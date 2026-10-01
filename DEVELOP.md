@@ -41,14 +41,10 @@ Registra cambios pequeños y funcionales siguiendo este estándar:
 git add <archivos-modificados>
 git commit -m "tipo: breve descripcion"
 ```
-```
-```
-```
-- `feat``: para nuevas características.
-- `fix``: para corrección de errores.
-- `docs``: para cambios en la documentación.
-- `refactor``: para mejoras internas del código sin cambiar su funcionalidad.
-```
+- `feat`: para nuevas características.
+- `fix`: para corrección de errores.
+- `docs`: para cambios en la documentación.
+- `refactor`: para mejoras internas del código sin cambiar su funcionalidad.
 
 ### Paso 4: Sincronizar antes de subir (Para evitar conflictos)
 Antes de subir a la rama de develop actualiza tu repo local para evitar conflictos por si alguien ha publicado algo mientras trabajabas.
