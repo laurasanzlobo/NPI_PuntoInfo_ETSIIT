@@ -66,7 +66,3 @@ Publica tu versión de la rama en el remoto:
 ```bash
 git push -u origin feature/nombre-de-tu-tarea
 ```
-```
-```
-```
-```
