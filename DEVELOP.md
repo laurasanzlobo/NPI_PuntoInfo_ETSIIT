@@ -1,64 +1,97 @@
-# NPI Aplicación Android
+# Trabajo con ramas y Pull Requests
 
-Este documento establece las normas de organización, flujo de ramas y buenas prácticas para coordinar el trabajo durante las 8 semanas del proyecto (aproximadamente 2 horas semanales por persona).
+En este proyecto no se trabaja directamente sobre `main` ni sobre `develop`.
+Cada persona realiza sus cambios en una rama propia y los incorpora al proyecto
+mediante una Pull Request (PR). Una PR es una solicitud para revisar y unir los
+cambios de una rama con otra.
+## Ramas del proyecto
 
----
+| Rama | Para qué sirve | Cómo se modifica |
+|---|---|---|
+| `main` | Contiene la versión estable y lista para entregar. | Solo mediante una PR desde `develop`. |
+| `develop` | Contiene la versión conjunta en desarrollo. | Mediante PRs aprobadas desde ramas personales. |
+| `<tipo>/<nombre>` | Contiene el trabajo de una tarea concreta. | Cada persona crea y modifica su propia rama. |
 
-## 1. Modelo de Ramas
+`main` y `develop` están protegidas. Por eso, no se deben subir cambios
+directamente a ellas.
 
-Se utiliza una variante ligera de GitHub Flow basada en integración continua sobre la rama `develop`:
+## Nombres de las ramas
+El nombre debe escribirse en minúsculas, usando guiones para separar palabras:
 
-* `main`: Código estable y entregable. Rama protegida; nadie sube cambios directamente aquí.
-* `develop`: Rama base de trabajo semanal. Todo el desarrollo parte de aquí y se integra aquí mediante Pull Request.
-* `feature/<nombre-tarea>`: Nuevas funcionalidades (ejemplo: `feature/filtro-busqueda`).
-* `fix/<nombre-error>`: Corrección de fallos (ejemplo: `fix/error-auth`).
-* `docs/<nombre-tarea>`: Cambios exclusivos de documentación (ejemplo: `docs/actualizar-readme`).
+- `feat/nombre-tarea`: nueva funcionalidad.
+- `fix/nombre-error`: corrección de un error.
+- `docs/nombre-tarea`: documentación.
+- `refactor/nombre-componente`: reorganización del código sin cambiar su comportamiento.
+- `chore/nombre-tarea`: mantenimiento, configuración o dependencias.
+Por ejemplo: `feat/filtro-busqueda`.
 
----
+## Flujo de trabajo
+### 1. Actualiza tu repo local desde `develop`
 
-## 2. Flujo de Trabajo Paso a Paso
-
-### Paso 1: Actualizar el entorno local
-Antes de comenzar la sesión de trabajo SIEMPRE, descarga siempre la última versión de `develop`:
-
+Antes de empezar una tarea, descarga la última versión disponible:
 ```bash
-git checkout develop # Te cambia a la rama develop
-git pull origin develop # Actualiza tu repo local
+git switch develop
+git pull origin develop
 ```
 
-### Paso 2: Crear la rama de trabajo
-Genera la rama propia asignándole un nombre descriptivo según la convención:
+### 2. Crear una rama personal
+Crea la rama desde `develop`. Sustituye el nombre del ejemplo por el de tu
+tarea:
 
 ```bash
-git checkout -b feature/<nombre-del-feature>
+git switch -c feat/nombre-de-la-tarea
 ```
+Desde este momento, todos tus cambios deben hacerse en esa rama.
 
-
-### Paso 3: Realizar commits ordenados (en la medida de lo posible)
-Registra cambios pequeños y funcionales siguiendo este estándar:
+### 3. Guardar y subir los cambios
+Cuando hayas terminado una parte de trabajo, guarda los archivos en un commit y
+sube la rama al repositorio:
 
 ```bash
 git add <archivos-modificados>
-git commit -m "tipo: breve descripcion"
+git commit -m "descripcion breve del cambio"
+git push -u origin feat/nombre-de-la-tarea
 ```
-- `feat`: para nuevas características.
-- `fix`: para corrección de errores.
-- `docs`: para cambios en la documentación.
-- `refactor`: para mejoras internas del código sin cambiar su funcionalidad.
+Comprueba antes que el proyecto funciona correctamente.
 
-### Paso 4: Sincronizar antes de subir (Para evitar conflictos)
-Antes de subir a la rama de develop actualiza tu repo local para evitar conflictos por si alguien ha publicado algo mientras trabajabas.
+### 4. Actualizar la rama antes de abrir la PR
+Mientras trabajabas, otra persona puede haber añadido cambios a `develop`.
+Incorpóralos a tu rama antes de solicitar la revisión:
 
 ```bash
-git checkout develop
+git switch develop
 git pull origin develop
-git checkout feature/nombre-de-tu-tarea
+git switch feat/nombre-de-la-tarea
 git merge develop
-# Si surgen conflictos, resuélvelos en el editor, añade los archivos y haz commit
 ```
-
-### Paso 5: Subir al repo
-Publica tu versión de la rama en el remoto:
+Si Git informa de conflictos, abre los archivos indicados, decide qué contenido
+debe conservarse y elimina las marcas de conflicto (`<<<<<<<`, `=======` y
+`>>>>>>>`). Después, guarda y ejecuta:
 ```bash
-git push -u origin feature/nombre-de-tu-tarea
+git add <archivos-resueltos>
+git commit -m "resuelve conflictos con develop"
 ```
+Comprueba de nuevo que el proyecto funciona y sube la rama actualizada:
+
+```bash
+git push origin feat/nombre-de-la-tarea
+```
+### 5. Crear la Pull Request
+
+En GitHub, abre una nueva Pull Request y selecciona:
+
+- **Base:** `develop`.
+- **Comparar:** `feat/nombre-de-la-tarea`.
+Añade un título claro y explica qué has cambiado. Comprueba que los archivos modificados son los esperados y solicita la revisión de al menos una persona del equipo.
+### 6. Revisar y completar la PR
+
+La persona revisora puede aprobar la PR o pedir cambios. Si pide cambios, realízalos en tu misma rama, crea otro commit y vuelve a subirla:
+```bash
+git add <archivos-modificados>
+git commit -m "corrige los cambios solicitados"
+git push origin feat/nombre-de-la-tarea
+```
+La Pull Request se actualizará automáticamente. Cuando esté aprobada y las comprobaciones sean correctas, se integra en `develop`. Después de integrarla, la rama de trabajo puede eliminarse.
+## Publicar una versión estable
+
+Cuando `develop` contenga una versión completa y probada, se crea una PR desde `develop` hacia `main`. Tras su revisión y aprobación, los cambios se integran en `main`, que pasa a contener la versión estable del proyecto.
