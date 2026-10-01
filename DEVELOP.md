@@ -22,8 +22,8 @@ Se utiliza una variante ligera de GitHub Flow basada en integración continua so
 Antes de comenzar la sesión de trabajo SIEMPRE, descarga siempre la última versión de `develop`:
 
 ```bash
-git checkout develop
-git pull origin develop
+git checkout develop # Te cambia a la rama develop
+git pull origin develop # Actualiza tu repo local
 ```
 
 ### Paso 2: Crear la rama de trabajo
