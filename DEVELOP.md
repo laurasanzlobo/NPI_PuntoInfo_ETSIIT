@@ -61,7 +61,7 @@ git merge develop
 # Si surgen conflictos, resuélvelos en el editor, añade los archivos y haz commit
 ```
 
-### Paso 5: Subir al repo y abrir Pull Request (si es que trabajamos con PRs)
+### Paso 5: Subir al repo
 Publica tu versión de la rama en el remoto:
 ```bash
 git push -u origin feature/nombre-de-tu-tarea
