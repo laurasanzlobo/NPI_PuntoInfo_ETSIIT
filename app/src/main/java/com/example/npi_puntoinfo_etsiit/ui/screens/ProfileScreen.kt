@@ -144,7 +144,7 @@ fun ProfileScreen() {
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
                 Text(
-                    text = "Identificación Inteligente (T2)",
+                    text = "Identificación Inteligente",
                     fontWeight = FontWeight.Bold,
                     fontSize = 15.sp,
                     color = TextPrimary
