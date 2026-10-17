@@ -66,17 +66,11 @@ class AccelerometerManager(context: Context) : SensorEventListener {
     private val FLICK_COOLDOWN = 1800L
     private var lastFlickTriggeredTime = 0L
 
-    // --- Parámetros Gesto 3: Levantar el móvil (Lift-to-Orient) ---
-    // En posición vertical estricta mirando al frente (caminando), la pantalla queda perpendicular al suelo:
-    // - El eje Z vale alrededor de 0 a 1-2 m/s² (lo que Laura calibró exactamente a ~1 m/s²).
-    // - En uso normal relajado (inclinado a ~45° mirando abajo), el eje Z vale ~5 a 7 m/s².
-    var verticalMaxZThreshold: Float = 2.2f // Configurable: Z debe ser <= 2.2 m/s² (alrededor de 1 m/s²)
-    var verticalMinYThreshold: Float = 8.5f // La gravedad recae casi íntegra en Y (> 8.5 m/s²)
-    var flatMinZThreshold: Float = 4.5f     // Cuando Z >= 4.5 m/s² se considera lectura relajada o mesa
+    // --- Parámetros Gesto 3: Levantar el móvil (Guiado paso a paso) y bajarlo (Ver mapa) ---
+    var verticalMaxZThreshold: Float = 3.0f // Z <= 3.0 m/s² y Y >= 7.8 m/s² indican vertical (levantado frente a los ojos)
+    var verticalMinYThreshold: Float = 7.8f
+    var flatMinZThreshold: Float = 3.8f     // Z >= 3.8 m/s² o Y < 7.2 m/s² indican que el móvil se ha bajado a posición de lectura del mapa
 
-    private var lastFlatTimestamp = 0L
-    private var lastLiftTriggeredTime = 0L
-    private val LIFT_COOLDOWN = 2000L
     private var isCurrentlyVertical = false
 
     private var currentOrientation: DeviceOrientation = DeviceOrientation.UNKNOWN
@@ -139,9 +133,9 @@ class AccelerometerManager(context: Context) : SensorEventListener {
         }
 
         // =========================================================================
-        // GESTO 2: GIRO DE MUÑECA A LA IZQUIERDA («¡Llévame!»)
+        // GESTO 2: GIRO DEL MÓVIL / MUÑECA («¡Llévame!»)
         // =========================================================================
-        if (x > FLICK_LEFT_THRESHOLD && y > 3.0f && abs(z) < 7.5f) {
+        if (abs(x) > FLICK_LEFT_THRESHOLD && y > 2.0f && abs(z) < 7.5f) {
             if (now - lastFlickTriggeredTime > FLICK_COOLDOWN && now - lastShakeTriggeredTime > 1000L) {
                 lastFlickTriggeredTime = now
                 onTakeMeThereGesture?.invoke()
@@ -149,32 +143,21 @@ class AccelerometerManager(context: Context) : SensorEventListener {
         }
 
         // =========================================================================
-        // GESTO 3: LEVANTAR EL MÓVIL (Lift-to-Orient)
+        // GESTO 3: LEVANTAR EL MÓVIL (Guiado paso a paso) Y BAJARLO (Ver mapa)
         // =========================================================================
-        // Vertical estricto: Z muy bajo (|Z| <= verticalMaxZThreshold, aprox 1 m/s²) y Y alto (> 8.5 m/s²)
-        val isVertical = abs(z) <= verticalMaxZThreshold && y >= verticalMinYThreshold && abs(x) < 3.5f
+        val isVertical = abs(z) <= verticalMaxZThreshold && y >= verticalMinYThreshold && abs(x) < 4.0f
+        val isLowered = abs(z) >= flatMinZThreshold || y < 7.2f || abs(x) >= 4.8f
 
-        // Posición de lectura en mano o sobre la mesa: Z alto (>= 4.5 m/s²) o Y bajo
-        val isFlat = z >= flatMinZThreshold || y < 6.0f
-
-        if (isFlat) {
-            lastFlatTimestamp = now
-            if (isCurrentlyVertical) {
-                isCurrentlyVertical = false
-                onPostureModeChanged?.invoke(false)
-            }
-        } else if (isVertical) {
+        if (isVertical) {
             if (!isCurrentlyVertical) {
                 isCurrentlyVertical = true
                 onPostureModeChanged?.invoke(true)
+                onDeviceLifted?.invoke()
             }
-            // Si en los últimos 2.2 segundos estuvo en lectura relajada o mesa y ahora está vertical: ¡Levantado!
-            if (lastFlatTimestamp > 0L && (now - lastFlatTimestamp < 2200L)) {
-                if (now - lastLiftTriggeredTime > LIFT_COOLDOWN) {
-                    lastLiftTriggeredTime = now
-                    lastFlatTimestamp = 0L
-                    onDeviceLifted?.invoke()
-                }
+        } else if (isLowered) {
+            if (isCurrentlyVertical) {
+                isCurrentlyVertical = false
+                onPostureModeChanged?.invoke(false)
             }
         }
 
@@ -183,7 +166,7 @@ class AccelerometerManager(context: Context) : SensorEventListener {
             x > 5.5f -> DeviceOrientation.TILTED_LEFT
             x < -5.5f -> DeviceOrientation.TILTED_RIGHT
             isVertical -> DeviceOrientation.VERTICAL
-            isFlat -> DeviceOrientation.FLAT
+            isLowered -> DeviceOrientation.FLAT
             else -> DeviceOrientation.UNKNOWN
         }
 

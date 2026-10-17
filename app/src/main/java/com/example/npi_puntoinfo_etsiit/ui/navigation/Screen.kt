@@ -16,7 +16,19 @@ sealed class Screen(
 ) {
     data object Home : Screen("home", "Inicio", Icons.Default.Home)
     data object Schedule : Screen("schedule", "Horario", Icons.Default.DateRange)
-    data object Navigation : Screen("navigation", "Guiado", Icons.Default.Navigation)
+    data object Navigation : Screen("navigation", "Guiado", Icons.Default.Navigation) {
+        const val routePattern = "navigation?destination={destination}&location={location}"
+
+        fun createRoute(destination: String? = null, location: String? = null): String {
+            return if (!destination.isNullOrBlank()) {
+                val encodedDest = android.net.Uri.encode(destination)
+                val encodedLoc = android.net.Uri.encode(location ?: "")
+                "navigation?destination=$encodedDest&location=$encodedLoc"
+            } else {
+                "navigation"
+            }
+        }
+    }
     data object Dining : Screen("dining", "Comedores", Icons.Default.Restaurant)
     data object Professors : Screen("professors", "Profesores", Icons.Default.School)
     data object Profile : Screen("profile", "Mi TUI", Icons.Default.AccountCircle)

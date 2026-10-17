@@ -30,13 +30,6 @@ fun ProfileScreen() {
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        Text(
-            text = "Tarjeta Universitaria (TUI)",
-            fontSize = 22.sp,
-            fontWeight = FontWeight.Bold,
-            color = TextPrimary
-        )
-
         // Tarjeta estilo carné universitario TUI
         Card(
             modifier = Modifier
