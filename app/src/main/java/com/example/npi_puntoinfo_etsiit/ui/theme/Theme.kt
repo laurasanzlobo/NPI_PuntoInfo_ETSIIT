@@ -1,25 +1,9 @@
 package com.example.npi_puntoinfo_etsiit.ui.theme
 
-import android.app.Activity
-import android.os.Build
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
-
-private val DarkColorScheme = darkColorScheme(
-    primary = Color(0xFFFFB3BA),
-    secondary = Color(0xFF93C5FD),
-    tertiary = CampusTeal,
-    background = Color(0xFF0F172A),
-    surface = Color(0xFF1E293B),
-    onPrimary = Color.Black,
-    onSecondary = Color.Black,
-    onBackground = Color.White,
-    onSurface = Color.White
-)
 
 private val LightColorScheme = lightColorScheme(
     primary = UgrRed,
@@ -39,9 +23,13 @@ private val LightColorScheme = lightColorScheme(
     outline = SurfaceBorder
 )
 
+// Para mantener consistencia con la identidad visual corporativa ETSIIT (fondos claros),
+// garantizamos contraste legible en cualquier modo del sistema
+private val DarkColorScheme = LightColorScheme.copy()
+
 @Composable
 fun NPI_PuntoInfo_ETSIITTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
+    darkTheme: Boolean = false,
     content: @Composable () -> Unit
 ) {
     val colorScheme = if (darkTheme) DarkColorScheme else LightColorScheme

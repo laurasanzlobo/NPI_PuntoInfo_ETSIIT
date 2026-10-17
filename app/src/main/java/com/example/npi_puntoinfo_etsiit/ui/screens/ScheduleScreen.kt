@@ -1,120 +1,441 @@
 package com.example.npi_puntoinfo_etsiit.ui.screens
 
+import android.content.Context
+import android.os.Build
+import android.os.VibrationEffect
+import android.os.Vibrator
+import android.os.VibratorManager
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.PagerState
+import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.DirectionsWalk
+import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.EventBusy
+import androidx.compose.material.icons.filled.MeetingRoom
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Schedule
+import androidx.compose.material.icons.filled.School
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import kotlinx.coroutines.launch
+import java.time.DayOfWeek
+import java.time.LocalDate
+import java.time.LocalTime
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.npi_puntoinfo_etsiit.data.ClassItem
+import com.example.npi_puntoinfo_etsiit.data.DayScheduleInfo
+import com.example.npi_puntoinfo_etsiit.data.ScheduleRepository
+import com.example.npi_puntoinfo_etsiit.ui.components.GestureBadge
+import com.example.npi_puntoinfo_etsiit.ui.components.GestureType
+import com.example.npi_puntoinfo_etsiit.sensors.AccelerometerManager
 import com.example.npi_puntoinfo_etsiit.ui.navigation.Screen
 import com.example.npi_puntoinfo_etsiit.ui.theme.*
 
-data class ClassItem(
-    val time: String,
-    val subject: String,
-    val room: String,
-    val teacher: String,
-    val isCurrent: Boolean = false
-)
-
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ScheduleScreen(
-    onNavigate: (String) -> Unit
+    onNavigate: (String) -> Unit = {},
+    navKey: Int = 0
 ) {
-    val days = listOf("Lunes", "Martes", "Miércoles", "Jueves", "Viernes")
-    var selectedDayIndex by remember { mutableIntStateOf(0) }
+    val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
+    var selectedClass by remember { mutableStateOf<ClassItem?>(null) }
 
-    val sampleSchedule = listOf(
-        ClassItem("08:30 - 10:30", "Sistemas Distribuidos", "Aula 2.1 · Planta 2", "Prof. Alberto R.", false),
-        ClassItem("10:30 - 12:00", "Ingeniería del Software", "Aula 1.4 · Planta 1", "Prof. María G.", false),
-        ClassItem("12:00 - 14:00", "Nuevos Paradigmas de Interacción", "Aula 1.2 · Planta 1", "Prof. Roberto P.", true),
-        ClassItem("15:30 - 17:30", "Seguridad en Redes", "Aula 0.3 · Planta Baja", "Prof. Carmen S.", false)
-    )
+    val today = remember { LocalDate.now() }
+    val now = remember { LocalTime.now() }
+
+    // El acelerómetro con el gesto «¡Llévame!» SOLO está activo si el usuario está viendo el detalle de una clase concreta
+    DisposableEffect(selectedClass) {
+        val manager = AccelerometerManager(context)
+
+        if (selectedClass != null) {
+            manager.onTakeMeThereGesture = {
+                triggerVibration(context, durationMs = 150)
+                val currentClass = selectedClass
+                if (currentClass != null) {
+                    val roomName = currentClass.room.split("·")[0].trim()
+                    val floorName = currentClass.room.split("·").getOrElse(1) { "ETSIIT" }.trim()
+                    selectedClass = null
+                    onNavigate(Screen.Navigation.createRoute(roomName, floorName))
+                }
+            }
+            manager.startListening()
+        }
+
+        onDispose {
+            manager.stopListening()
+        }
+    }
+
+    val daysSchedule = remember(today, now) {
+        (0 until 7).map { offset ->
+            val date = today.plusDays(offset.toLong())
+            val dayOfWeek = date.dayOfWeek
+            val isToday = (offset == 0)
+
+            val dayName = when (dayOfWeek) {
+                DayOfWeek.MONDAY -> "Lunes"
+                DayOfWeek.TUESDAY -> "Martes"
+                DayOfWeek.WEDNESDAY -> "Miércoles"
+                DayOfWeek.THURSDAY -> "Jueves"
+                DayOfWeek.FRIDAY -> "Viernes"
+                DayOfWeek.SATURDAY -> "Sábado"
+                DayOfWeek.SUNDAY -> "Domingo"
+            }
+
+            val dayLabel = when (offset) {
+                0 -> "$dayName · Hoy"
+                1 -> "$dayName · Mañana"
+                else -> dayName
+            }
+
+            val baseClasses = ScheduleRepository.getClassesForDay(dayOfWeek)
+
+            val classesForDay = baseClasses.map { item ->
+                item.copy(isCurrent = isToday && isTimeInRange(item.time, now))
+            }
+
+            DayScheduleInfo(
+                dayName = dayName,
+                dayLabel = dayLabel,
+                classes = classesForDay
+            )
+        }
+    }
+
+    val pagerState = remember(navKey) {
+        PagerState(currentPage = 0, currentPageOffsetFraction = 0f) { daysSchedule.size }
+    }
 
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(BackgroundLight)
-            .padding(16.dp)
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
         Text(
-            text = "Mi Horario Semanal",
-            fontSize = 22.sp,
-            fontWeight = FontWeight.Bold,
-            color = TextPrimary
-        )
-        Text(
-            text = "Consulta tus clases y cómo llegar a cada aula",
+            text = "Desliza horizontalmente para consultar otros días",
             fontSize = 13.sp,
             color = TextSecondary
         )
 
-        Spacer(modifier = Modifier.height(14.dp))
-
-        // Selector de días horizontal
-        ScrollableTabRow(
-            selectedTabIndex = selectedDayIndex,
-            edgePadding = 0.dp,
-            containerColor = Color.Transparent,
-            divider = {},
-            indicator = {}
+        // Indicador del día actual y puntos (dots) de la semana (diseño idéntico a Comedor)
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            days.forEachIndexed { index, day ->
-                val isSelected = selectedDayIndex == index
+            Surface(
+                shape = RoundedCornerShape(20.dp),
+                color = UgrRed.copy(alpha = 0.12f)
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.DateRange,
+                        contentDescription = null,
+                        tint = UgrRed,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = daysSchedule[pagerState.currentPage].dayLabel,
+                        color = UgrRed,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 13.sp
+                    )
+                }
+            }
+
+            // Indicador de puntos (dots) de la semana
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                repeat(daysSchedule.size) { index ->
+                    val isSelected = pagerState.currentPage == index
+                    Box(
+                        modifier = Modifier
+                            .size(if (isSelected) 10.dp else 7.dp)
+                            .clip(CircleShape)
+                            .background(if (isSelected) UgrRed else SurfaceBorder)
+                            .clickable {
+                                coroutineScope.launch {
+                                    pagerState.animateScrollToPage(index)
+                                }
+                            }
+                    )
+                }
+            }
+        }
+
+        // Pager deslizante horizontal con los días de la semana
+        HorizontalPager(
+            state = pagerState,
+            pageSpacing = 16.dp,
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f)
+        ) { page ->
+            val dayClasses = daysSchedule[page].classes
+
+            if (dayClasses.isEmpty()) {
                 Box(
                     modifier = Modifier
-                        .padding(end = 8.dp)
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(if (isSelected) UgrRed else SurfaceWhite)
-                        .padding(horizontal = 16.dp, vertical = 8.dp),
-                    contentAlignment = Alignment.Center
+                        .fillMaxSize()
+                        .verticalScroll(rememberScrollState()),
+                    contentAlignment = Alignment.TopCenter
                 ) {
-                    TextButton(
-                        onClick = { selectedDayIndex = index },
-                        contentPadding = PaddingValues(0.dp)
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(containerColor = SurfaceWhite)
                     ) {
-                        Text(
-                            text = day,
-                            color = if (isSelected) Color.White else TextPrimary,
-                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                            fontSize = 13.sp
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(28.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(64.dp)
+                                    .clip(CircleShape)
+                                    .background(UgrRed.copy(alpha = 0.10f)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.EventBusy,
+                                    contentDescription = null,
+                                    tint = UgrRed,
+                                    modifier = Modifier.size(32.dp)
+                                )
+                            }
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Text(
+                                text = if (page == 0) "Hoy no tienes clase" else "El ${daysSchedule[page].dayName} no tienes clase",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 18.sp,
+                                color = TextPrimary
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = if (page == 0)
+                                    "No tienes clases programadas para hoy."
+                                else
+                                    "No tienes clases programadas para el ${daysSchedule[page].dayName}.",
+                                fontSize = 14.sp,
+                                color = TextSecondary,
+                                textAlign = TextAlign.Center
+                            )
+                        }
+                    }
+                }
+            } else {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    dayClasses.forEach { item ->
+                        ClassCard(
+                            item = item,
+                            onClick = { selectedClass = item }
                         )
                     }
                 }
             }
         }
+    }
 
-        Spacer(modifier = Modifier.height(16.dp))
+    // Diálogo informativo detallado de una clase concreta al pulsar en su recuadro
+    if (selectedClass != null) {
+        val item = selectedClass!!
+        AlertDialog(
+            onDismissRequest = { selectedClass = null },
+            containerColor = SurfaceWhite,
+            titleContentColor = TextPrimary,
+            textContentColor = TextPrimary,
+            iconContentColor = UgrRed,
+            icon = {
+                Box(
+                    modifier = Modifier
+                        .size(48.dp)
+                        .clip(CircleShape)
+                        .background(UgrRed.copy(alpha = 0.12f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.School,
+                        contentDescription = null,
+                        tint = UgrRed,
+                        modifier = Modifier.size(28.dp)
+                    )
+                }
+            },
+            title = {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(
+                        text = item.subject,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 18.sp,
+                        color = TextPrimary,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Surface(
+                        shape = RoundedCornerShape(6.dp),
+                        color = if (item.isPractice) CampusTeal.copy(alpha = 0.12f) else Color(0xFFF1F5F9)
+                    ) {
+                        Text(
+                            text = if (item.isPractice) "PRÁCTICAS (${item.acronym})" else "TEORÍA (${item.acronym})",
+                            color = if (item.isPractice) CampusTeal else TextSecondary,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 11.sp,
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                        )
+                    }
+                }
+            },
+            text = {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    // Horario y Ubicación
+                    Card(
+                        colors = CardDefaults.cardColors(containerColor = BackgroundLight),
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(14.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(
+                                    imageVector = Icons.Default.Schedule,
+                                    contentDescription = null,
+                                    tint = CampusGreen,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    text = "Horario: ${item.time}",
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = TextPrimary
+                                )
+                            }
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier.weight(1f)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.MeetingRoom,
+                                        contentDescription = null,
+                                        tint = UgrRed,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(
+                                        text = "Aula: ${item.room}",
+                                        fontSize = 13.sp,
+                                        color = TextPrimary
+                                    )
+                                }
+                                // Loguito del gesto «¡Llévame!» hacia el aula
+                                GestureBadge(
+                                    type = GestureType.TAKE_ME_THERE,
+                                    onClick = {
+                                        val roomName = item.room.split("·")[0].trim()
+                                        val floorName = item.room.split("·").getOrElse(1) { "ETSIIT" }.trim()
+                                        selectedClass = null
+                                        onNavigate(Screen.Navigation.createRoute(roomName, floorName))
+                                    }
+                                )
+                            }
+                        }
+                    }
 
-        // Lista de clases del día
-        LazyColumn(
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            items(sampleSchedule) { item ->
-                ClassCard(item = item, onGuideClick = { onNavigate(Screen.Navigation.route) })
+                    // Profesor asignado
+                    Card(
+                        colors = CardDefaults.cardColors(containerColor = BackgroundLight),
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(14.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Person,
+                                contentDescription = null,
+                                tint = CampusTeal,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Spacer(modifier = Modifier.width(10.dp))
+                            Column {
+                                Text(
+                                    text = "Profesor/a:",
+                                    fontSize = 11.sp,
+                                    color = TextSecondary
+                                )
+                                Text(
+                                    text = item.professor,
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 14.sp,
+                                    color = TextPrimary
+                                )
+                            }
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { selectedClass = null }) {
+                    Text("Cerrar", color = TextPrimary, fontWeight = FontWeight.Bold)
+                }
             }
-        }
+        )
     }
 }
 
 @Composable
 private fun ClassCard(
     item: ClassItem,
-    onGuideClick: () -> Unit
+    onClick: () -> Unit
 ) {
     Card(
+        onClick = onClick,
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = SurfaceWhite),
@@ -142,52 +463,109 @@ private fun ClassCard(
                     )
                 }
 
-                if (item.isCurrent) {
-                    Box(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(CampusGreen.copy(alpha = 0.15f))
-                            .padding(horizontal = 8.dp, vertical = 2.dp)
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    // Badge de Teoría (fondo gris) o Prácticas (fondo blanco/teal)
+                    Surface(
+                        shape = RoundedCornerShape(6.dp),
+                        color = if (item.isPractice) CampusTeal.copy(alpha = 0.12f) else Color(0xFFF1F5F9)
                     ) {
                         Text(
-                            text = "ACTUAL",
-                            fontSize = 11.sp,
+                            text = if (item.isPractice) "PRÁCTICAS" else "TEORÍA",
+                            color = if (item.isPractice) CampusTeal else TextSecondary,
                             fontWeight = FontWeight.Bold,
-                            color = CampusGreen
+                            fontSize = 10.sp,
+                            modifier = Modifier.padding(horizontal = 7.dp, vertical = 3.dp)
                         )
+                    }
+
+                    if (item.isCurrent) {
+                        Surface(
+                            shape = RoundedCornerShape(6.dp),
+                            color = CampusGreen.copy(alpha = 0.15f)
+                        ) {
+                            Text(
+                                text = "EN CURSO",
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = CampusGreen,
+                                modifier = Modifier.padding(horizontal = 7.dp, vertical = 3.dp)
+                            )
+                        }
                     }
                 }
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(10.dp))
 
             Text(
-                text = item.subject,
+                text = "${item.subject} (${item.acronym})",
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Bold,
                 color = TextPrimary
             )
-            Text(
-                text = "${item.room} · ${item.teacher}",
-                fontSize = 13.sp,
-                color = TextSecondary
-            )
 
-            Spacer(modifier = Modifier.height(10.dp))
+            Spacer(modifier = Modifier.height(6.dp))
 
-            OutlinedButton(
-                onClick = onGuideClick,
-                shape = RoundedCornerShape(10.dp),
-                modifier = Modifier.fillMaxWidth()
-            ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(
-                    imageVector = Icons.Default.DirectionsWalk,
+                    imageVector = Icons.Default.MeetingRoom,
                     contentDescription = null,
+                    tint = TextSecondary,
                     modifier = Modifier.size(16.dp)
                 )
                 Spacer(modifier = Modifier.width(6.dp))
-                Text(text = "Ruta guiada a ${item.room.split("·")[0].trim()}", fontSize = 13.sp)
+                Text(
+                    text = item.room,
+                    fontSize = 13.sp,
+                    color = TextSecondary
+                )
             }
         }
     }
 }
+
+/**
+ * Función auxiliar para emitir una vibración háptica al disparar un gesto
+ */
+private fun triggerVibration(context: Context, durationMs: Long = 150) {
+    try {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            val vibratorManager = context.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as? VibratorManager
+            vibratorManager?.defaultVibrator?.vibrate(
+                VibrationEffect.createOneShot(durationMs, VibrationEffect.DEFAULT_AMPLITUDE)
+            )
+        } else {
+            @Suppress("DEPRECATION")
+            val vibrator = context.getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                vibrator?.vibrate(VibrationEffect.createOneShot(durationMs, VibrationEffect.DEFAULT_AMPLITUDE))
+            } else {
+                @Suppress("DEPRECATION")
+                vibrator?.vibrate(durationMs)
+            }
+        }
+    } catch (_: Exception) {
+    }
+}
+
+/**
+ * Comprueba si la hora actual se encuentra dentro del rango de una clase (formato "HH:mm - HH:mm").
+ */
+private fun isTimeInRange(timeRange: String, currentTime: LocalTime): Boolean {
+    return try {
+        val parts = timeRange.split("-").map { it.trim() }
+        if (parts.size == 2) {
+            val start = LocalTime.parse(parts[0])
+            val end = LocalTime.parse(parts[1])
+            !currentTime.isBefore(start) && currentTime.isBefore(end)
+        } else {
+            false
+        }
+    } catch (_: Exception) {
+        false
+    }
+}
+
