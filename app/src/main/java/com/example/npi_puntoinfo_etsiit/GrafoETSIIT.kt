@@ -66,8 +66,8 @@ sealed class ResultadoVoz {
 fun formatearPlanta(planta: String): String {
     return when (planta.trim().uppercase()) {
         "B", "0", "PB" -> "Planta Baja"
-        "P-1", "-1", "PSS" -> "Planta Semisótano / -1"
-        "-2" -> "Planta -2 (PSS)"
+        "P-1", "-1", "PSS" -> "Planta -1"
+        "-2" -> "Planta -2"
         "1", "P1" -> "Planta 1"
         "2", "P2" -> "Planta 2"
         "3", "P3" -> "Planta 3"
@@ -276,11 +276,11 @@ class GrafoETSIIT {
         // 2. Destinos y servicios del campus
         if (limpia.contains("comedor") || limpia.contains("comer") || limpia.contains("almorzar") || limpia.contains("cantina")) {
             val nodo = buscarNodoPorDestino("comedor")
-            if (nodo != null) return ResultadoVoz.Exito(DestinoVoz(nodo, "Comedor Aynadamar", "Planta Semisótano / -1", texto))
+            if (nodo != null) return ResultadoVoz.Exito(DestinoVoz(nodo, "Comedor Aynadamar", "Planta -1", texto))
         }
         if (limpia.contains("cafeteria") || limpia.contains("cafe") || limpia.contains("desayunar") || limpia.contains("bar")) {
             val nodo = buscarNodoPorDestino("cafeteria")
-            if (nodo != null) return ResultadoVoz.Exito(DestinoVoz(nodo, "Cafetería", "Planta Semisótano / -1", texto))
+            if (nodo != null) return ResultadoVoz.Exito(DestinoVoz(nodo, "Cafetería", "Planta -1", texto))
         }
         if (limpia.contains("biblioteca") || limpia.contains("estudiar") || limpia.contains("libros")) {
             val nodo = buscarNodoPorDestino("biblioteca")
@@ -288,7 +288,7 @@ class GrafoETSIIT {
         }
         if (limpia.contains("salon") || limpia.contains("actos") || limpia.contains("conferencia") || limpia.contains("eventos")) {
             val nodo = buscarNodoPorDestino("salon")
-            if (nodo != null) return ResultadoVoz.Exito(DestinoVoz(nodo, "Salón de Actos", "Planta Semisótano / -1", texto))
+            if (nodo != null) return ResultadoVoz.Exito(DestinoVoz(nodo, "Salón de Actos", "Planta -1", texto))
         }
         if (limpia.contains("secretaria") || limpia.contains("matricula") || limpia.contains("expediente")) {
             val nodo = buscarNodoPorDestino("secretaria")
@@ -342,11 +342,11 @@ class GrafoETSIIT {
         // Aulas sótano
         if (normalizadaNumeros.contains("-1") || normalizadaNumeros.contains("menos 1") || normalizadaNumeros.contains("menos1")) {
             val nodo = buscarNodoPorDestino("-1")
-            if (nodo != null) return ResultadoVoz.Exito(DestinoVoz(nodo, "Aula -1", "Planta Semisótano / -1", texto))
+            if (nodo != null) return ResultadoVoz.Exito(DestinoVoz(nodo, "Aula -1", "Planta -1", texto))
         }
         if (normalizadaNumeros.contains("-2") || normalizadaNumeros.contains("menos 2") || normalizadaNumeros.contains("menos2")) {
             val nodo = buscarNodoPorDestino("-2")
-            if (nodo != null) return ResultadoVoz.Exito(DestinoVoz(nodo, "Aula -2", "Planta Semisótano / -1", texto))
+            if (nodo != null) return ResultadoVoz.Exito(DestinoVoz(nodo, "Aula -2", "Planta -1", texto))
         }
 
         // Aulas o Laboratorios con formato explícito "aula/clase/laboratorio/lab X.Y", "aula 3.4", "lab 3.4", "aula 3 4", etc.:

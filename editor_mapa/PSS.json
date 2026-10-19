@@ -1,0 +1,169 @@
+{
+  "nodos": [
+    {
+      "id": "n_1791914593902_88",
+      "nombre": "Vestibulo_PSS",
+      "planta": "P-1",
+      "edificio": "despachos",
+      "tipo": "servicio",
+      "x": 670,
+      "y": 654
+    },
+    {
+      "id": "n_1791914616902_89",
+      "nombre": "Comedor_PSS",
+      "planta": "P-1",
+      "edificio": "despachos",
+      "tipo": "servicio",
+      "x": 569,
+      "y": 717
+    },
+    {
+      "id": "n_1791914633465_409",
+      "nombre": "Cafeteria_PSS",
+      "planta": "P-1",
+      "edificio": "despachos",
+      "tipo": "servicio",
+      "x": 760,
+      "y": 641
+    },
+    {
+      "id": "n_1791914646660_715",
+      "nombre": "Salon_Actos_PSS",
+      "planta": "P-1",
+      "edificio": "despachos",
+      "tipo": "aula_especial",
+      "x": 617,
+      "y": 773
+    },
+    {
+      "id": "n_1791914693474_405",
+      "nombre": "Entrada_PSS_1",
+      "planta": "P-1",
+      "edificio": "despachos",
+      "tipo": "acceso",
+      "x": 642,
+      "y": 572
+    },
+    {
+      "id": "n_1791914711015_789",
+      "nombre": "Escaleras_PSS_Interior",
+      "planta": "P-1",
+      "edificio": "despachos",
+      "tipo": "escalera",
+      "x": 592,
+      "y": 625
+    },
+    {
+      "id": "n_1791914724402_696",
+      "nombre": "Escaleras_PSS_Exterior",
+      "planta": "P-1",
+      "edificio": "exterior",
+      "tipo": "escalera",
+      "x": 552,
+      "y": 518
+    },
+    {
+      "id": "n_1791914748836_525",
+      "nombre": "A_Menos1",
+      "planta": "P-1",
+      "edificio": "exterior",
+      "tipo": "aula",
+      "x": 498,
+      "y": 466
+    },
+    {
+      "id": "n_1791914754706_365",
+      "nombre": "A_Menos2",
+      "planta": "P-1",
+      "edificio": "exterior",
+      "tipo": "aula",
+      "x": 559,
+      "y": 424
+    },
+    {
+      "id": "n_1791914865454_551",
+      "nombre": "P_ExteriorSS",
+      "planta": "P-1",
+      "edificio": "exterior",
+      "tipo": "pasillo_exterior",
+      "x": 605,
+      "y": 508
+    },
+    {
+      "id": "n_1791914903466_670",
+      "nombre": "P_Interior_SS",
+      "planta": "P-1",
+      "edificio": "despachos",
+      "tipo": "pasillo",
+      "x": 656,
+      "y": 609
+    },
+    {
+      "id": "n_1791914995295_675",
+      "nombre": "Ascensor_PSS",
+      "planta": "P-1",
+      "edificio": "despachos",
+      "tipo": "ascensor",
+      "x": 609,
+      "y": 670
+    }
+  ],
+  "aristas": [
+    {
+      "origen": "n_1791914593902_88",
+      "destino": "n_1791914633465_409",
+      "distancia_metros": 8
+    },
+    {
+      "origen": "n_1791914593902_88",
+      "destino": "n_1791914646660_715",
+      "distancia_metros": 12
+    },
+    {
+      "origen": "n_1791914593902_88",
+      "destino": "n_1791914616902_89",
+      "distancia_metros": 11
+    },
+    {
+      "origen": "n_1791914754706_365",
+      "destino": "n_1791914865454_551",
+      "distancia_metros": 9
+    },
+    {
+      "origen": "n_1791914865454_551",
+      "destino": "n_1791914748836_525",
+      "distancia_metros": 10
+    },
+    {
+      "origen": "n_1791914865454_551",
+      "destino": "n_1791914724402_696",
+      "distancia_metros": 5
+    },
+    {
+      "origen": "n_1791914865454_551",
+      "destino": "n_1791914693474_405",
+      "distancia_metros": 7
+    },
+    {
+      "origen": "n_1791914903466_670",
+      "destino": "n_1791914693474_405",
+      "distancia_metros": 4
+    },
+    {
+      "origen": "n_1791914593902_88",
+      "destino": "n_1791914903466_670",
+      "distancia_metros": 4
+    },
+    {
+      "origen": "n_1791914903466_670",
+      "destino": "n_1791914711015_789",
+      "distancia_metros": 6
+    },
+    {
+      "origen": "n_1791914903466_670",
+      "destino": "n_1791914995295_675",
+      "distancia_metros": 7
+    }
+  ]
+}
