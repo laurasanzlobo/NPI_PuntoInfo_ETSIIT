@@ -6,8 +6,8 @@
       "planta": "P-1",
       "edificio": "despachos",
       "tipo": "servicio",
-      "x": 670,
-      "y": 654
+      "x": 688,
+      "y": 665
     },
     {
       "id": "n_1791914616902_89",
@@ -15,8 +15,8 @@
       "planta": "P-1",
       "edificio": "despachos",
       "tipo": "servicio",
-      "x": 569,
-      "y": 717
+      "x": 594,
+      "y": 718
     },
     {
       "id": "n_1791914633465_409",
@@ -24,8 +24,8 @@
       "planta": "P-1",
       "edificio": "despachos",
       "tipo": "servicio",
-      "x": 760,
-      "y": 641
+      "x": 757,
+      "y": 646
     },
     {
       "id": "n_1791914646660_715",
@@ -33,8 +33,8 @@
       "planta": "P-1",
       "edificio": "despachos",
       "tipo": "aula_especial",
-      "x": 617,
-      "y": 773
+      "x": 610,
+      "y": 760
     },
     {
       "id": "n_1791914693474_405",
@@ -42,8 +42,8 @@
       "planta": "P-1",
       "edificio": "despachos",
       "tipo": "acceso",
-      "x": 642,
-      "y": 572
+      "x": 640,
+      "y": 573
     },
     {
       "id": "n_1791914711015_789",
@@ -69,8 +69,8 @@
       "planta": "P-1",
       "edificio": "exterior",
       "tipo": "aula",
-      "x": 498,
-      "y": 466
+      "x": 521,
+      "y": 477
     },
     {
       "id": "n_1791914754706_365",
@@ -78,8 +78,8 @@
       "planta": "P-1",
       "edificio": "exterior",
       "tipo": "aula",
-      "x": 559,
-      "y": 424
+      "x": 554,
+      "y": 423
     },
     {
       "id": "n_1791914865454_551",
@@ -87,8 +87,8 @@
       "planta": "P-1",
       "edificio": "exterior",
       "tipo": "pasillo_exterior",
-      "x": 605,
-      "y": 508
+      "x": 595,
+      "y": 495
     },
     {
       "id": "n_1791914903466_670",
@@ -96,7 +96,7 @@
       "planta": "P-1",
       "edificio": "despachos",
       "tipo": "pasillo",
-      "x": 656,
+      "x": 660,
       "y": 609
     },
     {
@@ -105,8 +105,8 @@
       "planta": "P-1",
       "edificio": "despachos",
       "tipo": "ascensor",
-      "x": 609,
-      "y": 670
+      "x": 613,
+      "y": 673
     }
   ],
   "aristas": [

@@ -12,6 +12,7 @@ val EtsiitBlue = Color(0xFF2563EB)
 val CampusTeal = Color(0xFF0D9488)
 val CampusGreen = Color(0xFF16A34A)
 val WarningAmber = Color(0xFFD97706)
+val VoicePurple = Color(0xFF7C3AED)
 
 // Fondos y superficies modernas
 val BackgroundLight = Color(0xFFF8FAFC)

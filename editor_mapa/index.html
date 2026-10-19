@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Editor Visual de Nodos - ETSIIT</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body { display: flex; height: 100vh; background: #0f172a; color: #f8fafc; overflow: hidden; }
+    
+    #sidebar {
+      width: 340px;
+      background: #1e293b;
+      border-right: 1px solid #334155;
+      display: flex;
+      flex-direction: column;
+      padding: 16px;
+      gap: 14px;
+      z-index: 10;
+      box-shadow: 2px 0 10px rgba(0,0,0,0.3);
+    }
+    
+    h1 { font-size: 1.15rem; color: #38bdf8; display: flex; align-items: center; gap: 8px; }
+    
+    .section { background: #0f172a; padding: 12px; border-radius: 8px; border: 1px solid #334155; }
+    .section label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: #94a3b8; font-weight: bold; display: block; margin-bottom: 6px; }
+    
+    select, input, button {
+      width: 100%;
+      padding: 8px 12px;
+      border-radius: 6px;
+      border: 1px solid #475569;
+      background: #1e293b;
+      color: #fff;
+      font-size: 0.85rem;
+    }
+    
+    button {
+      cursor: pointer;
+      font-weight: 600;
+      transition: background 0.2s, transform 0.1s;
+    }
+    button:active { transform: scale(0.98); }
+    
+    .btn-primary { background: #0284c7; border: none; }
+    .btn-primary:hover { background: #0369a1; }
+    
+    .btn-success { background: #10b981; border: none; }
+    .btn-success:hover { background: #059669; }
+
+    .btn-danger { background: #ef4444; border: none; }
+    .btn-danger:hover { background: #dc2626; }
+    
+    .btn-secondary { background: #334155; border: 1px solid #64748b; }
+    .btn-secondary:hover { background: #475569; }
+
+    .tool-group { display: flex; gap: 6px; }
+    .tool-btn { flex: 1; padding: 8px 4px; font-size: 0.75rem; text-align: center; }
+    .tool-btn.active { background: #38bdf8; color: #0f172a; font-weight: bold; }
+
+    #info-box { font-size: 0.8rem; color: #cbd5e1; line-height: 1.4; max-height: 140px; overflow-y: auto; }
+    
+    #viewport {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+      cursor: grab;
+      background: #020617;
+    }
+    #viewport.dragging { cursor: grabbing; }
+
+    canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      transform-origin: 0 0;
+    }
+
+    .help-pill {
+      font-size: 0.72rem;
+      background: rgba(56, 189, 248, 0.1);
+      color: #38bdf8;
+      border: 1px solid rgba(56, 189, 248, 0.2);
+      padding: 6px 8px;
+      border-radius: 6px;
+      line-height: 1.3;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="sidebar">
+    <h1>📍 Editor Nodos ETSIIT</h1>
+
+    <div class="section">
+      <label>1. Seleccionar Planta</label>
+      <select id="select-planta">
+        <option value="PB">Planta Baja (PB.json)</option>
+        <option value="PSS">Semisótano (PSS.json)</option>
+        <option value="P1">Planta 1 (P1.json)</option>
+        <option value="P2">Planta 2 (P2.json)</option>
+        <option value="P3">Planta 3 (P3.json)</option>
+        <option value="P4">Planta 4 (P4.json)</option>
+      </select>
+    </div>
+
+    <div class="section">
+      <label>2. Modo de Trabajo</label>
+      <div class="tool-group">
+        <button id="btn-mode-move" class="tool-btn active">🖐 Mover</button>
+        <button id="btn-mode-add" class="tool-btn">➕ Nuevo Nodo</button>
+        <button id="btn-mode-edge" class="tool-btn">🔗 Unir</button>
+      </div>
+    </div>
+
+    <div class="section">
+      <label>Nodo Seleccionado</label>
+      <div id="selected-info">
+        <input type="text" id="node-name" placeholder="Nombre nodo..." style="margin-bottom: 6px;" />
+        <div style="display: flex; gap: 6px; margin-bottom: 6px;">
+          <input type="number" id="node-x" placeholder="X" style="width: 50%;" />
+          <input type="number" id="node-y" placeholder="Y" style="width: 50%;" />
+        </div>
+        <button id="btn-delete-node" class="btn-danger" style="padding: 6px;">🗑 Eliminar Nodo</button>
+      </div>
+    </div>
+
+    <div class="section" style="flex: 1; display: flex; flex-direction: column;">
+      <label>Instrucciones</label>
+      <div id="info-box">
+        <div class="help-pill">
+          • <b>Arrastrar nodo</b>: haz clic en cualquier círculo y muévelo.<br>
+          • <b>Mover mapa</b>: arrastra el fondo o usa rueda del ratón para Zoom.<br>
+          • <b>Nuevo nodo</b>: pulsa "➕ Nuevo Nodo" y haz clic en el plano.<br>
+          • <b>Unir</b>: pulsa "🔗 Unir" y haz clic en dos nodos consecutivos.
+        </div>
+      </div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 8px;">
+      <button id="btn-reset-view" class="btn-secondary">↺ Centrar Vista</button>
+      <button id="btn-export" class="btn-success">💾 Guardar / Descargar JSON</button>
+    </div>
+  </div>
+
+  <div id="viewport">
+    <canvas id="canvas"></canvas>
+  </div>
+
+  <script>
+    let currentPlanta = 'PB';
+    let graphData = { nodos: [], aristas: [] };
+    let bgImage = new Image();
+    let imageLoaded = false;
+
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    const viewport = document.getElementById('viewport');
+
+    // Estado de navegación (pan & zoom)
+    let zoom = 0.5;
+    let panX = 40;
+    let panY = 20;
+    let isPanning = false;
+    let startPanX = 0, startPanY = 0;
+
+    // Modos: 'move', 'add', 'edge'
+    let currentMode = 'move';
+    let selectedNode = null;
+    let hoveredNode = null;
+    let edgeStartNode = null;
+    let isDraggingNode = false;
+
+    // Cargar datos
+    async function loadPlanta(planta) {
+      currentPlanta = planta;
+      imageLoaded = false;
+      bgImage.src = `${planta}.jpeg`;
+      bgImage.onload = () => {
+        canvas.width = bgImage.width;
+        canvas.height = bgImage.height;
+        imageLoaded = true;
+        render();
+      };
+
+      try {
+        const resp = await fetch(`${planta}.json?t=${Date.now()}`);
+        graphData = await resp.json();
+      } catch (e) {
+        console.error("Error al cargar JSON", e);
+      }
+      selectedNode = null;
+      edgeStartNode = null;
+      updateSidebar();
+      render();
+    }
+
+    function worldToScreen(wx, wy) {
+      return { x: wx * zoom + panX, y: wy * zoom + panY };
+    }
+
+    function screenToWorld(sx, sy) {
+      return { x: (sx - panX) / zoom, y: (sy - panY) / zoom };
+    }
+
+    function findNodeAt(wx, wy, threshold = 18) {
+      for (let n of graphData.nodos) {
+        let dist = Math.hypot(n.x - wx, n.y - wy);
+        if (dist <= threshold / zoom) return n;
+      }
+      return null;
+    }
+
+    function render() {
+      if (!imageLoaded) return;
+
+      canvas.style.transform = `translate(${panX}px, ${panY}px) scale(${zoom})`;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(bgImage, 0, 0);
+
+      const nodeMap = new Map(graphData.nodos.map(n => [n.id, n]));
+
+      // 1. Dibujar Aristas
+      ctx.lineWidth = 3;
+      ctx.strokeStyle = 'rgba(37, 99, 235, 0.7)';
+      for (let a of graphData.aristas) {
+        let n1 = nodeMap.get(a.origen);
+        let n2 = nodeMap.get(a.destino);
+        if (n1 && n2) {
+          ctx.beginPath();
+          ctx.moveTo(n1.x, n1.y);
+          ctx.lineTo(n2.x, n2.y);
+          ctx.stroke();
+        }
+      }
+
+      // Si estamos trazando una nueva arista
+      if (currentMode === 'edge' && edgeStartNode) {
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = '#f59e0b';
+        ctx.beginPath();
+        ctx.moveTo(edgeStartNode.x, edgeStartNode.y);
+        ctx.lineTo(hoveredWorldPos.x, hoveredWorldPos.y);
+        ctx.stroke();
+      }
+
+      // 2. Dibujar Nodos
+      for (let n of graphData.nodos) {
+        let isSel = (n === selectedNode);
+        let isHov = (n === hoveredNode);
+        let isEdgeStart = (n === edgeStartNode);
+
+        ctx.beginPath();
+        ctx.arc(n.x, n.y, isSel ? 10 : 7, 0, Math.PI * 2);
+        ctx.fillStyle = isEdgeStart ? '#f59e0b' : (isSel ? '#38bdf8' : (n.tipo === 'aula' ? '#2563eb' : '#10b981'));
+        ctx.fill();
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = '#ffffff';
+        ctx.stroke();
+
+        // Etiqueta
+        ctx.font = 'bold 11px sans-serif';
+        let text = n.nombre;
+        let tw = ctx.measureText(text).width;
+        ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
+        ctx.fillRect(n.x + 10, n.y - 7, tw + 6, 15);
+        ctx.fillStyle = '#ffffff';
+        ctx.fillText(text, n.x + 13, n.y + 5);
+      }
+    }
+
+    let hoveredWorldPos = { x: 0, y: 0 };
+
+    viewport.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      const zoomFactor = e.deltaY < 0 ? 1.15 : 0.87;
+      const mouseX = e.clientX - viewport.getBoundingClientRect().left;
+      const mouseY = e.clientY - viewport.getBoundingClientRect().top;
+
+      panX = mouseX - (mouseX - panX) * zoomFactor;
+      panY = mouseY - (mouseY - panY) * zoomFactor;
+      zoom = Math.min(Math.max(zoom * zoomFactor, 0.15), 3.0);
+      render();
+    });
+
+    viewport.addEventListener('mousedown', (e) => {
+      const rect = viewport.getBoundingClientRect();
+      const sx = e.clientX - rect.left;
+      const sy = e.clientY - rect.top;
+      const wpos = screenToWorld(sx, sy);
+
+      if (e.button === 0) { // Clic izquierdo
+        const node = findNodeAt(wpos.x, wpos.y);
+
+        if (currentMode === 'move') {
+          if (node) {
+            selectedNode = node;
+            isDraggingNode = true;
+            updateSidebar();
+          } else {
+            isPanning = true;
+            startPanX = sx - panX;
+            startPanY = sy - panY;
+            viewport.classList.add('dragging');
+          }
+        } else if (currentMode === 'add') {
+          const newId = `n_${Date.now()}_${Math.floor(Math.random() * 900 + 100)}`;
+          const nuevo = {
+            id: newId,
+            nombre: `Nodo_${graphData.nodos.length + 1}`,
+            planta: currentPlanta,
+            edificio: "aulas",
+            tipo: "pasillo",
+            x: Math.round(wpos.x),
+            y: Math.round(wpos.y)
+          };
+          graphData.nodos.push(nuevo);
+          selectedNode = nuevo;
+          currentMode = 'move';
+          document.getElementById('btn-mode-move').click();
+          updateSidebar();
+        } else if (currentMode === 'edge') {
+          if (node) {
+            if (!edgeStartNode) {
+              edgeStartNode = node;
+            } else if (edgeStartNode !== node) {
+              graphData.aristas.push({
+                origen: edgeStartNode.id,
+                destino: node.id,
+                distancia_metros: Math.round(Math.hypot(edgeStartNode.x - node.x, edgeStartNode.y - node.y) / 10)
+              });
+              edgeStartNode = null;
+            }
+          } else {
+            edgeStartNode = null;
+          }
+        }
+        render();
+      }
+    });
+
+    window.addEventListener('mousemove', (e) => {
+      const rect = viewport.getBoundingClientRect();
+      const sx = e.clientX - rect.left;
+      const sy = e.clientY - rect.top;
+      hoveredWorldPos = screenToWorld(sx, sy);
+
+      if (isDraggingNode && selectedNode) {
+        selectedNode.x = Math.round(hoveredWorldPos.x);
+        selectedNode.y = Math.round(hoveredWorldPos.y);
+        updateSidebarCoords();
+        render();
+      } else if (isPanning) {
+        panX = sx - startPanX;
+        panY = sy - startPanY;
+        render();
+      } else {
+        const node = findNodeAt(hoveredWorldPos.x, hoveredWorldPos.y);
+        if (node !== hoveredNode) {
+          hoveredNode = node;
+          render();
+        }
+      }
+    });
+
+    window.addEventListener('mouseup', () => {
+      isDraggingNode = false;
+      isPanning = false;
+      viewport.classList.remove('dragging');
+      render();
+    });
+
+    function updateSidebar() {
+      if (selectedNode) {
+        document.getElementById('node-name').value = selectedNode.nombre;
+        document.getElementById('node-x').value = selectedNode.x;
+        document.getElementById('node-y').value = selectedNode.y;
+      } else {
+        document.getElementById('node-name').value = '';
+        document.getElementById('node-x').value = '';
+        document.getElementById('node-y').value = '';
+      }
+    }
+
+    function updateSidebarCoords() {
+      if (selectedNode) {
+        document.getElementById('node-x').value = selectedNode.x;
+        document.getElementById('node-y').value = selectedNode.y;
+      }
+    }
+
+    document.getElementById('node-name').addEventListener('input', (e) => {
+      if (selectedNode) {
+        selectedNode.nombre = e.target.value;
+        render();
+      }
+    });
+
+    document.getElementById('node-x').addEventListener('change', (e) => {
+      if (selectedNode) {
+        selectedNode.x = parseInt(e.target.value) || selectedNode.x;
+        render();
+      }
+    });
+
+    document.getElementById('node-y').addEventListener('change', (e) => {
+      if (selectedNode) {
+        selectedNode.y = parseInt(e.target.value) || selectedNode.y;
+        render();
+      }
+    });
+
+    document.getElementById('btn-delete-node').addEventListener('click', () => {
+      if (!selectedNode) return;
+      const id = selectedNode.id;
+      graphData.nodos = graphData.nodos.filter(n => n.id !== id);
+      graphData.aristas = graphData.aristas.filter(a => a.origen !== id && a.destino !== id);
+      selectedNode = null;
+      updateSidebar();
+      render();
+    });
+
+    // Modos
+    document.getElementById('btn-mode-move').onclick = () => setMode('move');
+    document.getElementById('btn-mode-add').onclick = () => setMode('add');
+    document.getElementById('btn-mode-edge').onclick = () => setMode('edge');
+
+    function setMode(mode) {
+      currentMode = mode;
+      document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById(`btn-mode-${mode}`).classList.add('active');
+      edgeStartNode = null;
+      render();
+    }
+
+    document.getElementById('select-planta').onchange = (e) => {
+      loadPlanta(e.target.value);
+    };
+
+    document.getElementById('btn-reset-view').onclick = () => {
+      zoom = 0.5;
+      panX = 40;
+      panY = 20;
+      render();
+    };
+
+    // Exportar JSON y sincronizar
+    document.getElementById('btn-export').onclick = async () => {
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(graphData, null, 2));
+      const dlAnchor = document.createElement('a');
+      dlAnchor.setAttribute("href", dataStr);
+      dlAnchor.setAttribute("download", `${currentPlanta}.json`);
+      dlAnchor.click();
+
+      // Guardar también vía backend local si está disponible
+      try {
+        await fetch('/save', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ planta: currentPlanta, data: graphData })
+        });
+        alert(`¡Planta ${currentPlanta}.json guardada y actualizada con éxito!`);
+      } catch (e) {
+        alert(`Descargado ${currentPlanta}.json. Puedes reemplazarlo en app/src/main/assets/`);
+      }
+    };
+
+    // Iniciar
+    loadPlanta('PB');
+  </script>
+</body>
+</html>
+

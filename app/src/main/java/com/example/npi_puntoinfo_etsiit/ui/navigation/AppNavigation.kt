@@ -1,10 +1,20 @@
 package com.example.npi_puntoinfo_etsiit.ui.navigation
 
+import android.app.Activity
+import android.content.ActivityNotFoundException
 import android.content.Context
+import android.content.Intent
+import com.example.npi_puntoinfo_etsiit.GrafoRepository
+import com.example.npi_puntoinfo_etsiit.ResultadoVoz
+import com.example.npi_puntoinfo_etsiit.sensors.ProximityManager
 import android.os.Build
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
+import android.speech.RecognizerIntent
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -101,6 +111,74 @@ fun AppNavigation() {
         }
     }
 
+    // Asistente de Voz Global (búsqueda de destinos en todo el campus)
+    var isListeningSpeechGlobal by remember { mutableStateOf(false) }
+
+    val globalSpeechLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        isListeningSpeechGlobal = false
+        if (result.resultCode == Activity.RESULT_OK) {
+            val spokenList = result.data?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)
+            val query = spokenList?.firstOrNull()?.trim()
+            if (!query.isNullOrBlank()) {
+                val grafo = GrafoRepository.getGrafo(context)
+                when (val res = grafo.resolverDestinoPorVoz(query)) {
+                    is ResultadoVoz.Exito -> {
+                        triggerVibration(context, durationMs = 120)
+                        activeDestination = res.destino.titulo
+                        activeLocation = res.destino.ubicacion
+                        navigateToTab(Screen.Navigation.route)
+                    }
+                    is ResultadoVoz.Error -> {
+                        Toast.makeText(
+                            context,
+                            res.mensaje,
+                            Toast.LENGTH_LONG
+                        ).show()
+                    }
+                }
+            }
+        }
+    }
+
+    fun launchGlobalVoiceSearch() {
+        val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+            putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+            putExtra(RecognizerIntent.EXTRA_LANGUAGE, "es-ES")
+            putExtra(RecognizerIntent.EXTRA_PROMPT, "¿A dónde quieres ir?")
+        }
+        try {
+            isListeningSpeechGlobal = true
+            globalSpeechLauncher.launch(intent)
+        } catch (_: ActivityNotFoundException) {
+            isListeningSpeechGlobal = false
+            Toast.makeText(context, "El reconocimiento por voz no está disponible en este dispositivo", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    val currentLaunchGlobalVoiceSearch by rememberUpdatedState(::launchGlobalVoiceSearch)
+
+    // Sensor de Proximidad GLOBAL: activo en todas las pantallas de la app.
+    // Al pasar la mano por la cámara frontal / parte superior del móvil o acercarlo a la oreja,
+    // se activa el asistente de voz y se calcula la ruta guiada en el mapa.
+    DisposableEffect(context) {
+        val proximityManager = ProximityManager(context)
+
+        proximityManager.onNear = {
+            if (!isListeningSpeechGlobal) {
+                triggerVibration(context, durationMs = 80)
+                currentLaunchGlobalVoiceSearch()
+            }
+        }
+
+        proximityManager.startListening()
+
+        onDispose {
+            proximityManager.stopListening()
+        }
+    }
+
     // Gesto de agitación (Triple Shake): activo GLOBALMENTE en toda la app y en cualquier pestaña.
     // Detecta dinámicamente si hay una clase en curso o próxima (con 30 minutos de antelación).
     // Si hay clase, el gesto de «¡Llévame!» (giro de muñeca) guía directamente a su aula.
@@ -137,9 +215,9 @@ fun AppNavigation() {
         currentRoute == Screen.Home.route -> "ETSIIT"
         currentRoute == Screen.Schedule.route -> "Mi Horario"
         currentRoute?.startsWith("navigation") == true -> {
-            if (isVerticalGuidanceActive && !activeDestination.isNullOrBlank()) "Guiado Paso a Paso" else "Mapa y Guiado"
+            if (isVerticalGuidanceActive && !activeDestination.isNullOrBlank()) "Guiado Paso a Paso" else "Mapa"
         }
-        currentRoute == Screen.Dining.route -> "Comedores Universitarios"
+        currentRoute == Screen.Dining.route -> "Comedores"
         currentRoute == Screen.Professors.route -> "Profesores"
         currentRoute == Screen.Profile.route -> "Tarjeta Universitaria (TUI)"
         else -> "ETSIIT UGR"
@@ -169,11 +247,21 @@ fun AppNavigation() {
                     }
                 },
                 actions = {
-                    // Loguito del gesto global de triple agitación para ver la clase actual (rojo, a la izquierda)
+                    // Loguito del gesto global de micrófono / sensor de proximidad (morado)
+                    GestureBadge(
+                        type = GestureType.PROXIMITY_VOICE,
+                        size = 26.dp,
+                        iconSize = 14.dp,
+                        onClick = { launchGlobalVoiceSearch() }
+                    )
+
+                    Spacer(modifier = Modifier.width(6.dp))
+
+                    // Loguito del gesto global de triple agitación para ver la clase actual (rojo)
                     GestureBadge(
                         type = GestureType.TRIPLE_SHAKE,
-                        size = 32.dp,
-                        iconSize = 18.dp,
+                        size = 26.dp,
+                        iconSize = 14.dp,
                         onClick = {
                             activeClassForDialog = ScheduleRepository.getCurrentOrUpcomingClass()
                             showCurrentClassDialog = true
@@ -182,7 +270,7 @@ fun AppNavigation() {
 
                     Spacer(modifier = Modifier.width(6.dp))
 
-                    // Botón con la 'i' de información sobre gestos (circulito gris sutil, en medio)
+                    // Botón con la 'i' de información sobre gestos (circulito gris sutil, se mantiene igual)
                     GestureGuideButton(
                         size = 32.dp,
                         iconSize = 18.dp,

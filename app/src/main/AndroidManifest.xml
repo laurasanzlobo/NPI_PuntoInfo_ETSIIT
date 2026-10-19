@@ -5,6 +5,9 @@
     <!-- Permiso para vibrar cuando se detectan gestos -->
     <uses-permission android:name="android.permission.VIBRATE" />
 
+    <!-- Permiso para reconocimiento y búsqueda por voz -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+
     <application
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"

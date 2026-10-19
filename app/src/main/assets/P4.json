@@ -6,8 +6,8 @@
       "planta": "4",
       "edificio": "despachos",
       "tipo": "ascensor",
-      "x": 672,
-      "y": 836
+      "x": 675,
+      "y": 842
     },
     {
       "id": "n_1792000766391_978",
@@ -15,8 +15,8 @@
       "planta": "4",
       "edificio": "despachos",
       "tipo": "escalera",
-      "x": 675,
-      "y": 801
+      "x": 721,
+      "y": 803
     },
     {
       "id": "n_1792000774242_381",
@@ -24,8 +24,8 @@
       "planta": "4",
       "edificio": "despachos",
       "tipo": "servicio",
-      "x": 703,
-      "y": 824
+      "x": 701,
+      "y": 830
     },
     {
       "id": "n_1792000795478_636",
@@ -33,8 +33,8 @@
       "planta": "4",
       "edificio": "despachos",
       "tipo": "servicio",
-      "x": 756,
-      "y": 797
+      "x": 748,
+      "y": 803
     },
     {
       "id": "n_1792000821782_767",
@@ -78,8 +78,8 @@
       "planta": "4",
       "edificio": "despachos",
       "tipo": "despacho",
-      "x": 924,
-      "y": 768
+      "x": 927,
+      "y": 772
     },
     {
       "id": "n_1792000839467_188",
@@ -114,8 +114,8 @@
       "planta": "4",
       "edificio": "despachos",
       "tipo": "despacho",
-      "x": 858,
-      "y": 807
+      "x": 863,
+      "y": 813
     },
     {
       "id": "n_1792000853202_890",
@@ -123,8 +123,8 @@
       "planta": "4",
       "edificio": "despachos",
       "tipo": "despacho",
-      "x": 791,
-      "y": 815
+      "x": 795,
+      "y": 810
     },
     {
       "id": "n_1792000856231_275",
@@ -213,8 +213,8 @@
       "planta": "4",
       "edificio": "despachos",
       "tipo": "despacho",
-      "x": 565,
-      "y": 934
+      "x": 563,
+      "y": 938
     },
     {
       "id": "n_1792000944749_589",
@@ -222,8 +222,8 @@
       "planta": "4",
       "edificio": "despachos",
       "tipo": "despacho",
-      "x": 543,
-      "y": 995
+      "x": 538,
+      "y": 1000
     },
     {
       "id": "n_1792000947769_369",
@@ -294,8 +294,8 @@
       "planta": "4",
       "edificio": "despachos",
       "tipo": "despacho",
-      "x": 401,
-      "y": 1067
+      "x": 406,
+      "y": 1076
     },
     {
       "id": "n_1792000986364_828",
@@ -312,8 +312,8 @@
       "planta": "4",
       "edificio": "despachos",
       "tipo": "despacho",
-      "x": 385,
-      "y": 1081
+      "x": 384,
+      "y": 1086
     },
     {
       "id": "n_1792000998477_232",
@@ -375,8 +375,8 @@
       "planta": "4",
       "edificio": "laboratorios",
       "tipo": "ascensor",
-      "x": 216,
-      "y": 579
+      "x": 204,
+      "y": 584
     },
     {
       "id": "n_1792001108564_813",
@@ -384,8 +384,8 @@
       "planta": "4",
       "edificio": "laboratorios",
       "tipo": "pasillo",
-      "x": 187,
-      "y": 526
+      "x": 184,
+      "y": 527
     },
     {
       "id": "n_1792001155725_749",
@@ -393,8 +393,8 @@
       "planta": "4",
       "edificio": "despachos",
       "tipo": "pasillo",
-      "x": 973,
-      "y": 721
+      "x": 920,
+      "y": 758
     },
     {
       "id": "n_1792001182771_487",
@@ -402,8 +402,8 @@
       "planta": "4",
       "edificio": "despachos",
       "tipo": "pasillo",
-      "x": 901,
-      "y": 762
+      "x": 853,
+      "y": 797
     },
     {
       "id": "n_1792001207978_626",
@@ -411,8 +411,8 @@
       "planta": "4",
       "edificio": "despachos",
       "tipo": "pasillo",
-      "x": 821,
-      "y": 820
+      "x": 797,
+      "y": 827
     },
     {
       "id": "n_1792001246098_308",
@@ -421,7 +421,7 @@
       "edificio": "despachos",
       "tipo": "pasillo",
       "x": 723,
-      "y": 863
+      "y": 868
     },
     {
       "id": "n_1792001289446_855",
@@ -429,8 +429,8 @@
       "planta": "4",
       "edificio": "despachos",
       "tipo": "servicio",
-      "x": 735,
-      "y": 778
+      "x": 737,
+      "y": 783
     },
     {
       "id": "n_1792001322193_399",
@@ -438,8 +438,8 @@
       "planta": "4",
       "edificio": "despachos",
       "tipo": "pasillo",
-      "x": 646,
-      "y": 911
+      "x": 654,
+      "y": 908
     },
     {
       "id": "n_1792001345269_27",
@@ -447,8 +447,8 @@
       "planta": "4",
       "edificio": "despachos",
       "tipo": "pasillo",
-      "x": 582,
-      "y": 944
+      "x": 590,
+      "y": 946
     },
     {
       "id": "n_1792001376767_32",
@@ -456,8 +456,8 @@
       "planta": "4",
       "edificio": "despachos",
       "tipo": "pasillo",
-      "x": 548,
-      "y": 972
+      "x": 528,
+      "y": 985
     },
     {
       "id": "n_1792001402612_674",
@@ -465,8 +465,8 @@
       "planta": "4",
       "edificio": "despachos",
       "tipo": "pasillo",
-      "x": 474,
-      "y": 1010
+      "x": 462,
+      "y": 1022
     },
     {
       "id": "n_1792001434157_420",
@@ -474,8 +474,8 @@
       "planta": "4",
       "edificio": "despachos",
       "tipo": "pasillo",
-      "x": 412,
-      "y": 1050
+      "x": 397,
+      "y": 1057
     },
     {
       "id": "n_1792001457329_143",
@@ -483,8 +483,8 @@
       "planta": "4",
       "edificio": "despachos",
       "tipo": "pasillo",
-      "x": 338,
-      "y": 1088
+      "x": 318,
+      "y": 1102
     }
   ],
   "aristas": [
@@ -522,11 +522,6 @@
       "origen": "n_1792000831649_492",
       "destino": "n_1792001155725_749",
       "distancia_metros": 6
-    },
-    {
-      "origen": "n_1792000835179_360",
-      "destino": "n_1792001182771_487",
-      "distancia_metros": 2
     },
     {
       "origen": "n_1792001182771_487",
@@ -644,11 +639,6 @@
       "distancia_metros": 1
     },
     {
-      "origen": "n_1792000941001_74",
-      "destino": "n_1792000935210_441",
-      "distancia_metros": 2
-    },
-    {
       "origen": "n_1792001345269_27",
       "destino": "n_1792001376767_32",
       "distancia_metros": 4
@@ -744,9 +734,19 @@
       "distancia_metros": 7
     },
     {
+      "origen": "n_1792000941001_74",
+      "destino": "n_1792001345269_27",
+      "distancia_metros": 3
+    },
+    {
       "origen": "n_1792000849398_531",
-      "destino": "n_1792001207978_626",
-      "distancia_metros": 4
+      "destino": "n_1792001182771_487",
+      "distancia_metros": 2
+    },
+    {
+      "origen": "n_1792000835179_360",
+      "destino": "n_1792001155725_749",
+      "distancia_metros": 2
     }
   ]
 }
