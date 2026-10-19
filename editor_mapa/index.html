@@ -183,7 +183,7 @@
       };
 
       try {
-        const resp = await fetch(`${planta}.json`);
+        const resp = await fetch(`${planta}.json?t=${Date.now()}`);
         graphData = await resp.json();
       } catch (e) {
         console.error("Error al cargar JSON", e);

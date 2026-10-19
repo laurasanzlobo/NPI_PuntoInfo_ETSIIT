@@ -285,8 +285,8 @@
       "planta": "B",
       "edificio": "laboratorios",
       "tipo": "servicio",
-      "x": 257,
-      "y": 562
+      "x": 256,
+      "y": 558
     },
     {
       "id": "n_1791913569886_967",
@@ -294,8 +294,8 @@
       "planta": "B",
       "edificio": "laboratorios",
       "tipo": "servicio",
-      "x": 260,
-      "y": 518
+      "x": 256,
+      "y": 531
     },
     {
       "id": "n_1791913576783_555",
@@ -330,7 +330,7 @@
       "planta": "B",
       "edificio": "laboratorios",
       "tipo": "pasillo",
-      "x": 230,
+      "x": 226,
       "y": 618
     },
     {
@@ -631,6 +631,16 @@
       "origen": "n_1791913008264_508",
       "destino": "Ascensor_PB_Despachos",
       "distancia_metros": 7
+    },
+    {
+      "origen": "n_1791913563782_524",
+      "destino": "n_1791913591214_191",
+      "distancia_metros": 9
+    },
+    {
+      "origen": "n_1791913569886_967",
+      "destino": "n_1791913597882_818",
+      "distancia_metros": 9
     }
   ]
 }

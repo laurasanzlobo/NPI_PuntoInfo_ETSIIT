@@ -13,6 +13,12 @@ class Handler(http.server.SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, directory=DIRECTORY, **kwargs)
 
+    def end_headers(self):
+        self.send_header('Cache-Control', 'no-cache, no-store, must-revalidate')
+        self.send_header('Pragma', 'no-cache')
+        self.send_header('Expires', '0')
+        super().end_headers()
+
     def do_POST(self):
         if self.path == '/save':
             content_length = int(self.headers['Content-Length'])
@@ -55,18 +61,18 @@ INTER_FLOOR_EDGES = [
     {"origen": "Ascensor_PB_Despachos", "destino": "Ascensor_Despachos_P1", "distancia_metros": 5},
     {"origen": "n_1791915749714_13", "destino": "n_1791998634407_239", "distancia_metros": 15},
     {"origen": "n_1791915763675_148", "destino": "n_1791998648053_223", "distancia_metros": 5},
-    {"origen": "n_1791916089556_395", "destino": "n_1791998963539_552", "distancia_metros": 15},
-    {"origen": "Ascensor_Despachos_P1", "destino": "n_1791998980946_961", "distancia_metros": 5},
-    {"origen": "n_1791915883684_272", "destino": "n_1791998767980_165", "distancia_metros": 15},
-    {"origen": "n_1791998634407_239", "destino": "n_1791999946271_718", "distancia_metros": 15},
-    {"origen": "n_1791998648053_223", "destino": "n_1791999958742_369", "distancia_metros": 5},
-    {"origen": "n_1791998963539_552", "destino": "n_1792000288828_647", "distancia_metros": 15},
-    {"origen": "n_1791998980946_961", "destino": "n_1792000305603_710", "distancia_metros": 5},
-    {"origen": "n_1791998767980_165", "destino": "n_1792000078832_627", "distancia_metros": 15},
-    {"origen": "n_1791999946271_718", "destino": "n_1792001155998_407", "distancia_metros": 15},
-    {"origen": "n_1791999958742_369", "destino": "n_1792001168053_296", "distancia_metros": 5},
-    {"origen": "n_1792000288828_647", "destino": "n_1792001402237_108", "distancia_metros": 15},
-    {"origen": "n_1792000305603_710", "destino": "n_1792001421689_384", "distancia_metros": 5}
+    {"origen": "n_1791916089556_395", "destino": "n_1791998126052_317", "distancia_metros": 15},
+    {"origen": "Ascensor_Despachos_P1", "destino": "n_1791998111075_764", "distancia_metros": 5},
+    {"origen": "n_1791915883684_272", "destino": "n_1791998445992_24", "distancia_metros": 15},
+    {"origen": "n_1791998634407_239", "destino": "n_1791999942151_398", "distancia_metros": 15},
+    {"origen": "n_1791998648053_223", "destino": "n_1791999957262_535", "distancia_metros": 5},
+    {"origen": "n_1791998126052_317", "destino": "n_1791999519729_602", "distancia_metros": 15},
+    {"origen": "n_1791998111075_764", "destino": "n_1791999502955_53", "distancia_metros": 5},
+    {"origen": "n_1791998445992_24", "destino": "n_1791999818689_18", "distancia_metros": 15},
+    {"origen": "n_1791999942151_398", "destino": "n_1792001073139_930", "distancia_metros": 15},
+    {"origen": "n_1791999957262_535", "destino": "n_1792001097241_373", "distancia_metros": 5},
+    {"origen": "n_1791999519729_602", "destino": "n_1792000766391_978", "distancia_metros": 15},
+    {"origen": "n_1791999502955_53", "destino": "n_1792000725673_794", "distancia_metros": 5}
 ]
 
 def reconstruir_grafo_completo():
