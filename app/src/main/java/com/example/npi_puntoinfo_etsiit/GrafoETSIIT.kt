@@ -63,15 +63,28 @@ sealed class ResultadoVoz {
     data class Error(val mensaje: String) : ResultadoVoz()
 }
 
-fun formatearPlanta(planta: String): String {
+fun normalizarPlanta(planta: String): String {
     return when (planta.trim().uppercase()) {
-        "B", "0", "PB" -> "Planta Baja"
-        "P-1", "-1", "PSS" -> "Planta -1"
+        "B", "0", "PB" -> "PB"
+        "P-1", "-1", "PSS" -> "PSS"
+        "-2", "P-2" -> "-2"
+        "1", "P1" -> "P1"
+        "2", "P2" -> "P2"
+        "3", "P3" -> "P3"
+        "4", "P4" -> "P4"
+        else -> planta.trim().uppercase()
+    }
+}
+
+fun formatearPlanta(planta: String): String {
+    return when (normalizarPlanta(planta)) {
+        "PB" -> "Planta Baja"
+        "PSS" -> "Planta -1"
         "-2" -> "Planta -2"
-        "1", "P1" -> "Planta 1"
-        "2", "P2" -> "Planta 2"
-        "3", "P3" -> "Planta 3"
-        "4", "P4" -> "Planta 4"
+        "P1" -> "Planta 1"
+        "P2" -> "Planta 2"
+        "P3" -> "Planta 3"
+        "P4" -> "Planta 4"
         else -> "Planta $planta"
     }
 }
@@ -175,12 +188,16 @@ class GrafoETSIIT {
             return null
         }
 
-        // 3. Aulas de sótano
-        if (normalizado.contains("-1") || normalizado.contains("menos 1") || normalizado.contains("menos1")) {
-            return directorioNodos.values.find { it.nombre.equals("A_Menos1", ignoreCase = true) }
-        }
-        if (normalizado.contains("-2") || normalizado.contains("menos 2") || normalizado.contains("menos2")) {
-            return directorioNodos.values.find { it.nombre.equals("A_Menos2", ignoreCase = true) }
+        // 3. Aulas de sótano (ej. "Aula -1", "-1", "menos 1", "Aula -2", "-2", "menos 2")
+        val esDespacho = normalizado.contains("despacho") || normalizado.startsWith("d-") || normalizado.startsWith("d_") || normalizado.startsWith("d ")
+        if (!esDespacho) {
+            val regexSotano = Regex("""(?:^|\b|aula\s*)(?:menos\s*|[-–])([12])\b""", RegexOption.IGNORE_CASE)
+            val matchSotano = regexSotano.find(normalizado)
+            if (matchSotano != null) {
+                val numSotano = matchSotano.groupValues[1]
+                val nodo = directorioNodos.values.find { it.nombre.equals("A_Menos$numSotano", ignoreCase = true) }
+                if (nodo != null) return nodo
+            }
         }
 
         // 4. Laboratorios: ej. "Laboratorio 2.1", "Lab 21", "L_21", "L_31", "L_310"
@@ -193,28 +210,21 @@ class GrafoETSIIT {
             if (nodoLab != null) return nodoLab
         }
 
-        // 5. Despachos: ej. "Despacho D-08", "D-08", "D08", "D_201", "D 208", "Despacho 24"
-        // NOTA: Exige explícitamente la palabra 'despacho' o prefijo 'd' para no confundir con números de aula
-        val tieneIndicadorDespacho = normalizado.contains("despacho") ||
-            Regex("""\bd[-_\s]*\d+""", RegexOption.IGNORE_CASE).containsMatchIn(normalizado)
+        // 5. Despachos: ej. "Despacho D-08", "D-08", "D08", "D_201", "D 208", "Despacho 420", "despacho 4 20"
         val noEsAula = !normalizado.contains("aula") && !normalizado.contains("clase") &&
-            !normalizado.contains("lab") && !normalizado.contains(".")
-        if (tieneIndicadorDespacho && noEsAula) {
-            val regexDespacho = Regex("""(?:despacho\s*(?:d[-_\s]*)?|\bd[-_\s]+|\bd)(\d{1,3})\b""", RegexOption.IGNORE_CASE)
-            val matchDespacho = regexDespacho.find(normalizado)
-            if (matchDespacho != null) {
-                val numStr = matchDespacho.groupValues[1]
-                val candidatas = listOf(
-                    "D_$numStr",
-                    "D_${numStr.padStart(3, '0')}",
-                    "D_2${numStr.padStart(2, '0')}",
-                    "D_3${numStr.padStart(2, '0')}",
-                    "D_4${numStr.padStart(2, '0')}"
-                )
-                for (c in candidatas) {
-                    val nodo = directorioNodos.values.find { it.nombre.equals(c, ignoreCase = true) }
-                    if (nodo != null) return nodo
-                }
+            !normalizado.contains("lab")
+        val numDespacho = extraerNumeroDespacho(query)
+        if (numDespacho != null && noEsAula) {
+            val candidatas = listOf(
+                "D_$numDespacho",
+                "D_${numDespacho.padStart(3, '0')}",
+                "D_2${numDespacho.padStart(2, '0')}",
+                "D_3${numDespacho.padStart(2, '0')}",
+                "D_4${numDespacho.padStart(2, '0')}"
+            )
+            for (c in candidatas) {
+                val nodo = directorioNodos.values.find { it.nombre.equals(c, ignoreCase = true) }
+                if (nodo != null) return nodo
             }
         }
 
@@ -232,6 +242,95 @@ class GrafoETSIIT {
         }
 
         return null
+    }
+
+    /**
+     * Normaliza palabras numéricas habladas en español (unidades, decenas, centenas)
+     * para que coincidan con representaciones numéricas ("cuatrocientos veinte" -> "420").
+     */
+    fun normalizarTextoVoz(texto: String): String {
+        var t = texto.trim().lowercase()
+            .replace("á", "a")
+            .replace("é", "e")
+            .replace("í", "i")
+            .replace("ó", "o")
+            .replace("ú", "u")
+
+        // 1. Decenas compuestas con 'y' (ej. "treinta y cinco" -> "35")
+        val decenas = mapOf(
+            "treinta" to 30, "cuarenta" to 40, "cincuenta" to 50, "sesenta" to 60,
+            "setenta" to 70, "ochenta" to 80, "noventa" to 90
+        )
+        val unidades = mapOf(
+            "uno" to 1, "un" to 1, "una" to 1, "dos" to 2, "tres" to 3, "cuatro" to 4,
+            "cinco" to 5, "seis" to 6, "siete" to 7, "ocho" to 8, "nueve" to 9
+        )
+        for ((decW, decV) in decenas) {
+            for ((uniW, uniV) in unidades) {
+                t = t.replace(Regex("""\b$decW\s+y\s+$uniW\b"""), (decV + uniV).toString())
+            }
+        }
+
+        // 2. Reemplazos directos de palabras numéricas individuales
+        val palabrasDirectas = mapOf(
+            "veintiuno" to 21, "veintidos" to 22, "veintitres" to 23, "veinticuatro" to 24, "veinticinco" to 25,
+            "veintiseis" to 26, "veintisiete" to 27, "veintiocho" to 28, "veintinueve" to 29,
+            "veinte" to 20, "diecinueve" to 19, "dieciocho" to 18, "diecisiete" to 17, "dieciseis" to 16,
+            "quince" to 15, "catorce" to 14, "trece" to 13, "doce" to 12, "once" to 11, "diez" to 10,
+            "nueve" to 9, "ocho" to 8, "siete" to 7, "seis" to 6, "cinco" to 5, "cuatro" to 4, "tres" to 3,
+            "dos" to 2, "uno" to 1, "un" to 1, "una" to 1, "cero" to 0,
+            "treinta" to 30, "cuarenta" to 40, "cincuenta" to 50, "sesenta" to 60, "setenta" to 70, "ochenta" to 80, "noventa" to 90,
+            "cuatrocientos" to 400, "cuatrocientas" to 400, "trescientos" to 300, "trescientas" to 300,
+            "doscientos" to 200, "doscientas" to 200, "ciento" to 100, "cien" to 100
+        )
+        for ((palabra, num) in palabrasDirectas) {
+            t = t.replace(Regex("""\b$palabra\b"""), num.toString())
+        }
+
+        // 3. Centenas seguidas de decenas/unidades: "400 20" -> "420", "400 5" -> "405", "300 9" -> "309"
+        t = t.replace(Regex("""\b([1-4])00\s+(\d{1,2})\b""")) { m ->
+            m.groupValues[1] + m.groupValues[2].padStart(2, '0')
+        }
+
+        // 4. Palabras "punto" y "coma" para aulas o dictados:
+        t = t.replace(Regex("""\bpunto\b"""), ".")
+            .replace(Regex("""\bcoma\b"""), ".")
+
+        return t
+    }
+
+    /**
+     * Extrae de forma inteligente el número de despacho a partir de cualquier locución o texto
+     * (soporta "despacho 420", "despacho 4 20", "despacho cuatrocientos veinte", "despacho 4.20", "despacho 4 0 5", "D-420", etc.)
+     */
+    fun extraerNumeroDespacho(texto: String): String? {
+        val normalizada = normalizarTextoVoz(texto)
+
+        val tieneIndicadorDespacho = normalizada.contains("despacho") ||
+            Regex("""\bd[-_\s]*\d+""").containsMatchIn(normalizada)
+        if (!tieneIndicadorDespacho) {
+            val soloD = Regex("""^d[-_\s]*(\d{1,3})$""").find(normalizada.trim())
+            if (soloD != null) return soloD.groupValues[1]
+            return null
+        }
+
+        var t = normalizada
+        // 1. Planta (2, 3 o 4) + 0 + dígito (ej. "despacho 4 0 5" o "despacho 4 05") -> "despacho 405"
+        t = t.replace(Regex("""(despacho\s*(?:d[-_\s]*)?|\bd[-_\s]+|\bd)\s*([234])[\s\.\-]+0[\s\.\-]*(\d)\b""")) {
+            "${it.groupValues[1]}${it.groupValues[2]}0${it.groupValues[3]}"
+        }
+        // 2. Planta (2, 3 o 4) + dos dígitos (ej. "despacho 4 20", "despacho 4.20", "despacho 2 15") -> "despacho 420"
+        t = t.replace(Regex("""(despacho\s*(?:d[-_\s]*)?|\bd[-_\s]+|\bd)\s*([234])[\s\.\-]+(\d{2})\b""")) {
+            "${it.groupValues[1]}${it.groupValues[2]}${it.groupValues[3]}"
+        }
+        // 3. Planta (2, 3 o 4) + un dígito suelto (ej. "despacho 4 5" -> "despacho 405", "despacho 3 9" -> "despacho 309", "despacho 2 4" -> "despacho 204")
+        t = t.replace(Regex("""(despacho\s*(?:d[-_\s]*)?|\bd[-_\s]+|\bd)\s*([234])[\s\.\-]+(\d)\b""")) {
+            "${it.groupValues[1]}${it.groupValues[2]}0${it.groupValues[3]}"
+        }
+
+        // Extraer el número resultante de 1 a 3 dígitos tras 'despacho' o 'd'
+        val regexMatch = Regex("""(?:despacho\s*(?:d[-_\s]*)?|\bd[-_\s]+|\bd)(\d{1,3})\b""").find(t)
+        return regexMatch?.groupValues?.get(1)
     }
 
     /**
@@ -303,37 +402,21 @@ class GrafoETSIIT {
             if (nodo != null) return ResultadoVoz.Exito(DestinoVoz(nodo, "Dirección", "Planta Baja", texto))
         }
 
-        // 3. Normalizar números hablados (ej. "cero punto uno" -> "0.1", "tres punto cuatro" -> "3.4")
-        val normalizadaNumeros = limpia
-            .replace(Regex("""\bcero\b"""), "0")
-            .replace(Regex("""\buno\b"""), "1")
-            .replace(Regex("""\bdos\b"""), "2")
-            .replace(Regex("""\btres\b"""), "3")
-            .replace(Regex("""\bcuatro\b"""), "4")
-            .replace(Regex("""\bcinco\b"""), "5")
-            .replace(Regex("""\bseis\b"""), "6")
-            .replace(Regex("""\bsiete\b"""), "7")
-            .replace(Regex("""\bocho\b"""), "8")
-            .replace(Regex("""\bnueve\b"""), "9")
-            .replace(Regex("""\bdiez\b"""), "10")
-            .replace(Regex("""\bonce\b"""), "11")
-            .replace(Regex("""\bpunto\b"""), ".")
-            .replace(Regex("""\bcoma\b"""), ".")
+        // 3. Normalizar números hablados (unidades, decenas, centenas y decimales)
+        val normalizadaNumeros = normalizarTextoVoz(limpia)
 
-        // 4. Despachos (SOLO si dice explícitamente "despacho" o prefijo "d" con número):
-        // ej: "despacho 208", "despacho d-24", "despacho 8", "d 24", "d-08"
-        val regexDespacho = Regex("""(?:despacho\s*(?:d[-_\s]*)?|\bd[-_\s]+|\bd)(\d{1,3})\b""")
-        val matchDespacho = regexDespacho.find(normalizadaNumeros)
+        // 4. Despachos (ej: "despacho 420", "despacho 4 20", "despacho cuatrocientos veinte", "despacho 208", "d 24", "d-08")
+        val numDespacho = extraerNumeroDespacho(texto)
         val esConsultaAula = normalizadaNumeros.contains("aula") || normalizadaNumeros.contains("clase") ||
-            normalizadaNumeros.contains("laboratorio") || normalizadaNumeros.contains("lab") || normalizadaNumeros.contains(".")
-        if (matchDespacho != null && !esConsultaAula) {
-            val num = matchDespacho.groupValues[1]
-            val nodo = buscarNodoPorDestino("D-$num")
+            normalizadaNumeros.contains("laboratorio") || normalizadaNumeros.contains("lab")
+        if (numDespacho != null && !esConsultaAula) {
+            val nodo = buscarNodoPorDestino("D-$numDespacho")
             if (nodo != null) {
                 val plantaFormateada = formatearPlanta(nodo.planta)
-                return ResultadoVoz.Exito(DestinoVoz(nodo, "Despacho D-${num.padStart(2, '0')}", plantaFormateada, texto))
+                val titulo = if (numDespacho.length <= 2) "Despacho D-${numDespacho.padStart(2, '0')}" else "Despacho D-${nodo.nombre.removePrefix("D_")}"
+                return ResultadoVoz.Exito(DestinoVoz(nodo, titulo, plantaFormateada, texto))
             } else {
-                return ResultadoVoz.Error("El Despacho D-$num no se ha encontrado en la ETSIIT.")
+                return ResultadoVoz.Error("El Despacho D-$numDespacho no se ha encontrado en la ETSIIT.")
             }
         }
 

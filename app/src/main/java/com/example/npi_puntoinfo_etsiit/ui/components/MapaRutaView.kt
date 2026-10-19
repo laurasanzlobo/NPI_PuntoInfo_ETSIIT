@@ -37,6 +37,7 @@ import com.example.npi_puntoinfo_etsiit.Nodo
 import com.example.npi_puntoinfo_etsiit.R
 import com.example.npi_puntoinfo_etsiit.RutaCalculada
 import com.example.npi_puntoinfo_etsiit.formatearPlanta
+import com.example.npi_puntoinfo_etsiit.normalizarPlanta
 import com.example.npi_puntoinfo_etsiit.ui.theme.*
 
 // Dimensiones de resolución nativa de los planos originales de la ETSIIT (1131 x 1600 px)
@@ -51,6 +52,22 @@ private val ColorDestino = Color(0xFF7C3AED)   // Morado vibrante (evita el rojo
 private val ColorEscaleras = Color(0xFFF59E0B) // Ámbar dorado para transición entre plantas
 
 /**
+ * Determina si un nodo de la ruta debe representarse visualmente en la planta indicada.
+ * Se excluyen nodos intermedios de paso vertical (como un ascensor o hueco de escalera por el
+ * que la ruta pasa entre dos plantas distintas sin que el usuario camine ni se detenga en la planta actual).
+ */
+private fun esNodoActivoEnPlanta(ruta: RutaCalculada, index: Int, plantaNorm: String): Boolean {
+    val nodo = ruta.nodos[index]
+    if (normalizarPlanta(nodo.planta) != plantaNorm) return false
+    if (nodo.id == ruta.origen.id || nodo.id == ruta.destino.id) return true
+
+    val vecinoAnteriorMismaPlanta = index > 0 && normalizarPlanta(ruta.nodos[index - 1].planta) == plantaNorm
+    val vecinoSiguienteMismaPlanta = index < ruta.nodos.size - 1 && normalizarPlanta(ruta.nodos[index + 1].planta) == plantaNorm
+
+    return vecinoAnteriorMismaPlanta || vecinoSiguienteMismaPlanta
+}
+
+/**
  * Componente interactivo que dibuja el plano oficial de la ETSIIT y traza encima la ruta calculada por Dijkstra.
  * Permite hacer zoom con pellizco (pinch-to-zoom), arrastrar para explorar y cambiar de planta si la ruta
  * pasa por varias plantas del edificio.
@@ -63,25 +80,17 @@ fun MapaRutaView(
     // Lista de todas las plantas para el modo de exploración libre (sin ruta activa)
     val todasLasPlantas = remember { listOf("PSS", "PB", "P1", "P2", "P3", "P4") }
 
-    // Lista ordenada de plantas involucradas en la ruta calculada.
-    // Si no hay ruta, se ofrecen todas las plantas del campus para navegar libremente.
-    // Si hay ruta, se filtran plantas intermedias con 1 solo nodo (escalera de paso).
+    // Lista ordenada de plantas involucradas en la ruta calculada donde el usuario tiene actividad.
     val plantasEnRuta = remember(ruta) {
         if (ruta == null) {
             todasLasPlantas
         } else {
-            val nodosPorPlanta = ruta.nodos.groupBy { it.planta.trim().uppercase() }
-            val origenPlanta = ruta.origen.planta.trim().uppercase()
-            val destinoPlanta = ruta.destino.planta.trim().uppercase()
-
-            val plantasFiltradas = ruta.nodos
-                .map { it.planta.trim().uppercase() }
+            val plantasConActividad = ruta.nodos.indices
+                .filter { i -> esNodoActivoEnPlanta(ruta, i, normalizarPlanta(ruta.nodos[i].planta)) }
+                .map { i -> normalizarPlanta(ruta.nodos[i].planta) }
                 .distinct()
-                .filter { planta ->
-                    planta == origenPlanta || planta == destinoPlanta || (nodosPorPlanta[planta]?.size ?: 0) > 1
-                }
 
-            if (plantasFiltradas.isNotEmpty()) plantasFiltradas else ruta.nodos.map { it.planta.trim().uppercase() }.distinct()
+            if (plantasConActividad.isNotEmpty()) plantasConActividad else ruta.nodos.map { normalizarPlanta(it.planta) }.distinct()
         }
     }
 
@@ -90,27 +99,33 @@ fun MapaRutaView(
         if (ruta == null) {
             mutableStateOf("PB")
         } else {
-            val plantaOrigen = ruta.origen.planta.trim().uppercase()
+            val plantaOrigen = normalizarPlanta(ruta.origen.planta)
             mutableStateOf(
                 if (plantasEnRuta.contains(plantaOrigen)) plantaOrigen else (plantasEnRuta.firstOrNull() ?: "PB")
             )
         }
     }
 
-    // Nodos de la ruta que pertenecen a la planta seleccionada
+    // Nodos de la ruta que pertenecen a la planta seleccionada y en los que el usuario camina o transita
     val nodosPlantaActual = remember(ruta, plantaSeleccionada) {
-        ruta?.nodos?.filter { it.planta.trim().uppercase() == plantaSeleccionada } ?: emptyList()
+        if (ruta == null) emptyList()
+        else {
+            val plantaNorm = normalizarPlanta(plantaSeleccionada)
+            ruta.nodos.filterIndexed { index, _ ->
+                esNodoActivoEnPlanta(ruta, index, plantaNorm)
+            }
+        }
     }
 
     // Recurso del plano según la planta
     val planoResId = remember(plantaSeleccionada) {
-        when (plantaSeleccionada) {
-            "P-1", "-1", "PSS" -> R.drawable.mapa_pss
-            "B", "0", "PB" -> R.drawable.mapa_pb
-            "1", "P1" -> R.drawable.mapa_p1
-            "2", "P2" -> R.drawable.mapa_p2
-            "3", "P3" -> R.drawable.mapa_p3
-            "4", "P4" -> R.drawable.mapa_p4
+        when (normalizarPlanta(plantaSeleccionada)) {
+            "PSS", "P-1", "-1" -> R.drawable.mapa_pss
+            "PB", "B", "0" -> R.drawable.mapa_pb
+            "P1", "1" -> R.drawable.mapa_p1
+            "P2", "2" -> R.drawable.mapa_p2
+            "P3", "3" -> R.drawable.mapa_p3
+            "P4", "4" -> R.drawable.mapa_p4
             else -> R.drawable.mapa_pb
         }
     }
@@ -207,6 +222,7 @@ fun MapaRutaView(
                 Canvas(modifier = Modifier.fillMaxSize()) {
                     val r = ruta ?: return@Canvas
                     if (nodosPlantaActual.isEmpty()) return@Canvas
+                    val plantaNorm = normalizarPlanta(plantaSeleccionada)
 
                     // Calcular la relación de escala de ContentScale.Fit dentro del Canvas
                     val scaleFactor = minOf(
@@ -231,7 +247,7 @@ fun MapaRutaView(
 
                     for (i in r.nodos.indices) {
                         val n = r.nodos[i]
-                        if (n.planta.trim().uppercase() == plantaSeleccionada) {
+                        if (esNodoActivoEnPlanta(r, i, plantaNorm)) {
                             tramoActual.add(mapPoint(n))
                         } else {
                             if (tramoActual.size >= 2) {
@@ -276,15 +292,21 @@ fun MapaRutaView(
                         )
                     }
 
-                    // Dibujar puntos intermedios en los pasillos
-                    nodosPlantaActual.forEach { nodo ->
+                    // Dibujar puntos intermedios en los pasillos y conectores de cambio de planta
+                    for (i in r.nodos.indices) {
+                        if (!esNodoActivoEnPlanta(r, i, plantaNorm)) continue
+
+                        val nodo = r.nodos[i]
                         val pt = mapPoint(nodo)
                         val esInicio = (nodo.id == r.origen.id)
                         val esFin = (nodo.id == r.destino.id)
-                        val esConectorEscaleras = nodo.nombre.contains("Escalera", ignoreCase = true) ||
-                            nodo.nombre.contains("Ascensor", ignoreCase = true)
 
-                        if (!esInicio && !esFin && !esConectorEscaleras) {
+                        // Es cambio de planta si en la ruta el nodo anterior o siguiente pertenece a otra planta
+                        val esCambioPlanta = (i > 0 && normalizarPlanta(r.nodos[i - 1].planta) != plantaNorm) ||
+                            (i < r.nodos.size - 1 && normalizarPlanta(r.nodos[i + 1].planta) != plantaNorm)
+
+                        if (!esInicio && !esFin && !esCambioPlanta) {
+                            // Punto intermedio normal de pasillo
                             drawCircle(
                                 color = Color.White,
                                 radius = 4.5.dp.toPx() / scale,
@@ -295,7 +317,8 @@ fun MapaRutaView(
                                 radius = 3.dp.toPx() / scale,
                                 center = pt
                             )
-                        } else if (esConectorEscaleras && !esInicio && !esFin) {
+                        } else if (esCambioPlanta && !esInicio && !esFin) {
+                            // Conector de cambio de planta (escaleras o ascensor en el extremo del tramo)
                             drawCircle(
                                 color = Color.White,
                                 radius = 7.dp.toPx() / scale,
@@ -310,7 +333,7 @@ fun MapaRutaView(
                     }
 
                     // Punto de partida (Verde esmeralda con aro blanco) si está en esta planta
-                    if (r.origen.planta.trim().uppercase() == plantaSeleccionada) {
+                    if (normalizarPlanta(r.origen.planta) == plantaNorm) {
                         val ptInicio = mapPoint(r.origen)
                         drawCircle(
                             color = Color.White,
@@ -330,7 +353,7 @@ fun MapaRutaView(
                     }
 
                     // Punto de destino (Morado vibrante con aro blanco, sin nada de rojo) si está en esta planta
-                    if (r.destino.planta.trim().uppercase() == plantaSeleccionada) {
+                    if (normalizarPlanta(r.destino.planta) == plantaNorm) {
                         val ptDestino = mapPoint(r.destino)
                         // Aro blanco exterior
                         drawCircle(

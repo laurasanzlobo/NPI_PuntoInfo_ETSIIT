@@ -215,7 +215,7 @@ fun AppNavigation() {
         currentRoute == Screen.Home.route -> "ETSIIT"
         currentRoute == Screen.Schedule.route -> "Mi Horario"
         currentRoute?.startsWith("navigation") == true -> {
-            if (isVerticalGuidanceActive && !activeDestination.isNullOrBlank()) "Guiado Paso a Paso" else "Mapa y Guiado"
+            if (isVerticalGuidanceActive && !activeDestination.isNullOrBlank()) "Guiado Paso a Paso" else "Mapa"
         }
         currentRoute == Screen.Dining.route -> "Comedores"
         currentRoute == Screen.Professors.route -> "Profesores"

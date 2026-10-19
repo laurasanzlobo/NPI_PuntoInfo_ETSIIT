@@ -95,11 +95,48 @@ class ExampleUnitTest {
         assertTrue("Aula 3.99 debe devolver error", resInexistente is ResultadoVoz.Error)
         assertTrue((resInexistente as ResultadoVoz.Error).mensaje.contains("no existe"))
 
-        // 4. Despacho explícito
+        // 4. Despacho explícito y combinaciones de voz ("despacho 420", "despacho 4 20", "cuatrocientos veinte", etc.)
         val resDespacho = grafo.resolverDestinoPorVoz("Quiero ir al despacho 8")
         assertTrue("Debe resolver el despacho explícito", resDespacho is ResultadoVoz.Exito)
         val destDespacho = (resDespacho as ResultadoVoz.Exito).destino
         assertEquals("Despacho D-08", destDespacho.titulo)
+
+        val queriesDespacho420 = listOf(
+            "despacho 420",
+            "despacho 4 20",
+            "despacho cuatrocientos veinte",
+            "despacho cuatro veinte",
+            "despacho 4.20",
+            "despacho 4-20",
+            "d 420",
+            "d-420"
+        )
+        for (q in queriesDespacho420) {
+            val res = grafo.resolverDestinoPorVoz(q)
+            assertTrue("La consulta '$q' debe resolver con éxito hacia el Despacho D_420", res is ResultadoVoz.Exito)
+            val dest = (res as ResultadoVoz.Exito).destino
+            assertEquals("D_420", dest.nodo.nombre)
+            assertEquals("Despacho D-420", dest.titulo)
+            assertEquals("Planta 4", dest.ubicacion)
+        }
+
+        // Otras plantas y combinaciones habladas
+        val queriesOtrosDespachos = mapOf(
+            "despacho trescientos nueve" to ("D_309" to "Planta 3"),
+            "despacho 3 09" to ("D_309" to "Planta 3"),
+            "despacho 3 9" to ("D_309" to "Planta 3"),
+            "despacho doscientos quince" to ("D_215" to "Planta 2"),
+            "despacho 2 15" to ("D_215" to "Planta 2"),
+            "despacho cuatrocientos cinco" to ("D_405" to "Planta 4"),
+            "despacho 4 0 5" to ("D_405" to "Planta 4")
+        )
+        for ((q, esperado) in queriesOtrosDespachos) {
+            val res = grafo.resolverDestinoPorVoz(q)
+            assertTrue("La consulta '$q' debe resolver hacia ${esperado.first}", res is ResultadoVoz.Exito)
+            val dest = (res as ResultadoVoz.Exito).destino
+            assertEquals(esperado.first, dest.nodo.nombre)
+            assertEquals(esperado.second, dest.ubicacion)
+        }
 
         // 5. Detección de comedor
         val resComedor = grafo.resolverDestinoPorVoz("Quiero comer algo en el comedor")
