@@ -43,6 +43,32 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             self.send_response(404)
             self.end_headers()
 
+INTER_FLOOR_EDGES = [
+    {"origen": "n_1791914711015_789", "destino": "n_1791914113485_119", "distancia_metros": 15},
+    {"origen": "n_1791914995295_675", "destino": "Ascensor_PB_Despachos", "distancia_metros": 5},
+    {"origen": "n_1791914724402_696", "destino": "n_1791913292457_895", "distancia_metros": 15},
+    {"origen": "n_1791913884204_730", "destino": "n_1791915749714_13", "distancia_metros": 15},
+    {"origen": "n_1791913923106_438", "destino": "n_1791915763675_148", "distancia_metros": 5},
+    {"origen": "n_1791913405743_173", "destino": "n_1791915873928_698", "distancia_metros": 15},
+    {"origen": "n_1791913415349_574", "destino": "n_1791915883684_272", "distancia_metros": 15},
+    {"origen": "n_1791913154169_461", "destino": "n_1791916089556_395", "distancia_metros": 15},
+    {"origen": "Ascensor_PB_Despachos", "destino": "Ascensor_Despachos_P1", "distancia_metros": 5},
+    {"origen": "n_1791915749714_13", "destino": "n_1791998634407_239", "distancia_metros": 15},
+    {"origen": "n_1791915763675_148", "destino": "n_1791998648053_223", "distancia_metros": 5},
+    {"origen": "n_1791916089556_395", "destino": "n_1791998963539_552", "distancia_metros": 15},
+    {"origen": "Ascensor_Despachos_P1", "destino": "n_1791998980946_961", "distancia_metros": 5},
+    {"origen": "n_1791915883684_272", "destino": "n_1791998767980_165", "distancia_metros": 15},
+    {"origen": "n_1791998634407_239", "destino": "n_1791999946271_718", "distancia_metros": 15},
+    {"origen": "n_1791998648053_223", "destino": "n_1791999958742_369", "distancia_metros": 5},
+    {"origen": "n_1791998963539_552", "destino": "n_1792000288828_647", "distancia_metros": 15},
+    {"origen": "n_1791998980946_961", "destino": "n_1792000305603_710", "distancia_metros": 5},
+    {"origen": "n_1791998767980_165", "destino": "n_1792000078832_627", "distancia_metros": 15},
+    {"origen": "n_1791999946271_718", "destino": "n_1792001155998_407", "distancia_metros": 15},
+    {"origen": "n_1791999958742_369", "destino": "n_1792001168053_296", "distancia_metros": 5},
+    {"origen": "n_1792000288828_647", "destino": "n_1792001402237_108", "distancia_metros": 15},
+    {"origen": "n_1792000305603_710", "destino": "n_1792001421689_384", "distancia_metros": 5}
+]
+
 def reconstruir_grafo_completo():
     todos_nodos = []
     todas_aristas = []
@@ -55,10 +81,13 @@ def reconstruir_grafo_completo():
                 d = json.load(f)
                 todos_nodos.extend(d.get("nodos", []))
                 todas_aristas.extend(d.get("aristas", []))
+
+    todas_aristas.extend(INTER_FLOOR_EDGES)
                 
-    completo_path = os.path.join(ASSETS_DIR, "grafo_etsiit_completo.json")
-    with open(completo_path, "w", encoding="utf-8") as f:
-        json.dump({"nodos": todos_nodos, "aristas": todas_aristas}, f, indent=2, ensure_ascii=False)
+    for out_dir in [ASSETS_DIR, DIRECTORY]:
+        completo_path = os.path.join(out_dir, "grafo_etsiit_completo.json")
+        with open(completo_path, "w", encoding="utf-8") as f:
+            json.dump({"nodos": todos_nodos, "aristas": todas_aristas}, f, indent=2, ensure_ascii=False)
     print("grafo_etsiit_completo.json actualizado con éxito.")
 
 if __name__ == "__main__":
