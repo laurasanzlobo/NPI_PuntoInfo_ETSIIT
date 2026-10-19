@@ -48,6 +48,34 @@ data class RutaCalculada(
         }
 }
 
+/**
+ * Representa el resultado resuelto a partir de una locución por voz o texto natural
+ */
+data class DestinoVoz(
+    val nodo: Nodo,
+    val titulo: String,
+    val ubicacion: String,
+    val textoOriginal: String
+)
+
+sealed class ResultadoVoz {
+    data class Exito(val destino: DestinoVoz) : ResultadoVoz()
+    data class Error(val mensaje: String) : ResultadoVoz()
+}
+
+fun formatearPlanta(planta: String): String {
+    return when (planta.trim().uppercase()) {
+        "B", "0", "PB" -> "Planta Baja"
+        "P-1", "-1", "PSS" -> "Planta Semisótano / -1"
+        "-2" -> "Planta -2 (PSS)"
+        "1", "P1" -> "Planta 1"
+        "2", "P2" -> "Planta 2"
+        "3", "P3" -> "Planta 3"
+        "4", "P4" -> "Planta 4"
+        else -> "Planta $planta"
+    }
+}
+
 class GrafoETSIIT {
     private val conexiones = mutableMapOf<String, MutableList<AristaDijkstra>>()
     private val directorioNodos = mutableMapOf<String, Nodo>()
@@ -128,17 +156,23 @@ class GrafoETSIIT {
             return directorioNodos.values.find { it.nombre.equals("Salon_Actos_PSS", ignoreCase = true) }
         }
 
-        // 2. Aulas con número decimal o estándar: ej. "Aula 0.1", "0.1", "A01", "A-01", "A_01", "1.2"
-        val regexAula = Regex("""(?:aula\s*)?([0-4])\.(\d+)""", RegexOption.IGNORE_CASE)
+        // 2. Aulas y Laboratorios con número decimal o estándar: ej. "Aula 0.1", "0.1", "Aula 3.4", "Lab 3.4", "3.4", "1.2"
+        val regexAula = Regex("""(?:aula\s*|clase\s*|laboratorio\s*|lab\s*)?([0-4])\.(\d+)""", RegexOption.IGNORE_CASE)
         val matchAula = regexAula.find(normalizado)
         if (matchAula != null) {
             val planta = matchAula.groupValues[1]
             val num = matchAula.groupValues[2]
-            val candidatos = listOf("A_${planta}${num}", "A_${planta}0${num}")
+            val candidatos = listOf(
+                "A_${planta}${num}",
+                "A_${planta}0${num}",
+                "L_${planta}${num}"
+            )
             for (cand in candidatos) {
                 val nodo = directorioNodos.values.find { it.nombre.equals(cand, ignoreCase = true) }
                 if (nodo != null) return nodo
             }
+            // Si la consulta tiene formato o mención de aula/lab, NUNCA buscar como despacho
+            return null
         }
 
         // 3. Aulas de sótano
@@ -149,37 +183,220 @@ class GrafoETSIIT {
             return directorioNodos.values.find { it.nombre.equals("A_Menos2", ignoreCase = true) }
         }
 
-        // 4. Despachos: ej. "Despacho D-08", "D-08", "D08", "D_201", "2.01", "D 208"
-        val regexDespacho = Regex("""(?:despacho\s*)?(?:d[-_\s]?)?(\d{1,3})""", RegexOption.IGNORE_CASE)
-        val matchDespacho = regexDespacho.find(normalizado)
-        if (matchDespacho != null) {
-            val numStr = matchDespacho.groupValues[1]
-            val candidatas = listOf(
-                "D_$numStr",
-                "D_${numStr.padStart(3, '0')}",
-                "D_2${numStr.padStart(2, '0')}",
-                "D_3${numStr.padStart(2, '0')}",
-                "D_4${numStr.padStart(2, '0')}"
-            )
-            for (c in candidatas) {
-                val nodo = directorioNodos.values.find { it.nombre.equals(c, ignoreCase = true) }
-                if (nodo != null) return nodo
+        // 4. Laboratorios: ej. "Laboratorio 2.1", "Lab 21", "L_21", "L_31", "L_310"
+        val regexLab = Regex("""(?:laboratorio|lab|l)[-_\s]*([23])[\.\s_]*(\d{1,2})\b""", RegexOption.IGNORE_CASE)
+        val matchLab = regexLab.find(normalizado)
+        if (matchLab != null) {
+            val p = matchLab.groupValues[1]
+            val n = matchLab.groupValues[2]
+            val nodoLab = directorioNodos.values.find { it.nombre.equals("L_$p$n", ignoreCase = true) }
+            if (nodoLab != null) return nodoLab
+        }
+
+        // 5. Despachos: ej. "Despacho D-08", "D-08", "D08", "D_201", "D 208", "Despacho 24"
+        // NOTA: Exige explícitamente la palabra 'despacho' o prefijo 'd' para no confundir con números de aula
+        val tieneIndicadorDespacho = normalizado.contains("despacho") ||
+            Regex("""\bd[-_\s]*\d+""", RegexOption.IGNORE_CASE).containsMatchIn(normalizado)
+        val noEsAula = !normalizado.contains("aula") && !normalizado.contains("clase") &&
+            !normalizado.contains("lab") && !normalizado.contains(".")
+        if (tieneIndicadorDespacho && noEsAula) {
+            val regexDespacho = Regex("""(?:despacho\s*(?:d[-_\s]*)?|\bd[-_\s]+|\bd)(\d{1,3})\b""", RegexOption.IGNORE_CASE)
+            val matchDespacho = regexDespacho.find(normalizado)
+            if (matchDespacho != null) {
+                val numStr = matchDespacho.groupValues[1]
+                val candidatas = listOf(
+                    "D_$numStr",
+                    "D_${numStr.padStart(3, '0')}",
+                    "D_2${numStr.padStart(2, '0')}",
+                    "D_3${numStr.padStart(2, '0')}",
+                    "D_4${numStr.padStart(2, '0')}"
+                )
+                for (c in candidatas) {
+                    val nodo = directorioNodos.values.find { it.nombre.equals(c, ignoreCase = true) }
+                    if (nodo != null) return nodo
+                }
             }
         }
 
-        // 5. Coincidencia exacta por nombre
+        // 6. Coincidencia exacta por nombre
         val exacto = directorioNodos.values.find { it.nombre.equals(query.trim(), ignoreCase = true) }
         if (exacto != null) return exacto
 
-        // 6. Contiene subcadena
-        val parcial = directorioNodos.values.find {
-            it.nombre.contains(query.trim(), ignoreCase = true) ||
-            query.trim().contains(it.nombre, ignoreCase = true)
+        // 7. Contiene subcadena (solo si no es patrón de aula)
+        if (noEsAula) {
+            val parcial = directorioNodos.values.find {
+                it.nombre.contains(query.trim(), ignoreCase = true) ||
+                query.trim().contains(it.nombre, ignoreCase = true)
+            }
+            if (parcial != null) return parcial
         }
-        if (parcial != null) return parcial
 
-        // 7. Fallback seguro: primera aula o servicio
-        return directorioNodos.values.firstOrNull { it.tipo == "aula" || it.tipo == "despacho" }
+        return null
+    }
+
+    /**
+     * Resuelve búsquedas en lenguaje natural / dictado por voz hacia destinos del campus.
+     * Mapea profesores ("Alberto Ruiz" -> Despacho D-08), aulas ("aula cero uno", "aula 0.1"),
+     * comedores, cafetería, biblioteca, etc.
+     */
+    fun resolverDestinoPorVoz(texto: String): ResultadoVoz {
+        if (texto.isBlank()) {
+            return ResultadoVoz.Error("No se ha detectado ninguna locución.")
+        }
+        val limpia = texto.trim().lowercase()
+            .replace("á", "a")
+            .replace("é", "e")
+            .replace("í", "i")
+            .replace("ó", "o")
+            .replace("ú", "u")
+
+        // 1. Detección de profesores
+        if (limpia.contains("alberto") || limpia.contains("ruiz")) {
+            val nodo = buscarNodoPorDestino("D-08")
+            if (nodo != null) {
+                return ResultadoVoz.Exito(DestinoVoz(nodo, "Despacho D-08", "Alberto Ruiz · Planta Baja", texto))
+            }
+        }
+        if (limpia.contains("roberto") || limpia.contains("perez")) {
+            val nodo = buscarNodoPorDestino("D-24")
+            if (nodo != null) {
+                return ResultadoVoz.Exito(DestinoVoz(nodo, "Despacho D-24", "Roberto Pérez · Planta 2", texto))
+            }
+        }
+        if (limpia.contains("maria") || limpia.contains("gomez")) {
+            val nodo = buscarNodoPorDestino("D-12")
+            if (nodo != null) {
+                return ResultadoVoz.Exito(DestinoVoz(nodo, "Despacho D-12", "María Gómez · Planta 1", texto))
+            }
+        }
+        if (limpia.contains("profesor") || limpia.contains("profesora") || limpia.contains("docente")) {
+            return ResultadoVoz.Error("Profesor/a no encontrado/a. Actualmente están registrados: Alberto Ruiz (D-08), Roberto Pérez (D-24) y María Gómez (D-12).")
+        }
+
+        // 2. Destinos y servicios del campus
+        if (limpia.contains("comedor") || limpia.contains("comer") || limpia.contains("almorzar") || limpia.contains("cantina")) {
+            val nodo = buscarNodoPorDestino("comedor")
+            if (nodo != null) return ResultadoVoz.Exito(DestinoVoz(nodo, "Comedor Aynadamar", "Planta Semisótano / -1", texto))
+        }
+        if (limpia.contains("cafeteria") || limpia.contains("cafe") || limpia.contains("desayunar") || limpia.contains("bar")) {
+            val nodo = buscarNodoPorDestino("cafeteria")
+            if (nodo != null) return ResultadoVoz.Exito(DestinoVoz(nodo, "Cafetería", "Planta Semisótano / -1", texto))
+        }
+        if (limpia.contains("biblioteca") || limpia.contains("estudiar") || limpia.contains("libros")) {
+            val nodo = buscarNodoPorDestino("biblioteca")
+            if (nodo != null) return ResultadoVoz.Exito(DestinoVoz(nodo, "Biblioteca", "Planta Baja", texto))
+        }
+        if (limpia.contains("salon") || limpia.contains("actos") || limpia.contains("conferencia") || limpia.contains("eventos")) {
+            val nodo = buscarNodoPorDestino("salon")
+            if (nodo != null) return ResultadoVoz.Exito(DestinoVoz(nodo, "Salón de Actos", "Planta Semisótano / -1", texto))
+        }
+        if (limpia.contains("secretaria") || limpia.contains("matricula") || limpia.contains("expediente")) {
+            val nodo = buscarNodoPorDestino("secretaria")
+            if (nodo != null) return ResultadoVoz.Exito(DestinoVoz(nodo, "Secretaría", "Planta Baja", texto))
+        }
+        if (limpia.contains("conserjeria") || limpia.contains("conserje") || limpia.contains("informacion")) {
+            val nodo = buscarNodoPorDestino("conserjeria")
+            if (nodo != null) return ResultadoVoz.Exito(DestinoVoz(nodo, "Conserjería", "Planta Baja", texto))
+        }
+        if (limpia.contains("direccion") || limpia.contains("director") || limpia.contains("jefe de estudios")) {
+            val nodo = buscarNodoPorDestino("director")
+            if (nodo != null) return ResultadoVoz.Exito(DestinoVoz(nodo, "Dirección", "Planta Baja", texto))
+        }
+
+        // 3. Normalizar números hablados (ej. "cero punto uno" -> "0.1", "tres punto cuatro" -> "3.4")
+        val normalizadaNumeros = limpia
+            .replace(Regex("""\bcero\b"""), "0")
+            .replace(Regex("""\buno\b"""), "1")
+            .replace(Regex("""\bdos\b"""), "2")
+            .replace(Regex("""\btres\b"""), "3")
+            .replace(Regex("""\bcuatro\b"""), "4")
+            .replace(Regex("""\bcinco\b"""), "5")
+            .replace(Regex("""\bseis\b"""), "6")
+            .replace(Regex("""\bsiete\b"""), "7")
+            .replace(Regex("""\bocho\b"""), "8")
+            .replace(Regex("""\bnueve\b"""), "9")
+            .replace(Regex("""\bdiez\b"""), "10")
+            .replace(Regex("""\bonce\b"""), "11")
+            .replace(Regex("""\bpunto\b"""), ".")
+            .replace(Regex("""\bcoma\b"""), ".")
+
+        // 4. Despachos (SOLO si dice explícitamente "despacho" o prefijo "d" con número):
+        // ej: "despacho 208", "despacho d-24", "despacho 8", "d 24", "d-08"
+        val regexDespacho = Regex("""(?:despacho\s*(?:d[-_\s]*)?|\bd[-_\s]+|\bd)(\d{1,3})\b""")
+        val matchDespacho = regexDespacho.find(normalizadaNumeros)
+        val esConsultaAula = normalizadaNumeros.contains("aula") || normalizadaNumeros.contains("clase") ||
+            normalizadaNumeros.contains("laboratorio") || normalizadaNumeros.contains("lab") || normalizadaNumeros.contains(".")
+        if (matchDespacho != null && !esConsultaAula) {
+            val num = matchDespacho.groupValues[1]
+            val nodo = buscarNodoPorDestino("D-$num")
+            if (nodo != null) {
+                val plantaFormateada = formatearPlanta(nodo.planta)
+                return ResultadoVoz.Exito(DestinoVoz(nodo, "Despacho D-${num.padStart(2, '0')}", plantaFormateada, texto))
+            } else {
+                return ResultadoVoz.Error("El Despacho D-$num no se ha encontrado en la ETSIIT.")
+            }
+        }
+
+        // 5. AULAS Y LABORATORIOS (Sótano, Planta Baja, Planta 1, Planta 2 y Planta 3)
+        // Pueden referenciarse indistintamente como "aula X.Y" o "laboratorio X.Y" (ej: "aula 3.4" = Lab 3.4)
+        // Aulas sótano
+        if (normalizadaNumeros.contains("-1") || normalizadaNumeros.contains("menos 1") || normalizadaNumeros.contains("menos1")) {
+            val nodo = buscarNodoPorDestino("-1")
+            if (nodo != null) return ResultadoVoz.Exito(DestinoVoz(nodo, "Aula -1", "Planta Semisótano / -1", texto))
+        }
+        if (normalizadaNumeros.contains("-2") || normalizadaNumeros.contains("menos 2") || normalizadaNumeros.contains("menos2")) {
+            val nodo = buscarNodoPorDestino("-2")
+            if (nodo != null) return ResultadoVoz.Exito(DestinoVoz(nodo, "Aula -2", "Planta Semisótano / -1", texto))
+        }
+
+        // Aulas o Laboratorios con formato explícito "aula/clase/laboratorio/lab X.Y", "aula 3.4", "lab 3.4", "aula 3 4", etc.:
+        val regexEspacioDocente = Regex("""(?:aula|aulas|clase|clases|laboratorio|laboratorios|lab|labs)\s*([0-4])[\.\s]*(\d+)""")
+        val matchEspacio = regexEspacioDocente.find(normalizadaNumeros)
+        if (matchEspacio != null) {
+            val planta = matchEspacio.groupValues[1]
+            val num = matchEspacio.groupValues[2]
+            val nodo = buscarNodoPorDestino("$planta.$num")
+            if (nodo != null) {
+                val esLab = nodo.nombre.startsWith("L_")
+                val titulo = if (esLab) "Laboratorio $planta.$num" else "Aula $planta.$num"
+                val plantaStr = if (planta == "0") "Planta Baja" else "Planta $planta"
+                return ResultadoVoz.Exito(DestinoVoz(nodo, titulo, plantaStr, texto))
+            } else {
+                return ResultadoVoz.Error("El Aula o Laboratorio $planta.$num no existe en la ETSIIT. Las aulas se encuentran en Semisótano (-1 y -2), Planta Baja (0.1 a 0.8), Planta 1 (1.1 a 1.8), y los laboratorios en Planta 2 (2.1 a 2.10) y Planta 3 (3.1 a 3.11).")
+            }
+        }
+
+        // Formato numérico decimal en cualquier parte del texto: ej. "3.4", "3.7", "0.1", "1.2", "ir a la 3.4"
+        val regexCualquierDecimal = Regex("""\b([0-4])\.(\d+)\b""")
+        val matchCualquierDecimal = regexCualquierDecimal.find(normalizadaNumeros)
+        if (matchCualquierDecimal != null) {
+            val planta = matchCualquierDecimal.groupValues[1]
+            val num = matchCualquierDecimal.groupValues[2]
+            val nodo = buscarNodoPorDestino("$planta.$num")
+            if (nodo != null) {
+                val esLab = nodo.nombre.startsWith("L_")
+                val titulo = if (esLab) "Laboratorio $planta.$num" else "Aula $planta.$num"
+                val plantaStr = if (planta == "0") "Planta Baja" else "Planta $planta"
+                return ResultadoVoz.Exito(DestinoVoz(nodo, titulo, plantaStr, texto))
+            } else {
+                return ResultadoVoz.Error("El Aula o Laboratorio $planta.$num no existe en la ETSIIT. Las aulas se encuentran en Semisótano (-1 y -2), Planta Baja (0.1 a 0.8), Planta 1 (1.1 a 1.8), y los laboratorios en Planta 2 (2.1 a 2.10) y Planta 3 (3.1 a 3.11).")
+            }
+        }
+
+        // Si la frase contenía la palabra "aula", "clase", "laboratorio" o "lab" pero no coincidió con ningún aula o lab existente
+        if (normalizadaNumeros.contains("aula") || normalizadaNumeros.contains("clase") ||
+            normalizadaNumeros.contains("laboratorio") || normalizadaNumeros.contains("lab")) {
+            return ResultadoVoz.Error("No se ha encontrado el aula o laboratorio solicitado. Las aulas van de la 0.1 a la 0.8 (Planta Baja), de la 1.1 a la 1.8 (Planta 1), Semisótano (-1 y -2), y los laboratorios en Planta 2 (2.1 a 2.10) y Planta 3 (3.1 a 3.11).")
+        }
+
+        // 7. Fallback buscando en el grafo general por coincidencia exacta
+        val nodoGenerico = buscarNodoPorDestino(texto)
+        if (nodoGenerico != null) {
+            val titulo = nodoGenerico.nombre.replace('_', ' ')
+            return ResultadoVoz.Exito(DestinoVoz(nodoGenerico, titulo, formatearPlanta(nodoGenerico.planta), texto))
+        }
+
+        return ResultadoVoz.Error("No se ha encontrado \"$texto\". Prueba diciendo: Comedor, Cafetería, Aula 0.1 o un profesor como Alberto Ruiz.")
     }
 
     /**

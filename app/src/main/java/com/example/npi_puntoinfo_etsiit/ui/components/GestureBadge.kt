@@ -11,6 +11,8 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Mic
+import androidx.compose.material.icons.filled.PanTool
 import androidx.compose.material.icons.filled.ScreenRotation
 import androidx.compose.material.icons.filled.TouchApp
 import androidx.compose.material.icons.filled.Vibration
@@ -117,7 +119,7 @@ enum class GestureType(
         title = "Gesto «¡Llévame!»",
         gestureName = "Giro de muñeca",
         description = "Gira el terminal verticalmente hacia la izquierda con un giro de muñeca para iniciar el guiado y ver la ruta hasta este destino.",
-        howTo = "Gira el móvil de pie hacia la izquierda con un giro rápido de muñeca (o pulsa su icono en pantalla).",
+        howTo = "Gira el móvil de pie hacia la izquierda con un giro rápido de muñeca.",
         whatFor = "Inicia el mapa y traza automáticamente la ruta guiada hacia el destino (comedor, despacho o aula).",
         icon = WristTwistIcon,
         badgeColor = CampusTeal
@@ -126,7 +128,7 @@ enum class GestureType(
         title = "Gesto de Acción",
         gestureName = "Movimiento físico de acción",
         description = "Realiza el gesto de acción rápida para encargar comida para llevar o enviar un correo al profesor.",
-        howTo = "Realiza un movimiento rápido de inclinación/toque hacia el frente (o pulsa su icono en pantalla).",
+        howTo = "Realiza un movimiento rápido de inclinación/toque hacia el frente.",
         whatFor = "Ejecuta al instante la acción principal de la tarjeta: encargar comida para llevar en comedores o redactar un correo al profesor.",
         icon = Icons.Default.TouchApp,
         badgeColor = WarningAmber
@@ -144,10 +146,19 @@ enum class GestureType(
         title = "Consulta de Próxima Clase",
         gestureName = "Agitar 3 veces",
         description = "Agita el teléfono 3 veces consecutivas en cualquier pantalla de la app para consultar tu clase actual o próxima y su aula correspondiente.",
-        howTo = "Agita el móvil con energía de un lado a otro 3 veces seguidas (o pulsa el circulito rojo de la cabecera).",
+        howTo = "Agita el móvil con energía de un lado a otro 3 veces seguidas.",
         whatFor = "Abre una ventana emergente en cualquier pantalla mostrando la clase que tienes ahora o la siguiente, el horario, el aula y acceso directo para guiarte.",
         icon = Icons.Default.Vibration,
         badgeColor = UgrRed
+    ),
+    PROXIMITY_VOICE(
+        title = "Búsqueda por Voz",
+        gestureName = "Pasar la mano / Proximidad",
+        description = "Pasa la mano por donde está la cámara, en la parte superior del móvil (o acércatelo a la oreja), para activar el asistente de voz y buscar un destino en cualquier pantalla de la app.",
+        howTo = "Pasa la mano por encima de la cámara frontal en la parte superior del móvil.",
+        whatFor = "Activa el reconocimiento de voz para buscar aulas, comedores, cafetería, biblioteca o profesores y trazar la ruta automáticamente en el mapa con Dijkstra.",
+        icon = Icons.Default.Mic,
+        badgeColor = VoicePurple
     )
 }
 
@@ -402,13 +413,13 @@ fun AccelerometerGesturesGuideDialog(
                 }
                 Column {
                     Text(
-                        text = "Gestos del Acelerómetro",
+                        text = "Sensores y Gestos Físicos",
                         fontWeight = FontWeight.Bold,
                         fontSize = 17.sp,
                         color = TextPrimary
                     )
                     Text(
-                        text = "Funciones por movimiento del móvil",
+                        text = "Acelerómetro, proximidad y voz",
                         fontSize = 12.sp,
                         color = TextSecondary
                     )
@@ -423,7 +434,7 @@ fun AccelerometerGesturesGuideDialog(
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 Text(
-                    text = "La aplicación utiliza el acelerómetro del dispositivo para ofrecer atajos y acciones físicas rápidas mediante gestos:",
+                    text = "La aplicación utiliza los sensores del dispositivo (acelerómetro y proximidad) para ofrecer atajos y acciones físicas rápidas mediante gestos:",
                     fontSize = 12.sp,
                     color = TextSecondary,
                     lineHeight = 16.sp
