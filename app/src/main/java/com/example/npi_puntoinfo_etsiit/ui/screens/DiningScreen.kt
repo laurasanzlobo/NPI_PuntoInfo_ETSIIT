@@ -5,7 +5,9 @@ import android.os.Build
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
+import android.util.Log
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
@@ -31,8 +33,14 @@ import com.example.npi_puntoinfo_etsiit.ui.components.GestureType
 import com.example.npi_puntoinfo_etsiit.sensors.AccelerometerManager
 import com.example.npi_puntoinfo_etsiit.ui.navigation.Screen
 import com.example.npi_puntoinfo_etsiit.ui.theme.*
+import java.time.DayOfWeek
+import java.time.LocalDate
+import java.time.format.TextStyle
+import java.util.Locale
+import kotlinx.coroutines.delay
 
 data class DayDiningMenu(
+    val date: LocalDate,
     val dayName: String,
     val dayLabel: String,
     val firstCourse: String,
@@ -54,71 +62,132 @@ fun DiningScreen(
         onNavigate(Screen.Navigation.createRoute("Comedor Aynadamar", "Campus Aynadamar"))
     }
 
-    // Gesto del acelerómetro: «¡Llévame!» (giro de muñeca a la izquierda) activo mientras se consulta el comedor
-    // Si el diálogo global de clase actual está abierto, se silencia para que prevalezca el de clase actual
-    DisposableEffect(context, isCurrentClassDialogVisible) {
-        val accelerometerManager = AccelerometerManager(context)
-
-        if (!isCurrentClassDialogVisible) {
-            accelerometerManager.onTakeMeThereGesture = {
-                navigateToDining()
-            }
-            accelerometerManager.startListening()
-        }
-
-        onDispose {
-            accelerometerManager.stopListening()
+    // Tomamos la fecha real del teléfono y la revisamos periódicamente mientras
+    // Comedores está abierta: también se actualiza cuando cambia el día.
+    var today by remember { mutableStateOf(LocalDate.now()) }
+    LaunchedEffect(Unit) {
+        while (true) {
+            today = LocalDate.now()
+            delay(30_000L)
         }
     }
-    val menuList = listOf(
-        DayDiningMenu(
-            dayName = "Hoy",
-            dayLabel = "Hoy · Lunes",
-            firstCourse = "Lentejas castellanas con verduras o Ensalada mixta",
-            secondCourse = "Filete de merluza a la plancha o Pechuga de pollo",
-            dessert = "Fruta de temporada o Yogur natural",
-            isToday = true
-        ),
-        DayDiningMenu(
-            dayName = "Mañana",
-            dayLabel = "Mañana · Martes",
-            firstCourse = "Paella mixta tradicional o Crema de calabacín",
-            secondCourse = "Lomo de cerdo al ajillo o Tortilla francesa con champiñones",
-            dessert = "Fruta de temporada o Natillas caseras",
-            isToday = false
-        ),
-        DayDiningMenu(
-            dayName = "Miércoles",
-            dayLabel = "Miércoles",
-            firstCourse = "Salmorejo cordobés con huevo o Macarrones a la boloñesa",
-            secondCourse = "Salmón al horno con patatas o Hamburguesa de ternera",
-            dessert = "Fruta de temporada o Flan de huevo",
-            isToday = false
-        ),
-        DayDiningMenu(
-            dayName = "Jueves",
-            dayLabel = "Jueves",
-            firstCourse = "Potaje de garbanzos con espinacas o Ensalada César",
-            secondCourse = "Escalope de pollo empanado o Bacalao con tomate",
-            dessert = "Fruta de temporada o Gelatina de frutas",
-            isToday = false
-        ),
-        DayDiningMenu(
-            dayName = "Viernes",
-            dayLabel = "Viernes",
-            firstCourse = "Arroz tres delicias o Sopa de picadillo",
-            secondCourse = "Merluza a la romana o Chuleta de pavo a la plancha",
-            dessert = "Fruta de temporada o Mousse de yogur",
-            isToday = false
-        )
-    )
 
-    val pagerState = remember(navKey) {
+    // Mostramos cinco días lectivos: desde hoy si es lunes-viernes, o desde
+    // el próximo lunes si es fin de semana. Los platos siguen siendo ficticios.
+    val menuList = remember(today) {
+        generateSequence(today) { it.plusDays(1) }
+            .filter { it.dayOfWeek.value in 1..5 }
+            .take(5)
+            .map { date ->
+                val weekday = date.dayOfWeek
+                    .getDisplayName(TextStyle.FULL, Locale.forLanguageTag("es-ES"))
+                    .replaceFirstChar { it.uppercaseChar() }
+                val title = when (date) {
+                    today -> "Hoy"
+                    today.plusDays(1) -> "Mañana"
+                    else -> weekday
+                }
+                val dateLabel = "${date.dayOfMonth}/${date.monthValue}"
+                val label = if (date == today || date == today.plusDays(1)) {
+                    "$weekday · $dateLabel"
+                } else {
+                    "$weekday · $dateLabel"
+                }
+                val (first, second, dessert) = sampleDishesFor(weekday = date.dayOfWeek)
+                DayDiningMenu(
+                    date = date,
+                    dayName = title,
+                    dayLabel = label,
+                    firstCourse = first,
+                    secondCourse = second,
+                    dessert = dessert,
+                    isToday = date == today
+                )
+            }
+            .toList()
+    }
+
+    // Al cambiar de fecha, volvemos al primer día disponible.
+    val pagerState = remember(navKey, today) {
         PagerState(currentPage = 0, currentPageOffsetFraction = 0f) { menuList.size }
     }
 
-    // Registro de pedidos encargados por día
-    val ordersPlaced = remember { mutableStateMapOf<Int, Boolean>() }
+    // Cada encargo se guarda con una FECHA REAL (ISO 8601), no con el índice
+    // del menú. Así los pedidos de la semana pasada no aparecen en la actual.
+    val orderPreferences = remember(context) {
+        context.getSharedPreferences("npi_demo_dining_orders", Context.MODE_PRIVATE)
+    }
+    val ordersPlaced = remember(orderPreferences) {
+        mutableStateMapOf<String, Boolean>().apply {
+            orderPreferences.all.forEach { (key, value) ->
+                if (key.startsWith("ordered_date_") && value == true) {
+                    this[key.removePrefix("ordered_date_")] = true
+                }
+            }
+        }
+    }
+
+    // Los pedidos antiguos, guardados como ordered_day_1, ordered_day_2...
+    // carecen de fecha: no se reutilizan para evitar reservas incorrectas.
+    LaunchedEffect(today) {
+        val expired = ordersPlaced.keys.filter { dateKey ->
+            val orderDate = runCatching { LocalDate.parse(dateKey) }.getOrNull()
+            orderDate == null || orderDate.isBefore(today)
+        }
+        if (expired.isNotEmpty()) {
+            val editor = orderPreferences.edit()
+            expired.forEach { dateKey ->
+                ordersPlaced.remove(dateKey)
+                editor.remove("ordered_date_$dateKey")
+            }
+            editor.apply()
+        }
+    }
+
+    // Guardamos la fecha que se desea encargar: no el índice de su página.
+    var pendingOrderDate by remember { mutableStateOf<LocalDate?>(null) }
+    LaunchedEffect(today) {
+        if (pendingOrderDate?.isAfter(today) != true) pendingOrderDate = null
+    }
+
+    // Esta pantalla dispone de dos gestos independientes:
+    // 1) Giro lateral («¡Llévame!»): conservamos la navegación original.
+    // 2) Bajar brevemente la parte superior y volver: confirmar menú visible.
+    // El gestor se escucha solo mientras esta pantalla está activa y no está abierto
+    // el diálogo global de clase actual.
+    DisposableEffect(context, isCurrentClassDialogVisible, pagerState, today) {
+        val accelerometerManager = AccelerometerManager(context)
+        if (!isCurrentClassDialogVisible) {
+            accelerometerManager.onTakeMeThereGesture = {
+                if (pendingOrderDate == null) navigateToDining()
+            }
+            accelerometerManager.onForwardTiltGesture = {
+                val day = pagerState.currentPage
+                val selected = menuList.getOrNull(day)
+                val dateKey = selected?.date?.toString()
+                val isOrdered = dateKey?.let { ordersPlaced[it] == true } ?: false
+                Log.i(
+                    "NPI_COMEDOR_GESTO",
+                    "Recibido en Comedores: fecha=$dateKey, reservado=$isOrdered, " +
+                            "diálogoAbierto=${pendingOrderDate != null}, " +
+                            "deslizando=${pagerState.isScrollInProgress}"
+                )
+                // El gesto solo abre la confirmación para un día futuro
+                // que no esté reservado (nunca para hoy).
+                if (selected != null &&
+                    selected.date.isAfter(LocalDate.now()) &&
+                    !isOrdered &&
+                    pendingOrderDate == null &&
+                    !pagerState.isScrollInProgress
+                ) {
+                    triggerVibration(context, durationMs = 80)
+                    pendingOrderDate = selected.date
+                }
+            }
+            accelerometerManager.startListening()
+        }
+        onDispose { accelerometerManager.stopListening() }
+    }
 
     Column(
         modifier = Modifier
@@ -189,8 +258,13 @@ fun DiningScreen(
                 .weight(1f)
         ) { page ->
             val selectedMenu = menuList[page]
-            val isCurrentDayOrdered = ordersPlaced[page] == true
-            val targetDayText = if (selectedMenu.dayName.equals("Mañana", ignoreCase = true)) "mañana" else "el ${selectedMenu.dayName}"
+            val isCurrentDayOrdered = ordersPlaced[selectedMenu.date.toString()] == true
+            val targetDayText = when (selectedMenu.date) {
+                today -> "hoy"
+                today.plusDays(1) -> "mañana"
+                else -> "el ${selectedMenu.dayName.lowercase(Locale.forLanguageTag("es-ES"))} " +
+                        "${selectedMenu.date.dayOfMonth}/${selectedMenu.date.monthValue}"
+            }
 
             Column(
                 modifier = Modifier
@@ -211,7 +285,7 @@ fun DiningScreen(
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             Text(
-                                text = "Menú del Día · ${selectedMenu.dayLabel}",
+                                text = "Menú del Día · ${selectedMenu.date.dayOfWeek.getDisplayName(TextStyle.FULL, Locale.forLanguageTag("es-ES")).replaceFirstChar { it.uppercaseChar() }}",
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 16.sp,
                                 color = TextPrimary
@@ -263,8 +337,9 @@ fun DiningScreen(
                     }
                 }
 
-                // Sección de encargo para llevar: SOLO disponible en días posteriores
-                if (selectedMenu.isToday) {
+                // El menú de hoy no puede reservarse ahora, pero si se encargó
+                // ayer debe seguir mostrándose en verde durante todo el día.
+                if (selectedMenu.isToday && !isCurrentDayOrdered) {
                     Card(
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(14.dp),
@@ -291,7 +366,11 @@ fun DiningScreen(
                     }
                 } else {
                     Card(
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable(enabled = !isCurrentDayOrdered && selectedMenu.date.isAfter(today)) {
+                                pendingOrderDate = selectedMenu.date
+                            },
                         shape = RoundedCornerShape(16.dp),
                         colors = CardDefaults.cardColors(containerColor = if (isCurrentDayOrdered) Color(0xFFDCFCE7) else SurfaceWhite)
                     ) {
@@ -336,6 +415,76 @@ fun DiningScreen(
             }
         }
     }
+
+    // No confirmamos pedidos de hoy o de días pasados, aunque la fecha cambie
+    // mientras el diálogo está abierto.
+    pendingOrderDate?.let { date ->
+        val pendingMenu = menuList.find { it.date == date }
+        if (pendingMenu != null && date.isAfter(today)) {
+            AlertDialog(
+                onDismissRequest = { pendingOrderDate = null },
+                title = { Text("Confirmar encargo") },
+                text = {
+                    Text(
+                        "¿Quieres encargar el menú de ${pendingMenu.dayLabel} para llevar " +
+                                "por 5,50 €?"
+                    )
+                },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            if (date.isAfter(LocalDate.now())) {
+                                val dateKey = date.toString()
+                                ordersPlaced[dateKey] = true
+                                orderPreferences.edit()
+                                    .putBoolean("ordered_date_$dateKey", true)
+                                    .apply()
+                            }
+                            pendingOrderDate = null
+                        }
+                    ) {
+                        Text("Confirmar")
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { pendingOrderDate = null }) {
+                        Text("Cancelar")
+                    }
+                }
+            )
+        }
+    }
+
+}
+
+/** Platos ficticios por día de la semana; solo cambian las fechas visibles. */
+private fun sampleDishesFor(weekday: DayOfWeek): Triple<String, String, String> = when (weekday) {
+    DayOfWeek.MONDAY -> Triple(
+        "Lentejas castellanas con verduras o Ensalada mixta",
+        "Filete de merluza a la plancha o Pechuga de pollo",
+        "Fruta de temporada o Yogur natural"
+    )
+    DayOfWeek.TUESDAY -> Triple(
+        "Paella mixta tradicional o Crema de calabacín",
+        "Lomo de cerdo al ajillo o Tortilla francesa con champiñones",
+        "Fruta de temporada o Natillas caseras"
+    )
+    DayOfWeek.WEDNESDAY -> Triple(
+        "Salmorejo cordobés con huevo o Macarrones a la boloñesa",
+        "Salmón al horno con patatas o Hamburguesa de ternera",
+        "Fruta de temporada o Flan de huevo"
+    )
+    DayOfWeek.THURSDAY -> Triple(
+        "Potaje de garbanzos con espinacas o Ensalada César",
+        "Escalope de pollo empanado o Bacalao con tomate",
+        "Fruta de temporada o Gelatina de frutas"
+    )
+    DayOfWeek.FRIDAY -> Triple(
+        "Arroz tres delicias o Sopa de picadillo",
+        "Merluza a la romana o Chuleta de pavo a la plancha",
+        "Fruta de temporada o Mousse de yogur"
+    )
+    else -> error("El comedor no tiene menú de fin de semana")
 }
 
 @Composable
@@ -369,4 +518,3 @@ private fun triggerVibration(context: Context, durationMs: Long = 150) {
     } catch (_: Exception) {
     }
 }
-
