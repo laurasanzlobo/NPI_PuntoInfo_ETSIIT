@@ -52,7 +52,10 @@ fun NavigationScreen(
     isVerticalGuidanceActive: Boolean = false,
     onPostureChanged: (Boolean) -> Unit = {},
     onSelectDestination: (String, String) -> Unit = { _, _ -> },
-    onClearRoute: () -> Unit = {}
+    onClearRoute: () -> Unit = {},
+    entryNodeId: String? = null,
+    destinationNodeId: String? = null,
+    onReturnOutdoors: (() -> Unit)? = null
 ) {
     val context = LocalContext.current
     val hasActiveRoute = !destinationName.isNullOrBlank()
@@ -83,12 +86,15 @@ fun NavigationScreen(
 
     // Instancia del grafo y cálculo de ruta mediante Dijkstra
     val grafo = remember(context) { GrafoRepository.getGrafo(context) }
-    val nodoInicio = remember(grafo) { grafo.obtenerNodoInicioPredeterminado() }
-    val nodoDestino = remember(grafo, activeDestination) {
-        if (hasActiveRoute) grafo.buscarNodoPorDestino(activeDestination) else null
+    val nodoInicio = remember(grafo, entryNodeId) {
+        if (entryNodeId != null) grafo.obtenerNodoPorId(entryNodeId) else grafo.obtenerNodoInicioPredeterminado()
+    }
+    val nodoDestino = remember(grafo, activeDestination, destinationNodeId) {
+        if (!hasActiveRoute) null else if (destinationNodeId != null) grafo.obtenerNodoPorId(destinationNodeId)
+        else grafo.buscarNodoPorDestino(activeDestination)
     }
     val rutaCalculada = remember(grafo, nodoInicio, nodoDestino) {
-        if (nodoDestino != null) {
+        if (nodoDestino != null && nodoInicio != null) {
             grafo.calcularRutaCompleta(nodoInicio.id, nodoDestino.id)
         } else null
     }
@@ -123,6 +129,9 @@ fun NavigationScreen(
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
+        if (onReturnOutdoors != null) {
+            TextButton(onClick = onReturnOutdoors) { Text("Volver al exterior") }
+        }
         if (hasActiveRoute) {
             // Arriba: dónde vamos (se adapta dinámicamente si se levanta el terminal a Guiado Paso a Paso)
             Card(
@@ -360,5 +369,4 @@ private fun triggerVibration(context: Context, durationMs: Long = 80) {
     } catch (_: Exception) {
     }
 }
-
 

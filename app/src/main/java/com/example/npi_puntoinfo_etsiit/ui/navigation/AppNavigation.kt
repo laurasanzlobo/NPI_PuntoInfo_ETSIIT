@@ -14,6 +14,7 @@ import android.os.VibratorManager
 import android.speech.RecognizerIntent
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.compose.BackHandler
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -25,6 +26,7 @@ import androidx.compose.material.icons.filled.School
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.saveable.listSaver
 import com.example.npi_puntoinfo_etsiit.data.ClassItem
 import com.example.npi_puntoinfo_etsiit.data.ScheduleRepository
 import com.example.npi_puntoinfo_etsiit.ui.components.GestureBadge
@@ -49,6 +51,11 @@ import androidx.navigation.navArgument
 import com.example.npi_puntoinfo_etsiit.sensors.AccelerometerManager
 import com.example.npi_puntoinfo_etsiit.ui.screens.*
 import com.example.npi_puntoinfo_etsiit.ui.theme.*
+import com.example.npi_puntoinfo_etsiit.outdoor.NavigationJourney
+import com.example.npi_puntoinfo_etsiit.outdoor.EtsiitAccess
+import com.example.npi_puntoinfo_etsiit.outdoor.OutdoorNavigationRoute
+import com.example.npi_puntoinfo_etsiit.outdoor.NavigationTrip
+import com.example.npi_puntoinfo_etsiit.outdoor.OutdoorDestinations
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -62,6 +69,35 @@ fun AppNavigation() {
     var activeDestination by rememberSaveable { mutableStateOf<String?>(null) }
     var activeLocation by rememberSaveable { mutableStateOf<String?>(null) }
     var isVerticalGuidanceActive by rememberSaveable { mutableStateOf(false) }
+    var activeEntryNodeId by rememberSaveable { mutableStateOf<String?>(null) }
+    var activeTargetNodeId by rememberSaveable { mutableStateOf<String?>(null) }
+    var canReturnOutdoors by rememberSaveable { mutableStateOf(false) }
+    var activeTrip by rememberSaveable(stateSaver = listSaver<NavigationTrip?, String>(
+        save = { it?.savedValues().orEmpty() },
+        restore = { if (it.isEmpty()) null else NavigationTrip.restore(it) }
+    )) { mutableStateOf<NavigationTrip?>(null) }
+
+    fun clearHandoff() {
+        activeEntryNodeId = null
+        activeTargetNodeId = null
+        canReturnOutdoors = false
+    }
+
+    fun returnToOutdoor() {
+        activeTrip = activeTrip?.returnOutdoors()
+        clearHandoff()
+        activeDestination = null
+        activeLocation = null
+        isVerticalGuidanceActive = false
+        if (!navController.popBackStack(Screen.Outdoor.routePattern, inclusive = false)) {
+            activeTrip?.let { trip ->
+                val target = trip.indoor?.target
+                val route = if (target != null) OutdoorNavigationRoute.forIndoorTarget(target.name, target.location, target.nodeId)
+                    else OutdoorNavigationRoute.create(trip.destinationId)
+                navController.navigate(route) { launchSingleTop = true }
+            }
+        }
+    }
 
     // Diálogo emergente global de Clase Actual (Gesto de agitar 3 veces el terminal)
     var showCurrentClassDialog by remember { mutableStateOf(false) }
@@ -95,11 +131,48 @@ fun AppNavigation() {
     }
 
     fun handleNavigation(route: String) {
-        if (route.startsWith("navigation?")) {
+        if (route == Screen.Outdoor.route || route.startsWith("${Screen.Outdoor.route}?")) {
+            isVerticalGuidanceActive = false
+            val uri = android.net.Uri.parse("app://$route")
+            val graph = GrafoRepository.getGrafo(context)
+            val name = uri.getQueryParameter("finalDestination")
+            val destinationId = uri.getQueryParameter("destinationId")
+            val combined = if (name != null && destinationId == EtsiitAccess.outdoorId)
+                EtsiitAccess.journey(graph, name, uri.getQueryParameter("finalLocation").orEmpty(),
+                    uri.getQueryParameter("finalNodeId"))
+            else destinationId?.let { EtsiitAccess.diningJourney(graph, it) }
+            val journey = combined ?: OutdoorDestinations.find(destinationId)?.let { NavigationJourney.Outdoor(it) }
+                ?: return
+            activeTrip = NavigationTrip.start(journey)
+            clearHandoff()
+            activeDestination = null
+            activeLocation = null
+            val resolvedRoute = combined?.indoor?.target?.let {
+                OutdoorNavigationRoute.forIndoorTarget(it.name, it.location, it.nodeId)
+            } ?: route
+            navController.navigate(resolvedRoute) {
+                // Sustituir recorrido elimina entradas antiguas, incluso si antes estábamos dentro.
+                popUpTo(Screen.Outdoor.routePattern) { inclusive = true }
+            }
+        } else if (route.startsWith("navigation?")) {
             val uri = android.net.Uri.parse("app://$route")
             val dest = uri.getQueryParameter("destination")
             val loc = uri.getQueryParameter("location")
+            val graph = GrafoRepository.getGrafo(context)
+            if (dest != null && EtsiitAccess.journey(graph, dest, loc.orEmpty()) != null) {
+                handleNavigation(OutdoorNavigationRoute.forIndoorTarget(dest, loc.orEmpty(),
+                    graph.buscarNodoPorDestino(dest)?.id))
+                return
+            }
+            if (dest?.contains("comedor", ignoreCase = true) == true) {
+                val dining = OutdoorDestinations.diningNamedIn(dest)
+                if (dining != null) handleNavigation(OutdoorNavigationRoute.create(dining.id))
+                else Toast.makeText(context, "No hay una correspondencia interior verificada para $dest", Toast.LENGTH_LONG).show()
+                return
+            }
+            clearHandoff()
             if (!dest.isNullOrBlank()) {
+                activeTrip = null
                 activeDestination = dest
                 activeLocation = loc
             }
@@ -122,13 +195,28 @@ fun AppNavigation() {
             val spokenList = result.data?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)
             val query = spokenList?.firstOrNull()?.trim()
             if (!query.isNullOrBlank()) {
+                val namedDining = OutdoorDestinations.diningNamedIn(query)
+                if (namedDining != null) {
+                    triggerVibration(context, durationMs = 120)
+                    handleNavigation(OutdoorNavigationRoute.create(namedDining.id))
+                    return@rememberLauncherForActivityResult
+                }
                 val grafo = GrafoRepository.getGrafo(context)
                 when (val res = grafo.resolverDestinoPorVoz(query)) {
                     is ResultadoVoz.Exito -> {
-                        triggerVibration(context, durationMs = 120)
-                        activeDestination = res.destino.titulo
-                        activeLocation = res.destino.ubicacion
-                        navigateToTab(Screen.Navigation.route)
+                        if (EtsiitAccess.journey(grafo, res.destino.titulo,
+                                res.destino.ubicacion, res.destino.nodo.id) != null) {
+                            triggerVibration(context, durationMs = 120)
+                            handleNavigation(OutdoorNavigationRoute.forIndoorTarget(res.destino.titulo,
+                                res.destino.ubicacion, res.destino.nodo.id))
+                        } else {
+                            activeTrip = null
+                            clearHandoff()
+                            triggerVibration(context, durationMs = 120)
+                            activeDestination = res.destino.titulo
+                            activeLocation = res.destino.ubicacion
+                            navigateToTab(Screen.Navigation.route)
+                        }
                     }
                     is ResultadoVoz.Error -> {
                         Toast.makeText(
@@ -218,6 +306,7 @@ fun AppNavigation() {
             if (isVerticalGuidanceActive && !activeDestination.isNullOrBlank()) "Guiado Paso a Paso" else "Mapa"
         }
         currentRoute == Screen.Dining.route -> "Comedores"
+        currentRoute == Screen.Outdoor.routePattern -> "Mapa exterior · A pie"
         currentRoute == Screen.Professors.route -> "Profesores"
         currentRoute == Screen.Profile.route -> "Tarjeta Universitaria (TUI)"
         else -> "ETSIIT UGR"
@@ -235,9 +324,15 @@ fun AppNavigation() {
                     )
                 },
                 navigationIcon = {
-                    val showBack = currentRoute == Screen.Profile.route
+                    val showBack = currentRoute == Screen.Profile.route || currentRoute == Screen.Outdoor.routePattern
                     if (showBack) {
-                        IconButton(onClick = { navController.popBackStack() }) {
+                        IconButton(onClick = {
+                            if (currentRoute == Screen.Outdoor.routePattern) {
+                                activeTrip = null
+                                clearHandoff()
+                            }
+                            navController.popBackStack()
+                        }) {
                             Icon(
                                 imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                                 contentDescription = "Atrás",
@@ -373,6 +468,7 @@ fun AppNavigation() {
                     }
                 )
             ) { backStackEntry ->
+                BackHandler(enabled = canReturnOutdoors) { returnToOutdoor() }
                 val destinationArg = backStackEntry.arguments?.getString("destination")
                 val locationArg = backStackEntry.arguments?.getString("location")
 
@@ -392,14 +488,33 @@ fun AppNavigation() {
                         isVerticalGuidanceActive = isVertical
                     },
                     onSelectDestination = { dest, loc ->
-                        activeDestination = dest
-                        activeLocation = loc
+                        if (EtsiitAccess.journey(GrafoRepository.getGrafo(context), dest, loc) != null) {
+                            handleNavigation(Screen.Navigation.createRoute(dest, loc))
+                        } else {
+                            activeTrip = null
+                            clearHandoff()
+                            activeDestination = dest
+                            activeLocation = loc
+                        }
                     },
                     onClearRoute = {
+                        val hadTrip = activeTrip != null
+                        activeTrip = activeTrip?.finish()
+                        clearHandoff()
                         activeDestination = null
                         activeLocation = null
                         isVerticalGuidanceActive = false
-                    }
+                        if (hadTrip) {
+                            navController.popBackStack(Screen.Outdoor.routePattern, inclusive = true)
+                            activeTrip = null
+                            navigateToTab(Screen.Navigation.route)
+                        }
+                    },
+                    entryNodeId = activeEntryNodeId,
+                    destinationNodeId = activeTargetNodeId,
+                    onReturnOutdoors = if (canReturnOutdoors) ({
+                        returnToOutdoor()
+                    }) else null
                 )
             }
             composable(Screen.Dining.route) {
@@ -408,6 +523,40 @@ fun AppNavigation() {
                     isCurrentClassDialogVisible = showCurrentClassDialog,
                     navKey = diningNavCounter
                 )
+            }
+            composable(
+                route = Screen.Outdoor.routePattern,
+                arguments = listOf("destinationId", "finalDestination", "finalLocation", "finalNodeId").map { name ->
+                    navArgument(name) { type = NavType.StringType; nullable = true; defaultValue = null }
+                }
+            ) { entry ->
+                BackHandler {
+                    activeTrip = null
+                    clearHandoff()
+                    navController.popBackStack()
+                }
+                val trip = activeTrip
+                if (trip != null) {
+                    OutdoorNavigationScreen(
+                        destinationId = entry.arguments?.getString("destinationId"),
+                        finalDestination = entry.arguments?.getString("finalDestination"),
+                        finalLocation = entry.arguments?.getString("finalLocation"),
+                        finalNodeId = entry.arguments?.getString("finalNodeId"),
+                        trip = trip,
+                        onTripChanged = { updated -> if (activeTrip?.id == updated.id) activeTrip = updated },
+                        onSelectOutdoorDestination = { id -> handleNavigation(OutdoorNavigationRoute.create(id)) },
+                        onContinueIndoors = { indoor: NavigationJourney.Indoor ->
+                            activeTrip = activeTrip?.enterIndoors()
+                            activeDestination = indoor.target.name
+                            activeLocation = indoor.target.location
+                            activeEntryNodeId = indoor.entryNodeId
+                            activeTargetNodeId = indoor.target.nodeId
+                            canReturnOutdoors = true
+                            isVerticalGuidanceActive = false
+                            navController.navigate(Screen.Navigation.route) { launchSingleTop = true }
+                        }
+                    )
+                }
             }
             composable(Screen.Professors.route) {
                 ProfessorsScreen(onNavigate = { route -> handleNavigation(route) })

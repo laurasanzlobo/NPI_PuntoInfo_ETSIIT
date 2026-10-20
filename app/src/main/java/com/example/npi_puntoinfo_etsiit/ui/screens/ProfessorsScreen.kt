@@ -31,7 +31,7 @@ import androidx.compose.ui.unit.sp
 import com.example.npi_puntoinfo_etsiit.ui.components.GestureBadge
 import com.example.npi_puntoinfo_etsiit.ui.components.GestureType
 import com.example.npi_puntoinfo_etsiit.sensors.AccelerometerManager
-import com.example.npi_puntoinfo_etsiit.ui.navigation.Screen
+import com.example.npi_puntoinfo_etsiit.outdoor.OutdoorNavigationRoute
 import com.example.npi_puntoinfo_etsiit.ui.theme.*
 
 data class Professor(
@@ -69,7 +69,7 @@ fun ProfessorsScreen(
                     val floorName = prof.office.split("·").getOrElse(1) { "ETSIIT" }.trim()
                     selectedProfessor = null
                     val locationText = if (floorName.isNotBlank() && floorName != "ETSIIT") "${prof.name} · $floorName" else prof.name
-                    onNavigate(Screen.Navigation.createRoute(roomName, locationText))
+                    onNavigate(OutdoorNavigationRoute.forProfessor(roomName, locationText))
                 }
             }
             manager.startListening()
@@ -195,7 +195,7 @@ fun ProfessorsScreen(
                                         val floorName = prof.office.split("·").getOrElse(1) { "ETSIIT" }.trim()
                                         selectedProfessor = null
                                         val locationText = if (floorName.isNotBlank() && floorName != "ETSIIT") "${prof.name} · $floorName" else prof.name
-                                        onNavigate(Screen.Navigation.createRoute(roomName, locationText))
+                                        onNavigate(OutdoorNavigationRoute.forProfessor(roomName, locationText))
                                     }
                                 )
                             }

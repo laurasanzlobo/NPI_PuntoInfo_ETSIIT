@@ -32,6 +32,7 @@ import com.example.npi_puntoinfo_etsiit.ui.components.GestureBadge
 import com.example.npi_puntoinfo_etsiit.ui.components.GestureType
 import com.example.npi_puntoinfo_etsiit.sensors.AccelerometerManager
 import com.example.npi_puntoinfo_etsiit.ui.navigation.Screen
+import com.example.npi_puntoinfo_etsiit.outdoor.OutdoorDestinations
 import com.example.npi_puntoinfo_etsiit.ui.theme.*
 import java.time.DayOfWeek
 import java.time.LocalDate
@@ -59,7 +60,7 @@ fun DiningScreen(
 
     fun navigateToDining() {
         triggerVibration(context, durationMs = 150)
-        onNavigate(Screen.Navigation.createRoute("Comedor Aynadamar", "Campus Aynadamar"))
+        onNavigate(Screen.Outdoor.createRoute(OutdoorDestinations.forDiningHall("aynadamar")!!.id))
     }
 
     // Tomamos la fecha real del teléfono y la revisamos periódicamente mientras
@@ -151,7 +152,7 @@ fun DiningScreen(
     }
 
     // Esta pantalla dispone de dos gestos independientes:
-    // 1) Giro lateral («¡Llévame!»): conservamos la navegación original.
+    // 1) Giro lateral («¡Llévame!»): navegación exterior al comedor mostrado.
     // 2) Bajar brevemente la parte superior y volver: confirmar menú visible.
     // El gestor se escucha solo mientras esta pantalla está activa y no está abierto
     // el diálogo global de clase actual.
