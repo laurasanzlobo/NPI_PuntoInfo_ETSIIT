@@ -68,11 +68,11 @@ class NfcCardReader(private val activity: Activity) {
 
     companion object {
         /**
-         * Simula una lectura NFC válida con un UID de tarjeta UGR Mifare/Desfire
-         * para entornos de emulador o terminales sin sensor físico.
+         * UID real de la TUI física UGR del dump Mifare Classic EV1 (MF1S70): EA:76:97:6E
          */
         fun generateMockUid(): String {
-            return "04:5B:2A:8C:1E:60:80"
+            return "EA:76:97:6E"
         }
     }
 }
+
