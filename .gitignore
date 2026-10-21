@@ -16,3 +16,6 @@ local.properties
 .idea/
 __pycache__/
 *.pyc
+tools/horarios_parser/downloads/
+tools/horarios_parser/output/
+
