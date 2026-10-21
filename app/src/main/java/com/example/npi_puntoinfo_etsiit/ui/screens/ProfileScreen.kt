@@ -1,15 +1,22 @@
 package com.example.npi_puntoinfo_etsiit.ui.screens
 
+import android.Manifest
 import android.app.Activity
+import android.content.pm.PackageManager
 import android.graphics.Bitmap
+import android.graphics.ImageDecoder
+import android.net.Uri
+import android.os.Build
+import android.provider.MediaStore
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -29,6 +36,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat
 import com.example.npi_puntoinfo_etsiit.data.ScheduleRepository
 import com.example.npi_puntoinfo_etsiit.data.SubjectOption
 import com.example.npi_puntoinfo_etsiit.data.UserProfile
@@ -58,17 +66,22 @@ fun ProfileScreen() {
     var selectedCourse by remember { mutableIntStateOf(3) }
     var selectedGroup by remember { mutableStateOf("A") }
     var userMatricula by remember { mutableStateOf<Map<String, String>>(emptyMap()) }
+    var searchQuery by remember { mutableStateOf("") }
+    var courseFilter by remember { mutableIntStateOf(0) } // 0 = Todos, 1..4
 
-    // Inicializar asignaturas cuando se selecciona grado o curso
-    val catalogSubjects = remember(context, selectedDegreeId, selectedCourse) {
-        ScheduleRepository.getCatalogSubjects(context, selectedDegreeId, selectedCourse)
+    // Cargar catálogo de asignaturas del grado
+    val allDegreeSubjects = remember(context, selectedDegreeId) {
+        (1..4).flatMap { c -> ScheduleRepository.getCatalogSubjects(context, selectedDegreeId, c) }
+            .distinctBy { it.acronym }
+            .sortedBy { it.acronym }
     }
 
-    // Auto-preseleccionar asignaturas del curso
-    LaunchedEffect(catalogSubjects) {
-        if (catalogSubjects.isNotEmpty() && userMatricula.isEmpty()) {
+    // Inicializar asignaturas cuando se selecciona grado o curso principal
+    LaunchedEffect(selectedDegreeId, selectedCourse) {
+        val courseSubjects = ScheduleRepository.getCatalogSubjects(context, selectedDegreeId, selectedCourse)
+        if (courseSubjects.isNotEmpty() && userMatricula.isEmpty()) {
             val defaultMatricula = mutableMapOf<String, String>()
-            catalogSubjects.forEach { subj ->
+            courseSubjects.forEach { subj ->
                 val defaultSubgroup = subj.subgruposDisponibles.firstOrNull() ?: "A1"
                 defaultMatricula[subj.acronym] = defaultSubgroup
             }
@@ -76,13 +89,13 @@ fun ProfileScreen() {
         }
     }
 
-    // Listener del sensor NFC
+    // Listener universal del sensor NFC (acepta cualquier tarjeta física)
     DisposableEffect(activity, scannedTuiData, nfcVerifiedUid) {
         if (activity != null && scannedTuiData != null && nfcVerifiedUid == null) {
             val nfcReader = NfcCardReader(activity)
             nfcReader.onCardDiscovered = { uid ->
                 nfcVerifiedUid = uid
-                Toast.makeText(context, "Tarjeta NFC verificada con éxito ($uid)", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, "Tarjeta NFC detectada y verificada: $uid", Toast.LENGTH_SHORT).show()
             }
             nfcReader.startListening()
 
@@ -94,12 +107,11 @@ fun ProfileScreen() {
         }
     }
 
-    // Launcher de cámara para foto a la TUI
-    val takePhotoLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.TakePicturePreview()
-    ) { bitmap: Bitmap? ->
-        if (bitmap != null) {
-            isProcessingOcr = true
+    // Procesador seguro de Bitmap
+    fun processBitmapSafe(bitmap: Bitmap?) {
+        if (bitmap == null) return
+        isProcessingOcr = true
+        try {
             TuiOcrScanner.processImage(
                 bitmap = bitmap,
                 onSuccess = { data ->
@@ -109,9 +121,54 @@ fun ProfileScreen() {
                 },
                 onError = { e ->
                     isProcessingOcr = false
-                    Toast.makeText(context, "Error leyendo imagen: ${e.message}", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, "Error OCR: ${e.localizedMessage ?: "desconocido"}", Toast.LENGTH_SHORT).show()
                 }
             )
+        } catch (e: Exception) {
+            isProcessingOcr = false
+            Toast.makeText(context, "Excepción al procesar imagen: ${e.message}", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    // Launcher de cámara protegido con try-catch
+    val takePhotoLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.TakePicturePreview()
+    ) { bitmap: Bitmap? ->
+        processBitmapSafe(bitmap)
+    }
+
+    // Launcher para solicitar permiso de cámara en tiempo de ejecución (evita crash)
+    val cameraPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted: Boolean ->
+        if (isGranted) {
+            try {
+                takePhotoLauncher.launch(null)
+            } catch (e: Exception) {
+                Toast.makeText(context, "No se pudo abrir la cámara: ${e.message}", Toast.LENGTH_SHORT).show()
+            }
+        } else {
+            Toast.makeText(context, "Permiso de cámara denegado. Puedes usar la galería o TUI demo.", Toast.LENGTH_LONG).show()
+        }
+    }
+
+    // Launcher de galería (alternativa sin necesidad de cámara)
+    val pickImageLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        if (uri != null) {
+            try {
+                val bitmap = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                    val source = ImageDecoder.createSource(context.contentResolver, uri)
+                    ImageDecoder.decodeBitmap(source)
+                } else {
+                    @Suppress("DEPRECATION")
+                    MediaStore.Images.Media.getBitmap(context.contentResolver, uri)
+                }
+                processBitmapSafe(bitmap)
+            } catch (e: Exception) {
+                Toast.makeText(context, "Error cargando imagen de galería: ${e.message}", Toast.LENGTH_SHORT).show()
+            }
         }
     }
 
@@ -125,10 +182,9 @@ fun ProfileScreen() {
     ) {
         if (profile.isLoggedIn) {
             // ==========================================
-            // VISTA DE USUARIO CON SESIÓN INICIADA
+            // VISTA CON SESIÓN INICIADA
             // ==========================================
 
-            // Carné virtual TUI con datos reales
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -167,13 +223,14 @@ fun ProfileScreen() {
                                     imageVector = Icons.Default.Nfc,
                                     contentDescription = "NFC Verificado",
                                     tint = Color(0xFF4ADE80),
-                                    modifier = Modifier.size(22.dp)
+                                    modifier = Modifier.size(20.dp)
                                 )
                                 Spacer(modifier = Modifier.width(4.dp))
                                 Text(
-                                    text = "UID: ${profile.nfcUid.take(8)}...",
-                                    color = Color.White.copy(alpha = 0.8f),
-                                    fontSize = 10.sp
+                                    text = profile.nfcUid,
+                                    color = Color.White.copy(alpha = 0.85f),
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold
                                 )
                             }
                         }
@@ -181,7 +238,7 @@ fun ProfileScreen() {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Box(
                                 modifier = Modifier
-                                    .size(56.dp)
+                                    .size(54.dp)
                                     .clip(CircleShape)
                                     .background(Color.White.copy(alpha = 0.2f)),
                                 contentAlignment = Alignment.Center
@@ -193,7 +250,7 @@ fun ProfileScreen() {
                                     modifier = Modifier.size(32.dp)
                                 )
                             }
-                            Spacer(modifier = Modifier.width(16.dp))
+                            Spacer(modifier = Modifier.width(14.dp))
                             Column {
                                 Text(
                                     text = profile.name,
@@ -241,7 +298,7 @@ fun ProfileScreen() {
                 }
             }
 
-            // Sección de Asignaturas Matriculadas y Subgrupos
+            // Sección de asignaturas matriculadas
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp),
@@ -256,59 +313,41 @@ fun ProfileScreen() {
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text(
-                            text = "Mis Asignaturas y Subgrupos",
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 15.sp,
-                            color = TextPrimary
-                        )
-                        IconButton(onClick = { showSubjectEditorDialog = true }) {
-                            Icon(
-                                imageVector = Icons.Default.Edit,
-                                contentDescription = "Editar matrícula",
-                                tint = EtsiitBlue
+                        Column {
+                            Text(
+                                text = "Mis Asignaturas (${profile.matricula.size})",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 15.sp,
+                                color = TextPrimary
                             )
+                            Text(
+                                text = "Horario filtrado por tus materias y subgrupos",
+                                fontSize = 12.sp,
+                                color = TextSecondary
+                            )
+                        }
+                        IconButton(onClick = { showSubjectEditorDialog = true }) {
+                            Icon(imageVector = Icons.Default.Edit, contentDescription = "Editar matrícula", tint = EtsiitBlue)
                         }
                     }
 
-                    if (profile.matricula.isEmpty()) {
-                        Text(
-                            text = "Asistiendo al horario general del Grupo ${profile.primaryGroup}.",
-                            fontSize = 13.sp,
-                            color = TextSecondary
-                        )
-                    } else {
-                        profile.matricula.forEach { (acronym, subgroup) ->
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clip(RoundedCornerShape(8.dp))
-                                    .background(BackgroundLight)
-                                    .padding(horizontal = 12.dp, vertical = 8.dp),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text(
-                                    text = acronym,
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 14.sp,
-                                    color = TextPrimary
-                                )
-                                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    profile.matricula.forEach { (acronym, subgroup) ->
+                        val subName = allDegreeSubjects.find { it.acronym == acronym }?.name ?: acronym
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(10.dp),
+                            colors = CardDefaults.cardColors(containerColor = BackgroundLight)
+                        ) {
+                            Column(modifier = Modifier.padding(10.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(text = acronym, fontWeight = FontWeight.Bold, fontSize = 14.sp, color = TextPrimary)
                                     Surface(
-                                        shape = RoundedCornerShape(4.dp),
-                                        color = SurfaceWhite
-                                    ) {
-                                        Text(
-                                            text = "Teoría",
-                                            fontSize = 11.sp,
-                                            color = TextSecondary,
-                                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-                                        )
-                                    }
-                                    Surface(
-                                        shape = RoundedCornerShape(4.dp),
-                                        color = CampusTeal.copy(alpha = 0.12f)
+                                        shape = RoundedCornerShape(6.dp),
+                                        color = CampusTeal.copy(alpha = 0.15f)
                                     ) {
                                         Text(
                                             text = "Prácticas: $subgroup",
@@ -319,13 +358,13 @@ fun ProfileScreen() {
                                         )
                                     }
                                 }
+                                Text(text = subName, fontSize = 12.sp, color = TextSecondary, maxLines = 1)
                             }
                         }
                     }
                 }
             }
 
-            // Botón de Cerrar Sesión
             OutlinedButton(
                 onClick = {
                     UserSessionRepository.logout(context)
@@ -345,7 +384,7 @@ fun ProfileScreen() {
 
         } else {
             // ==========================================
-            // VISTA DE INICIO DE SESIÓN CON TUI + NFC
+            // VISTA SIN SESIÓN (ASISTENTE DE LOGIN)
             // ==========================================
 
             Card(
@@ -354,17 +393,17 @@ fun ProfileScreen() {
                 colors = CardDefaults.cardColors(containerColor = SurfaceWhite)
             ) {
                 Column(
-                    modifier = Modifier.padding(20.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                    modifier = Modifier.padding(18.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Text(
-                        text = "Inicio de Sesión con TUI",
+                        text = "Inicio de Sesión TUI + NFC",
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold,
                         color = TextPrimary
                     )
                     Text(
-                        text = "Escanea tu Tarjeta Universitaria Inteligente de la UGR y acércala al lector NFC para validar tu identidad física y cargar automáticamente tu horario.",
+                        text = "Identifícate con tu carné universitario físico para cargar tu horario exacto y filtrar solo tus asignaturas y subgrupos.",
                         fontSize = 13.sp,
                         color = TextSecondary,
                         lineHeight = 18.sp
@@ -372,63 +411,76 @@ fun ProfileScreen() {
                 }
             }
 
-            // PASO 1: Captura Óptica de la TUI
+            // PASO 1: Captura Óptica
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp),
                 colors = CardDefaults.cardColors(containerColor = SurfaceWhite)
             ) {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
+                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Surface(
                             shape = CircleShape,
-                            color = (if (scannedTuiData != null) Color(0xFF10B981) else UgrRed).copy(alpha = 0.12f),
+                            color = (if (scannedTuiData != null) Color(0xFF10B981) else UgrRed).copy(alpha = 0.15f),
                             modifier = Modifier.size(32.dp)
                         ) {
                             Box(contentAlignment = Alignment.Center) {
-                                Text(
-                                    text = "1",
-                                    fontWeight = FontWeight.Bold,
-                                    color = if (scannedTuiData != null) Color(0xFF10B981) else UgrRed
-                                )
+                                Text("1", fontWeight = FontWeight.Bold, color = if (scannedTuiData != null) Color(0xFF10B981) else UgrRed)
                             }
                         }
                         Spacer(modifier = Modifier.width(10.dp))
-                        Text(
-                            text = "Captura de la TUI (Foto / OCR)",
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 15.sp,
-                            color = TextPrimary
-                        )
+                        Text("Captura de la TUI", fontWeight = FontWeight.Bold, fontSize = 15.sp, color = TextPrimary)
                     }
 
                     if (scannedTuiData == null) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            Button(
-                                onClick = { takePhotoLauncher.launch(null) },
-                                modifier = Modifier.weight(1f),
-                                shape = RoundedCornerShape(10.dp),
-                                colors = ButtonDefaults.buttonColors(containerColor = UgrRed)
-                            ) {
-                                Icon(Icons.Default.PhotoCamera, contentDescription = null, modifier = Modifier.size(18.dp))
-                                Spacer(modifier = Modifier.width(6.dp))
-                                Text("Hacer foto", fontSize = 13.sp)
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Button(
+                                    onClick = {
+                                        val hasPermission = ContextCompat.checkSelfPermission(
+                                            context,
+                                            Manifest.permission.CAMERA
+                                        ) == PackageManager.PERMISSION_GRANTED
+
+                                        if (hasPermission) {
+                                            try {
+                                                takePhotoLauncher.launch(null)
+                                            } catch (e: Exception) {
+                                                Toast.makeText(context, "Error al abrir cámara: ${e.message}", Toast.LENGTH_SHORT).show()
+                                            }
+                                        } else {
+                                            cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
+                                        }
+                                    },
+                                    modifier = Modifier.weight(1f),
+                                    shape = RoundedCornerShape(10.dp),
+                                    colors = ButtonDefaults.buttonColors(containerColor = UgrRed)
+                                ) {
+                                    Icon(Icons.Default.PhotoCamera, contentDescription = null, modifier = Modifier.size(18.dp))
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text("Cámara", fontSize = 13.sp)
+                                }
+
+                                OutlinedButton(
+                                    onClick = { pickImageLauncher.launch("image/*") },
+                                    modifier = Modifier.weight(1f),
+                                    shape = RoundedCornerShape(10.dp)
+                                ) {
+                                    Icon(Icons.Default.Image, contentDescription = null, modifier = Modifier.size(18.dp))
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text("Galería", fontSize = 13.sp)
+                                }
                             }
+
                             OutlinedButton(
                                 onClick = {
                                     scannedTuiData = TuiOcrScanner.getDemoTui()
-                                    Toast.makeText(context, "Cargada TUI demo", Toast.LENGTH_SHORT).show()
+                                    Toast.makeText(context, "Cargada TUI demo de Laura Sanz", Toast.LENGTH_SHORT).show()
                                 },
-                                modifier = Modifier.weight(1f),
+                                modifier = Modifier.fillMaxWidth(),
                                 shape = RoundedCornerShape(10.dp)
                             ) {
-                                Text("Usar TUI Demo", fontSize = 13.sp)
+                                Text("Probar con TUI Demo (Sin foto)", fontSize = 13.sp)
                             }
                         }
 
@@ -440,11 +492,10 @@ fun ProfileScreen() {
                             ) {
                                 CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
                                 Spacer(modifier = Modifier.width(8.dp))
-                                Text("Extrayendo datos de la tarjeta con ML Kit...", fontSize = 12.sp, color = TextSecondary)
+                                Text("Analizando texto con ML Kit...", fontSize = 12.sp, color = TextSecondary)
                             }
                         }
                     } else {
-                        // Resumen de datos extraídos
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -453,51 +504,39 @@ fun ProfileScreen() {
                                 .padding(12.dp),
                             verticalArrangement = Arrangement.spacedBy(4.dp)
                         ) {
-                            Text("Estudiante: ${scannedTuiData?.name}", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = TextPrimary)
-                            Text("DNI: ${scannedTuiData?.dni} · Tarjeta: ${scannedTuiData?.cardNumber?.take(8)}...", fontSize = 12.sp, color = TextSecondary)
+                            Text("Estudiante: ${scannedTuiData?.name}", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = TextPrimary)
+                            Text("DNI: ${scannedTuiData?.dni} · TUI: ${scannedTuiData?.cardNumber?.chunked(4)?.joinToString(" ")}", fontSize = 12.sp, color = TextSecondary)
                             Text("Colectivo: ${scannedTuiData?.colectivo}", fontSize = 12.sp, color = CampusTeal, fontWeight = FontWeight.Bold)
                         }
                     }
                 }
             }
 
-            // PASO 2: Verificación de Seguridad por NFC
+            // PASO 2: Verificación NFC Universal
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp),
                 colors = CardDefaults.cardColors(containerColor = SurfaceWhite)
             ) {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
+                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Surface(
                             shape = CircleShape,
-                            color = (if (nfcVerifiedUid != null) Color(0xFF10B981) else EtsiitBlue).copy(alpha = 0.12f),
+                            color = (if (nfcVerifiedUid != null) Color(0xFF10B981) else EtsiitBlue).copy(alpha = 0.15f),
                             modifier = Modifier.size(32.dp)
                         ) {
                             Box(contentAlignment = Alignment.Center) {
-                                Text(
-                                    text = "2",
-                                    fontWeight = FontWeight.Bold,
-                                    color = if (nfcVerifiedUid != null) Color(0xFF10B981) else EtsiitBlue
-                                )
+                                Text("2", fontWeight = FontWeight.Bold, color = if (nfcVerifiedUid != null) Color(0xFF10B981) else EtsiitBlue)
                             }
                         }
                         Spacer(modifier = Modifier.width(10.dp))
-                        Text(
-                            text = "Verificación Física por NFC",
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 15.sp,
-                            color = TextPrimary
-                        )
+                        Text("Verificación NFC Física", fontWeight = FontWeight.Bold, fontSize = 15.sp, color = TextPrimary)
                     }
 
                     if (nfcVerifiedUid == null) {
                         Text(
                             text = if (scannedTuiData != null)
-                                "Acerca tu tarjeta física al lector NFC de la parte trasera del teléfono para validar el chip anti-suplantación."
+                                "Acerca cualquier tarjeta física TUI al lector NFC del móvil para capturar su UID inmutable anti-copia."
                             else
                                 "Completa primero la foto de la TUI en el Paso 1.",
                             fontSize = 13.sp,
@@ -507,15 +546,15 @@ fun ProfileScreen() {
                         if (scannedTuiData != null) {
                             OutlinedButton(
                                 onClick = {
-                                    nfcVerifiedUid = NfcCardReader.generateMockUid()
-                                    Toast.makeText(context, "Simulación NFC completada", Toast.LENGTH_SHORT).show()
+                                    nfcVerifiedUid = "EA:76:97:6E"
+                                    Toast.makeText(context, "UID verificado: EA:76:97:6E", Toast.LENGTH_SHORT).show()
                                 },
                                 modifier = Modifier.fillMaxWidth(),
                                 shape = RoundedCornerShape(10.dp)
                             ) {
                                 Icon(Icons.Default.Nfc, contentDescription = null, modifier = Modifier.size(18.dp))
                                 Spacer(modifier = Modifier.width(6.dp))
-                                Text("Simular toque NFC (Prueba en emulador)", fontSize = 13.sp)
+                                Text("Simular toque NFC (UID: EA:76:97:6E)", fontSize = 13.sp)
                             }
                         }
                     } else {
@@ -531,14 +570,14 @@ fun ProfileScreen() {
                             Spacer(modifier = Modifier.width(10.dp))
                             Column {
                                 Text("Tarjeta TUI física verificada", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = Color(0xFF065F46))
-                                Text("UID hardware: $nfcVerifiedUid", fontSize = 12.sp, color = Color(0xFF047857))
+                                Text("UID hardware capturado: $nfcVerifiedUid", fontSize = 12.sp, color = Color(0xFF047857))
                             }
                         }
                     }
                 }
             }
 
-            // PASO 3: Selección de Grado, Curso y Configuración de Matrícula
+            // PASO 3: Selección de Grado, Asignaturas con Buscador
             AnimatedVisibility(visible = scannedTuiData != null && nfcVerifiedUid != null) {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
@@ -547,12 +586,12 @@ fun ProfileScreen() {
                 ) {
                     Column(
                         modifier = Modifier.padding(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                        verticalArrangement = Arrangement.spacedBy(14.dp)
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Surface(
                                 shape = CircleShape,
-                                color = CampusTeal.copy(alpha = 0.12f),
+                                color = CampusTeal.copy(alpha = 0.15f),
                                 modifier = Modifier.size(32.dp)
                             ) {
                                 Box(contentAlignment = Alignment.Center) {
@@ -560,12 +599,7 @@ fun ProfileScreen() {
                                 }
                             }
                             Spacer(modifier = Modifier.width(10.dp))
-                            Text(
-                                text = "Matrícula y Asignaturas",
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 15.sp,
-                                color = TextPrimary
-                            )
+                            Text("Matrícula y Asignaturas", fontWeight = FontWeight.Bold, fontSize = 15.sp, color = TextPrimary)
                         }
 
                         // Selector de Grado
@@ -581,7 +615,7 @@ fun ProfileScreen() {
                                             selectedDegreeId = id
                                             selectedDegreeName = name
                                         }
-                                        .background(if (selectedDegreeId == id) EtsiitBlue.copy(alpha = 0.12f) else BackgroundLight)
+                                        .background(if (selectedDegreeId == id) EtsiitBlue.copy(alpha = 0.1f) else BackgroundLight)
                                         .padding(10.dp),
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
@@ -598,10 +632,11 @@ fun ProfileScreen() {
                             }
                         }
 
-                        // Selector de Curso y Grupo
+                        // Selector de Curso y Grupo Principal
+                        Text("Curso y Grupo principal:", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
                         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                             Column(modifier = Modifier.weight(1f)) {
-                                Text("Curso:", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
+                                Text("Curso:", fontSize = 12.sp, color = TextSecondary)
                                 Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                                     listOf(1, 2, 3, 4).forEach { c ->
                                         FilterChip(
@@ -613,7 +648,7 @@ fun ProfileScreen() {
                                 }
                             }
                             Column(modifier = Modifier.weight(1f)) {
-                                Text("Grupo:", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
+                                Text("Grupo:", fontSize = 12.sp, color = TextSecondary)
                                 Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                                     listOf("A", "B", "C", "D").forEach { g ->
                                         FilterChip(
@@ -626,39 +661,129 @@ fun ProfileScreen() {
                             }
                         }
 
-                        // Asignaturas y subgrupos
-                        Text("Asignaturas y subgrupos de prácticas:", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
-                        catalogSubjects.forEach { subj ->
-                            val currentSubg = userMatricula[subj.acronym] ?: "A1"
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clip(RoundedCornerShape(8.dp))
-                                    .background(BackgroundLight)
-                                    .padding(8.dp),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Column(modifier = Modifier.weight(1f)) {
-                                    Text(subj.acronym, fontWeight = FontWeight.Bold, fontSize = 13.sp, color = TextPrimary)
-                                    Text(subj.name, fontSize = 11.sp, color = TextSecondary, maxLines = 1)
+                        // BARRA DE BÚSQUEDA DE ASIGNATURAS
+                        Text("Personalizar asignaturas y subgrupos:", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
+                        OutlinedTextField(
+                            value = searchQuery,
+                            onValueChange = { searchQuery = it },
+                            placeholder = { Text("Buscar por nombre o acrónimo (ej. NPI, VC)...", fontSize = 12.sp) },
+                            leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = TextSecondary) },
+                            trailingIcon = {
+                                if (searchQuery.isNotEmpty()) {
+                                    IconButton(onClick = { searchQuery = "" }) {
+                                        Icon(Icons.Default.Clear, contentDescription = null, tint = TextSecondary)
+                                    }
                                 }
-                                Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                                    val subgrupos = if (subj.subgruposDisponibles.isNotEmpty()) subj.subgruposDisponibles else listOf("A1", "A2", "A3")
-                                    subgrupos.take(3).forEach { sg ->
-                                        FilterChip(
-                                            selected = currentSubg == sg,
-                                            onClick = {
-                                                userMatricula = userMatricula.toMutableMap().apply { put(subj.acronym, sg) }
-                                            },
-                                            label = { Text(sg, fontSize = 11.sp) }
-                                        )
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(10.dp),
+                            singleLine = true
+                        )
+
+                        // Filtro rápido de curso para asignaturas
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            listOf(0 to "Todos", 1 to "1º", 2 to "2º", 3 to "3º", 4 to "4º").forEach { (c, label) ->
+                                FilterChip(
+                                    selected = courseFilter == c,
+                                    onClick = { courseFilter = c },
+                                    label = { Text(label, fontSize = 11.sp) }
+                                )
+                            }
+                        }
+
+                        // Lista filtrada de asignaturas
+                        val filteredSubjects = remember(allDegreeSubjects, searchQuery, courseFilter) {
+                            allDegreeSubjects.filter { subj ->
+                                val matchesSearch = searchQuery.isBlank() ||
+                                        subj.acronym.contains(searchQuery, ignoreCase = true) ||
+                                        subj.name.contains(searchQuery, ignoreCase = true)
+                                val matchesCourse = courseFilter == 0 || subj.curso == courseFilter
+                                matchesSearch && matchesCourse
+                            }
+                        }
+
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            filteredSubjects.forEach { subj ->
+                                val isEnrolled = userMatricula.containsKey(subj.acronym)
+                                val currentSubg = userMatricula[subj.acronym] ?: "A1"
+
+                                Card(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    shape = RoundedCornerShape(10.dp),
+                                    colors = CardDefaults.cardColors(
+                                        containerColor = if (isEnrolled) EtsiitBlue.copy(alpha = 0.05f) else BackgroundLight
+                                    )
+                                ) {
+                                    Column(modifier = Modifier.padding(10.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                                Checkbox(
+                                                    checked = isEnrolled,
+                                                    onCheckedChange = { checked ->
+                                                        val mutable = userMatricula.toMutableMap()
+                                                        if (checked) {
+                                                            mutable[subj.acronym] = subj.subgruposDisponibles.firstOrNull() ?: "A1"
+                                                        } else {
+                                                            mutable.remove(subj.acronym)
+                                                        }
+                                                        userMatricula = mutable
+                                                    }
+                                                )
+                                                Column {
+                                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                                        Text(text = subj.acronym, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                                                        Spacer(modifier = Modifier.width(6.dp))
+                                                        Surface(
+                                                            shape = RoundedCornerShape(4.dp),
+                                                            color = EtsiitBlue.copy(alpha = 0.12f)
+                                                        ) {
+                                                            Text(
+                                                                text = "${subj.curso}º curso",
+                                                                fontSize = 10.sp,
+                                                                fontWeight = FontWeight.Bold,
+                                                                color = EtsiitBlue,
+                                                                modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)
+                                                            )
+                                                        }
+                                                    }
+                                                    Text(text = subj.name, fontSize = 12.sp, color = TextSecondary, maxLines = 1)
+                                                }
+                                            }
+                                        }
+
+                                        // Subgrupos de prácticas (solo si está matriculada)
+                                        if (isEnrolled) {
+                                            Row(
+                                                modifier = Modifier.fillMaxWidth().padding(start = 40.dp),
+                                                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                                verticalAlignment = Alignment.CenterVertically
+                                            ) {
+                                                Text("Prácticas:", fontSize = 11.sp, color = TextSecondary)
+                                                val subgs = if (subj.subgruposDisponibles.isNotEmpty()) subj.subgruposDisponibles else listOf("A1", "A2", "A3")
+                                                subgs.take(4).forEach { sg ->
+                                                    FilterChip(
+                                                        selected = currentSubg == sg,
+                                                        onClick = {
+                                                            userMatricula = userMatricula.toMutableMap().apply { put(subj.acronym, sg) }
+                                                        },
+                                                        label = { Text(sg, fontSize = 10.sp) }
+                                                    )
+                                                }
+                                            }
+                                        }
                                     }
                                 }
                             }
                         }
 
-                        // Botón Final de Iniciar Sesión
+                        // Botón de Inicio de Sesión
                         Button(
                             onClick = {
                                 val tui = scannedTuiData
@@ -697,22 +822,28 @@ fun ProfileScreen() {
         }
     }
 
-    // Diálogo para editar asignaturas y subgrupos
+    // Diálogo de edición de asignaturas
     if (showSubjectEditorDialog) {
+        var dialogSearch by remember { mutableStateOf("") }
         AlertDialog(
             onDismissRequest = { showSubjectEditorDialog = false },
-            title = { Text("Configurar Asignaturas y Prácticas", fontWeight = FontWeight.Bold) },
+            title = { Text("Gestionar Matrícula", fontWeight = FontWeight.Bold) },
             text = {
                 Column(
                     modifier = Modifier.verticalScroll(rememberScrollState()),
                     verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    Text(
-                        "Selecciona el subgrupo de prácticas asignado a cada materia o elimina las que no curses este cuatrimestre:",
-                        fontSize = 12.sp,
-                        color = TextSecondary
+                    OutlinedTextField(
+                        value = dialogSearch,
+                        onValueChange = { dialogSearch = it },
+                        placeholder = { Text("Buscar asignatura...", fontSize = 12.sp) },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true
                     )
-                    catalogSubjects.forEach { subj ->
+                    allDegreeSubjects.filter {
+                        dialogSearch.isBlank() || it.acronym.contains(dialogSearch, ignoreCase = true) || it.name.contains(dialogSearch, ignoreCase = true)
+                    }.forEach { subj ->
+                        val isEnrolled = profile.matricula.containsKey(subj.acronym)
                         val currentSubg = profile.matricula[subj.acronym] ?: "A1"
                         Row(
                             modifier = Modifier
@@ -723,8 +854,22 @@ fun ProfileScreen() {
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text(subj.acronym, fontWeight = FontWeight.Bold, fontSize = 13.sp)
-                            Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Checkbox(
+                                checked = isEnrolled,
+                                onCheckedChange = { checked ->
+                                    if (checked) {
+                                        UserSessionRepository.setSubjectSubgroup(context, subj.acronym, "A1")
+                                    } else {
+                                        UserSessionRepository.removeSubject(context, subj.acronym)
+                                    }
+                                    profile = UserSessionRepository.getProfile(context)
+                                }
+                            )
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(subj.acronym, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                                Text(subj.name, fontSize = 11.sp, color = TextSecondary, maxLines = 1)
+                            }
+                            if (isEnrolled) {
                                 val subgs = if (subj.subgruposDisponibles.isNotEmpty()) subj.subgruposDisponibles else listOf("A1", "A2", "A3")
                                 subgs.take(3).forEach { sg ->
                                     FilterChip(
@@ -733,7 +878,7 @@ fun ProfileScreen() {
                                             UserSessionRepository.setSubjectSubgroup(context, subj.acronym, sg)
                                             profile = UserSessionRepository.getProfile(context)
                                         },
-                                        label = { Text(sg, fontSize = 10.sp) }
+                                        label = { Text(sg, fontSize = 9.sp) }
                                     )
                                 }
                             }
