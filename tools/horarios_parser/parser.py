@@ -468,7 +468,6 @@ def parse_table_section(words: list[dict], y_start: float, y_end: float,
         for tok in subject_tokens:
             acronym = tok["acronym"]
             subgroup = tok["subgroup"]
-            is_practice = subgroup is not None
 
             # Buscar aula más cercana horizontalmente (tanto arriba como abajo)
             matched_room = "0.1"
@@ -495,6 +494,9 @@ def parse_table_section(words: list[dict], y_start: float, y_end: float,
 
             clean_room_code = limpiar_codigo_aula(matched_room)
             room_label, planta, tipo_espacio = formatear_aula_y_planta(clean_room_code)
+
+            # Práctica si tiene subgrupo asignado o si se imparte en laboratorio
+            is_practice = (subgroup is not None) or (tipo_espacio == "laboratorio")
 
             slot_times = slot["slot_text"].split("-")
             hora_ini = slot_times[0].strip().zfill(5)
