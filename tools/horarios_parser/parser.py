@@ -391,45 +391,59 @@ def parse_horarios_pdf(pdf_path: str, grado_id: str, grado_nombre: str) -> dict:
         if not words:
             continue
 
-        # Extraer cabecera del curso y grupo (palabras en y < 65)
-        top_words = [w for w in words if w["yMin"] < 65.0]
-        top_words.sort(key=lambda w: (w["yMin"], w["xMin"]))
-        top_text = " ".join(w["text"] for w in top_words)
-
-        # Ejemplo regex: '1º A Grado en...' o '2º Grado en...'
-        m_head = re.search(r"([1-5])º(?:\s*([A-D]))?\s*((?:Doble\s+)?Grado[^\n\r]+)", top_text)
-        curso = int(m_head.group(1)) if m_head else 1
-        grupo = m_head.group(2) if (m_head and m_head.group(2)) else "A"
-
         # Leyenda de asignaturas de la página
         legend = parse_legend_items(words)
 
-        # Detectar cuatrimestres en la página
-        cuatrimestre_words = [w for w in words if "cuatrimestre" in w["text"].lower()]
-        
-        if len(cuatrimestre_words) >= 2:
-            # Típicamente 1er cuatrimestre arriba (y < 250) y 2º cuatrimestre abajo (y >= 250)
-            split_y = (cuatrimestre_words[0]["yMin"] + cuatrimestre_words[1]["yMin"]) / 2.0
-            
-            # 1er cuatrimestre
-            info_c1 = {"curso": curso, "grupo": grupo, "cuatrimestre": 1}
-            sec1 = parse_table_section(words, 60.0, split_y + 10.0, info_c1, legend)
-            if sec1 and any(sec1.get("horario", {}).values()):
-                cursos_parsed.append(sec1)
+        # Buscar todas las tablas en la página identificando la posición 'Lunes'
+        lunes_words = [w for w in words if w["text"] == "Lunes" and w["xMin"] < 200.0]
+        lunes_words.sort(key=lambda w: w["yMin"])
 
-            # 2º cuatrimestre
-            info_c2 = {"curso": curso, "grupo": grupo, "cuatrimestre": 2}
-            sec2 = parse_table_section(words, split_y - 10.0, 600.0, info_c2, legend)
-            if sec2 and any(sec2.get("horario", {}).values()):
-                cursos_parsed.append(sec2)
-        else:
-            # Página con un solo cuatrimestre
+        for idx, lw in enumerate(lunes_words):
+            y_lunes = lw["yMin"]
+            
+            # Las palabras de cabecera están en los 45 puntos inmediatamente superiores a Lunes
+            above_words = [w for w in words if y_lunes - 45.0 <= w["yMin"] < y_lunes]
+            above_words.sort(key=lambda w: (w["yMin"], w["xMin"]))
+            header_text = " ".join(w["text"] for w in above_words)
+
+            # Extraer Curso
+            m_curso = re.search(r"([1-5])º", header_text)
+            curso = int(m_curso.group(1)) if m_curso else 1
+
+            # Extraer Cuatrimestre
             cuatrimestre = 1
-            if cuatrimestre_words and "2" in cuatrimestre_words[0]["text"]:
+            if "2" in header_text and "cuatrimestre" in header_text.lower():
                 cuatrimestre = 2
-            info = {"curso": curso, "grupo": grupo, "cuatrimestre": cuatrimestre}
-            sec = parse_table_section(words, 60.0, 600.0, info, legend)
+
+            # Extraer Mención o Especialidad si viene entre paréntesis
+            m_mencion = re.search(r"\(([^)]+)\)", header_text)
+            mencion = m_mencion.group(1).replace("–", "-").strip() if m_mencion else ""
+
+            # Extraer Grupo
+            grupo = "A"
+            m_grupo_letra = re.search(r"[1-5]º\s*([A-Fa-f])\b", header_text)
+            if m_grupo_letra:
+                grupo = m_grupo_letra.group(1).upper()
+            elif mencion:
+                # Si es por especialidad, ej. 'Ingeniería del Software - A' o 'CSI-A'
+                if "-" in mencion:
+                    grupo = mencion.split("-")[-1].strip().upper()
+                else:
+                    grupo = mencion
+
+            info = {
+                "curso": curso,
+                "grupo": grupo,
+                "cuatrimestre": cuatrimestre,
+                "mencion": mencion
+            }
+
+            # Límite inferior de la tabla: siguiente Lunes o final de página
+            next_y = lunes_words[idx + 1]["yMin"] - 45.0 if idx + 1 < len(lunes_words) else 600.0
+
+            sec = parse_table_section(words, y_lunes - 5.0, next_y, info, legend)
             if sec and any(sec.get("horario", {}).values()):
+                sec["mencion"] = mencion
                 cursos_parsed.append(sec)
 
     return {
@@ -437,6 +451,7 @@ def parse_horarios_pdf(pdf_path: str, grado_id: str, grado_nombre: str) -> dict:
         "nombre": grado_nombre,
         "cursos": cursos_parsed
     }
+
 
 
 def main():

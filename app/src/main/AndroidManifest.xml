@@ -8,6 +8,15 @@
     <!-- Permiso para reconocimiento y búsqueda por voz -->
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
 
+    <!-- Permiso de hardware NFC para verificación de la TUI física -->
+    <uses-permission android:name="android.permission.NFC" />
+    <uses-feature android:name="android.hardware.nfc" android:required="false" />
+
+    <!-- Permiso de cámara para captura de la TUI -->
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
+
+
     <application
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"

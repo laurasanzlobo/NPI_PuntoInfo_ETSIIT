@@ -18,6 +18,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.EventBusy
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.MeetingRoom
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Schedule
@@ -57,6 +58,7 @@ fun ScheduleScreen(
 
     val today = remember { LocalDate.now() }
     val now = remember { LocalTime.now() }
+    val profile = remember(context) { com.example.npi_puntoinfo_etsiit.data.UserSessionRepository.getProfile(context) }
 
     // El acelerómetro con el gesto «¡Llévame!» SOLO está activo si el usuario está viendo el detalle de una clase concreta
     DisposableEffect(selectedClass) {
@@ -81,7 +83,7 @@ fun ScheduleScreen(
         }
     }
 
-    val daysSchedule = remember(today, now) {
+    val daysSchedule = remember(today, now, profile) {
         (0 until 7).map { offset ->
             val date = today.plusDays(offset.toLong())
             val dayOfWeek = date.dayOfWeek
@@ -103,7 +105,7 @@ fun ScheduleScreen(
                 else -> dayName
             }
 
-            val baseClasses = ScheduleRepository.getClassesForDay(dayOfWeek)
+            val baseClasses = ScheduleRepository.getClassesForDay(context, dayOfWeek, profile)
 
             val classesForDay = baseClasses.map { item ->
                 item.copy(isCurrent = isToday && isTimeInRange(item.time, now))
@@ -133,6 +135,66 @@ fun ScheduleScreen(
             fontSize = 13.sp,
             color = TextSecondary
         )
+
+        // Indicador del estado de matrícula del estudiante
+        if (profile.isLoggedIn) {
+            Surface(
+                shape = RoundedCornerShape(10.dp),
+                color = EtsiitBlue.copy(alpha = 0.08f),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = Icons.Default.School,
+                            contentDescription = null,
+                            tint = EtsiitBlue,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = "${profile.degreeName.replace("Grado en ", "")} · ${profile.primaryCourse}º ${profile.primaryGroup}",
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = EtsiitBlue
+                        )
+                    }
+                    Text(
+                        text = "${profile.matricula.size} asignaturas",
+                        fontSize = 11.sp,
+                        color = TextSecondary
+                    )
+                }
+            }
+        } else {
+            Surface(
+                shape = RoundedCornerShape(10.dp),
+                color = SurfaceWhite,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Info,
+                        contentDescription = null,
+                        tint = TextSecondary,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = "Escanea tu TUI en Perfil para ver tus asignaturas y subgrupos personalizados.",
+                        fontSize = 11.sp,
+                        color = TextSecondary
+                    )
+                }
+            }
+        }
 
         // Indicador del día actual y puntos (dots) de la semana (diseño idéntico a Comedor)
         Row(

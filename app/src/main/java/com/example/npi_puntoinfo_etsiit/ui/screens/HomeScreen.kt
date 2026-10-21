@@ -23,6 +23,11 @@ import com.example.npi_puntoinfo_etsiit.ui.theme.*
 fun HomeScreen(
     onNavigate: (String) -> Unit
 ) {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val profile = androidx.compose.runtime.remember(context) {
+        com.example.npi_puntoinfo_etsiit.data.UserSessionRepository.getProfile(context)
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -79,7 +84,12 @@ fun HomeScreen(
                     }
                     Spacer(modifier = Modifier.height(10.dp))
                     Text(
-                        text = "Bienvenida, Laura. Tu campus inteligente al alcance de tu mano.",
+                        text = if (profile.isLoggedIn) {
+                            val primerNombre = profile.name.split(" ").firstOrNull() ?: profile.name
+                            "Hola, $primerNombre. ${profile.degreeName} (${profile.primaryCourse}º ${profile.primaryGroup})."
+                        } else {
+                            "Bienvenido a la ETSIIT. Inicia sesión con tu TUI en Perfil para ver tus clases personalizadas."
+                        },
                         color = Color.White.copy(alpha = 0.9f),
                         fontSize = 13.sp
                     )
