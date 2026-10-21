@@ -53,3 +53,4 @@ class TuiSessionTest {
         assertEquals("ESTUDIANTE", demo.colectivo)
     }
 }
+

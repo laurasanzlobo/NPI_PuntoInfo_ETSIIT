@@ -41,3 +41,4 @@ data class SubjectOption(
     val degreeId: String,
     val subgruposDisponibles: List<String> = emptyList()
 )
+
