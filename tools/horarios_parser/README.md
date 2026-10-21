@@ -7,7 +7,7 @@ Genera una base de datos estructurada en formato **JSON** lista para ser integra
 
 ---
 
-## 🎯 Características
+## Características
 - **Detección automática del último curso académico:** Obtiene siempre los horarios más recientes publicados (ej. *Curso Académico 2026-2027*).
 - **Soporte multitítulo (Generalidad):**
   - Grado en Ingeniería Informática (`gii`)
@@ -25,7 +25,7 @@ Genera una base de datos estructurada en formato **JSON** lista para ser integra
 
 ---
 
-## 🚀 Requisitos
+## Requisitos
 - Python 3.9+
 - Herramienta de sistema `pdftotext` (incluida en `poppler-utils`):
   ```bash
@@ -41,7 +41,7 @@ Genera una base de datos estructurada en formato **JSON** lista para ser integra
 
 ---
 
-## 💻 Uso
+## Uso
 
 ### 1. Ejecución estándar (descarga y parseo completo)
 ```bash
@@ -66,7 +66,7 @@ python3 parser.py --force-download
 
 ---
 
-## 📦 Estructura del JSON generado (`horarios_etsiit.json`)
+## Estructura del JSON generado (`horarios_etsiit.json`)
 
 ```json
 {
