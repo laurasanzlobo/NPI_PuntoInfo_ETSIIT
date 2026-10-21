@@ -237,6 +237,35 @@ object ScheduleRepository {
     }
 
     /**
+     * Retorna los grupos o menciones disponibles para un grado y curso concreto.
+     */
+    fun getAvailableGroups(context: Context, degreeId: String, course: Int): List<String> {
+        val data = loadJsonData(context) ?: return listOf("A")
+        val gradosArr = data.getAsJsonArray("grados") ?: return listOf("A")
+        val groupsSet = mutableSetOf<String>()
+
+        for (g in gradosArr) {
+            val gObj = g.asJsonObject
+            if (!gObj.get("id").asString.equals(degreeId, ignoreCase = true)) continue
+
+            val cursosArr = gObj.getAsJsonArray("cursos") ?: continue
+            for (c in cursosArr) {
+                val cObj = c.asJsonObject
+                if (cObj.get("curso").asInt == course) {
+                    val grp = cObj.get("grupo").asString
+                    val menc = if (cObj.has("mencion") && !cObj.get("mencion").isJsonNull) cObj.get("mencion").asString else ""
+                    if (menc.isNotBlank() && (grp.isBlank() || grp.equals(menc, ignoreCase = true))) {
+                        groupsSet.add(menc)
+                    } else if (grp.isNotBlank()) {
+                        groupsSet.add(grp)
+                    }
+                }
+            }
+        }
+        return if (groupsSet.isNotEmpty()) groupsSet.sorted() else listOf("A")
+    }
+
+    /**
      * Obtiene las clases para un día de la semana concreto.
      * Si el perfil tiene matrícula configurada, filtra automáticamente sus asignaturas
      * y subgrupos elegidos, incluyendo asignaturas repetidas.
@@ -320,8 +349,11 @@ object ScheduleRepository {
                                     resultClasses.add(classItem)
                                 }
                             } else {
-                                // Para prácticas, solo añadir si coincide con su subgrupo elegido
-                                if (targetSubgroup.isNullOrBlank() || targetSubgroup.equals(subg, ignoreCase = true)) {
+                                // Para prácticas: si es grupo único (subg == null o elegido "Único"),
+                                // o si coincide con el subgrupo elegido (ej. "A1", "1", etc.)
+                                val isSinglePractice = subg == null || targetSubgroup.isNullOrBlank() || targetSubgroup.equals("Único", ignoreCase = true)
+                                val matchesPractice = isSinglePractice || targetSubgroup.equals(subg, ignoreCase = true)
+                                if (matchesPractice) {
                                     resultClasses.add(classItem)
                                 }
                             }

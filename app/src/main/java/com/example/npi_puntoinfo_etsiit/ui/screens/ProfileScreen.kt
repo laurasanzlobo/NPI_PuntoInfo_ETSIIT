@@ -16,6 +16,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -82,7 +83,7 @@ fun ProfileScreen() {
         if (courseSubjects.isNotEmpty() && userMatricula.isEmpty()) {
             val defaultMatricula = mutableMapOf<String, String>()
             courseSubjects.forEach { subj ->
-                val defaultSubgroup = subj.subgruposDisponibles.firstOrNull() ?: "A1"
+                val defaultSubgroup = subj.subgruposDisponibles.firstOrNull() ?: "Único"
                 defaultMatricula[subj.acronym] = defaultSubgroup
             }
             userMatricula = defaultMatricula
@@ -350,7 +351,7 @@ fun ProfileScreen() {
                                         color = CampusTeal.copy(alpha = 0.15f)
                                     ) {
                                         Text(
-                                            text = "Prácticas: $subgroup",
+                                            text = if (subgroup == "Único" || subgroup.isBlank()) "Grupo Único" else "Prácticas: $subgroup",
                                             fontSize = 11.sp,
                                             fontWeight = FontWeight.Bold,
                                             color = CampusTeal,
@@ -632,32 +633,43 @@ fun ProfileScreen() {
                             }
                         }
 
-                        // Selector de Curso y Grupo Principal
-                        Text("Curso y Grupo principal:", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
-                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text("Curso:", fontSize = 12.sp, color = TextSecondary)
-                                Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                                    listOf(1, 2, 3, 4).forEach { c ->
-                                        FilterChip(
-                                            selected = selectedCourse == c,
-                                            onClick = { selectedCourse = c },
-                                            label = { Text("${c}º") }
-                                        )
-                                    }
-                                }
+                        // Selector de Curso (Fila completa, nunca se corta en vertical)
+                        Text("Curso principal:", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            listOf(1, 2, 3, 4).forEach { c ->
+                                FilterChip(
+                                    selected = selectedCourse == c,
+                                    onClick = {
+                                        selectedCourse = c
+                                        val groups = ScheduleRepository.getAvailableGroups(context, selectedDegreeId, c)
+                                        if (!groups.contains(selectedGroup)) {
+                                            selectedGroup = groups.firstOrNull() ?: "A"
+                                        }
+                                    },
+                                    label = { Text("${c}º Curso", fontSize = 12.sp) },
+                                    modifier = Modifier.weight(1f)
+                                )
                             }
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text("Grupo:", fontSize = 12.sp, color = TextSecondary)
-                                Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                                    listOf("A", "B", "C", "D").forEach { g ->
-                                        FilterChip(
-                                            selected = selectedGroup == g,
-                                            onClick = { selectedGroup = g },
-                                            label = { Text(g) }
-                                        )
-                                    }
-                                }
+                        }
+
+                        // Selector de Grupo / Mención (Fila dedicada con scroll horizontal)
+                        val availableGroups = remember(selectedDegreeId, selectedCourse) {
+                            ScheduleRepository.getAvailableGroups(context, selectedDegreeId, selectedCourse)
+                        }
+                        Text("Grupo o Mención:", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
+                        LazyRow(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            items(availableGroups) { grp ->
+                                FilterChip(
+                                    selected = selectedGroup == grp,
+                                    onClick = { selectedGroup = grp },
+                                    label = { Text(grp, fontSize = 11.sp, maxLines = 1) }
+                                )
                             }
                         }
 
@@ -708,7 +720,7 @@ fun ProfileScreen() {
                         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                             filteredSubjects.forEach { subj ->
                                 val isEnrolled = userMatricula.containsKey(subj.acronym)
-                                val currentSubg = userMatricula[subj.acronym] ?: "A1"
+                                val currentSubg = userMatricula[subj.acronym] ?: "Único"
 
                                 Card(
                                     modifier = Modifier.fillMaxWidth(),
@@ -729,7 +741,7 @@ fun ProfileScreen() {
                                                     onCheckedChange = { checked ->
                                                         val mutable = userMatricula.toMutableMap()
                                                         if (checked) {
-                                                            mutable[subj.acronym] = subj.subgruposDisponibles.firstOrNull() ?: "A1"
+                                                            mutable[subj.acronym] = subj.subgruposDisponibles.firstOrNull() ?: "Único"
                                                         } else {
                                                             mutable.remove(subj.acronym)
                                                         }
@@ -765,16 +777,35 @@ fun ProfileScreen() {
                                                 horizontalArrangement = Arrangement.spacedBy(4.dp),
                                                 verticalAlignment = Alignment.CenterVertically
                                             ) {
-                                                Text("Prácticas:", fontSize = 11.sp, color = TextSecondary)
-                                                val subgs = if (subj.subgruposDisponibles.isNotEmpty()) subj.subgruposDisponibles else listOf("A1", "A2", "A3")
-                                                subgs.take(4).forEach { sg ->
-                                                    FilterChip(
-                                                        selected = currentSubg == sg,
-                                                        onClick = {
-                                                            userMatricula = userMatricula.toMutableMap().apply { put(subj.acronym, sg) }
-                                                        },
-                                                        label = { Text(sg, fontSize = 10.sp) }
-                                                    )
+                                                if (subj.subgruposDisponibles.isEmpty()) {
+                                                    Surface(
+                                                        shape = RoundedCornerShape(6.dp),
+                                                        color = CampusTeal.copy(alpha = 0.1f)
+                                                    ) {
+                                                        Text(
+                                                            text = "Grupo único (Teoría y Prácticas)",
+                                                            fontSize = 11.sp,
+                                                            color = CampusTeal,
+                                                            fontWeight = FontWeight.Medium,
+                                                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                                                        )
+                                                    }
+                                                } else {
+                                                    Text("Prácticas:", fontSize = 11.sp, color = TextSecondary)
+                                                    LazyRow(
+                                                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                                        verticalAlignment = Alignment.CenterVertically
+                                                    ) {
+                                                        items(subj.subgruposDisponibles) { sg ->
+                                                            FilterChip(
+                                                                selected = currentSubg == sg,
+                                                                onClick = {
+                                                                    userMatricula = userMatricula.toMutableMap().apply { put(subj.acronym, sg) }
+                                                                },
+                                                                label = { Text(sg, fontSize = 10.sp) }
+                                                            )
+                                                        }
+                                                    }
                                                 }
                                             }
                                         }
@@ -858,7 +889,8 @@ fun ProfileScreen() {
                                 checked = isEnrolled,
                                 onCheckedChange = { checked ->
                                     if (checked) {
-                                        UserSessionRepository.setSubjectSubgroup(context, subj.acronym, "A1")
+                                        val defaultSg = subj.subgruposDisponibles.firstOrNull() ?: "Único"
+                                        UserSessionRepository.setSubjectSubgroup(context, subj.acronym, defaultSg)
                                     } else {
                                         UserSessionRepository.removeSubject(context, subj.acronym)
                                     }
@@ -870,16 +902,29 @@ fun ProfileScreen() {
                                 Text(subj.name, fontSize = 11.sp, color = TextSecondary, maxLines = 1)
                             }
                             if (isEnrolled) {
-                                val subgs = if (subj.subgruposDisponibles.isNotEmpty()) subj.subgruposDisponibles else listOf("A1", "A2", "A3")
-                                subgs.take(3).forEach { sg ->
-                                    FilterChip(
-                                        selected = currentSubg == sg,
-                                        onClick = {
-                                            UserSessionRepository.setSubjectSubgroup(context, subj.acronym, sg)
-                                            profile = UserSessionRepository.getProfile(context)
-                                        },
-                                        label = { Text(sg, fontSize = 9.sp) }
-                                    )
+                                if (subj.subgruposDisponibles.isEmpty()) {
+                                    Surface(
+                                        shape = RoundedCornerShape(4.dp),
+                                        color = CampusTeal.copy(alpha = 0.1f)
+                                    ) {
+                                        Text("Único", fontSize = 9.sp, color = CampusTeal, modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp))
+                                    }
+                                } else {
+                                    LazyRow(
+                                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                        modifier = Modifier.widthIn(max = 140.dp)
+                                    ) {
+                                        items(subj.subgruposDisponibles) { sg ->
+                                            FilterChip(
+                                                selected = currentSubg == sg,
+                                                onClick = {
+                                                    UserSessionRepository.setSubjectSubgroup(context, subj.acronym, sg)
+                                                    profile = UserSessionRepository.getProfile(context)
+                                                },
+                                                label = { Text(sg, fontSize = 9.sp) }
+                                            )
+                                        }
+                                    }
                                 }
                             }
                         }

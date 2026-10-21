@@ -27,6 +27,26 @@ class TuiSessionTest {
     }
 
     @Test
+    fun testParseTuiText_withRealUserTui() {
+        val userTuiOcr = """
+            ( TaRETA UN
+            IVERSITARIA N TELIGENTE - UNIVERSIDAD DE GRANADA 3\
+            590144 393364055 8
+            JOSE PEDREGOSA GARCIA
+            75932717
+            Caduca: Final 09/2029 UNIVERSIDAD
+            ESTUDIANTE DE GRANADA
+        """.trimIndent()
+
+        val parsed = TuiOcrScanner.parseTuiText(userTuiOcr)
+
+        assertEquals("Jose Pedregosa Garcia", parsed.name)
+        assertEquals("75932717", parsed.dni)
+        assertEquals("5901443933640558", parsed.cardNumber)
+        assertEquals("ESTUDIANTE", parsed.colectivo)
+    }
+
+    @Test
     fun testParseTuiText_withHyphenatedCardNumber() {
         val sampleText = """
             UNIVERSIDAD DE GRANADA
