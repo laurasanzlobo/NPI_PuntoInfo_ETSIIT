@@ -103,6 +103,7 @@ DICCIONARIO_MAESTRO_ASIGNATURAS = {
     "DIU": "Diseño de Interfaces de Usuario",
     "DS": "Desarrollo de Software",
     "EISI": "Ética, Informática y Sociedad de la Información",
+    "CEGE": "Creación de Empresas y Gestión Emprendedora",
     "GRD": "Gestión de Recursos Digitales",
     "II": "Informática Industrial",
     "IN": "Inteligencia de Negocio",
@@ -113,6 +114,7 @@ DICCIONARIO_MAESTRO_ASIGNATURAS = {
     "MEI": "Mantenimiento de Equipos Informáticos",
     "NTP": "Nuevas Tecnologías de la Programación",
     "PDS": "Procesamiento Digital de Señales",
+    "PDIH": "Periféricos y Dispositivos de Interfaz Humana",
     "PGV": "Programación Gráfica de Videojuegos",
     "PLD": "Programación Lúdica",
     "PPR": "Programación Paralela",
@@ -126,21 +128,70 @@ DICCIONARIO_MAESTRO_ASIGNATURAS = {
     # Telecomunicación (GITT)
     "AM": "Análisis Matemático",
     "AL": "Álgebra Lineal y Geometría",
+    "EDCN": "Ecuaciones Diferenciales y Cálculo Numérico",
+    "EO": "Estadística y Optimización",
+    "FFI": "Fundamentos Físicos de la Ingeniería",
     "FIE": "Fundamentos de Informática y Empresa",
     "FTE": "Fundamentos de Telecomunicación y Electrónica",
-    "SC": "Sistemas de Conmutación",
+    "SL": "Sistemas Lineales",
+    "C1": "Comunicaciones 1",
+    "EA": "Electrónica Analógica",
+    "IRC": "Infraestructuras y Redes de Comunicación",
+    "CCE": "Componentes y Circuitos Electrónicos",
+    "SD": "Señales Digitales",
+    "ST": "Sistemas Telemáticos",
+    "TC": "Teoría de la Comunicación",
+    "TO": "Transmisión de Ondas",
+    "AP": "Antenas y Propagación",
+    "MCO": "Medios y Componentes Ópticos",
+    "SCA": "Sistemas de Codificación y Almacenamiento",
+    "SR": "Sistemas de Radiocomunicación",
+    "TDS": "Tratamiento Digital de Señales",
+    "C2": "Comunicaciones 2",
     "EP": "Electrónica de Potencia",
+    "SC": "Sistemas de Conmutación",
+    "SED": "Sistemas Electrónicos Digitales",
+    "CERF": "Circuitos Electrónicos para Radiofrecuencia",
+    "DCSE": "Dispositivos y Sistemas Electrónicos",
+    "EM": "Electromagnetismo",
+    "IE": "Instrumentación Electrónica",
+    "SAL": "Sistemas de Audio y Líneas",
+    "AET": "Arquitecturas Especializadas para Telecomunicaciones",
+    "CAM": "Complementos de Análisis Matemático",
+    "FAT": "Física Aplicada a las Telecomunicaciones",
+    "FF": "Fundamentos de Fotónica",
+    "LT": "Laboratorio de Telemática",
+    "PSETR": "Programación de Sistemas Empotrados y de Tiempo Real",
+    "PVD": "Procesamiento de Vídeo Digital",
+    "TCI": "Tecnología de Circuitos Impresos",
+    "TH": "Tecnologías del Habla",
+    "CI": "Comunicaciones Inalámbricas",
+    "CO": "Comunicaciones Ópticas",
+    "TRD": "Televisión y Radio Digital",
+    "DDR": "Diseño y Dimensionado de Redes",
+    "RAC": "Redes de Acceso y Corporativas",
+    "RM": "Redes Multimedia",
+    "EE": "Equipos Electrónicos",
+    "CIC": "Circuitos Integrados para Comunicaciones",
+    "DAR": "Desarrollo de Aplicaciones en Red",
+    "GR": "Gestión de Redes",
+    "RIM": "Redes Inalámbricas y Movilidad",
+    "SRC": "Seguridad en Redes de Comunicación",
     "RD": "Redes de Datos",
     "CE": "Campos Electromagnéticos",
-    "TC": "Teoría de la Comunicación",
     "SELE": "Sistemas Electrónicos",
-    "ST": "Sistemas de Telecomunicación",
     # Ciencia de Datos e Inteligencia Artificial (GCDIA)
-    "IP": "Introducción a la Programación",
+    "AL1": "Álgebra Lineal 1",
+    "CA1": "Cálculo 1",
     "AEDV": "Análisis Exploratorio de Datos y Visualización",
+    "ICD": "Introducción a la Ciencia de Datos",
+    "IP": "Introducción a la Programación",
+    "CP": "Cálculo de Probabilidades",
+    "PED": "Programación y Estructuras de Datos",
     "FMI": "Fundamentos Matemáticos para la Inteligencia Artificial",
-    # Dobles Grados
-    "AM/AL": "Análisis Matemático / Álgebra Lineal"
+    # Dobles Grados y Docencia Externa
+    "AM/AL": "Análisis Matemático / Álgebra Lineal",
+    "DE": "Docencia Externa (Facultad de Ciencias)"
 }
 
 def limpiar_codigo_aula(room_code: str) -> str:
@@ -266,7 +317,7 @@ def parse_page_words(page_elem) -> list[dict]:
     return words
 
 
-def parse_legend_items(words: list[dict], min_x: float = 590.0) -> dict[str, str]:
+def parse_legend_items(words: list[dict], min_x: float = 570.0) -> dict[str, str]:
     """
     Extrae la leyenda de asignaturas de la página de forma limpia.
     Filtra cualquier artefacto que provenga de celdas de la tabla.
@@ -334,6 +385,11 @@ def tokenize_subject_line(words: list[dict]) -> list[dict]:
             if m_sub:
                 acr = m_sub.group(1)
                 subg = m_sub.group(2)
+                # Separar subgrupo numérico pegado en asignaturas de 4º (ej. DBA1, DBA2, DGP3, MDA1)
+                m_num = re.match(r"^([A-ZÁÉÍÓÚ]{2,6})(\d)$", acr)
+                if m_num and acr not in DICCIONARIO_MAESTRO_ASIGNATURAS and m_num.group(1) in DICCIONARIO_MAESTRO_ASIGNATURAS:
+                    acr = m_num.group(1)
+                    subg = subg or m_num.group(2)
                 # Ignorar notas de ubicación externa en dobles grados
                 if acr in ["FACULTAD", "CIENCIAS", "CAMPUS"]:
                     continue
@@ -586,7 +642,19 @@ def main():
         pdf_links = []
         for fname in os.listdir(DEFAULT_DOWNLOAD_DIR):
             if fname.endswith(".pdf"):
-                gid = "gii" if "gii" in fname.lower() else ("gitt" if "gitt" in fname.lower() else "otro")
+                fn = fname.lower()
+                if "giim" in fn:
+                    gid = "giim"
+                elif "giiade" in fn:
+                    gid = "giiade"
+                elif "gcdia" in fn:
+                    gid = "gcdia"
+                elif "gitt" in fn:
+                    gid = "gitt"
+                elif "gii" in fn:
+                    gid = "gii"
+                else:
+                    gid = "otro"
                 pdf_links.append({
                     "title": fname,
                     "url": "",
@@ -628,7 +696,19 @@ def main():
             )
             total_clases_global += clases_en_grado
             print(f"    [OK] Extraídos {len(parsed['cursos'])} grupos/cuatrimestres ({clases_en_grado} clases totales).")
-            grados_resultado.append(parsed)
+            existing = next((g for g in grados_resultado if g["id"] == gid), None)
+            if existing:
+                existing_keys = set(
+                    (c.get("curso"), c.get("grupo"), c.get("cuatrimestre"), c.get("mencion"))
+                    for c in existing["cursos"]
+                )
+                for c in parsed["cursos"]:
+                    k = (c.get("curso"), c.get("grupo"), c.get("cuatrimestre"), c.get("mencion"))
+                    if k not in existing_keys:
+                        existing["cursos"].append(c)
+                        existing_keys.add(k)
+            else:
+                grados_resultado.append(parsed)
         except Exception as e:
             print(f"    [!] Error parseando {item['filename']}: {e}")
 
