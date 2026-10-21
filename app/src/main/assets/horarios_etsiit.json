@@ -1,6 +1,6 @@
 {
   "curso_academico": "Curso Académico Local",
-  "fecha_extraccion": "2026-10-21T22:40:29.430210",
+  "fecha_extraccion": "2026-10-21T23:16:35.334334",
   "total_grados": 4,
   "total_clases": 2078,
   "grados": [
@@ -5313,7 +5313,7 @@
                 "planta": "P2",
                 "tipo_espacio": "laboratorio",
                 "professor": "",
-                "isPractice": false,
+                "isPractice": true,
                 "isCurrent": false
               },
               {
@@ -5420,7 +5420,7 @@
                 "planta": "P2",
                 "tipo_espacio": "laboratorio",
                 "professor": "",
-                "isPractice": false,
+                "isPractice": true,
                 "isCurrent": false
               },
               {
@@ -5527,7 +5527,7 @@
                 "planta": "P2",
                 "tipo_espacio": "laboratorio",
                 "professor": "",
-                "isPractice": false,
+                "isPractice": true,
                 "isCurrent": false
               },
               {
@@ -5649,7 +5649,7 @@
                 "planta": "P2",
                 "tipo_espacio": "laboratorio",
                 "professor": "",
-                "isPractice": false,
+                "isPractice": true,
                 "isCurrent": false
               },
               {
@@ -5771,7 +5771,7 @@
                 "planta": "P3",
                 "tipo_espacio": "laboratorio",
                 "professor": "",
-                "isPractice": false,
+                "isPractice": true,
                 "isCurrent": false
               },
               {
@@ -7415,7 +7415,7 @@
                 "planta": "P2",
                 "tipo_espacio": "laboratorio",
                 "professor": "",
-                "isPractice": false,
+                "isPractice": true,
                 "isCurrent": false
               },
               {
@@ -11549,7 +11549,7 @@
                 "planta": "P3",
                 "tipo_espacio": "laboratorio",
                 "professor": "",
-                "isPractice": false,
+                "isPractice": true,
                 "isCurrent": false
               },
               {
@@ -11771,7 +11771,7 @@
                 "planta": "P3",
                 "tipo_espacio": "laboratorio",
                 "professor": "",
-                "isPractice": false,
+                "isPractice": true,
                 "isCurrent": false
               },
               {
@@ -11863,7 +11863,7 @@
                 "planta": "P2",
                 "tipo_espacio": "laboratorio",
                 "professor": "",
-                "isPractice": false,
+                "isPractice": true,
                 "isCurrent": false
               },
               {
@@ -12047,7 +12047,7 @@
                 "planta": "P2",
                 "tipo_espacio": "laboratorio",
                 "professor": "",
-                "isPractice": false,
+                "isPractice": true,
                 "isCurrent": false
               },
               {
@@ -12147,7 +12147,7 @@
                 "planta": "P3",
                 "tipo_espacio": "laboratorio",
                 "professor": "",
-                "isPractice": false,
+                "isPractice": true,
                 "isCurrent": false
               },
               {
@@ -12239,7 +12239,7 @@
                 "planta": "P3",
                 "tipo_espacio": "laboratorio",
                 "professor": "",
-                "isPractice": false,
+                "isPractice": true,
                 "isCurrent": false
               },
               {
@@ -12361,7 +12361,7 @@
                 "planta": "P2",
                 "tipo_espacio": "laboratorio",
                 "professor": "",
-                "isPractice": false,
+                "isPractice": true,
                 "isCurrent": false
               },
               {
@@ -12560,7 +12560,7 @@
                 "planta": "P3",
                 "tipo_espacio": "laboratorio",
                 "professor": "",
-                "isPractice": false,
+                "isPractice": true,
                 "isCurrent": false
               }
             ]
@@ -15075,7 +15075,7 @@
                 "planta": "P3",
                 "tipo_espacio": "laboratorio",
                 "professor": "",
-                "isPractice": false,
+                "isPractice": true,
                 "isCurrent": false
               },
               {
@@ -15167,7 +15167,7 @@
                 "planta": "P3",
                 "tipo_espacio": "laboratorio",
                 "professor": "",
-                "isPractice": false,
+                "isPractice": true,
                 "isCurrent": false
               },
               {
@@ -16011,7 +16011,7 @@
                 "planta": "P3",
                 "tipo_espacio": "laboratorio",
                 "professor": "",
-                "isPractice": false,
+                "isPractice": true,
                 "isCurrent": false
               },
               {
@@ -16103,7 +16103,7 @@
                 "planta": "P3",
                 "tipo_espacio": "laboratorio",
                 "professor": "",
-                "isPractice": false,
+                "isPractice": true,
                 "isCurrent": false
               },
               {
@@ -16195,7 +16195,7 @@
                 "planta": "P2",
                 "tipo_espacio": "laboratorio",
                 "professor": "",
-                "isPractice": false,
+                "isPractice": true,
                 "isCurrent": false
               },
               {
@@ -16287,7 +16287,7 @@
                 "planta": "P3",
                 "tipo_espacio": "laboratorio",
                 "professor": "",
-                "isPractice": false,
+                "isPractice": true,
                 "isCurrent": false
               },
               {
@@ -16343,7 +16343,7 @@
                 "planta": "P3",
                 "tipo_espacio": "laboratorio",
                 "professor": "",
-                "isPractice": false,
+                "isPractice": true,
                 "isCurrent": false
               }
             ],
@@ -16390,7 +16390,7 @@
                 "planta": "P3",
                 "tipo_espacio": "laboratorio",
                 "professor": "",
-                "isPractice": false,
+                "isPractice": true,
                 "isCurrent": false
               }
             ],
@@ -16437,7 +16437,7 @@
                 "planta": "P3",
                 "tipo_espacio": "laboratorio",
                 "professor": "",
-                "isPractice": false,
+                "isPractice": true,
                 "isCurrent": false
               }
             ],
@@ -16509,7 +16509,7 @@
                 "planta": "P2",
                 "tipo_espacio": "laboratorio",
                 "professor": "",
-                "isPractice": false,
+                "isPractice": true,
                 "isCurrent": false
               },
               {
@@ -16681,7 +16681,7 @@
                 "planta": "P3",
                 "tipo_espacio": "laboratorio",
                 "professor": "",
-                "isPractice": false,
+                "isPractice": true,
                 "isCurrent": false
               }
             ]
@@ -16706,7 +16706,7 @@
                 "planta": "P2",
                 "tipo_espacio": "laboratorio",
                 "professor": "",
-                "isPractice": false,
+                "isPractice": true,
                 "isCurrent": false
               },
               {
@@ -16753,7 +16753,7 @@
                 "planta": "P3",
                 "tipo_espacio": "laboratorio",
                 "professor": "",
-                "isPractice": false,
+                "isPractice": true,
                 "isCurrent": false
               }
             ],
@@ -16785,7 +16785,7 @@
                 "planta": "P2",
                 "tipo_espacio": "laboratorio",
                 "professor": "",
-                "isPractice": false,
+                "isPractice": true,
                 "isCurrent": false
               },
               {
@@ -16815,7 +16815,7 @@
                 "planta": "P2",
                 "tipo_espacio": "laboratorio",
                 "professor": "",
-                "isPractice": false,
+                "isPractice": true,
                 "isCurrent": false
               }
             ],
@@ -17159,7 +17159,7 @@
                 "planta": "P2",
                 "tipo_espacio": "laboratorio",
                 "professor": "",
-                "isPractice": false,
+                "isPractice": true,
                 "isCurrent": false
               }
             ],
@@ -17255,7 +17255,7 @@
                 "planta": "P2",
                 "tipo_espacio": "laboratorio",
                 "professor": "",
-                "isPractice": false,
+                "isPractice": true,
                 "isCurrent": false
               },
               {
@@ -17270,7 +17270,7 @@
                 "planta": "P2",
                 "tipo_espacio": "laboratorio",
                 "professor": "",
-                "isPractice": false,
+                "isPractice": true,
                 "isCurrent": false
               }
             ],
@@ -17317,7 +17317,7 @@
                 "planta": "P2",
                 "tipo_espacio": "laboratorio",
                 "professor": "",
-                "isPractice": false,
+                "isPractice": true,
                 "isCurrent": false
               }
             ]
@@ -17402,7 +17402,7 @@
                 "planta": "P2",
                 "tipo_espacio": "laboratorio",
                 "professor": "",
-                "isPractice": false,
+                "isPractice": true,
                 "isCurrent": false
               },
               {
@@ -17434,7 +17434,7 @@
                 "planta": "P2",
                 "tipo_espacio": "laboratorio",
                 "professor": "",
-                "isPractice": false,
+                "isPractice": true,
                 "isCurrent": false
               },
               {
@@ -17481,7 +17481,7 @@
                 "planta": "P3",
                 "tipo_espacio": "laboratorio",
                 "professor": "",
-                "isPractice": false,
+                "isPractice": true,
                 "isCurrent": false
               }
             ],
@@ -17891,7 +17891,7 @@
                 "planta": "P3",
                 "tipo_espacio": "laboratorio",
                 "professor": "",
-                "isPractice": false,
+                "isPractice": true,
                 "isCurrent": false
               }
             ],
@@ -17923,7 +17923,7 @@
                 "planta": "P2",
                 "tipo_espacio": "laboratorio",
                 "professor": "",
-                "isPractice": false,
+                "isPractice": true,
                 "isCurrent": false
               },
               {
@@ -18251,7 +18251,7 @@
                 "planta": "P3",
                 "tipo_espacio": "laboratorio",
                 "professor": "",
-                "isPractice": false,
+                "isPractice": true,
                 "isCurrent": false
               }
             ],
@@ -18379,7 +18379,7 @@
                 "planta": "P2",
                 "tipo_espacio": "laboratorio",
                 "professor": "",
-                "isPractice": false,
+                "isPractice": true,
                 "isCurrent": false
               }
             ]
@@ -18499,7 +18499,7 @@
                 "planta": "P2",
                 "tipo_espacio": "laboratorio",
                 "professor": "",
-                "isPractice": false,
+                "isPractice": true,
                 "isCurrent": false
               },
               {
@@ -18696,7 +18696,7 @@
                 "planta": "P2",
                 "tipo_espacio": "laboratorio",
                 "professor": "",
-                "isPractice": false,
+                "isPractice": true,
                 "isCurrent": false
               },
               {
@@ -18751,7 +18751,7 @@
                 "planta": "P3",
                 "tipo_espacio": "laboratorio",
                 "professor": "",
-                "isPractice": false,
+                "isPractice": true,
                 "isCurrent": false
               },
               {
@@ -18907,7 +18907,7 @@
                 "planta": "P3",
                 "tipo_espacio": "laboratorio",
                 "professor": "",
-                "isPractice": false,
+                "isPractice": true,
                 "isCurrent": false
               }
             ],
@@ -18954,7 +18954,7 @@
                 "planta": "P2",
                 "tipo_espacio": "laboratorio",
                 "professor": "",
-                "isPractice": false,
+                "isPractice": true,
                 "isCurrent": false
               }
             ]
@@ -19758,7 +19758,7 @@
                 "planta": "P3",
                 "tipo_espacio": "laboratorio",
                 "professor": "",
-                "isPractice": false,
+                "isPractice": true,
                 "isCurrent": false
               },
               {
@@ -19957,7 +19957,7 @@
                 "planta": "P3",
                 "tipo_espacio": "laboratorio",
                 "professor": "",
-                "isPractice": false,
+                "isPractice": true,
                 "isCurrent": false
               },
               {
@@ -20510,7 +20510,7 @@
                 "planta": "P3",
                 "tipo_espacio": "laboratorio",
                 "professor": "",
-                "isPractice": false,
+                "isPractice": true,
                 "isCurrent": false
               },
               {
@@ -20632,7 +20632,7 @@
                 "planta": "P2",
                 "tipo_espacio": "laboratorio",
                 "professor": "",
-                "isPractice": false,
+                "isPractice": true,
                 "isCurrent": false
               },
               {
@@ -20754,7 +20754,7 @@
                 "planta": "P3",
                 "tipo_espacio": "laboratorio",
                 "professor": "",
-                "isPractice": false,
+                "isPractice": true,
                 "isCurrent": false
               },
               {
@@ -20876,7 +20876,7 @@
                 "planta": "P2",
                 "tipo_espacio": "laboratorio",
                 "professor": "",
-                "isPractice": false,
+                "isPractice": true,
                 "isCurrent": false
               },
               {
@@ -21028,7 +21028,7 @@
                 "planta": "P3",
                 "tipo_espacio": "laboratorio",
                 "professor": "",
-                "isPractice": false,
+                "isPractice": true,
                 "isCurrent": false
               },
               {
@@ -21143,7 +21143,7 @@
                 "planta": "P2",
                 "tipo_espacio": "laboratorio",
                 "professor": "",
-                "isPractice": false,
+                "isPractice": true,
                 "isCurrent": false
               },
               {
@@ -21235,7 +21235,7 @@
                 "planta": "P3",
                 "tipo_espacio": "laboratorio",
                 "professor": "",
-                "isPractice": false,
+                "isPractice": true,
                 "isCurrent": false
               },
               {
@@ -21327,7 +21327,7 @@
                 "planta": "P2",
                 "tipo_espacio": "laboratorio",
                 "professor": "",
-                "isPractice": false,
+                "isPractice": true,
                 "isCurrent": false
               },
               {
@@ -21419,7 +21419,7 @@
                 "planta": "P3",
                 "tipo_espacio": "laboratorio",
                 "professor": "",
-                "isPractice": false,
+                "isPractice": true,
                 "isCurrent": false
               },
               {
@@ -21526,7 +21526,7 @@
                 "planta": "P3",
                 "tipo_espacio": "laboratorio",
                 "professor": "",
-                "isPractice": false,
+                "isPractice": true,
                 "isCurrent": false
               },
               {
@@ -22804,7 +22804,7 @@
                 "planta": "P2",
                 "tipo_espacio": "laboratorio",
                 "professor": "",
-                "isPractice": false,
+                "isPractice": true,
                 "isCurrent": false
               },
               {
@@ -23003,7 +23003,7 @@
                 "planta": "P3",
                 "tipo_espacio": "laboratorio",
                 "professor": "",
-                "isPractice": false,
+                "isPractice": true,
                 "isCurrent": false
               },
               {
@@ -24251,7 +24251,7 @@
                 "planta": "P3",
                 "tipo_espacio": "laboratorio",
                 "professor": "",
-                "isPractice": false,
+                "isPractice": true,
                 "isCurrent": false
               },
               {
@@ -24343,7 +24343,7 @@
                 "planta": "P2",
                 "tipo_espacio": "laboratorio",
                 "professor": "",
-                "isPractice": false,
+                "isPractice": true,
                 "isCurrent": false
               },
               {
@@ -24435,7 +24435,7 @@
                 "planta": "P2",
                 "tipo_espacio": "laboratorio",
                 "professor": "",
-                "isPractice": false,
+                "isPractice": true,
                 "isCurrent": false
               },
               {
@@ -24527,7 +24527,7 @@
                 "planta": "P3",
                 "tipo_espacio": "laboratorio",
                 "professor": "",
-                "isPractice": false,
+                "isPractice": true,
                 "isCurrent": false
               },
               {
@@ -24634,7 +24634,7 @@
                 "planta": "P2",
                 "tipo_espacio": "laboratorio",
                 "professor": "",
-                "isPractice": false,
+                "isPractice": true,
                 "isCurrent": false
               },
               {
@@ -24824,7 +24824,7 @@
                 "planta": "P3",
                 "tipo_espacio": "laboratorio",
                 "professor": "",
-                "isPractice": false,
+                "isPractice": true,
                 "isCurrent": false
               },
               {
@@ -24961,7 +24961,7 @@
                 "planta": "P3",
                 "tipo_espacio": "laboratorio",
                 "professor": "",
-                "isPractice": false,
+                "isPractice": true,
                 "isCurrent": false
               },
               {
@@ -25053,7 +25053,7 @@
                 "planta": "P3",
                 "tipo_espacio": "laboratorio",
                 "professor": "",
-                "isPractice": false,
+                "isPractice": true,
                 "isCurrent": false
               },
               {
@@ -25337,7 +25337,7 @@
                 "planta": "P3",
                 "tipo_espacio": "laboratorio",
                 "professor": "",
-                "isPractice": false,
+                "isPractice": true,
                 "isCurrent": false
               },
               {
@@ -25865,7 +25865,7 @@
                 "planta": "P2",
                 "tipo_espacio": "laboratorio",
                 "professor": "",
-                "isPractice": false,
+                "isPractice": true,
                 "isCurrent": false
               }
             ],
@@ -26792,7 +26792,7 @@
                 "planta": "P3",
                 "tipo_espacio": "laboratorio",
                 "professor": "",
-                "isPractice": false,
+                "isPractice": true,
                 "isCurrent": false
               },
               {
@@ -26869,7 +26869,7 @@
                 "planta": "P3",
                 "tipo_espacio": "laboratorio",
                 "professor": "",
-                "isPractice": false,
+                "isPractice": true,
                 "isCurrent": false
               },
               {
@@ -27069,7 +27069,7 @@
                 "planta": "P3",
                 "tipo_espacio": "laboratorio",
                 "professor": "",
-                "isPractice": false,
+                "isPractice": true,
                 "isCurrent": false
               },
               {
@@ -27161,7 +27161,7 @@
                 "planta": "P3",
                 "tipo_espacio": "laboratorio",
                 "professor": "",
-                "isPractice": false,
+                "isPractice": true,
                 "isCurrent": false
               },
               {
@@ -27283,7 +27283,7 @@
                 "planta": "P3",
                 "tipo_espacio": "laboratorio",
                 "professor": "",
-                "isPractice": false,
+                "isPractice": true,
                 "isCurrent": false
               },
               {
@@ -27475,7 +27475,7 @@
                 "planta": "P3",
                 "tipo_espacio": "laboratorio",
                 "professor": "",
-                "isPractice": false,
+                "isPractice": true,
                 "isCurrent": false
               },
               {
@@ -28266,7 +28266,7 @@
                 "planta": "P2",
                 "tipo_espacio": "laboratorio",
                 "professor": "",
-                "isPractice": false,
+                "isPractice": true,
                 "isCurrent": false
               },
               {
@@ -29125,7 +29125,7 @@
                 "planta": "P3",
                 "tipo_espacio": "laboratorio",
                 "professor": "",
-                "isPractice": false,
+                "isPractice": true,
                 "isCurrent": false
               },
               {
