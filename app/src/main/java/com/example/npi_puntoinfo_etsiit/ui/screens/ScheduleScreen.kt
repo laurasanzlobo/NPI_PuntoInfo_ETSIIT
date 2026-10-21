@@ -157,7 +157,7 @@ fun ScheduleScreen(
                         )
                         Spacer(modifier = Modifier.width(6.dp))
                         Text(
-                            text = "${profile.degreeName.replace("Grado en ", "")} · ${profile.primaryCourse}º ${profile.primaryGroup}",
+                            text = profile.degreeName.ifBlank { "Horario Personalizado" }.replace("Grado en ", ""),
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Bold,
                             color = EtsiitBlue
