@@ -431,7 +431,7 @@ def parse_table_section(words: list[dict], y_start: float, y_end: float,
     day_bounds = []
     for i, d in enumerate(sorted_days):
         left = 95.0 if i == 0 else (day_anchors[sorted_days[i - 1]] + day_anchors[d]) / 2.0
-        right = 612.0 if i == len(sorted_days) - 1 else (day_anchors[d] + day_anchors[sorted_days[i + 1]]) / 2.0
+        right = 645.0 if i == len(sorted_days) - 1 else (day_anchors[d] + day_anchors[sorted_days[i + 1]]) / 2.0
         day_bounds.append((d, left, right))
 
     # Buscar franjas horarias (ej. 8:30-9:30, 9:30-10:30, 15:30-16:30...)
@@ -454,7 +454,7 @@ def parse_table_section(words: list[dict], y_start: float, y_end: float,
         slot_y_min = slot["yMin"] - 3.0
         slot_y_max = time_slots[idx + 1]["yMin"] - 3.0 if idx + 1 < len(time_slots) else slot["yMax"] + 24.0
 
-        slot_words = [w for w in section_words if slot_y_min <= w["yMin"] < slot_y_max and 95 <= w["xMin"] < 630]
+        slot_words = [w for w in section_words if slot_y_min <= w["yMin"] < slot_y_max and 95 <= w["xMin"] < 645]
         if not slot_words:
             continue
 
@@ -479,12 +479,15 @@ def parse_table_section(words: list[dict], y_start: float, y_end: float,
                     closest_dist = dist
                     matched_room = rw["text"]
 
-            # Determinar día según x_center
-            matched_day = "Lunes"
+            # Determinar día según x_center (con fallback seguro al último día si está en columna derecha)
+            matched_day = sorted_days[0]
             for d_name, left, right in day_bounds:
                 if left <= tok["x_center"] < right:
                     matched_day = d_name
                     break
+            else:
+                if tok["x_center"] >= day_bounds[-1][1]:
+                    matched_day = sorted_days[-1]
 
             # Resolver nombre completo: primero diccionario maestro, luego leyenda local
             full_subject_name = DICCIONARIO_MAESTRO_ASIGNATURAS.get(
@@ -527,18 +530,18 @@ def parse_table_section(words: list[dict], y_start: float, y_end: float,
         lista.sort(key=lambda c: c["hora_inicio"])
         fusionadas = []
         for c in lista:
-            if not fusionadas:
-                fusionadas.append(c.copy())
-            else:
-                prev = fusionadas[-1]
+            merged = False
+            for prev in fusionadas:
                 if (prev["acronym"] == c["acronym"] and
                     prev["subgroup"] == c["subgroup"] and
                     prev["room_code"] == c["room_code"] and
                     prev["hora_fin"] == c["hora_inicio"]):
                     prev["hora_fin"] = c["hora_fin"]
                     prev["time"] = f"{prev['hora_inicio']} - {prev['hora_fin']}"
-                else:
-                    fusionadas.append(c.copy())
+                    merged = True
+                    break
+            if not merged:
+                fusionadas.append(c.copy())
         clases_consolidadas[d] = fusionadas
 
     return {
