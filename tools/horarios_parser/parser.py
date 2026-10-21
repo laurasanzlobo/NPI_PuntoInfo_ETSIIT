@@ -26,7 +26,123 @@ DEFAULT_DOWNLOAD_DIR = os.path.join(SCRIPT_DIR, "downloads")
 DEFAULT_OUTPUT_FILE = os.path.join(SCRIPT_DIR, "output", "horarios_etsiit.json")
 DEFAULT_ASSETS_FILE = os.path.join(SCRIPT_DIR, "..", "..", "app", "src", "main", "assets", "horarios_etsiit.json")
 
-# Normalización de plantas y aulas para coincidir con GrafoETSIIT y ScheduleRepository
+# Diccionario maestro de asignaturas oficiales de la ETSIIT
+# Asegura nombres 100% limpios sin artefactos tipográficos del PDF
+DICCIONARIO_MAESTRO_ASIGNATURAS = {
+    # 1º Curso GII / Comunes
+    "ALEM": "Álgebra Lineal y Estructuras Matemáticas",
+    "CA": "Cálculo",
+    "FFT": "Fundamentos Físicos y Tecnológicos",
+    "FP": "Fundamentos de Programación",
+    "FS": "Fundamentos del Software",
+    "ES": "Estadística",
+    "IES": "Ingeniería, Empresa y Sociedad",
+    "LMD": "Lógica y Métodos Discretos",
+    "MP": "Metodología de la Programación",
+    "TOC": "Tecnología y Organización de los Computadores",
+    # 2º Curso GII
+    "ED": "Estructura de Datos",
+    "EC": "Estructura de Computadores",
+    "PDOO": "Programación y Diseño Orientado a Objetos",
+    "SO": "Sistemas Operativos",
+    "SCD": "Sistemas Concurrentes y Distribuidos",
+    "ALG": "Algorítmica",
+    "AC": "Arquitectura de Computadores",
+    "FIS": "Fundamentos e Ingeniería del Software",
+    "FBD": "Fundamentos de Bases de Datos",
+    "BD": "Bases de Datos",
+    "FR": "Fundamentos de Redes",
+    "IA": "Inteligencia Artificial",
+    # 3º y 4º Curso GII (Troncales, Optativas y Especialidades)
+    "NPI": "Nuevos Paradigmas de Interacción",
+    "VC": "Visión por Computador",
+    "PL": "Procesadores de Lenguajes",
+    "PTC": "Programación Técnica y Científica",
+    "SS": "Simulación de Sistemas",
+    "TIC": "Teoría de la Información y la Codificación",
+    "AA": "Aprendizaje Automático",
+    "IC": "Ingeniería del Conocimiento",
+    "MAC": "Modelos Avanzados de Computación",
+    "MH": "Metaheurísticas",
+    "TSI": "Técnicas de los Sistemas Inteligentes",
+    "SG": "Sistemas Gráficos",
+    "IG": "Informática Gráfica",
+    "ISE": "Ingeniería de Servidores",
+    "DDSI": "Diseño y Desarrollo de Sistemas de Información",
+    "DSI": "Desarrollo de Sistemas de Información",
+    "ABD": "Administración de Bases de Datos",
+    "BDD": "Bases de Datos Distribuidas",
+    "AS": "Arquitectura de Sistemas",
+    "ACAP": "Arquitectura y Computación de Altas Prestaciones",
+    "MC": "Modelos de Computación",
+    "PDM": "Programación de Dispositivos Móviles",
+    "TW": "Tecnologías Web",
+    "PW": "Programación Web",
+    "DAI": "Desarrollo de Aplicaciones para Internet",
+    "SIBW": "Sistemas de Información Basados en Web",
+    "DSD": "Desarrollo de Sistemas Distribuidos",
+    "SE": "Sistemas Empotrados",
+    "SMP": "Sistemas con Microprocesadores",
+    "DHD": "Desarrollo de Hardware Digital",
+    "DSE": "Diseño de Sistemas Electrónicos",
+    "CII": "Circuitos Integrados e Impresos",
+    "TDRC": "Transmisión de Datos y Redes de Computadores",
+    "TR": "Tecnologías de Red",
+    "RMS": "Redes Multiservicio",
+    "RSC": "Redes y Sistemas Complejos",
+    "SPSI": "Seguridad y Protección de Sistemas Informáticos",
+    "SSO": "Seguridad en Sistemas Operativos",
+    "SWAP": "Servidores Web de Altas Prestaciones",
+    "TID": "Tratamiento de Imágenes Digitales",
+    "CRIM": "Compresión y Recuperación de Información Multimedia",
+    "CRIP": "Criptografía y Computación",
+    "CUIA": "Computación Ubicua e Inteligencia Ambiental",
+    "DBA": "Desarrollo Basado en Agentes",
+    "DGP": "Dirección y Gestión de Proyectos",
+    "DI": "Derecho Informático",
+    "DIU": "Diseño de Interfaces de Usuario",
+    "DS": "Desarrollo de Software",
+    "EISI": "Ética, Informática y Sociedad de la Información",
+    "GRD": "Gestión de Recursos Digitales",
+    "II": "Informática Industrial",
+    "IN": "Inteligencia de Negocio",
+    "ISI": "Ingeniería de Sistemas de Información",
+    "IV": "Infraestructura Virtual",
+    "LP": "Lógica y Programación",
+    "MDA": "Metodologías de Desarrollo Ágil",
+    "MEI": "Mantenimiento de Equipos Informáticos",
+    "NTP": "Nuevas Tecnologías de la Programación",
+    "PDS": "Procesamiento Digital de Señales",
+    "PGV": "Programación Gráfica de Videojuegos",
+    "PLD": "Programación Lúdica",
+    "PPR": "Programación Paralela",
+    "RI": "Robótica Industrial",
+    "SCGC": "Sistemas Cooperativos y Gestión de Contenidos",
+    "SIE": "Sistemas de Información para Empresas",
+    "SIG": "Sistemas de Información Geográficos",
+    "SMD": "Sistemas Multidimensionales",
+    "SMM": "Sistemas Multimedia",
+    "TE": "Tecnologías Emergentes",
+    # Telecomunicación (GITT)
+    "AM": "Análisis Matemático",
+    "AL": "Álgebra Lineal y Geometría",
+    "FIE": "Fundamentos de Informática y Empresa",
+    "FTE": "Fundamentos de Telecomunicación y Electrónica",
+    "SC": "Sistemas de Conmutación",
+    "EP": "Electrónica de Potencia",
+    "RD": "Redes de Datos",
+    "CE": "Campos Electromagnéticos",
+    "TC": "Teoría de la Comunicación",
+    "SELE": "Sistemas Electrónicos",
+    "ST": "Sistemas de Telecomunicación",
+    # Ciencia de Datos e Inteligencia Artificial (GCDIA)
+    "IP": "Introducción a la Programación",
+    "AEDV": "Análisis Exploratorio de Datos y Visualización",
+    "FMI": "Fundamentos Matemáticos para la Inteligencia Artificial",
+    # Dobles Grados
+    "AM/AL": "Análisis Matemático / Álgebra Lineal"
+}
+
 def limpiar_codigo_aula(room_code: str) -> str:
     """Corrige artefactos del PDF (ej. '0.12' que es Aula 0.1 subgrupo 2)."""
     clean = room_code.strip()
@@ -42,8 +158,6 @@ def formatear_aula_y_planta(room_code: str) -> tuple[str, str, str]:
     """
     Recibe un código de aula como '0.7', '1.5', '2.6', '3.8', '-1.1', '-1'
     y retorna (room_label, planta, tipo_espacio)
-    ejemplo: ('Aula 0.7 · Planta Baja', 'PB', 'aula')
-             ('Laboratorio 2.6 · Planta 2', 'P2', 'laboratorio')
     """
     clean = limpiar_codigo_aula(room_code)
     if clean.startswith("-"):
@@ -68,12 +182,8 @@ def formatear_aula_y_planta(room_code: str) -> tuple[str, str, str]:
     return f"Espacio {clean}", "PB", "aula"
 
 
-
 def scrape_horarios_links(url: str = BASE_URL) -> tuple[str, list[dict]]:
-    """
-    Descarga la página principal de horarios de la ETSIIT y extrae los enlaces
-    a los PDFs del último curso académico disponible.
-    """
+    """Descarga la página principal y extrae los enlaces a los PDFs del último curso académico."""
     print(f"[*] Consultando página oficial: {url}...")
     headers = {"User-Agent": "Mozilla/5.0 (X11; Linux x86_64) NPI-ETSIIT-Parser/1.0"}
     req = urllib.request.Request(url, headers=headers)
@@ -97,7 +207,6 @@ def scrape_horarios_links(url: str = BASE_URL) -> tuple[str, list[dict]]:
                     text = a.get_text(strip=True)
                     full_link = urllib.parse.urljoin(url, href)
                     
-                    # Identificar grado
                     grado_id = "otro"
                     if "informática y matemáticas" in text.lower():
                         grado_id = "giim"
@@ -157,48 +266,97 @@ def parse_page_words(page_elem) -> list[dict]:
     return words
 
 
-def parse_legend_items(words: list[dict], min_x: float = 610.0) -> dict[str, str]:
+def parse_legend_items(words: list[dict], min_x: float = 590.0) -> dict[str, str]:
     """
-    Extrae la leyenda de asignaturas situada en la columna derecha (x > 610).
-    Mapea acrónimos como 'ALEM' -> 'Álgebra Lineal y Estructuras Matemáticas'.
+    Extrae la leyenda de asignaturas de la página de forma limpia.
+    Filtra cualquier artefacto que provenga de celdas de la tabla.
     """
     legend_words = [w for w in words if w["xMin"] >= min_x]
-    legend_words.sort(key=lambda w: (w["yMin"], w["xMin"]))
+    if not legend_words:
+        return {}
 
-    # Agrupar palabras por líneas de altura similar (tolerancia y < 4)
     lines = []
-    current_line = []
-    last_y = -999.0
-    for w in legend_words:
-        if abs(w["yMin"] - last_y) > 4.5:
-            if current_line:
-                lines.append(" ".join(cw["text"] for cw in current_line))
-            current_line = [w]
-            last_y = w["yMin"]
+    curr = []
+    for w in sorted(legend_words, key=lambda w: (w["yMin"], w["xMin"])):
+        if not curr or abs(w["yMin"] - curr[-1]["yMin"]) < 3.5:
+            curr.append(w)
         else:
-            current_line.append(w)
-    if current_line:
-        lines.append(" ".join(cw["text"] for cw in current_line))
+            lines.append(curr)
+            curr = [w]
+    if curr:
+        lines.append(curr)
 
-    # Parsear cada línea: 'ACRONYM[. ] Full Name'
     mapping = {}
     for line in lines:
-        m = re.match(r"^([A-ZÁÉÍÓÚ0-9/]{2,10})\.?\s+(.+)$", line)
+        line_text = " ".join(w["text"] for w in line)
+        m = re.match(r"^\s*([A-ZÁÉÍÓÚ0-9/]{2,8})\.?\s+([A-ZÁÉÍÓÚ][a-záéíóúÁÉÍÓÚñÑ\w\s,\(\)]+)", line_text)
         if m:
-            acronym = m.group(1).strip()
+            acr = m.group(1).strip()
             name = m.group(2).strip()
-            # Limpiar posible basura final
-            name = re.sub(r"\s+\d+$", "", name)
-            mapping[acronym] = name
+            # Si el texto concatena otro acrónimo o número de celda, cortar limpiamente
+            name = re.split(r"\s+[A-Z0-9/]{2,8}\.", name)[0].strip()
+            name = re.sub(r"\s+\d+.*$", "", name).strip()
+            # Corregir artefactos comunes del PDF
+            name = name.replace("delab. Conocimiento", "del Conocimiento")
+            name = name.replace("delab", "del")
+            name = name.rstrip(".")
+            if len(name) > 3 and not name.startswith("Aula") and not name.startswith("Lab"):
+                mapping[acr] = name
 
     return mapping
 
 
+def tokenize_subject_line(words: list[dict]) -> list[dict]:
+    """
+    Tokeniza las palabras de una línea de asignaturas evitando que dos acrónimos
+    contiguos se unan en una sola palabra (ej. nunca 'ALEMALEM' ni 'ALEMFP').
+    """
+    tokens = []
+    curr = None
+
+    for w in sorted(words, key=lambda x: x["xMin"]):
+        txt = w["text"].strip()
+        # Si es un subgrupo suelto ej. '(A1)', '(D2)'
+        if re.match(r"^\([A-Za-z0-9-]+\)$", txt) and curr:
+            curr["subgroup"] = txt.strip("()")
+            curr["xMax"] = w["xMax"]
+            curr["text"] += " " + txt
+            curr["x_center"] = (curr["xMin"] + curr["xMax"]) / 2.0
+            tokens.append(curr)
+            curr = None
+        else:
+            if curr:
+                tokens.append(curr)
+                curr = None
+            
+            # Buscar acrónimo con o sin subgrupo pegado
+            m_sub = re.match(r"^([A-ZÁÉÍÓÚ0-9/]{2,8})(?:\(([A-Za-z0-9-]+)\))?$", txt)
+            if m_sub:
+                acr = m_sub.group(1)
+                subg = m_sub.group(2)
+                # Ignorar notas de ubicación externa en dobles grados
+                if acr in ["FACULTAD", "CIENCIAS", "CAMPUS"]:
+                    continue
+                curr = {
+                    "text": txt,
+                    "acronym": acr,
+                    "subgroup": subg,
+                    "xMin": w["xMin"],
+                    "xMax": w["xMax"],
+                    "yMin": w["yMin"],
+                    "x_center": (w["xMin"] + w["xMax"]) / 2.0
+                }
+                if subg:
+                    tokens.append(curr)
+                    curr = None
+    if curr:
+        tokens.append(curr)
+    return tokens
+
+
 def parse_table_section(words: list[dict], y_start: float, y_end: float,
-                        header_info: dict, legend: dict) -> dict:
-    """
-    Parsea una sección de tabla (un cuatrimestre) comprendida entre y_start e y_end.
-    """
+                        header_info: dict, page_legend: dict) -> dict:
+    """Parsea una sección de tabla (cuatrimestre) comprendida entre y_start e y_end."""
     section_words = [w for w in words if y_start <= w["yMin"] < y_end]
     if not section_words:
         return {}
@@ -211,10 +369,8 @@ def parse_table_section(words: list[dict], y_start: float, y_end: float,
             day_anchors[w["text"]] = (w["xMin"] + w["xMax"]) / 2.0
 
     if len(day_anchors) < 3:
-        # No es una tabla válida
         return {}
 
-    # Definir límites horizontales de cada día
     sorted_days = [d for d in day_names if d in day_anchors]
     day_bounds = []
     for i, d in enumerate(sorted_days):
@@ -222,10 +378,10 @@ def parse_table_section(words: list[dict], y_start: float, y_end: float,
         right = 612.0 if i == len(sorted_days) - 1 else (day_anchors[d] + day_anchors[sorted_days[i + 1]]) / 2.0
         day_bounds.append((d, left, right))
 
-    # Buscar franjas horarias (ej. 8:30-9:30, 9:30-10:30, etc.) en x < 95
+    # Buscar franjas horarias (ej. 8:30-9:30, 9:30-10:30, 15:30-16:30...)
     time_slots = []
     for w in section_words:
-        if w["xMin"] < 95.0 and re.match(r"^\d{1,2}:\d{2}-\d{1,2}:\d{2}$", w["text"]):
+        if w["xMin"] < 105.0 and re.match(r"^\d{1,2}:\d{2}-\d{1,2}:\d{2}$", w["text"]):
             time_slots.append({
                 "slot_text": w["text"],
                 "yMin": w["yMin"],
@@ -236,78 +392,35 @@ def parse_table_section(words: list[dict], y_start: float, y_end: float,
     if not time_slots:
         return {}
 
-    # Para cada franja horaria, extraer las clases correspondientes
     clases_por_dia = {d: [] for d in day_names}
 
     for idx, slot in enumerate(time_slots):
-        slot_y_min = slot["yMin"] - 2.0
-        slot_y_max = time_slots[idx + 1]["yMin"] - 2.0 if idx + 1 < len(time_slots) else slot["yMax"] + 20.0
+        slot_y_min = slot["yMin"] - 3.0
+        slot_y_max = time_slots[idx + 1]["yMin"] - 3.0 if idx + 1 < len(time_slots) else slot["yMax"] + 24.0
 
-        # Palabras de esta franja en el área de la tabla (x entre 95 y 610)
-        slot_words = [w for w in section_words if slot_y_min <= w["yMin"] < slot_y_max and 95 <= w["xMin"] < 610]
+        slot_words = [w for w in section_words if slot_y_min <= w["yMin"] < slot_y_max and 95 <= w["xMin"] < 630]
         if not slot_words:
             continue
 
-        # Distinguir palabras de aula (números con punto ej. '0.7', '1.5', '2.6', '-1.1')
-        # de palabras de asignaturas y grupos
+        # Palabras de aula: números con punto ('0.7', '1.5', '2.6', '3.8', '-1', '-2')
         room_words = [w for w in slot_words if re.match(r"^-?\d+\.\d+$|^-?[0-4]$", w["text"])]
         subject_words = [w for w in slot_words if w not in room_words]
 
-        # Agrupar subject_words contiguos (ej. 'ALEM' + '(A1)')
-        subject_tokens = []
-        subject_words.sort(key=lambda w: (w["yMin"], w["xMin"]))
-        
-        curr_token = []
-        for sw in subject_words:
-            if not curr_token:
-                curr_token.append(sw)
-            else:
-                last_w = curr_token[-1]
-                # Si están en la misma línea y muy cerca horizontalmente (espacio < 15)
-                if abs(sw["yMin"] - last_w["yMin"]) < 4.0 and (sw["xMin"] - last_w["xMax"]) < 12.0:
-                    curr_token.append(sw)
-                else:
-                    tok_text = "".join(w["text"] for w in curr_token)
-                    tok_x_center = (curr_token[0]["xMin"] + curr_token[-1]["xMax"]) / 2.0
-                    subject_tokens.append({
-                        "text": tok_text,
-                        "x_center": tok_x_center,
-                        "xMin": curr_token[0]["xMin"],
-                        "xMax": curr_token[-1]["xMax"],
-                        "yMin": curr_token[0]["yMin"]
-                    })
-                    curr_token = [sw]
-        if curr_token:
-            tok_text = "".join(w["text"] for w in curr_token)
-            tok_x_center = (curr_token[0]["xMin"] + curr_token[-1]["xMax"]) / 2.0
-            subject_tokens.append({
-                "text": tok_text,
-                "x_center": tok_x_center,
-                "xMin": curr_token[0]["xMin"],
-                "xMax": curr_token[-1]["xMax"],
-                "yMin": curr_token[0]["yMin"]
-            })
+        # Tokenizar asignaturas con el tokenizer robusto
+        subject_tokens = tokenize_subject_line(subject_words)
 
-        # Para cada token de asignatura, buscar el aula más cercana en xMin/xMax
         for tok in subject_tokens:
-            tok_raw = tok["text"]
-            # Extraer acrónimo y subgrupo: ej 'ALEM(A1)' -> ('ALEM', 'A1')
-            m_sub = re.match(r"^([A-ZÁÉÍÓÚ0-9/]+)(?:\(([A-Za-z0-9]+)\))?$", tok_raw)
-            if not m_sub:
-                continue
-            
-            acronym = m_sub.group(1)
-            subgroup = m_sub.group(2)
+            acronym = tok["acronym"]
+            subgroup = tok["subgroup"]
             is_practice = subgroup is not None
 
-            # Buscar aula verticalmente debajo y centrada
-            matched_room = "0.1" # fallback por defecto
+            # Buscar aula más cercana horizontalmente (tanto arriba como abajo)
+            matched_room = "0.1"
             closest_dist = 999.0
             for rw in room_words:
                 rw_center = (rw["xMin"] + rw["xMax"]) / 2.0
                 dist = abs(rw_center - tok["x_center"])
-                # Debe estar en un rango razonable de alineación horizontal
-                if dist < 22.0 and dist < closest_dist:
+                if dist < 25.0 and dist < closest_dist:
                     closest_dist = dist
                     matched_room = rw["text"]
 
@@ -318,8 +431,12 @@ def parse_table_section(words: list[dict], y_start: float, y_end: float,
                     matched_day = d_name
                     break
 
-            # Resolver nombre completo desde la leyenda
-            full_subject_name = legend.get(acronym, acronym)
+            # Resolver nombre completo: primero diccionario maestro, luego leyenda local
+            full_subject_name = DICCIONARIO_MAESTRO_ASIGNATURAS.get(
+                acronym,
+                page_legend.get(acronym, acronym)
+            )
+
             clean_room_code = limpiar_codigo_aula(matched_room)
             room_label, planta, tipo_espacio = formatear_aula_y_planta(clean_room_code)
 
@@ -343,7 +460,7 @@ def parse_table_section(words: list[dict], y_start: float, y_end: float,
                 "isCurrent": False
             })
 
-    # Opcional: fusionar horas consecutivas idénticas (ej. 8:30-9:30 + 9:30-10:30 de la misma asignatura y aula)
+    # Fusionar horas consecutivas idénticas
     clases_consolidadas = {}
     for d, lista in clases_por_dia.items():
         if not lista:
@@ -356,7 +473,6 @@ def parse_table_section(words: list[dict], y_start: float, y_end: float,
                 fusionadas.append(c.copy())
             else:
                 prev = fusionadas[-1]
-                # Si es la misma asignatura, mismo subgrupo, misma aula y la hora de fin coincide con la de inicio
                 if (prev["acronym"] == c["acronym"] and
                     prev["subgroup"] == c["subgroup"] and
                     prev["room_code"] == c["room_code"] and
@@ -371,12 +487,13 @@ def parse_table_section(words: list[dict], y_start: float, y_end: float,
         "curso": header_info.get("curso", 1),
         "grupo": header_info.get("grupo", "A"),
         "cuatrimestre": header_info.get("cuatrimestre", 1),
+        "mencion": header_info.get("mencion", ""),
         "horario": clases_consolidadas
     }
 
 
 def parse_horarios_pdf(pdf_path: str, grado_id: str, grado_nombre: str) -> dict:
-    """Parsea completamente un PDF de horarios y retorna la estructura del grado."""
+    """Parsea completamente un PDF de horarios detectando dinámicamente tablas en cualquier posición."""
     print(f"\n[*] Procesando {grado_nombre} ({os.path.basename(pdf_path)})...")
     xml_str = pdf_to_bbox_xml(pdf_path)
     root = ET.fromstring(xml_str)
@@ -391,44 +508,50 @@ def parse_horarios_pdf(pdf_path: str, grado_id: str, grado_nombre: str) -> dict:
         if not words:
             continue
 
-        # Extraer cabecera del curso y grupo (palabras en y < 65)
-        top_words = [w for w in words if w["yMin"] < 65.0]
-        top_words.sort(key=lambda w: (w["yMin"], w["xMin"]))
-        top_text = " ".join(w["text"] for w in top_words)
-
-        # Ejemplo regex: '1º A Grado en...' o '2º Grado en...'
-        m_head = re.search(r"([1-5])º(?:\s*([A-D]))?\s*((?:Doble\s+)?Grado[^\n\r]+)", top_text)
-        curso = int(m_head.group(1)) if m_head else 1
-        grupo = m_head.group(2) if (m_head and m_head.group(2)) else "A"
-
-        # Leyenda de asignaturas de la página
         legend = parse_legend_items(words)
 
-        # Detectar cuatrimestres en la página
-        cuatrimestre_words = [w for w in words if "cuatrimestre" in w["text"].lower()]
-        
-        if len(cuatrimestre_words) >= 2:
-            # Típicamente 1er cuatrimestre arriba (y < 250) y 2º cuatrimestre abajo (y >= 250)
-            split_y = (cuatrimestre_words[0]["yMin"] + cuatrimestre_words[1]["yMin"]) / 2.0
-            
-            # 1er cuatrimestre
-            info_c1 = {"curso": curso, "grupo": grupo, "cuatrimestre": 1}
-            sec1 = parse_table_section(words, 60.0, split_y + 10.0, info_c1, legend)
-            if sec1 and any(sec1.get("horario", {}).values()):
-                cursos_parsed.append(sec1)
+        # Detectar dinámicamente cada tabla en la página localizando la cabecera 'Lunes'
+        lunes_words = [w for w in words if w["text"] == "Lunes" and w["xMin"] < 200.0]
+        lunes_words.sort(key=lambda w: w["yMin"])
 
-            # 2º cuatrimestre
-            info_c2 = {"curso": curso, "grupo": grupo, "cuatrimestre": 2}
-            sec2 = parse_table_section(words, split_y - 10.0, 600.0, info_c2, legend)
-            if sec2 and any(sec2.get("horario", {}).values()):
-                cursos_parsed.append(sec2)
-        else:
-            # Página con un solo cuatrimestre
+        for idx, lw in enumerate(lunes_words):
+            y_lunes = lw["yMin"]
+            
+            # Palabras de cabecera inmediatamente superiores al día Lunes
+            above_words = [w for w in words if y_lunes - 45.0 <= w["yMin"] < y_lunes]
+            above_words.sort(key=lambda w: (w["yMin"], w["xMin"]))
+            header_text = " ".join(w["text"] for w in above_words)
+
+            m_curso = re.search(r"([1-5])º", header_text)
+            curso = int(m_curso.group(1)) if m_curso else 1
+
             cuatrimestre = 1
-            if cuatrimestre_words and "2" in cuatrimestre_words[0]["text"]:
+            if "2" in header_text and "cuatrimestre" in header_text.lower():
                 cuatrimestre = 2
-            info = {"curso": curso, "grupo": grupo, "cuatrimestre": cuatrimestre}
-            sec = parse_table_section(words, 60.0, 600.0, info, legend)
+
+            m_mencion = re.search(r"\(([^)]+)\)", header_text)
+            mencion = m_mencion.group(1).replace("–", "-").strip() if m_mencion else ""
+
+            grupo = "A"
+            m_grupo_letra = re.search(r"[1-5]º\s*([A-Fa-f])\b", header_text)
+            if m_grupo_letra:
+                grupo = m_grupo_letra.group(1).upper()
+            elif mencion:
+                if "-" in mencion:
+                    grupo = mencion.split("-")[-1].strip().upper()
+                else:
+                    grupo = mencion
+
+            info = {
+                "curso": curso,
+                "grupo": grupo,
+                "cuatrimestre": cuatrimestre,
+                "mencion": mencion
+            }
+
+            next_y = lunes_words[idx + 1]["yMin"] - 45.0 if idx + 1 < len(lunes_words) else 600.0
+
+            sec = parse_table_section(words, y_lunes - 5.0, next_y, info, legend)
             if sec and any(sec.get("horario", {}).values()):
                 cursos_parsed.append(sec)
 
@@ -453,15 +576,13 @@ def main():
     os.makedirs(os.path.dirname(args.output), exist_ok=True)
 
     print("=" * 70)
-    print("ETSIIT - Herramienta de Extracción y Parseo de Horarios")
+    print("ETSIIT - Herramienta de Extracción y Parseo de Horarios (v2 Refined)")
     print("=" * 70)
 
-    # 1. Obtener enlaces del último año académico
     if not args.offline:
         year_title, pdf_links = scrape_horarios_links(BASE_URL)
     else:
         year_title = "Curso Académico Local"
-        # En modo offline buscar archivos en DEFAULT_DOWNLOAD_DIR
         pdf_links = []
         for fname in os.listdir(DEFAULT_DOWNLOAD_DIR):
             if fname.endswith(".pdf"):
@@ -473,10 +594,8 @@ def main():
                     "filename": fname
                 })
 
-    # Filtrar por grados solicitados
     pdf_links = [l for l in pdf_links if l["grado_id"] in args.grados]
 
-    # Nombres oficiales de grados
     nombres_grados = {
         "gii": "Grado en Ingeniería Informática",
         "gitt": "Grado en Ingeniería de Tecnologías de Telecomunicación",
@@ -502,7 +621,6 @@ def main():
 
         try:
             parsed = parse_horarios_pdf(dest_pdf, gid, gname)
-            # Contar total de clases
             clases_en_grado = sum(
                 len(clases)
                 for curso in parsed["cursos"]
@@ -514,7 +632,6 @@ def main():
         except Exception as e:
             print(f"    [!] Error parseando {item['filename']}: {e}")
 
-    # Estructura JSON final
     payload = {
         "curso_academico": year_title,
         "fecha_extraccion": datetime.now().isoformat(),
@@ -523,12 +640,10 @@ def main():
         "grados": grados_resultado
     }
 
-    # Guardar archivo JSON
     with open(args.output, "w", encoding="utf-8") as f:
         json.dump(payload, f, ensure_ascii=False, indent=2)
     print(f"\n[+] Archivo JSON guardado en: {args.output}")
 
-    # Copiar a assets si está habilitado
     if args.copy_assets:
         assets_dir = os.path.dirname(DEFAULT_ASSETS_FILE)
         os.makedirs(assets_dir, exist_ok=True)
@@ -545,4 +660,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
