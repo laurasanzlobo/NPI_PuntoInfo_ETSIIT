@@ -27,6 +27,17 @@ DEFAULT_OUTPUT_FILE = os.path.join(SCRIPT_DIR, "output", "horarios_etsiit.json")
 DEFAULT_ASSETS_FILE = os.path.join(SCRIPT_DIR, "..", "..", "app", "src", "main", "assets", "horarios_etsiit.json")
 
 # Normalización de plantas y aulas para coincidir con GrafoETSIIT y ScheduleRepository
+def limpiar_codigo_aula(room_code: str) -> str:
+    """Corrige artefactos del PDF (ej. '0.12' que es Aula 0.1 subgrupo 2)."""
+    clean = room_code.strip()
+    m0 = re.match(r"^0\.([1-8])\d+$", clean)
+    if m0:
+        return f"0.{m0.group(1)}"
+    m1 = re.match(r"^1\.([1-8])\d+$", clean)
+    if m1:
+        return f"1.{m1.group(1)}"
+    return clean
+
 def formatear_aula_y_planta(room_code: str) -> tuple[str, str, str]:
     """
     Recibe un código de aula como '0.7', '1.5', '2.6', '3.8', '-1.1', '-1'
@@ -34,7 +45,7 @@ def formatear_aula_y_planta(room_code: str) -> tuple[str, str, str]:
     ejemplo: ('Aula 0.7 · Planta Baja', 'PB', 'aula')
              ('Laboratorio 2.6 · Planta 2', 'P2', 'laboratorio')
     """
-    clean = room_code.strip()
+    clean = limpiar_codigo_aula(room_code)
     if clean.startswith("-"):
         num = clean.replace("-", "").strip()
         return f"Aula -{num} · Planta Semisótano", "PSS", "aula"
@@ -55,6 +66,7 @@ def formatear_aula_y_planta(room_code: str) -> tuple[str, str, str]:
             return f"Despacho/Seminario 4.{aula_num} · Planta 4", "P4", "seminario"
 
     return f"Espacio {clean}", "PB", "aula"
+
 
 
 def scrape_horarios_links(url: str = BASE_URL) -> tuple[str, list[dict]]:
@@ -308,7 +320,8 @@ def parse_table_section(words: list[dict], y_start: float, y_end: float,
 
             # Resolver nombre completo desde la leyenda
             full_subject_name = legend.get(acronym, acronym)
-            room_label, planta, tipo_espacio = formatear_aula_y_planta(matched_room)
+            clean_room_code = limpiar_codigo_aula(matched_room)
+            room_label, planta, tipo_espacio = formatear_aula_y_planta(clean_room_code)
 
             slot_times = slot["slot_text"].split("-")
             hora_ini = slot_times[0].strip().zfill(5)
@@ -322,7 +335,7 @@ def parse_table_section(words: list[dict], y_start: float, y_end: float,
                 "acronym": acronym,
                 "subgroup": subgroup,
                 "room": room_label,
-                "room_code": matched_room,
+                "room_code": clean_room_code,
                 "planta": planta,
                 "tipo_espacio": tipo_espacio,
                 "professor": "",
@@ -532,3 +545,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
