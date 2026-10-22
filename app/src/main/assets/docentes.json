@@ -3364,12 +3364,6 @@
           "tipo": "Teoría",
           "aula": "A_05",
           "horario": "Viernes 10:30 - 12:30"
-        },
-        {
-          "asignatura": "Procesadores de Lenguajes",
-          "tipo": "Prácticas",
-          "aula": "L_28",
-          "horario": "Viernes 12:30 - 14:30"
         }
       ]
     },

@@ -45,13 +45,20 @@ data class Professor(
 )
 
 @Composable
-fun ProfessorsScreen(
-    onNavigate: (String) -> Unit = {}
-) {
+fun ProfessorsScreen(onNavigate: (String) -> Unit, searchedName: String? = null) {
     val context = LocalContext.current
     var selectedProfessor by remember { mutableStateOf<Professor?>(null) }
 
     val professorsList = remember { loadProfessors(context) }
+
+    androidx.compose.runtime.LaunchedEffect(searchedName, professorsList) {
+        if (searchedName != null) {
+            val found = professorsList.find { it.name == searchedName }
+            if (found != null) {
+                selectedProfessor = found
+            }
+        }
+    }
 
     // El acelerómetro con el gesto «¡Llévame!» SOLO está activo si el usuario está dentro del detalle de un profesor
     DisposableEffect(selectedProfessor) {

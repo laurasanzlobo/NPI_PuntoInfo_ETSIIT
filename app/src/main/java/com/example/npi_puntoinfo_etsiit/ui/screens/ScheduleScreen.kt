@@ -58,6 +58,36 @@ fun ScheduleScreen(
     val today = remember { LocalDate.now() }
     val now = remember { LocalTime.now() }
 
+    // Diccionario que relaciona una asignatura con el nombre de su profesor real
+    val subjectToProfessorMap = remember {
+        val map = mutableMapOf<String, String>()
+        try {
+            val jsonString = context.assets.open("docentes.json").bufferedReader().use { it.readText() }
+            val jsonArray = org.json.JSONObject(jsonString).getJSONArray("profesores")
+            for (i in 0 until jsonArray.length()) {
+                val profObj = jsonArray.getJSONObject(i)
+                val profName = profObj.getString("nombre")
+                if (profObj.has("clases")) {
+                    val clasesArray = profObj.getJSONArray("clases")
+                    for (j in 0 until clasesArray.length()) {
+                        val claseObj = clasesArray.getJSONObject(j)
+                        val asig = claseObj.getString("asignatura")
+
+                        // Leemos el tipo, lo pasamos a minúsculas y comprobamos ambas opciones
+                        val tipo = claseObj.optString("tipo", "Teoría").lowercase()
+                        val esPractica = tipo.contains("práct") || tipo.contains("prac")
+
+                        val sufijo = if (esPractica) "-PRAC" else "-TEO"
+                        map["$asig$sufijo"] = profName
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            // Ignoramos errores de formato
+        }
+        map
+    }
+
     // El acelerómetro con el gesto «¡Llévame!» SOLO está activo si el usuario está viendo el detalle de una clase concreta
     DisposableEffect(selectedClass) {
         val manager = AccelerometerManager(context)
@@ -81,7 +111,7 @@ fun ScheduleScreen(
         }
     }
 
-    val daysSchedule = remember(today, now) {
+    val daysSchedule = remember(today, now, subjectToProfessorMap) {
         (0 until 7).map { offset ->
             val date = today.plusDays(offset.toLong())
             val dayOfWeek = date.dayOfWeek
@@ -106,7 +136,18 @@ fun ScheduleScreen(
             val baseClasses = ScheduleRepository.getClassesForDay(dayOfWeek)
 
             val classesForDay = baseClasses.map { item ->
-                item.copy(isCurrent = isToday && isTimeInRange(item.time, now))
+                // Creamos el mismo sufijo basándonos en el boolean isPractice del horario
+                val sufijo = if (item.isPractice) "-PRAC" else "-TEO"
+
+                // Buscamos con la clave compuesta (ej. "NPI-PRAC")
+                val realProfessor = subjectToProfessorMap["${item.acronym}$sufijo"]
+                    ?: subjectToProfessorMap["${item.subject}$sufijo"]
+                    ?: item.professor
+
+                item.copy(
+                    isCurrent = isToday && isTimeInRange(item.time, now),
+                    professor = realProfessor
+                )
             }
 
             DayScheduleInfo(

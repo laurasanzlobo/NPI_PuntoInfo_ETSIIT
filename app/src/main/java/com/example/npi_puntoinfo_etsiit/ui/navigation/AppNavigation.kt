@@ -195,6 +195,29 @@ fun AppNavigation() {
             val spokenList = result.data?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)
             val query = spokenList?.firstOrNull()?.trim()
             if (!query.isNullOrBlank()) {
+
+                // --- 1. BUSCAR PRIMERO EN EL DIRECTORIO DE PROFESORES ---
+                val jsonString = context.assets.open("docentes.json").bufferedReader().use { it.readText() }
+                val jsonArray = org.json.JSONObject(jsonString).getJSONArray("profesores")
+                var foundProfessor: String? = null
+
+                for (i in 0 until jsonArray.length()) {
+                    val nombre = jsonArray.getJSONObject(i).getString("nombre")
+                    // Comprobamos si lo que ha dicho el usuario coincide con algún nombre
+                    if (nombre.contains(query, ignoreCase = true)) {
+                        foundProfessor = nombre
+                        break
+                    }
+                }
+
+                if (foundProfessor != null) {
+                    triggerVibration(context, durationMs = 120)
+                    // Viajamos a la pestaña de profesores pasándole el nombre por la URL interna
+                    navController.navigate("${Screen.Professors.route}?nombre=$foundProfessor")
+                    return@rememberLauncherForActivityResult
+                }
+                // --- FIN DE LA BÚSQUEDA DE PROFESORES ---
+
                 val namedDining = OutdoorDestinations.diningNamedIn(query)
                 if (namedDining != null) {
                     triggerVibration(context, durationMs = 120)
@@ -558,9 +581,21 @@ fun AppNavigation() {
                     )
                 }
             }
-            composable(Screen.Professors.route) {
-                ProfessorsScreen(onNavigate = { route -> handleNavigation(route) })
+            composable(
+                route = "${Screen.Professors.route}?nombre={nombre}",
+                arguments = listOf(navArgument("nombre") {
+                    type = NavType.StringType
+                    nullable = true
+                    defaultValue = null
+                })
+            ) { backStackEntry ->
+                val nombreProfesor = backStackEntry.arguments?.getString("nombre")
+                ProfessorsScreen(
+                    onNavigate = { route -> handleNavigation(route) },
+                    searchedName = nombreProfesor // Le pasamos el nombre a tu pantalla
+                )
             }
+            
             composable(Screen.Profile.route) {
                 ProfileScreen()
             }
