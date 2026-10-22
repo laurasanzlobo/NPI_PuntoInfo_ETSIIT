@@ -9,12 +9,19 @@ import android.net.Network
 import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.animateContentSize
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ExpandLess
+import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.NearMe
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
@@ -22,6 +29,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import androidx.lifecycle.Lifecycle
@@ -38,6 +46,7 @@ import com.example.npi_puntoinfo_etsiit.ui.components.OutdoorMapStatus
 import com.example.npi_puntoinfo_etsiit.ui.components.WalkingStepRow
 import com.example.npi_puntoinfo_etsiit.ui.components.IndoorArrivalDialog
 import com.example.npi_puntoinfo_etsiit.ui.components.CompactIndoorEntryButton
+import com.example.npi_puntoinfo_etsiit.ui.theme.*
 import kotlinx.coroutines.delay
 import kotlin.math.roundToInt
 
@@ -266,54 +275,35 @@ fun OutdoorNavigationScreen(
             })
     }
 
-    Column(Modifier.fillMaxSize().testTag("outdoor-screen")) {
-        Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp), verticalAlignment = Alignment.CenterVertically) {
-            Box(Modifier.weight(1f)) {
-                OutlinedButton(onClick = { destinationMenu = true }, modifier = Modifier.fillMaxWidth()) {
-                    Text(state.destination?.name ?: "Seleccionar destino UGR")
-                }
-                DropdownMenu(expanded = destinationMenu, onDismissRequest = { destinationMenu = false }) {
-                    OutdoorDestinations.all.forEach { destination ->
-                        DropdownMenuItem(text = { Text(destination.name) }, onClick = {
-                            selectDestination(destination.id)
-                        })
-                    }
-                }
-            }
-            IconButton(onClick = { showInfo = true }) {
-                Icon(Icons.Default.Info, contentDescription = "Información y privacidad")
-            }
+    Box(Modifier.fillMaxSize().testTag("outdoor-screen")) {
+        // 1. EL MAPA: Ocupa todo el alto y ancho (fullscreen real)
+        key(mapAttempt) {
+            OutdoorMap(
+                destinations = OutdoorDestinations.all,
+                selected = state.destination,
+                position = position?.let { GeoPoint(it.latitude, it.longitude) },
+                route = route,
+                recenter = recenter,
+                onSelect = ::selectDestination,
+                onStatus = { mapStatus = it },
+                modifier = Modifier.fillMaxSize()
+            )
         }
-        if (indoor != null) {
-            Text("${indoor.target.name} · ${indoor.target.location}", Modifier.padding(horizontal = 12.dp),
-                style = MaterialTheme.typography.bodySmall)
-            if (!trip.showCompactEntry) TextButton(onClick = { showManualEntry = true },
-                modifier = Modifier.padding(horizontal = 12.dp).testTag("manual-indoor-entry")) {
-                Text("Continuar dentro manualmente")
-            }
-        } else if (finalDestination != null) {
-            Text("No hay una ruta interior disponible para $finalDestination.", Modifier.padding(horizontal = 12.dp),
-                color = MaterialTheme.colorScheme.error)
-        }
-        Box(Modifier.fillMaxWidth().weight(1.35f)) {
-            key(mapAttempt) {
-                OutdoorMap(
-                    destinations = OutdoorDestinations.all,
-                    selected = state.destination,
-                    position = position?.let { GeoPoint(it.latitude, it.longitude) },
-                    route = route,
-                    recenter = recenter,
-                    onSelect = ::selectDestination,
-                    onStatus = { mapStatus = it },
-                    modifier = Modifier.fillMaxSize()
-                )
-            }
-            if (mapStatus != OutdoorMapStatus.READY) {
-                Surface(Modifier.align(Alignment.BottomCenter).padding(8.dp), tonalElevation = 4.dp) {
-                    Column(Modifier.padding(8.dp)) {
-                        Text(if (mapStatus == OutdoorMapStatus.LOADING) "Cargando mapa…" else
-                            "No se ha podido cargar el mapa. Comprueba Internet o reintenta.")
-                        if (mapStatus == OutdoorMapStatus.ERROR) TextButton(onClick = {
+
+        // Estado del mapa (cargando o error)
+        if (mapStatus != OutdoorMapStatus.READY) {
+            Surface(
+                modifier = Modifier.align(Alignment.Center).padding(20.dp),
+                shape = RoundedCornerShape(16.dp),
+                color = SurfaceWhite.copy(alpha = 0.95f),
+                shadowElevation = 6.dp
+            ) {
+                Column(Modifier.padding(20.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(if (mapStatus == OutdoorMapStatus.LOADING) "Cargando mapa…" else
+                        "No se ha podido cargar el mapa. Comprueba Internet o reintenta.")
+                    if (mapStatus == OutdoorMapStatus.ERROR) {
+                        Spacer(Modifier.height(8.dp))
+                        TextButton(onClick = {
                             checkNetwork()
                             mapStatus = OutdoorMapStatus.LOADING
                             mapAttempt++
@@ -321,88 +311,291 @@ fun OutdoorNavigationScreen(
                     }
                 }
             }
-            if (indoor != null && trip.showCompactEntry) {
-                CompactIndoorEntryButton(onClick = {
-                    onTripChanged(trip.enterIndoors())
-                    onContinueIndoors(indoor)
-                }, modifier = Modifier.align(Alignment.TopCenter).padding(8.dp))
-            }
         }
+
+        // 2. CABECERA FLOTANTE SUPERIOR: Selector de destino + Info + "Ya estoy dentro"
         Column(
-            Modifier.fillMaxWidth().weight(0.85f, fill = false).verticalScroll(rememberScrollState()).padding(12.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .fillMaxWidth()
+                .padding(horizontal = 14.dp, vertical = 8.dp),
+            verticalArrangement = Arrangement.spacedBy(6.dp)
         ) {
-            if (state.destination == null) Text("Selecciona un destino")
-            if (showArrival && indoor == null) {
-                Surface(color = MaterialTheme.colorScheme.secondaryContainer, shape = MaterialTheme.shapes.medium) {
-                    Row(Modifier.padding(horizontal = 12.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Text("Estás cerca de ${state.destination?.name}. Comprueba el acceso.", Modifier.weight(1f))
-                        TextButton(onClick = { showArrival = false }) { Text("Cerrar") }
+            // Selector de destino en píldora con fondo blanco semitransparente sobre el mapa
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(24.dp),
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)),
+                color = SurfaceWhite.copy(alpha = 0.95f),
+                shadowElevation = 3.dp
+            ) {
+                Box {
+                    TextButton(
+                        onClick = { destinationMenu = true },
+                        modifier = Modifier.fillMaxWidth(),
+                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
+                    ) {
+                        Text(
+                            text = state.destination?.name ?: "Seleccionar destino UGR",
+                            fontWeight = FontWeight.SemiBold,
+                            color = TextPrimary,
+                            maxLines = 1
+                        )
+                    }
+                    DropdownMenu(expanded = destinationMenu, onDismissRequest = { destinationMenu = false }) {
+                        OutdoorDestinations.all.forEach { destination ->
+                            DropdownMenuItem(text = { Text(destination.name) }, onClick = {
+                                selectDestination(destination.id)
+                            })
+                        }
                     }
                 }
             }
-            if (!online) Text("Sin conexión a Internet. El mapa y las rutas necesitan red.")
-            when (val location = state.location) {
-                GpsLocationState.Idle -> Unit
-                GpsLocationState.Loading -> LinearProgressIndicator(Modifier.fillMaxWidth())
-                GpsLocationState.PermissionDenied -> {
-                    Text("Sin permiso de ubicación. Se admite ubicación precisa o aproximada.")
-                    TextButton(onClick = { openSettings(Settings.ACTION_APPLICATION_DETAILS_SETTINGS) }) {
-                        Text("Abrir permisos en Ajustes")
+
+            // Subtítulo con el despacho / profesor y botón "Ya estoy dentro"
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                if (indoor != null) {
+                    Surface(
+                        shape = RoundedCornerShape(12.dp),
+                        color = SurfaceWhite.copy(alpha = 0.95f),
+                        shadowElevation = 2.dp,
+                        border = BorderStroke(1.dp, SurfaceBorder.copy(alpha = 0.5f))
+                    ) {
+                        Text(
+                            text = "${indoor.target.name} · ${indoor.target.location}",
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+                            style = MaterialTheme.typography.bodySmall,
+                            fontWeight = FontWeight.Medium,
+                            color = TextPrimary
+                        )
                     }
-                }
-                GpsLocationState.LocationDisabled -> {
-                    Text("La ubicación del teléfono está desactivada.")
-                    TextButton(onClick = { openSettings(Settings.ACTION_LOCATION_SOURCE_SETTINGS) }) {
-                        Text("Activar ubicación")
+                } else if (finalDestination != null) {
+                    Surface(
+                        shape = RoundedCornerShape(12.dp),
+                        color = SurfaceWhite.copy(alpha = 0.95f),
+                        shadowElevation = 2.dp
+                    ) {
+                        Text(
+                            text = "Sin ruta interior para $finalDestination",
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.error
+                        )
                     }
+                } else {
+                    Spacer(Modifier.width(1.dp))
                 }
-                GpsLocationState.Unavailable -> Text("Ubicación temporalmente no disponible. Reintenta al aire libre.")
-                is GpsLocationState.Available -> {
-                    Text("Ubicación ${if (location.permission == LocationPermission.APPROXIMATE) "aproximada" else "precisa"}" +
-                        " · precisión ±${location.coordinates.accuracyMeters.roundToInt()} m")
+
+                // Botón "Ya estoy dentro" en la esquina superior derecha
+                if (indoor != null) {
+                    CompactIndoorEntryButton(
+                        onClick = {
+                            onTripChanged(trip.enterIndoors())
+                            onContinueIndoors(indoor)
+                        }
+                    )
                 }
-            }
-            if (settingsError) Text("No se han podido abrir los ajustes del teléfono.")
-            if (route == null && position != null && state.destination != null) {
-                val destination = state.destination!!
-                Text("En línea recta: " + formatOutdoorDistance(OutdoorDistances.distanceMeters(
-                    position.latitude, position.longitude, destination.point.latitude, destination.point.longitude)))
-            }
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedButton(enabled = !busy, onClick = {
-                    if (state.location == GpsLocationState.PermissionDenied) {
-                        permissionLauncher.launch(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION,
-                            Manifest.permission.ACCESS_COARSE_LOCATION))
-                    } else navigator.refreshLocation(scope)
-                }, modifier = Modifier.weight(1f)) { Text("Mi ubicación") }
-                OutlinedButton(onClick = { recenter++ }, modifier = Modifier.weight(1f)) { Text("Centrar mapa") }
-            }
-            if (BuildConfig.ORS_API_KEY.isBlank()) Text(RouteError.MISSING_KEY.message,
-                color = MaterialTheme.colorScheme.error)
-            Button(enabled = !busy && state.destination != null && BuildConfig.ORS_API_KEY.isNotBlank(),
-                modifier = Modifier.fillMaxWidth(), onClick = {
-                checkNetwork()
-                if (routeConsent) {
-                    if (online) startRoute() else launchPending = true
-                } else showConsent = true
-            }) { Text(if (state.routing) "Calculando…" else if (route != null) "Actualizar ruta" else "Calcular ruta a pie") }
-            if (state.routing && state.location != GpsLocationState.Loading) LinearProgressIndicator(Modifier.fillMaxWidth())
-            (state.route as? WalkingRouteResult.Failure)?.let {
-                Text(it.error.message, color = MaterialTheme.colorScheme.error)
-            }
-            route?.let {
-                Text("Ruta a pie: ${formatOutdoorDistance(it.distanceMeters)}" +
-                    (it.durationSeconds?.let { seconds -> " · ${formatWalkingDuration(seconds)} estimados" } ?: ""),
-                    style = MaterialTheme.typography.titleMedium)
-                TextButton(onClick = { showSteps = !showSteps }) {
-                    Text(if (showSteps) "Ocultar pasos" else "Ver instrucciones (${it.steps.size})")
-                }
-                if (showSteps) it.steps.forEachIndexed { index, step -> WalkingStepRow(step, index + 1) }
             }
         }
-        Text("Rutas: © openrouteservice / HeiGIT", Modifier.padding(horizontal = 12.dp, vertical = 2.dp),
-            style = MaterialTheme.typography.labelSmall)
+
+        // 3. BOTÓN FLOTANTE CIRCULAR DE CENTRAR MAPA (estilo Google Maps)
+        Surface(
+            shape = CircleShape,
+            color = SurfaceWhite,
+            shadowElevation = 4.dp,
+            border = BorderStroke(1.dp, SurfaceBorder.copy(alpha = 0.6f)),
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(end = 16.dp, bottom = if (route != null) 140.dp else 100.dp)
+                .size(46.dp),
+            onClick = { recenter++ }
+        ) {
+            Box(contentAlignment = Alignment.Center) {
+                Icon(
+                    imageVector = Icons.Default.NearMe,
+                    contentDescription = "Centrar mapa",
+                    tint = UgrRed,
+                    modifier = Modifier.size(22.dp)
+                )
+            }
+        }
+
+        // 4. TARJETA INFERIOR FLOTANTE ELEGANTE
+        Surface(
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .fillMaxWidth()
+                .padding(12.dp),
+            shape = RoundedCornerShape(20.dp),
+            color = SurfaceWhite.copy(alpha = 0.96f),
+            shadowElevation = 6.dp,
+            border = BorderStroke(1.dp, SurfaceBorder.copy(alpha = 0.5f))
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(14.dp)
+                    .animateContentSize(),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                // Aviso de llegada
+                if (showArrival && indoor == null) {
+                    Surface(color = MaterialTheme.colorScheme.secondaryContainer, shape = RoundedCornerShape(10.dp)) {
+                        Row(Modifier.padding(horizontal = 12.dp, vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+                            Text("Estás cerca de ${state.destination?.name}. Comprueba el acceso.", Modifier.weight(1f), style = MaterialTheme.typography.bodySmall)
+                            TextButton(onClick = { showArrival = false }) { Text("Cerrar", style = MaterialTheme.typography.labelMedium) }
+                        }
+                    }
+                }
+
+                // Avisos de red / GPS
+                if (!online) {
+                    Text("Sin conexión a Internet. El mapa necesita red.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
+                }
+                when (val location = state.location) {
+                    GpsLocationState.Idle -> Unit
+                    GpsLocationState.Loading -> LinearProgressIndicator(Modifier.fillMaxWidth())
+                    GpsLocationState.PermissionDenied -> {
+                        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
+                            Text("Sin permiso de ubicación", style = MaterialTheme.typography.bodySmall)
+                            TextButton(onClick = { openSettings(Settings.ACTION_APPLICATION_DETAILS_SETTINGS) }) {
+                                Text("Ajustes", style = MaterialTheme.typography.labelMedium)
+                            }
+                        }
+                    }
+                    GpsLocationState.LocationDisabled -> {
+                        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
+                            Text("Ubicación desactivada en el móvil", style = MaterialTheme.typography.bodySmall)
+                            TextButton(onClick = { openSettings(Settings.ACTION_LOCATION_SOURCE_SETTINGS) }) {
+                                Text("Activar", style = MaterialTheme.typography.labelMedium)
+                            }
+                        }
+                    }
+                    GpsLocationState.Unavailable -> Text("Ubicación temporalmente no disponible", style = MaterialTheme.typography.bodySmall)
+                    is GpsLocationState.Available -> Unit
+                }
+
+                if (route != null) {
+                    // Estado 1: Ruta calculada
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "${formatOutdoorDistance(route.distanceMeters)}" +
+                                    (route.durationSeconds?.let { " · ${formatWalkingDuration(it)}" } ?: ""),
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = TextPrimary
+                            )
+                            Text("Ruta a pie recomendada", style = MaterialTheme.typography.bodySmall, color = TextSecondary)
+                        }
+
+                        Button(
+                            enabled = !busy,
+                            onClick = {
+                                checkNetwork()
+                                if (routeConsent) {
+                                    if (online) startRoute() else launchPending = true
+                                } else showConsent = true
+                            },
+                            colors = ButtonDefaults.buttonColors(containerColor = UgrRed),
+                            contentPadding = PaddingValues(horizontal = 14.dp, vertical = 8.dp),
+                            shape = RoundedCornerShape(10.dp)
+                        ) {
+                            Text(
+                                text = if (state.routing) "Calculando…" else "Actualizar",
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+
+                    // Botón centrado para desplegar / ocultar pasos
+                    Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                        TextButton(
+                            onClick = { showSteps = !showSteps },
+                            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp)
+                        ) {
+                            Icon(
+                                imageVector = if (showSteps) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(Modifier.width(4.dp))
+                            Text(
+                                text = if (showSteps) "Ocultar pasos" else "Ver instrucciones (${route.steps.size})",
+                                style = MaterialTheme.typography.labelMedium
+                            )
+                        }
+                    }
+
+                    if (showSteps) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .heightIn(max = 160.dp)
+                                .verticalScroll(rememberScrollState()),
+                            verticalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            route.steps.forEachIndexed { index, step -> WalkingStepRow(step, index + 1) }
+                        }
+                    }
+                } else {
+                    // Estado 2: Sin ruta calculada todavía
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            if (position != null && state.destination != null) {
+                                val dMeters = OutdoorDistances.distanceMeters(
+                                    position.latitude, position.longitude,
+                                    state.destination!!.point.latitude, state.destination!!.point.longitude
+                                )
+                                Text("Línea recta: ${formatOutdoorDistance(dMeters)}", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
+                            } else {
+                                Text(state.destination?.name ?: "Selecciona un destino", style = MaterialTheme.typography.bodyMedium)
+                            }
+                        }
+
+                        Button(
+                            enabled = !busy && state.destination != null && BuildConfig.ORS_API_KEY.isNotBlank(),
+                            onClick = {
+                                checkNetwork()
+                                if (routeConsent) {
+                                    if (online) startRoute() else launchPending = true
+                                } else showConsent = true
+                            },
+                            colors = ButtonDefaults.buttonColors(containerColor = UgrRed),
+                            contentPadding = PaddingValues(horizontal = 14.dp, vertical = 8.dp),
+                            shape = RoundedCornerShape(10.dp)
+                        ) {
+                            Text(
+                                text = if (state.routing) "Calculando…" else "Calcular ruta",
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+                }
+
+                if (state.routing && state.location != GpsLocationState.Loading) {
+                    LinearProgressIndicator(Modifier.fillMaxWidth())
+                }
+
+                (state.route as? WalkingRouteResult.Failure)?.let {
+                    Text(it.error.message, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+                }
+            }
+        }
     }
 }
 

@@ -57,6 +57,7 @@ import com.example.npi_puntoinfo_etsiit.outdoor.NavigationJourney
 import com.example.npi_puntoinfo_etsiit.outdoor.EtsiitAccess
 import com.example.npi_puntoinfo_etsiit.outdoor.OutdoorNavigationRoute
 import com.example.npi_puntoinfo_etsiit.outdoor.NavigationTrip
+import com.example.npi_puntoinfo_etsiit.outdoor.TripPhase
 import com.example.npi_puntoinfo_etsiit.outdoor.OutdoorDestinations
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -96,7 +97,12 @@ fun AppNavigation() {
                 val target = trip.indoor?.target
                 val route = if (target != null) OutdoorNavigationRoute.forIndoorTarget(target.name, target.location, target.nodeId)
                     else OutdoorNavigationRoute.create(trip.destinationId)
-                navController.navigate(route) { launchSingleTop = true }
+                navController.navigate(route) {
+                    popUpTo(navController.graph.findStartDestination().id) {
+                        saveState = false
+                    }
+                    launchSingleTop = true
+                }
             }
         }
     }
@@ -122,13 +128,12 @@ fun AppNavigation() {
         if (route == Screen.Schedule.route) {
             scheduleNavCounter++
         }
-        val shouldRestore = route != Screen.Dining.route && route != Screen.Schedule.route
         navController.navigate(route) {
             popUpTo(navController.graph.findStartDestination().id) {
-                saveState = true
+                saveState = false
             }
             launchSingleTop = true
-            restoreState = shouldRestore
+            restoreState = false
         }
     }
 
@@ -153,8 +158,10 @@ fun AppNavigation() {
                 OutdoorNavigationRoute.forIndoorTarget(it.name, it.location, it.nodeId)
             } ?: route
             navController.navigate(resolvedRoute) {
-                // Sustituir recorrido elimina entradas antiguas, incluso si antes estábamos dentro.
-                popUpTo(Screen.Outdoor.routePattern) { inclusive = true }
+                popUpTo(navController.graph.findStartDestination().id) {
+                    saveState = false
+                }
+                launchSingleTop = true
             }
         } else if (route.startsWith("navigation?")) {
             val uri = android.net.Uri.parse("app://$route")
@@ -345,10 +352,10 @@ fun AppNavigation() {
         currentRoute == Screen.Home.route -> "ETSIIT"
         currentRoute == Screen.Schedule.route -> "Mi Horario"
         currentRoute?.startsWith("navigation") == true -> {
-            if (isVerticalGuidanceActive && !activeDestination.isNullOrBlank()) "Guiado Paso a Paso" else "Mapa"
+            if (isVerticalGuidanceActive && !activeDestination.isNullOrBlank()) "Guiado Paso a Paso" else "Mapa ETSIIT"
         }
         currentRoute == Screen.Dining.route -> "Comedores"
-        currentRoute == Screen.Outdoor.routePattern -> "Mapa exterior · A pie"
+        currentRoute == Screen.Outdoor.routePattern -> "Mapa exterior"
         currentRoute == Screen.Professors.route -> "Profesores"
         currentRoute == Screen.Profile.route -> "Tarjeta Universitaria (TUI)"
         else -> "ETSIIT UGR"
@@ -441,18 +448,29 @@ fun AppNavigation() {
             ) {
                 bottomNavItems.forEach { screen ->
                     val isNavigationSelected = screen == Screen.Navigation &&
-                        (currentRoute == Screen.Navigation.route || currentRoute?.startsWith("navigation") == true)
-                    val selected = currentRoute == screen.route || isNavigationSelected
+                        (currentRoute == Screen.Navigation.route ||
+                         currentRoute?.startsWith("navigation") == true ||
+                         currentRoute == Screen.Outdoor.routePattern ||
+                         currentRoute?.startsWith("outdoor") == true)
+                    val selected = (currentRoute == screen.route && !isNavigationSelected) || (screen == Screen.Navigation && isNavigationSelected)
                     NavigationBarItem(
                         selected = selected,
                         onClick = {
-                            if (!selected) {
-                                navigateToTab(screen.route)
+                            if (screen == Screen.Navigation) {
+                                if (activeTrip != null && activeTrip?.phase == TripPhase.OUTDOOR) {
+                                    returnToOutdoor()
+                                } else {
+                                    navigateToTab(Screen.Navigation.route)
+                                }
                             } else {
-                                if (screen == Screen.Dining) {
-                                    diningNavCounter++
-                                } else if (screen == Screen.Schedule) {
-                                    scheduleNavCounter++
+                                if (!selected) {
+                                    navigateToTab(screen.route)
+                                } else {
+                                    if (screen == Screen.Dining) {
+                                        diningNavCounter++
+                                    } else if (screen == Screen.Schedule) {
+                                        scheduleNavCounter++
+                                    }
                                 }
                             }
                         },

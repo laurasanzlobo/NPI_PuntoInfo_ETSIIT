@@ -169,12 +169,18 @@ private class OutdoorMapController(
         val fitPoints = current.route?.points.orEmpty() + listOfNotNull(current.position, current.selected?.point)
         val points = (fitPoints.ifEmpty { current.destinations.map { it.point } }).distinct()
         if (points.size == 1) {
-            map.moveCamera(CameraUpdateFactory.newLatLngZoom(points.first().toLatLng(), 16.0))
+            map.moveCamera(CameraUpdateFactory.newLatLngZoom(points.first().toLatLng(), 15.0))
         } else if (points.size > 1) {
+            val padLeft = (48 * density).toInt()
+            val padTop = (120 * density).toInt()
+            val padRight = (48 * density).toInt()
+            val padBottom = (180 * density).toInt()
             map.moveCamera(CameraUpdateFactory.newLatLngBounds(
-                LatLngBounds.Builder().includes(points.map { it.toLatLng() }).build(), (36 * density).toInt()))
+                LatLngBounds.Builder().includes(points.map { it.toLatLng() }).build(),
+                padLeft, padTop, padRight, padBottom
+            ))
             // Evita un zoom extremo si GPS y destino están prácticamente en el mismo punto.
-            if (map.cameraPosition.zoom > 17) map.moveCamera(CameraUpdateFactory.zoomTo(17.0))
+            if (map.cameraPosition.zoom > 16.0) map.moveCamera(CameraUpdateFactory.zoomTo(16.0))
         }
         displayed = current
     }

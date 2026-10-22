@@ -27,7 +27,7 @@ class OutdoorNavigationIntegrationTest {
         waitForOutdoor()
         compose.onNodeWithTag("outdoor-screen").assertIsDisplayed()
         dismissOptionalConsent()
-        compose.onNodeWithText("Mapa exterior · A pie").assertIsDisplayed()
+        compose.onNodeWithText("Mapa exterior").assertIsDisplayed()
         compose.onNodeWithText("Comedor Aynadamar · Planta -1").assertIsDisplayed()
         compose.onNodeWithText("ETSIIT", substring = false).performClick()
         compose.onNodeWithText("Comedor PTS").performClick()
@@ -37,7 +37,7 @@ class OutdoorNavigationIntegrationTest {
         compose.onNodeWithText("Desliza horizontalmente para consultar otros días").assertIsDisplayed()
         compose.onNodeWithText("Guiado").performClick()
         compose.onNodeWithTag("outdoor-screen").assertDoesNotExist()
-        compose.onNodeWithText("Mapa").assertIsDisplayed()
+        compose.onNodeWithText("Mapa ETSIIT").assertIsDisplayed()
     }
 
     @Test fun indoorRouteContractAndRealGraphAreUnchanged() {
@@ -73,14 +73,14 @@ class OutdoorNavigationIntegrationTest {
         compose.onNodeWithText("${target.name} · ${target.location}").assertIsDisplayed()
         compose.onNodeWithText("Ya estoy dentro").performClick()
         compose.onNodeWithTag("outdoor-screen").assertDoesNotExist()
-        compose.onNodeWithText(target.name).assertIsDisplayed()
+        compose.onNode(hasText(target.name) or hasText("Despacho ${target.name.removePrefix("D_").removePrefix("D-")}", substring = true)).assertIsDisplayed()
         compose.onNodeWithText(target.location).assertIsDisplayed()
         compose.onNodeWithText("Volver al exterior").performClick()
         compose.onNodeWithTag("outdoor-screen").assertIsDisplayed()
         repeat(3) {
             compose.onNodeWithTag("indoor-arrival-dialog").assertDoesNotExist()
             compose.onNodeWithText("Ya estoy dentro").performClick()
-            compose.onNodeWithText(target.name).assertIsDisplayed()
+            compose.onNode(hasText(target.name) or hasText("Despacho ${target.name.removePrefix("D_").removePrefix("D-")}", substring = true)).assertIsDisplayed()
             compose.onNodeWithText("Volver al exterior").performClick()
         }
         compose.activityRule.scenario.recreate()
