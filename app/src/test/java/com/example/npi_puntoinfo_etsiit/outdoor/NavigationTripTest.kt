@@ -80,4 +80,30 @@ class NavigationTripTest {
         assertFalse(trip.showCompactEntry)
         assertEquals(trip, NavigationTrip.restore(trip.savedValues()))
     }
+
+    @Test fun recentIndoorFixOnlyProposesEntryAndKeepsTargetAcrossDeclineAndReturn() {
+        val detector = ArrivalDetector()
+        var trip = start()
+        assertTrue(detector.observe(100.0, 80.0, 100_000, 125_000))
+        trip = trip.onArrival()
+        assertEquals(TripPhase.OUTDOOR, trip.phase)
+        assertEquals(ArrivalPresentation.PROMPT, trip.presentation)
+        trip = trip.markPromptShown().stayOutside()
+        assertTrue(trip.showCompactEntry)
+        trip = NavigationTrip.restore(trip.enterIndoors().returnOutdoors().savedValues())
+        assertTrue(trip.showCompactEntry)
+        assertEquals(target, trip.indoor)
+        assertEquals(trip, trip.onArrival())
+        assertFalse(detector.observe(50.0, 10.0, 127_000))
+    }
+
+    @Test fun proximityToOutdoorOnlyDestinationNeverEnablesIndoorTransition() {
+        val detector = ArrivalDetector()
+        val trip = NavigationTrip.start(NavigationJourney.Outdoor(OutdoorDestinations.find("dining-pts")!!))
+        assertTrue(detector.observe(50.0, 60.0, 100_000))
+        val arrived = trip.onArrival()
+        assertEquals(ArrivalPresentation.WAITING, arrived.presentation)
+        assertFalse(arrived.showCompactEntry)
+        assertEquals(arrived, arrived.enterIndoors())
+    }
 }

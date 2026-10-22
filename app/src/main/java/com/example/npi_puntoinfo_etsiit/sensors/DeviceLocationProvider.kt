@@ -24,7 +24,7 @@ import kotlinx.coroutines.flow.callbackFlow
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
-/** Fijaciones puntuales y suscripción cancelable solo durante una ruta exterior visible. */
+/** Fijaciones puntuales y suscripción cancelable solo durante la navegación exterior visible. */
 class DeviceLocationProvider(context: Context) : DeviceLocationSource {
     private val appContext = context.applicationContext
     private val client by lazy { LocationServices.getFusedLocationProviderClient(appContext) }
@@ -55,7 +55,7 @@ class DeviceLocationProvider(context: Context) : DeviceLocationSource {
                 else Priority.PRIORITY_BALANCED_POWER_ACCURACY
             )
             .setGranularity(Granularity.GRANULARITY_PERMISSION_LEVEL)
-            .setMaxUpdateAgeMillis(0) // La proximidad requiere fijaciones nuevas, no repetir la caché.
+            .setMaxUpdateAgeMillis(0) // El cálculo puntual de la ruta a pie conserva su fijación nueva.
             .setDurationMillis(15_000)
             .build()
         return withTimeoutOrNull(20_000) {
@@ -90,9 +90,9 @@ class DeviceLocationProvider(context: Context) : DeviceLocationSource {
             if (permission == LocationPermission.PRECISE) Priority.PRIORITY_HIGH_ACCURACY
             else Priority.PRIORITY_BALANCED_POWER_ACCURACY, intervalMillis)
             .setMinUpdateIntervalMillis(intervalMillis)
-            .setMaxUpdateAgeMillis(0)
+            .setMaxUpdateAgeMillis(30_000) // Reutilizar una posición reciente al iniciar/reanudar la proximidad.
             .setMaxUpdateDelayMillis(0)
-            .setWaitForAccurateLocation(false) // El detector, no Fused, valida ±25 m y dos fijaciones.
+            .setWaitForAccurateLocation(false) // ArrivalDetector valida edad, precisión y proximidad.
             .setGranularity(Granularity.GRANULARITY_PERMISSION_LEVEL)
             .build()
         var previousFix: Long? = null

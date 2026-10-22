@@ -169,8 +169,10 @@ fun OutdoorNavigationScreen(
         else Double.NaN
     val updateInterval = ActiveLocationPolicy.interval(distanceToAccess, position?.accuracyMeters?.toDouble() ?: Double.NaN)
 
-    LaunchedEffect(navigator, route != null, updateInterval, lifecycle) {
-        if (route == null) return@LaunchedEffect
+    // La propuesta interior no depende de Internet, consentimiento ORS ni de calcular una ruta a pie.
+    LaunchedEffect(navigator, route != null, state.location == GpsLocationState.Loading,
+        indoor, updateInterval, lifecycle) {
+        if (route == null && indoor == null) return@LaunchedEffect
         lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
             fun observe(location: GpsLocationState) {
                 if (currentTrip.arrivalNotified) return
@@ -193,7 +195,7 @@ fun OutdoorNavigationScreen(
                 }
             }
             observe(navigator.state.value.location)
-            navigator.trackActivePosition(updateInterval, ::observe)
+            navigator.trackActivePosition(updateInterval, requireRoute = indoor == null, onLocation = ::observe)
         }
     }
     LaunchedEffect(trip.presentation) {
@@ -280,6 +282,10 @@ fun OutdoorNavigationScreen(
         if (indoor != null) {
             Text("${indoor.target.name} · ${indoor.target.location}", Modifier.padding(horizontal = 12.dp),
                 style = MaterialTheme.typography.bodySmall)
+            if (!trip.showCompactEntry) TextButton(onClick = { showManualEntry = true },
+                modifier = Modifier.padding(horizontal = 12.dp).testTag("manual-indoor-entry")) {
+                Text("Continuar dentro manualmente")
+            }
         } else if (finalDestination != null) {
             Text("No hay una ruta interior disponible para $finalDestination.", Modifier.padding(horizontal = 12.dp),
                 color = MaterialTheme.colorScheme.error)

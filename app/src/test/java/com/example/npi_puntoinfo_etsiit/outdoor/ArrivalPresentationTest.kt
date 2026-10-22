@@ -4,12 +4,12 @@ import org.junit.Assert.*
 import org.junit.Test
 
 class ArrivalPresentationTest {
-    @Test fun waitsForBothReliableReadingsBeforeShowingPromptOnce() {
+    @Test fun boundaryWaitsForBothReadingsBeforeShowingPromptOnce() {
         val detector = ArrivalDetector()
         var presentation = ArrivalPresentation.WAITING
-        if (detector.observe(10.0, 5.0, 0)) presentation = presentation.onArrival(true)
+        if (detector.observe(150.0, 5.0, 0)) presentation = presentation.onArrival(true)
         assertEquals(ArrivalPresentation.WAITING, presentation)
-        if (detector.observe(10.0, 5.0, 12_000)) presentation = presentation.onArrival(true)
+        if (detector.observe(150.0, 5.0, 12_000)) presentation = presentation.onArrival(true)
         assertEquals(ArrivalPresentation.PROMPT, presentation)
         assertFalse(detector.observe(10.0, 5.0, 24_000))
     }
@@ -18,7 +18,7 @@ class ArrivalPresentationTest {
         val detector = ArrivalDetector()
         var presentation = ArrivalPresentation.WAITING
         repeat(5) {
-            if (detector.observe(10.0, 60.0, it * 12_000L)) presentation = presentation.onArrival(true)
+            if (detector.observe(10.0, 101.0, it * 12_000L)) presentation = presentation.onArrival(true)
         }
         assertEquals(ArrivalPresentation.WAITING, presentation)
     }

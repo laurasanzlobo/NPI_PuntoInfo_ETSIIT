@@ -45,7 +45,7 @@ class ActiveLocationTest {
             navigator.trackActivePosition(ActiveLocationPolicy.approachingIntervalMillis) { location ->
                 val fix = (location as? GpsLocationState.Available)?.coordinates!!
                 val time = fix.elapsedRealtimeMillis!!
-                if (detector.observe(10.0, fix.accuracyMeters.toDouble(), time, time + 50)) {
+                if (detector.observe(150.0, fix.accuracyMeters.toDouble(), time, time + 50)) {
                     trip = trip.onArrival()
                     promptAt = time + 50
                 }
@@ -97,6 +97,56 @@ class ActiveLocationTest {
         source.fixes.send(coordinates(3_000)); yield()
         assertEquals(listOf(GpsLocationState.Unavailable, GpsLocationState.Unavailable), states.take(2))
         assertTrue(states.last() is GpsLocationState.Available)
+        tracking.cancelAndJoin()
+        assertFalse(source.subscribed)
+    }
+
+    @Test fun indoorProximityUsesRecentFixWithoutRouteOrAnyOrsRequest() = runBlocking {
+        val source = StreamingSource()
+        var routeCalls = 0
+        val navigator = navigator(source) { routeCalls++ }
+        val detector = ArrivalDetector()
+        val indoor = NavigationJourney.Indoor(IndoorTarget("Aula 0.1", "PB", "aula"), "entrada")
+        var trip = NavigationTrip.start(NavigationJourney.Combined(OutdoorDestinations.find("etsiit")!!, indoor))
+        val tracking = launch {
+            navigator.trackActivePosition(2_000, requireRoute = false) { location ->
+                val fix = (location as? GpsLocationState.Available)?.coordinates
+                if (detector.observe(if (fix != null) 50.0 else Double.NaN,
+                        fix?.accuracyMeters?.toDouble() ?: Double.NaN,
+                        fix?.elapsedRealtimeMillis ?: -1, 125_000)) trip = trip.onArrival()
+            }
+        }
+        yield()
+        source.fixes.send(null); yield()
+        assertEquals(ArrivalPresentation.WAITING, trip.presentation)
+        source.fixes.send(coordinates(100_000).copy(accuracyMeters = 80f)); yield()
+        assertEquals(ArrivalPresentation.PROMPT, trip.presentation)
+        assertEquals(TripPhase.OUTDOOR, trip.phase)
+        assertEquals(indoor, trip.indoor)
+        assertNull(navigator.state.value.route)
+        assertEquals(0, routeCalls)
+        tracking.cancelAndJoin()
+        assertFalse(source.subscribed)
+    }
+
+    @Test fun locationRefreshAndRouteRequestDoNotSilenceIndependentProximity() = runBlocking {
+        val source = StreamingSource()
+        val navigator = navigator(source)
+        val fixes = mutableListOf<DeviceCoordinates>()
+        val tracking = launch {
+            navigator.trackActivePosition(2_000, requireRoute = false) {
+                (it as? GpsLocationState.Available)?.coordinates?.let(fixes::add)
+            }
+        }
+        yield()
+        navigator.refreshLocation(this); yield()
+        source.fixes.send(coordinates(100_000)); yield()
+        navigator.requestRoute(this); yield()
+        source.fixes.send(coordinates(102_000)); yield()
+        assertEquals(listOf(100_000L, 102_000L), fixes.map { it.elapsedRealtimeMillis })
+        navigator.selectDestination("dining-pts")
+        source.fixes.send(coordinates(104_000)); yield()
+        assertEquals(2, fixes.size)
         tracking.cancelAndJoin()
         assertFalse(source.subscribed)
     }

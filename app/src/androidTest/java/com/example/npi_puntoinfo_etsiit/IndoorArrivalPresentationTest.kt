@@ -2,8 +2,11 @@ package com.example.npi_puntoinfo_etsiit
 
 import android.content.Context
 import android.content.ContextWrapper
+import android.Manifest
+import android.content.pm.PackageManager
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.*
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.test.core.app.ApplicationProvider
@@ -20,6 +23,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import com.example.npi_puntoinfo_etsiit.ui.components.CompactIndoorEntryButton
 import com.example.npi_puntoinfo_etsiit.ui.components.IndoorArrivalDialog
+import com.example.npi_puntoinfo_etsiit.ui.screens.OutdoorNavigationScreen
 import org.junit.Assert.*
 import org.junit.Rule
 import org.junit.Test
@@ -47,10 +51,8 @@ class IndoorArrivalPresentationTest {
                 }
             }
         }
-        compose.runOnIdle { assertFalse(detector.observe(10.0, 5.0, 100_000)) }
-        compose.onNodeWithTag("indoor-arrival-dialog").assertDoesNotExist()
         compose.runOnIdle {
-            if (detector.observe(10.0, 5.0, 102_000)) trip = trip.onArrival()
+            if (detector.observe(50.0, 80.0, 100_000, 125_000)) trip = trip.onArrival()
         }
         compose.onNodeWithText("Estás llegando a la ETSIIT").assertIsDisplayed()
         compose.onNodeWithText("Continuar dentro").performClick()
@@ -85,11 +87,11 @@ class IndoorArrivalPresentationTest {
         }
         compose.onNodeWithTag("indoor-arrival-dialog").assertDoesNotExist()
         compose.runOnIdle {
-            if (detector.observe(10.0, 5.0, 0)) presentation = presentation.onArrival(true)
+            if (detector.observe(150.0, 5.0, 0)) presentation = presentation.onArrival(true)
         }
         compose.onNodeWithTag("indoor-arrival-dialog").assertDoesNotExist()
         compose.runOnIdle {
-            if (detector.observe(10.0, 5.0, 12_000)) presentation = presentation.onArrival(true)
+            if (detector.observe(150.0, 5.0, 12_000)) presentation = presentation.onArrival(true)
         }
         compose.onNodeWithText("Estás llegando a la ETSIIT").assertIsDisplayed()
         compose.onNodeWithText("Continuar dentro").assertIsDisplayed()
@@ -114,6 +116,48 @@ class IndoorArrivalPresentationTest {
         compose.runOnIdle { assertEquals(0, transitions) }
         compose.onNodeWithText("Continuar dentro").performClick()
         compose.runOnIdle { assertEquals(1, transitions) }
+    }
+
+    @Test fun realOutdoorScreenOffersVisibleManualEntryWithoutGpsOrRoute() {
+        // Permisos simulados mediante contexto local: no altera los ajustes del teléfono.
+        val indoor = NavigationJourney.Indoor(IndoorTarget("Comedor Aynadamar", "Planta -1", "comedor"), "entrada")
+        var trip by mutableStateOf(NavigationTrip.start(
+            NavigationJourney.Combined(OutdoorDestinations.find("etsiit")!!, indoor)))
+        var transitions = 0
+        compose.setContent {
+            val activityContext = LocalContext.current
+            val context = remember(activityContext) {
+                object : ContextWrapper(activityContext) {
+                    override fun getApplicationContext(): Context = this
+                    override fun checkPermission(permission: String, pid: Int, uid: Int): Int =
+                        if (permission in listOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION))
+                            PackageManager.PERMISSION_DENIED else super.checkPermission(permission, pid, uid)
+                    override fun getSharedPreferences(name: String, mode: Int) =
+                        super.getSharedPreferences("${name}_proximity_test", mode)
+                }
+            }
+            CompositionLocalProvider(LocalContext provides context) {
+                MaterialTheme {
+                    OutdoorNavigationScreen(destinationId = trip.destinationId, trip = trip,
+                        onTripChanged = { trip = it }, onSelectOutdoorDestination = {},
+                        onContinueIndoors = { assertEquals(indoor, it); transitions++ })
+                }
+            }
+        }
+        compose.waitForIdle()
+        if (compose.onNodeWithText("Ahora no").isDisplayed()) compose.onNodeWithText("Ahora no").performClick()
+        compose.onNodeWithText("Sin permiso de ubicación. Se admite ubicación precisa o aproximada.").assertIsDisplayed()
+        compose.onNodeWithTag("indoor-arrival-dialog").assertDoesNotExist()
+        compose.onNodeWithTag("manual-indoor-entry").assertIsDisplayed().performClick()
+        compose.runOnIdle { assertEquals(0, transitions) }
+        compose.onNodeWithText("Aún estoy fuera").performClick()
+        compose.onNodeWithTag("compact-indoor-entry").assertIsDisplayed().performClick()
+        compose.runOnIdle {
+            assertEquals(1, transitions)
+            trip = trip.returnOutdoors()
+        }
+        compose.onNodeWithTag("compact-indoor-entry").assertIsDisplayed()
+        compose.onNodeWithTag("indoor-arrival-dialog").assertDoesNotExist()
     }
 
     @Test fun consentIsAbsentByDefaultAndValidAcrossNewScreenStores() {

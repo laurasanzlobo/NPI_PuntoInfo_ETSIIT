@@ -93,12 +93,22 @@ class OutdoorNavigator(
     }
 
     /** La cancelación del scope STARTED retira la suscripción, sin consultar ORS. */
-    suspend fun trackActivePosition(intervalMillis: Long, onLocation: (GpsLocationState) -> Unit) {
-        if (mutableState.value.route !is WalkingRouteResult.Success) return
+    suspend fun trackActivePosition(
+        intervalMillis: Long,
+        requireRoute: Boolean = true,
+        onLocation: (GpsLocationState) -> Unit
+    ) {
+        fun canTrack() = mutableState.value.destination != null &&
+            (!requireRoute || mutableState.value.route is WalkingRouteResult.Success)
+        if (!canTrack()) return
         val version = requestVersion
+        val destinationId = mutableState.value.destination?.id
         gps.updates(intervalMillis).collect { location ->
             coroutineContext.ensureActive()
-            if (requestVersion == version && mutableState.value.route is WalkingRouteResult.Success) {
+            // Refrescar/calcular la ruta no debe silenciar la proximidad independiente de ORS.
+            val sameRequest = if (requireRoute) requestVersion == version
+                else mutableState.value.destination?.id == destinationId
+            if (sameRequest && canTrack()) {
                 mutableState.value = mutableState.value.copy(location = location)
                 onLocation(location)
             }
