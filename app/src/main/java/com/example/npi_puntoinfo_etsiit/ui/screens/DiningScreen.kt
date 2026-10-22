@@ -1,11 +1,14 @@
 package com.example.npi_puntoinfo_etsiit.ui.screens
 
+import android.Manifest
 import android.content.Context
 import android.os.Build
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
 import android.util.Log
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -17,6 +20,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.DirectionsWalk
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -31,6 +35,14 @@ import androidx.compose.ui.unit.sp
 import com.example.npi_puntoinfo_etsiit.ui.components.GestureBadge
 import com.example.npi_puntoinfo_etsiit.ui.components.GestureType
 import com.example.npi_puntoinfo_etsiit.sensors.AccelerometerManager
+import com.example.npi_puntoinfo_etsiit.sensors.CampusLocationManager
+import com.example.npi_puntoinfo_etsiit.sensors.DeviceCoordinates
+import com.example.npi_puntoinfo_etsiit.sensors.DeviceLocationProvider
+import com.example.npi_puntoinfo_etsiit.sensors.GpsLocationReader
+import com.example.npi_puntoinfo_etsiit.sensors.GpsLocationState
+import com.example.npi_puntoinfo_etsiit.sensors.LocationPermission
+import com.example.npi_puntoinfo_etsiit.sensors.OutdoorDistances
+import com.example.npi_puntoinfo_etsiit.sensors.UgrDiningHall
 import com.example.npi_puntoinfo_etsiit.ui.navigation.Screen
 import com.example.npi_puntoinfo_etsiit.outdoor.OutdoorDestinations
 import com.example.npi_puntoinfo_etsiit.ui.theme.*
@@ -39,6 +51,8 @@ import java.time.LocalDate
 import java.time.format.TextStyle
 import java.util.Locale
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlin.math.roundToInt
 
 data class DayDiningMenu(
     val date: LocalDate,
@@ -57,10 +71,97 @@ fun DiningScreen(
     navKey: Int = 0
 ) {
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    val locationProvider = remember(context) { DeviceLocationProvider(context) }
+    val gpsReader = remember(locationProvider) { GpsLocationReader(locationProvider) }
+    var userCoordinates by remember {
+        val initial = DeviceLocationProvider.getInstantLocation(context) ?: CampusLocationManager.lastKnownLocation
+        if (initial != null) {
+            CampusLocationManager.lastKnownLocation = initial
+        }
+        mutableStateOf(initial)
+    }
+    var showAllHallsDialog by remember { mutableStateOf(false) }
 
-    fun navigateToDining() {
+    // Calcula automáticamente el comedor más cercano según las coordenadas GPS actuales
+    val nearestDiningHall = remember(userCoordinates) {
+        CampusLocationManager.findNearestDiningHall(userCoordinates?.latitude, userCoordinates?.longitude)
+    }
+    val currentNearestDiningHall by rememberUpdatedState(nearestDiningHall)
+
+    val distanceMeters = remember(userCoordinates, nearestDiningHall) {
+        userCoordinates?.let {
+            OutdoorDistances.distanceMeters(it.latitude, it.longitude, nearestDiningHall.latitude, nearestDiningHall.longitude)
+        }
+    }
+
+    val distanceFormatted = distanceMeters?.let {
+        if (it < 1000) "${it.roundToInt()} m"
+        else String.format(Locale.getDefault(), "%.1f km", it / 1000)
+    }
+
+    fun navigateToDining(hall: UgrDiningHall? = null) {
+        val targetHall = hall ?: currentNearestDiningHall
         triggerVibration(context, durationMs = 150)
-        onNavigate(Screen.Outdoor.createRoute(OutdoorDestinations.forDiningHall("aynadamar")!!.id))
+        val outdoorDest = OutdoorDestinations.forDiningHall(targetHall.id)
+        if (outdoorDest != null) {
+            onNavigate(Screen.Outdoor.createRoute(outdoorDest.id))
+        }
+    }
+
+    val currentNavigateToDining by rememberUpdatedState(::navigateToDining)
+
+    val permissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) { permissions ->
+        if (permissions.values.any { it }) {
+            scope.launch {
+                val instant = DeviceLocationProvider.getInstantLocation(context)
+                if (instant != null) {
+                    userCoordinates = instant
+                    CampusLocationManager.lastKnownLocation = instant
+                }
+                val last = locationProvider.lastKnownLocation()
+                if (last != null) {
+                    userCoordinates = last
+                    CampusLocationManager.lastKnownLocation = last
+                }
+                val state = gpsReader.read()
+                if (state is GpsLocationState.Available) {
+                    userCoordinates = state.coordinates
+                    CampusLocationManager.lastKnownLocation = state.coordinates
+                }
+            }
+        }
+    }
+
+    // Al abrir la pantalla, si tenemos permiso obtenemos la ubicación inmediatamente
+    // o solicitamos permiso de ubicación para determinar el comedor más cercano
+    LaunchedEffect(Unit) {
+        if (locationProvider.permission() == LocationPermission.DENIED) {
+            permissionLauncher.launch(
+                arrayOf(
+                    Manifest.permission.ACCESS_FINE_LOCATION,
+                    Manifest.permission.ACCESS_COARSE_LOCATION
+                )
+            )
+        } else {
+            val instant = DeviceLocationProvider.getInstantLocation(context)
+            if (instant != null) {
+                userCoordinates = instant
+                CampusLocationManager.lastKnownLocation = instant
+            }
+            val last = locationProvider.lastKnownLocation()
+            if (last != null) {
+                userCoordinates = last
+                CampusLocationManager.lastKnownLocation = last
+            }
+            val state = gpsReader.read()
+            if (state is GpsLocationState.Available) {
+                userCoordinates = state.coordinates
+                CampusLocationManager.lastKnownLocation = state.coordinates
+            }
+        }
     }
 
     // Tomamos la fecha real del teléfono y la revisamos periódicamente mientras
@@ -160,7 +261,7 @@ fun DiningScreen(
         val accelerometerManager = AccelerometerManager(context)
         if (!isCurrentClassDialogVisible) {
             accelerometerManager.onTakeMeThereGesture = {
-                if (pendingOrderDate == null) navigateToDining()
+                if (pendingOrderDate == null) currentNavigateToDining(null)
             }
             accelerometerManager.onForwardTiltGesture = {
                 val day = pagerState.currentPage
@@ -310,21 +411,34 @@ fun DiningScreen(
                         ) {
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier.weight(1f)
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .clickable { showAllHallsDialog = true }
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.Place,
                                     contentDescription = null,
-                                    tint = TextSecondary,
-                                    modifier = Modifier.size(16.dp)
+                                    tint = UgrRed,
+                                    modifier = Modifier.size(18.dp)
                                 )
                                 Spacer(modifier = Modifier.width(6.dp))
-                                Text(
-                                    text = "Ubicación: Comedor Aynadamar",
-                                    fontSize = 13.sp,
-                                    fontWeight = FontWeight.Medium,
-                                    color = TextSecondary
-                                )
+                                Column {
+                                    Text(
+                                        text = if (distanceFormatted != null) {
+                                            "Comedor más cercano (a $distanceFormatted):"
+                                        } else {
+                                            "Comedor más cercano:"
+                                        },
+                                        fontSize = 11.sp,
+                                        color = TextSecondary
+                                    )
+                                    Text(
+                                        text = "${nearestDiningHall.name} · ${nearestDiningHall.campus}",
+                                        fontSize = 13.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = TextPrimary
+                                    )
+                                }
                             }
 
                             // Loguito para el gesto «¡Llévame!» al comedor
@@ -456,6 +570,111 @@ fun DiningScreen(
         }
     }
 
+    if (showAllHallsDialog) {
+        AlertDialog(
+            onDismissRequest = { showAllHallsDialog = false },
+            title = {
+                Text(
+                    text = "Comedores Universitarios UGR",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 18.sp,
+                    color = TextPrimary
+                )
+            },
+            text = {
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    Text(
+                        text = "Selecciona un comedor para iniciar la ruta a pie según tu ubicación:",
+                        fontSize = 13.sp,
+                        color = TextSecondary
+                    )
+                    CampusLocationManager.ugrDiningHalls.forEach { hall ->
+                        val isNearest = hall.id == nearestDiningHall.id
+                        val hallDistance = userCoordinates?.let {
+                            OutdoorDistances.distanceMeters(it.latitude, it.longitude, hall.latitude, hall.longitude)
+                        }
+                        val hallDistStr = hallDistance?.let {
+                            if (it < 1000) "${it.roundToInt()} m"
+                            else String.format(Locale.getDefault(), "%.1f km", it / 1000)
+                        }
+
+                        Surface(
+                            shape = RoundedCornerShape(12.dp),
+                            color = if (isNearest) UgrRed.copy(alpha = 0.08f) else SurfaceWhite,
+                            border = androidx.compose.foundation.BorderStroke(
+                                1.dp,
+                                if (isNearest) UgrRed else SurfaceBorder
+                            ),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    showAllHallsDialog = false
+                                    navigateToDining(hall)
+                                }
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(12.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Text(
+                                            text = hall.name,
+                                            fontWeight = FontWeight.Bold,
+                                            fontSize = 14.sp,
+                                            color = TextPrimary
+                                        )
+                                        if (isNearest) {
+                                            Spacer(modifier = Modifier.width(6.dp))
+                                            Surface(
+                                                shape = RoundedCornerShape(6.dp),
+                                                color = CampusGreen.copy(alpha = 0.15f)
+                                            ) {
+                                                Text(
+                                                    text = "Más cercano",
+                                                    fontSize = 10.sp,
+                                                    fontWeight = FontWeight.Bold,
+                                                    color = CampusGreen,
+                                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                                )
+                                            }
+                                        }
+                                    }
+                                    Text(
+                                        text = hall.campus,
+                                        fontSize = 12.sp,
+                                        color = TextSecondary
+                                    )
+                                    if (hallDistStr != null) {
+                                        Text(
+                                            text = "A $hallDistStr de tu posición actual",
+                                            fontSize = 11.sp,
+                                            fontWeight = FontWeight.Medium,
+                                            color = if (isNearest) UgrRed else TextSecondary
+                                        )
+                                    }
+                                }
+                                Icon(
+                                    imageVector = Icons.AutoMirrored.Filled.DirectionsWalk,
+                                    contentDescription = "Ir",
+                                    tint = if (isNearest) UgrRed else TextSecondary,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showAllHallsDialog = false }) {
+                    Text("Cerrar", color = TextSecondary)
+                }
+            }
+        )
+    }
 }
 
 /** Platos ficticios por día de la semana; solo cambian las fechas visibles. */

@@ -162,6 +162,11 @@ fun OutdoorNavigationScreen(
     }
 
     val position = (state.location as? GpsLocationState.Available)?.coordinates
+    LaunchedEffect(position) {
+        if (position != null) {
+            CampusLocationManager.lastKnownLocation = position
+        }
+    }
     val route = (state.route as? WalkingRouteResult.Success)?.route
     val busy = state.location == GpsLocationState.Loading || state.routing
     val distanceToAccess = if (position != null && state.destination != null) OutdoorDistances.distanceMeters(

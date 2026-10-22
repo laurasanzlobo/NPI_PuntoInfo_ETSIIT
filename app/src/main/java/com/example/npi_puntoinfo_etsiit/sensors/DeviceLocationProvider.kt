@@ -44,6 +44,27 @@ class DeviceLocationProvider(context: Context) : DeviceLocationSource {
         return LocationManagerCompat.isLocationEnabled(manager)
     }
 
+    @SuppressLint("MissingPermission")
+    suspend fun lastKnownLocation(): DeviceCoordinates? {
+        if (permission() == LocationPermission.DENIED) return null
+        return suspendCancellableCoroutine { continuation ->
+            client.lastLocation
+                .addOnSuccessListener { loc ->
+                    if (continuation.isActive) {
+                        continuation.resume(loc?.takeIf { it.hasAccuracy() }?.let {
+                            DeviceCoordinates(it.latitude, it.longitude, it.accuracy, it.elapsedRealtimeNanos / 1_000_000)
+                        })
+                    }
+                }
+                .addOnFailureListener {
+                    if (continuation.isActive) continuation.resume(null)
+                }
+                .addOnCanceledListener {
+                    if (continuation.isActive) continuation.resume(null)
+                }
+        }
+    }
+
     @SuppressLint("MissingPermission") // Se comprueba también justo antes de solicitar la fijación.
     override suspend fun currentLocation(permission: LocationPermission): DeviceCoordinates? {
         if (permission == LocationPermission.DENIED || permission() == LocationPermission.DENIED) {
@@ -115,6 +136,25 @@ class DeviceLocationProvider(context: Context) : DeviceLocationSource {
         awaitClose {
             client.removeLocationUpdates(callback)
             Log.d("NavigationGps", "unsubscribe requestedMs=$intervalMillis")
+        }
+    }
+
+    companion object {
+        @SuppressLint("MissingPermission")
+        fun getInstantLocation(context: Context): DeviceCoordinates? {
+            val appContext = context.applicationContext
+            val hasFine = ContextCompat.checkSelfPermission(appContext, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
+            val hasCoarse = ContextCompat.checkSelfPermission(appContext, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
+            if (!hasFine && !hasCoarse) return null
+
+            val manager = appContext.getSystemService(Context.LOCATION_SERVICE) as? LocationManager ?: return null
+            val loc = manager.getLastKnownLocation(LocationManager.GPS_PROVIDER)
+                ?: manager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER)
+                ?: manager.getLastKnownLocation(LocationManager.PASSIVE_PROVIDER)
+
+            return loc?.takeIf { it.hasAccuracy() }?.let {
+                DeviceCoordinates(it.latitude, it.longitude, it.accuracy, it.elapsedRealtimeNanos / 1_000_000)
+            }
         }
     }
 }

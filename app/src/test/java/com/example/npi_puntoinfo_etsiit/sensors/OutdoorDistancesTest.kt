@@ -21,8 +21,8 @@ class OutdoorDistancesTest {
 
     @Test
     fun distanceIsSymmetricAndCrossesDateLineCorrectly() {
-        val forward = OutdoorDistances.distanceMeters(37.197, -3.6245, 37.1812, -3.6087)
-        val reverse = OutdoorDistances.distanceMeters(37.1812, -3.6087, 37.197, -3.6245)
+        val forward = OutdoorDistances.distanceMeters(37.197, -3.6245, 37.1828, -3.6057)
+        val reverse = OutdoorDistances.distanceMeters(37.1828, -3.6057, 37.197, -3.6245)
         assertEquals(forward, reverse, 0.001)
         assertTrue(forward in 2_100.0..2_400.0)
         assertEquals(22_239.02, OutdoorDistances.distanceMeters(0.0, 179.9, 0.0, -179.9), 0.1)

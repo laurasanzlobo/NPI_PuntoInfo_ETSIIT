@@ -40,8 +40,8 @@ object CampusLocationManager {
             name = "Comedor Fuentenueva",
             campus = "Campus Fuentenueva",
             address = "C/ Severo Ochoa s/n",
-            latitude = 37.1812,
-            longitude = -3.6087,
+            latitude = 37.1828,
+            longitude = -3.6057,
             walkingTimeMinutes = 25
         ),
         UgrDiningHall(
@@ -64,18 +64,23 @@ object CampusLocationManager {
         )
     )
 
+    // Última ubicación conocida persistente en la sesión
+    var lastKnownLocation: DeviceCoordinates? = null
+
     /**
      * Calcula o devuelve el comedor de la UGR más cercano según coordenadas GPS.
-     * Si no se proporcionan coordenadas (o no se ha obtenido fijación GPS todavía),
-     * devuelve por proximidad el Comedor Aynadamar.
+     * Si no se proporcionan coordenadas explícitas, intenta usar la última ubicación conocida
+     * en la sesión de la app. Si aún no hay fijación GPS disponible, devuelve Aynadamar por defecto.
      */
     fun findNearestDiningHall(userLat: Double? = null, userLon: Double? = null): UgrDiningHall {
-        if (userLat == null || userLon == null) {
+        val lat = userLat ?: lastKnownLocation?.latitude
+        val lon = userLon ?: lastKnownLocation?.longitude
+        if (lat == null || lon == null) {
             return ugrDiningHalls.first()
         }
         return ugrDiningHalls.minByOrNull { hall ->
-            val dLat = hall.latitude - userLat
-            val dLon = hall.longitude - userLon
+            val dLat = hall.latitude - lat
+            val dLon = hall.longitude - lon
             dLat * dLat + dLon * dLon
         } ?: ugrDiningHalls.first()
     }

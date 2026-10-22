@@ -49,6 +49,8 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.npi_puntoinfo_etsiit.sensors.AccelerometerManager
+import com.example.npi_puntoinfo_etsiit.sensors.CampusLocationManager
+import com.example.npi_puntoinfo_etsiit.sensors.DeviceLocationProvider
 import com.example.npi_puntoinfo_etsiit.ui.screens.*
 import com.example.npi_puntoinfo_etsiit.ui.theme.*
 import com.example.npi_puntoinfo_etsiit.outdoor.NavigationJourney
@@ -166,8 +168,14 @@ fun AppNavigation() {
             }
             if (dest?.contains("comedor", ignoreCase = true) == true) {
                 val dining = OutdoorDestinations.diningNamedIn(dest)
-                if (dining != null) handleNavigation(OutdoorNavigationRoute.create(dining.id))
-                else Toast.makeText(context, "No hay una correspondencia interior verificada para $dest", Toast.LENGTH_LONG).show()
+                if (dining != null) {
+                    handleNavigation(OutdoorNavigationRoute.create(dining.id))
+                } else {
+                    val provider = DeviceLocationProvider(context)
+                    val last = runCatching { kotlinx.coroutines.runBlocking { provider.lastKnownLocation() } }.getOrNull()
+                    val nearest = CampusLocationManager.findNearestDiningHall(last?.latitude, last?.longitude)
+                    handleNavigation(OutdoorNavigationRoute.create("dining-${nearest.id}"))
+                }
                 return
             }
             clearHandoff()
@@ -222,6 +230,17 @@ fun AppNavigation() {
                 if (namedDining != null) {
                     triggerVibration(context, durationMs = 120)
                     handleNavigation(OutdoorNavigationRoute.create(namedDining.id))
+                    return@rememberLauncherForActivityResult
+                }
+
+                val asksNearestDining = query.contains("más cercano", ignoreCase = true) &&
+                    (query.contains("comedor", ignoreCase = true) || query.contains("comer", ignoreCase = true))
+                if (asksNearestDining) {
+                    val provider = DeviceLocationProvider(context)
+                    val last = runCatching { kotlinx.coroutines.runBlocking { provider.lastKnownLocation() } }.getOrNull()
+                    val nearest = CampusLocationManager.findNearestDiningHall(last?.latitude, last?.longitude)
+                    triggerVibration(context, durationMs = 120)
+                    handleNavigation(OutdoorNavigationRoute.create("dining-${nearest.id}"))
                     return@rememberLauncherForActivityResult
                 }
                 val grafo = GrafoRepository.getGrafo(context)
