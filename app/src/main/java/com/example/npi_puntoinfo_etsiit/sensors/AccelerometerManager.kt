@@ -7,6 +7,8 @@ import android.hardware.SensorEventListener
 import android.hardware.SensorManager
 import kotlin.math.abs
 import kotlin.math.sqrt
+import android.util.Log
+import kotlin.math.sign
 
 /**
  * Representa la postura física del terminal.
@@ -37,6 +39,8 @@ class AccelerometerManager(context: Context) : SensorEventListener {
 
     private val sensorManager = context.getSystemService(Context.SENSOR_SERVICE) as? SensorManager
     private val accelerometer: Sensor? = sensorManager?.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
+    private val gyroscope: Sensor? = sensorManager?.getDefaultSensor(Sensor.TYPE_GYROSCOPE)
+    private val forwardNodDetector = ForwardNodDetector()
 
     val isAvailable: Boolean
         get() = accelerometer != null
@@ -46,6 +50,7 @@ class AccelerometerManager(context: Context) : SensorEventListener {
     var onShakeProgress: ((count: Int, total: Int) -> Unit)? = null
     var onShakeDetected: (() -> Unit)? = null
     var onTakeMeThereGesture: (() -> Unit)? = null // Giro de muñeca hacia la izquierda
+    var onForwardTiltGesture: (() -> Unit)? = null // Inclinar hacia delante: confirmar acción en comedores
     var onDeviceLifted: (() -> Unit)? = null       // Levantamiento a vertical estricto
     var onPostureModeChanged: ((isVertical: Boolean) -> Unit)? = null
     var onOrientationChanged: ((DeviceOrientation) -> Unit)? = null
@@ -66,6 +71,12 @@ class AccelerometerManager(context: Context) : SensorEventListener {
     private val FLICK_COOLDOWN = 1800L
     private var lastFlickTriggeredTime = 0L
 
+    // La inclinación de comedores se detecta con el GIROSCOPIO (rotación sobre eje X),
+    // más apropiado que exigir posturas absolutas con el acelerómetro.
+    // Solo se escucha si la pantalla ha instalado onForwardTiltGesture.
+    private val gestureTag = "NPI_COMEDOR_GESTO"
+    private var lastGyroLogNs = 0L
+
     // --- Parámetros Gesto 3: Levantar el móvil (Guiado paso a paso) y bajarlo (Ver mapa) ---
     var verticalMaxZThreshold: Float = 3.0f // Z <= 3.0 m/s² y Y >= 7.8 m/s² indican vertical (levantado frente a los ojos)
     var verticalMinYThreshold: Float = 7.8f
@@ -76,18 +87,56 @@ class AccelerometerManager(context: Context) : SensorEventListener {
     private var currentOrientation: DeviceOrientation = DeviceOrientation.UNKNOWN
 
     fun startListening() {
-        if (!isAvailable) return
+        // Conservamos el acelerómetro para los gestos originales sin modificarlos.
         accelerometer?.let {
             sensorManager?.registerListener(this, it, SensorManager.SENSOR_DELAY_UI)
+        }
+
+        // Comedores: registrar el giroscopio solamente cuando se requiere el nuevo gesto.
+        if (onForwardTiltGesture != null) {
+            if (gyroscope == null) {
+                Log.e(gestureTag, "No hay giroscopio disponible en este dispositivo")
+            } else {
+                val registered = sensorManager?.registerListener(
+                    this, gyroscope, SensorManager.SENSOR_DELAY_GAME
+                ) ?: false
+                Log.i(gestureTag, "Giroscopio registrado: $registered")
+            }
         }
     }
 
     fun stopListening() {
         sensorManager?.unregisterListener(this)
+        forwardNodDetector.reset()
     }
 
     override fun onSensorChanged(event: SensorEvent?) {
-        if (event == null || event.sensor.type != Sensor.TYPE_ACCELEROMETER) return
+        if (event == null) return
+        if (event.sensor.type == Sensor.TYPE_GYROSCOPE) {
+            if (onForwardTiltGesture != null) {
+                // Trazas breves para medir el movimiento REAL del S22 en Logcat.
+                if (kotlin.math.abs(event.values[0]) > 0.25f &&
+                    event.timestamp - lastGyroLogNs > 120_000_000L
+                ) {
+                    lastGyroLogNs = event.timestamp
+                    Log.d(gestureTag, "Giro medido x=${event.values[0]}, " +
+                            "y=${event.values[1]}, z=${event.values[2]}")
+                }
+                val previous = forwardNodDetector.phaseName
+                val detected = forwardNodDetector.onRotation(
+                    event.values[0], event.values[1], event.values[2], event.timestamp
+                )
+                if (previous != forwardNodDetector.phaseName) {
+                    Log.d(gestureTag, "Gesto: $previous -> ${forwardNodDetector.phaseName}")
+                }
+                if (detected) {
+                    Log.i(gestureTag, "Cabeceo completo detectado: bajar y volver")
+                    onForwardTiltGesture?.invoke()
+                }
+            }
+            return
+        }
+        if (event.sensor.type != Sensor.TYPE_ACCELEROMETER) return
 
         val x = event.values[0]
         val y = event.values[1]
@@ -178,5 +227,120 @@ class AccelerometerManager(context: Context) : SensorEventListener {
 
     override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {
         // No aplicable
+    }
+}
+
+/**
+Gesto de inclinar la parte delantera del movil y volver
+ a la posicion original
+ */
+internal class ForwardNodDetector {
+    private enum class Phase { IDLE, DOWN, BACK }
+    private var phase = Phase.IDLE
+    val phaseName: String get() = phase.name
+    private var previousTimestampNs = 0L
+    private var gestureStartedNs = 0L
+    private var lastMotionNs = 0L
+    private var lastDetectionNs = -3_000_000_000L
+    private var direction = 0f
+    private var forwardAngle = 0f
+    private var returnAngle = 0f
+
+    private val minimumSpeed = 0.42f       // rad/s, movimiento intencional
+    private val minimumDipAngle = 0.20f    // radianes (~11,5º)
+    private val maxDipAngle = 1.1f         // evita movimientos descontrolados
+    private val maxGestureNs = 1_700_000_000L
+    private val maxPauseNs = 500_000_000L
+    private val cooldownNs = 1_500_000_000L
+
+    fun reset() {
+        phase = Phase.IDLE
+        previousTimestampNs = 0L
+        gestureStartedNs = 0L
+        lastMotionNs = 0L
+        direction = 0f
+        forwardAngle = 0f
+        returnAngle = 0f
+    }
+
+    fun onRotation(x: Float, y: Float, z: Float, timestampNs: Long): Boolean {
+        if (previousTimestampNs == 0L) {
+            previousTimestampNs = timestampNs
+            return false
+        }
+        val dt = (timestampNs - previousTimestampNs) / 1_000_000_000f
+        previousTimestampNs = timestampNs
+        if (dt <= 0f || dt > 0.25f) {
+            reset()
+            previousTimestampNs = timestampNs
+            return false
+        }
+        if (timestampNs - lastDetectionNs < cooldownNs) return false
+
+        // Durante el gesto, la rotación predominante ha de ser el cabeceo (eje X).
+        val xDominant = kotlin.math.abs(x) >= minimumSpeed &&
+                kotlin.math.abs(x) >= 0.90f * kotlin.math.abs(y) &&
+                kotlin.math.abs(x) >= 0.90f * kotlin.math.abs(z)
+
+        if (phase != Phase.IDLE &&
+            (timestampNs - gestureStartedNs > maxGestureNs ||
+                    timestampNs - lastMotionNs > maxPauseNs)
+        ) {
+            reset()
+            previousTimestampNs = timestampNs
+        }
+
+        when (phase) {
+            Phase.IDLE -> {
+                if (xDominant) {
+                    phase = Phase.DOWN
+                    direction = sign(x)
+                    forwardAngle = kotlin.math.abs(x) * dt
+                    gestureStartedNs = timestampNs
+                    lastMotionNs = timestampNs
+                }
+            }
+            Phase.DOWN -> {
+                when {
+                    xDominant && x * direction > minimumSpeed -> {
+                        forwardAngle += kotlin.math.abs(x) * dt
+                        lastMotionNs = timestampNs
+                        if (forwardAngle > maxDipAngle) {
+                            reset()
+                            previousTimestampNs = timestampNs
+                        }
+                    }
+                    xDominant && x * direction < -minimumSpeed -> {
+                        if (forwardAngle >= minimumDipAngle) {
+                            phase = Phase.BACK
+                            returnAngle = kotlin.math.abs(x) * dt
+                            lastMotionNs = timestampNs
+                        } else {
+                            reset()
+                            previousTimestampNs = timestampNs
+                        }
+                    }
+                }
+            }
+            Phase.BACK -> {
+                if (xDominant && x * direction < -minimumSpeed) {
+                    returnAngle += kotlin.math.abs(x) * dt
+                    lastMotionNs = timestampNs
+                    if (returnAngle >= minimumDipAngle &&
+                        returnAngle >= forwardAngle * 0.72f
+                    ) {
+                        lastDetectionNs = timestampNs
+                        reset()
+                        previousTimestampNs = timestampNs
+                        return true
+                    }
+                } else if (xDominant && x * direction > minimumSpeed) {
+                    // La persona volvió a inclinarlo en vez de recuperarlo.
+                    reset()
+                    previousTimestampNs = timestampNs
+                }
+            }
+        }
+        return false
     }
 }

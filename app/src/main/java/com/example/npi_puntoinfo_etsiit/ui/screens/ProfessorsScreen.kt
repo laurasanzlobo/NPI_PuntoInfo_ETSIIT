@@ -31,8 +31,9 @@ import androidx.compose.ui.unit.sp
 import com.example.npi_puntoinfo_etsiit.ui.components.GestureBadge
 import com.example.npi_puntoinfo_etsiit.ui.components.GestureType
 import com.example.npi_puntoinfo_etsiit.sensors.AccelerometerManager
-import com.example.npi_puntoinfo_etsiit.ui.navigation.Screen
+import com.example.npi_puntoinfo_etsiit.outdoor.OutdoorNavigationRoute
 import com.example.npi_puntoinfo_etsiit.ui.theme.*
+import org.json.JSONObject
 
 data class Professor(
     val name: String,
@@ -44,17 +45,20 @@ data class Professor(
 )
 
 @Composable
-fun ProfessorsScreen(
-    onNavigate: (String) -> Unit = {}
-) {
+fun ProfessorsScreen(onNavigate: (String) -> Unit, searchedName: String? = null) {
     val context = LocalContext.current
     var selectedProfessor by remember { mutableStateOf<Professor?>(null) }
 
-    val professorsList = listOf(
-        Professor("Roberto Pérez", "Nuevos Paradigmas de Interacción", "Despacho D-24 · Planta 2", "L y X de 10:00 a 12:00", "robertop@ugr.es", true),
-        Professor("María Gómez", "Ingeniería del Software", "Despacho D-12 · Planta 1", "M y J de 11:30 a 13:30", "mariag@ugr.es", true),
-        Professor("Alberto Ruiz", "Sistemas Distribuidos", "Despacho D-08 · Planta Baja", "V de 09:00 a 13:00", "albertor@ugr.es", false)
-    )
+    val professorsList = remember { loadProfessors(context) }
+
+    androidx.compose.runtime.LaunchedEffect(searchedName, professorsList) {
+        if (searchedName != null) {
+            val found = professorsList.find { it.name == searchedName }
+            if (found != null) {
+                selectedProfessor = found
+            }
+        }
+    }
 
     // El acelerómetro con el gesto «¡Llévame!» SOLO está activo si el usuario está dentro del detalle de un profesor
     DisposableEffect(selectedProfessor) {
@@ -69,9 +73,22 @@ fun ProfessorsScreen(
                     val floorName = prof.office.split("·").getOrElse(1) { "ETSIIT" }.trim()
                     selectedProfessor = null
                     val locationText = if (floorName.isNotBlank() && floorName != "ETSIIT") "${prof.name} · $floorName" else prof.name
-                    onNavigate(Screen.Navigation.createRoute(roomName, locationText))
+                    onNavigate(OutdoorNavigationRoute.forProfessor(roomName, locationText))
                 }
             }
+
+            manager.onForwardTiltGesture = {
+                triggerVibration(context, durationMs = 150)
+                val prof = selectedProfessor
+                if (prof != null) {
+                    val intent = android.content.Intent(android.content.Intent.ACTION_SENDTO).apply {
+                        data = android.net.Uri.parse("mailto:${prof.email}")
+                        putExtra(android.content.Intent.EXTRA_SUBJECT, "Tutoría: [Indica tu motivo]")
+                    }
+                    context.startActivity(intent)
+                }
+            }
+
             manager.startListening()
         }
 
@@ -195,7 +212,7 @@ fun ProfessorsScreen(
                                         val floorName = prof.office.split("·").getOrElse(1) { "ETSIIT" }.trim()
                                         selectedProfessor = null
                                         val locationText = if (floorName.isNotBlank() && floorName != "ETSIIT") "${prof.name} · $floorName" else prof.name
-                                        onNavigate(Screen.Navigation.createRoute(roomName, locationText))
+                                        onNavigate(OutdoorNavigationRoute.forProfessor(roomName, locationText))
                                     }
                                 )
                             }
@@ -379,4 +396,28 @@ private fun triggerVibration(context: Context, durationMs: Long = 120) {
         }
     } catch (_: Exception) {
     }
+}
+
+fun loadProfessors(context: Context): List<Professor> {
+    val jsonString = context.assets.open("docentes.json").bufferedReader().use { it.readText() }
+    val jsonArray = JSONObject(jsonString).getJSONArray("profesores")
+    val list = mutableListOf<Professor>()
+
+    for (i in 0 until jsonArray.length()) {
+        val obj = jsonArray.getJSONObject(i)
+        val clasesArray = obj.getJSONArray("clases")
+        val subjectText = if (clasesArray.length() > 0) clasesArray.getJSONObject(0).getString("asignatura") else obj.getString("departamento")
+
+        list.add(
+            Professor(
+                name = obj.getString("nombre"),
+                subject = subjectText,
+                office = obj.getString("despacho"),
+                officeHours = obj.getString("tutorias"),
+                email = obj.getString("email"),
+                isMyTeacher = obj.getBoolean("es_profesor_actual")
+            )
+        )
+    }
+    return list.sortedWith(compareByDescending<Professor> { it.isMyTeacher }.thenBy { it.name })
 }

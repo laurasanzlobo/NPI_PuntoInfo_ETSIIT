@@ -1,15 +1,12 @@
 package com.example.npi_puntoinfo_etsiit.ui.components
 
-import androidx.compose.foundation.horizontalScroll
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Remove
@@ -18,7 +15,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
@@ -30,9 +26,8 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.example.npi_puntoinfo_etsiit.Nodo
 import com.example.npi_puntoinfo_etsiit.R
 import com.example.npi_puntoinfo_etsiit.RutaCalculada
@@ -56,7 +51,7 @@ private val ColorEscaleras = Color(0xFFF59E0B) // Ámbar dorado para transición
  * Se excluyen nodos intermedios de paso vertical (como un ascensor o hueco de escalera por el
  * que la ruta pasa entre dos plantas distintas sin que el usuario camine ni se detenga en la planta actual).
  */
-private fun esNodoActivoEnPlanta(ruta: RutaCalculada, index: Int, plantaNorm: String): Boolean {
+internal fun esNodoActivoEnPlanta(ruta: RutaCalculada, index: Int, plantaNorm: String): Boolean {
     val nodo = ruta.nodos[index]
     if (normalizarPlanta(nodo.planta) != plantaNorm) return false
     if (nodo.id == ruta.origen.id || nodo.id == ruta.destino.id) return true
@@ -75,37 +70,10 @@ private fun esNodoActivoEnPlanta(ruta: RutaCalculada, index: Int, plantaNorm: St
 @Composable
 fun MapaRutaView(
     ruta: RutaCalculada? = null,
-    modifier: Modifier = Modifier
+    plantaSeleccionada: String = "PB",
+    modifier: Modifier = Modifier,
+    bottomPadding: Dp = 0.dp
 ) {
-    // Lista de todas las plantas para el modo de exploración libre (sin ruta activa)
-    val todasLasPlantas = remember { listOf("PSS", "PB", "P1", "P2", "P3", "P4") }
-
-    // Lista ordenada de plantas involucradas en la ruta calculada donde el usuario tiene actividad.
-    val plantasEnRuta = remember(ruta) {
-        if (ruta == null) {
-            todasLasPlantas
-        } else {
-            val plantasConActividad = ruta.nodos.indices
-                .filter { i -> esNodoActivoEnPlanta(ruta, i, normalizarPlanta(ruta.nodos[i].planta)) }
-                .map { i -> normalizarPlanta(ruta.nodos[i].planta) }
-                .distinct()
-
-            if (plantasConActividad.isNotEmpty()) plantasConActividad else ruta.nodos.map { normalizarPlanta(it.planta) }.distinct()
-        }
-    }
-
-    // Planta actualmente visible en el mapa: por defecto la planta de origen donde se encuentra el usuario (ej. Planta Baja)
-    var plantaSeleccionada by remember(ruta) {
-        if (ruta == null) {
-            mutableStateOf("PB")
-        } else {
-            val plantaOrigen = normalizarPlanta(ruta.origen.planta)
-            mutableStateOf(
-                if (plantasEnRuta.contains(plantaOrigen)) plantaOrigen else (plantasEnRuta.firstOrNull() ?: "PB")
-            )
-        }
-    }
-
     // Nodos de la ruta que pertenecen a la planta seleccionada y en los que el usuario camina o transita
     val nodosPlantaActual = remember(ruta, plantaSeleccionada) {
         if (ruta == null) emptyList()
@@ -135,81 +103,37 @@ fun MapaRutaView(
     var offsetX by remember { mutableFloatStateOf(0f) }
     var offsetY by remember { mutableFloatStateOf(0f) }
 
-    Column(
-        modifier = modifier.fillMaxSize(),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+    // Contenedor del plano interactivo a pantalla completa
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .background(SurfaceWhite)
+            .clipToBounds()
     ) {
-        // Selector de planta si la ruta abarca más de una planta (con scroll horizontal para que nunca se corte)
-        if (plantasEnRuta.size > 1) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 4.dp)
-                    .horizontalScroll(rememberScrollState()),
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "Planta:",
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = TextSecondary
-                )
-                plantasEnRuta.forEach { p ->
-                    val esActiva = (p == plantaSeleccionada)
-                    FilterChip(
-                        selected = esActiva,
-                        onClick = { plantaSeleccionada = p },
-                        label = {
-                            Text(
-                                text = formatearPlanta(p),
-                                fontSize = 11.sp,
-                                fontWeight = if (esActiva) FontWeight.Bold else FontWeight.Normal
-                            )
-                        },
-                        colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = EtsiitBlue.copy(alpha = 0.14f),
-                            selectedLabelColor = EtsiitBlue
-                        )
-                    )
-                }
-            }
-        }
-
-        // Contenedor del plano interactivo
         Box(
             modifier = Modifier
-                .fillMaxWidth()
-                .weight(1f)
-                .clip(RoundedCornerShape(14.dp))
-                .background(SurfaceWhite)
-                .border(1.dp, SurfaceBorder, RoundedCornerShape(14.dp))
-                .clipToBounds()
-        ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .pointerInput(Unit) {
-                        detectTransformGestures { _, pan, zoom, _ ->
-                            scale = (scale * zoom).coerceIn(1f, 4.5f)
-                            if (scale > 1f) {
-                                val maxPanX = (PLANO_ANCHO_ORIGINAL * (scale - 1f)) / 4f
-                                val maxPanY = (PLANO_ALTO_ORIGINAL * (scale - 1f)) / 4f
-                                offsetX = (offsetX + pan.x).coerceIn(-maxPanX, maxPanX)
-                                offsetY = (offsetY + pan.y).coerceIn(-maxPanY, maxPanY)
-                            } else {
-                                offsetX = 0f
-                                offsetY = 0f
-                            }
+                .fillMaxSize()
+                .pointerInput(Unit) {
+                    detectTransformGestures { _, pan, zoom, _ ->
+                        scale = (scale * zoom).coerceIn(1f, 4.5f)
+                        if (scale > 1f) {
+                            val maxPanX = (PLANO_ANCHO_ORIGINAL * (scale - 1f)) / 4f
+                            val maxPanY = (PLANO_ALTO_ORIGINAL * (scale - 1f)) / 4f
+                            offsetX = (offsetX + pan.x).coerceIn(-maxPanX, maxPanX)
+                            offsetY = (offsetY + pan.y).coerceIn(-maxPanY, maxPanY)
+                        } else {
+                            offsetX = 0f
+                            offsetY = 0f
                         }
                     }
-                    .graphicsLayer {
-                        scaleX = scale
-                        scaleY = scale
-                        translationX = offsetX
-                        translationY = offsetY
-                    }
-            ) {
+                }
+                .graphicsLayer {
+                    scaleX = scale
+                    scaleY = scale
+                    translationX = offsetX
+                    translationY = offsetY
+                }
+        ) {
                 // 1. Imagen del plano de fondo
                 Image(
                     painter = painterResource(id = planoResId),
@@ -377,130 +301,75 @@ fun MapaRutaView(
                 }
             }
 
-            // Controles de zoom táctil en la esquina inferior derecha
-            Column(
-                modifier = Modifier
-                    .align(Alignment.BottomEnd)
-                    .padding(10.dp),
-                verticalArrangement = Arrangement.spacedBy(6.dp)
+        // Controles de zoom táctil flotantes sobre el plano
+        Column(
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(end = 16.dp, bottom = 16.dp + bottomPadding),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Surface(
+                shape = CircleShape,
+                color = SurfaceWhite.copy(alpha = 0.95f),
+                shadowElevation = 4.dp,
+                border = BorderStroke(1.dp, SurfaceBorder.copy(alpha = 0.6f)),
+                onClick = { scale = (scale + 0.6f).coerceAtMost(4.5f) },
+                modifier = Modifier.size(42.dp)
             ) {
-                Surface(
-                    shape = CircleShape,
-                    color = SurfaceWhite.copy(alpha = 0.92f),
-                    shadowElevation = 3.dp,
-                    onClick = { scale = (scale + 0.6f).coerceAtMost(4.5f) },
-                    modifier = Modifier.size(36.dp)
-                ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Icon(
-                            imageVector = Icons.Default.Add,
-                            contentDescription = "Acercar",
-                            tint = TextPrimary,
-                            modifier = Modifier.size(18.dp)
-                        )
-                    }
-                }
-
-                Surface(
-                    shape = CircleShape,
-                    color = SurfaceWhite.copy(alpha = 0.92f),
-                    shadowElevation = 3.dp,
-                    onClick = {
-                        scale = (scale - 0.6f).coerceAtLeast(1f)
-                        if (scale == 1f) {
-                            offsetX = 0f
-                            offsetY = 0f
-                        }
-                    },
-                    modifier = Modifier.size(36.dp)
-                ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Icon(
-                            imageVector = Icons.Default.Remove,
-                            contentDescription = "Alejar",
-                            tint = TextPrimary,
-                            modifier = Modifier.size(18.dp)
-                        )
-                    }
-                }
-
-                if (scale > 1f || offsetX != 0f || offsetY != 0f) {
-                    Surface(
-                        shape = CircleShape,
-                        color = SurfaceWhite.copy(alpha = 0.92f),
-                        shadowElevation = 3.dp,
-                        onClick = {
-                            scale = 1f
-                            offsetX = 0f
-                            offsetY = 0f
-                        },
-                        modifier = Modifier.size(36.dp)
-                    ) {
-                        Box(contentAlignment = Alignment.Center) {
-                            Icon(
-                                imageVector = Icons.Default.RestartAlt,
-                                contentDescription = "Restablecer vista",
-                                tint = TextSecondary,
-                                modifier = Modifier.size(18.dp)
-                            )
-                        }
-                    }
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(
+                        imageVector = Icons.Default.Add,
+                        contentDescription = "Acercar",
+                        tint = TextPrimary,
+                        modifier = Modifier.size(20.dp)
+                    )
                 }
             }
 
-            // Leyenda sutil en la esquina inferior izquierda (solo cuando hay ruta activa)
-            if (ruta != null) {
+            Surface(
+                shape = CircleShape,
+                color = SurfaceWhite.copy(alpha = 0.95f),
+                shadowElevation = 4.dp,
+                border = BorderStroke(1.dp, SurfaceBorder.copy(alpha = 0.6f)),
+                onClick = {
+                    scale = (scale - 0.6f).coerceAtLeast(1f)
+                    if (scale == 1f) {
+                        offsetX = 0f
+                        offsetY = 0f
+                    }
+                },
+                modifier = Modifier.size(42.dp)
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(
+                        imageVector = Icons.Default.Remove,
+                        contentDescription = "Alejar",
+                        tint = TextPrimary,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+            }
+
+            if (scale > 1f || offsetX != 0f || offsetY != 0f) {
                 Surface(
-                    shape = RoundedCornerShape(8.dp),
-                    color = SurfaceWhite.copy(alpha = 0.90f),
-                    border = androidx.compose.foundation.BorderStroke(1.dp, SurfaceBorder.copy(alpha = 0.6f)),
-                    modifier = Modifier
-                        .align(Alignment.BottomStart)
-                        .padding(10.dp)
+                    shape = CircleShape,
+                    color = SurfaceWhite.copy(alpha = 0.95f),
+                    shadowElevation = 4.dp,
+                    border = BorderStroke(1.dp, SurfaceBorder.copy(alpha = 0.6f)),
+                    onClick = {
+                        scale = 1f
+                        offsetX = 0f
+                        offsetY = 0f
+                    },
+                    modifier = Modifier.size(42.dp)
                 ) {
-                    Row(
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(4.dp)
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .size(8.dp)
-                                    .clip(CircleShape)
-                                    .background(ColorOrigen)
-                            )
-                            Text("Inicio", fontSize = 10.sp, color = TextSecondary)
-                        }
-
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(4.dp)
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .size(8.dp)
-                                    .clip(CircleShape)
-                                    .background(ColorDestino)
-                            )
-                            Text("Destino", fontSize = 10.sp, color = TextSecondary)
-                        }
-
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(4.dp)
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .size(8.dp)
-                                    .clip(CircleShape)
-                                    .background(ColorEscaleras)
-                            )
-                            Text("Cambio de planta", fontSize = 10.sp, color = TextSecondary)
-                        }
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(
+                            imageVector = Icons.Default.RestartAlt,
+                            contentDescription = "Restablecer vista",
+                            tint = TextSecondary,
+                            modifier = Modifier.size(20.dp)
+                        )
                     }
                 }
             }
