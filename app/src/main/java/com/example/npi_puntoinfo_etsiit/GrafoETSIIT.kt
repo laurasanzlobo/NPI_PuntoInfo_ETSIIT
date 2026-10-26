@@ -137,6 +137,16 @@ class GrafoETSIIT {
     }
 
     /**
+     * Devuelve todos los nodos pertenecientes a una planta específica.
+     */
+    fun obtenerNodosPorPlanta(planta: String): List<Nodo> {
+        val norm = normalizarPlanta(planta)
+        return directorioNodos.values
+            .filter { normalizarPlanta(it.planta) == norm }
+            .sortedBy { it.nombre }
+    }
+
+    /**
      * Nodo de inicio predeterminado (Entrada Principal Exterior en Planta Baja)
      */
     fun obtenerNodoInicioPredeterminado(): Nodo {

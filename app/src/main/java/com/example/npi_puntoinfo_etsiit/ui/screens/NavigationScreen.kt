@@ -100,9 +100,28 @@ fun NavigationScreen(
 
     // Instancia del grafo y cálculo de ruta mediante Dijkstra
     val grafo = remember(context) { GrafoRepository.getGrafo(context) }
-    val nodoInicio = remember(grafo, entryNodeId) {
-        if (entryNodeId != null) grafo.obtenerNodoPorId(entryNodeId) else grafo.obtenerNodoInicioPredeterminado()
+
+    // Estimación del aula de origen según el horario del usuario (si está en clase o acaba de terminar)
+    val estimatedClassroom = remember(context) {
+        com.example.npi_puntoinfo_etsiit.data.ScheduleRepository.estimateCurrentOrRecentClassroom(context)
     }
+
+    var selectedEntryNodeId by remember(entryNodeId, activeDestination) {
+        mutableStateOf(entryNodeId)
+    }
+
+    var showVerificationDialog by remember(activeDestination) {
+        mutableStateOf(hasActiveRoute && entryNodeId == null)
+    }
+
+    val nodoInicio = remember(grafo, selectedEntryNodeId) {
+        if (selectedEntryNodeId != null) {
+            grafo.obtenerNodoPorId(selectedEntryNodeId)
+        } else {
+            grafo.obtenerNodoInicioPredeterminado()
+        }
+    }
+
     val nodoDestino = remember(grafo, activeDestination, destinationNodeId) {
         if (!hasActiveRoute) null else if (destinationNodeId != null) grafo.obtenerNodoPorId(destinationNodeId)
         else grafo.buscarNodoPorDestino(activeDestination)
@@ -390,6 +409,34 @@ fun NavigationScreen(
                                     maxLines = 1
                                 )
                             }
+                            if (hasActiveRoute && nodoInicio != null) {
+                                Surface(
+                                    shape = RoundedCornerShape(6.dp),
+                                    color = EtsiitBlue.copy(alpha = 0.10f),
+                                    modifier = Modifier
+                                        .padding(top = 2.dp)
+                                        .clickable { showVerificationDialog = true }
+                                ) {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                    ) {
+                                        Box(
+                                            modifier = Modifier
+                                                .size(6.dp)
+                                                .clip(CircleShape)
+                                                .background(Color(0xFF10B981))
+                                        )
+                                        Text(
+                                            text = "Desde: ${com.example.npi_puntoinfo_etsiit.ui.components.formatearNombreNodoAmigable(nodoInicio)}",
+                                            fontSize = 10.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = EtsiitBlue
+                                        )
+                                    }
+                                }
+                            }
                         }
                     }
 
@@ -562,6 +609,21 @@ fun NavigationScreen(
                     }
                 }
             }
+        }
+
+        // Diálogo emergente de verificación de ubicación inicial
+        if (showVerificationDialog) {
+            com.example.npi_puntoinfo_etsiit.ui.components.OriginVerificationDialog(
+                grafo = grafo,
+                estimatedClassroom = estimatedClassroom,
+                onNodeConfirmed = { confirmedNode ->
+                    selectedEntryNodeId = confirmedNode.id
+                    showVerificationDialog = false
+                },
+                onDismiss = {
+                    showVerificationDialog = false
+                }
+            )
         }
     }
 }

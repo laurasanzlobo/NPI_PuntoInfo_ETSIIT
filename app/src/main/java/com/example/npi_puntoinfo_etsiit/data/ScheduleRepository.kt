@@ -427,4 +427,77 @@ object ScheduleRepository {
 
         return null
     }
+
+    /**
+     * Estima en qué aula se encuentra el usuario según su horario:
+     * 1. Clase en curso actualmente (rango inicio - fin).
+     * 2. Clase recién terminada (margen de 25 minutos tras finalizar la clase).
+     */
+    fun estimateCurrentOrRecentClassroom(
+        context: Context? = null,
+        date: LocalDate = LocalDate.now(),
+        time: LocalTime = LocalTime.now(),
+        profile: UserProfile = if (context != null) UserSessionRepository.getProfile(context) else UserProfile()
+    ): EstimatedClassroom? {
+        val classes = getClassesForDay(context, date.dayOfWeek, profile)
+        if (classes.isEmpty()) return null
+
+        for (i in classes.indices) {
+            val item = classes[i]
+            val parts = item.time.split("-").map { it.trim() }
+            if (parts.size != 2) continue
+
+            val start = try { LocalTime.parse(parts[0]) } catch (_: Exception) { continue }
+            val end = try { LocalTime.parse(parts[1]) } catch (_: Exception) { continue }
+
+            val roomClean = item.room.split("·")[0].trim()
+            val floorClean = item.room.split("·").getOrElse(1) { "ETSIIT" }.trim()
+
+            // 1. Clase en curso (el usuario se encuentra actualmente en este aula)
+            if (!time.isBefore(start) && !time.isAfter(end)) {
+                return EstimatedClassroom(
+                    classItem = item,
+                    roomName = roomClean,
+                    floorName = floorClean,
+                    status = ClassroomStatus.ONGOING,
+                    explanation = "Clase de ${item.acronym} en curso ($start - $end)"
+                )
+            }
+
+            // 2. Clase recién terminada (el usuario acaba de salir o sigue cerca del aula, en los 25 min posteriores)
+            val postWindowEnd = if (i + 1 < classes.size) {
+                val nextParts = classes[i + 1].time.split("-").map { it.trim() }
+                val nextStart = try { LocalTime.parse(nextParts[0]) } catch (_: Exception) { null }
+                if (nextStart != null && nextStart.isBefore(end.plusMinutes(25))) nextStart else end.plusMinutes(25)
+            } else {
+                end.plusMinutes(25)
+            }
+
+            if (!time.isBefore(end) && time.isBefore(postWindowEnd)) {
+                return EstimatedClassroom(
+                    classItem = item,
+                    roomName = roomClean,
+                    floorName = floorClean,
+                    status = ClassroomStatus.JUST_ENDED,
+                    explanation = "Clase de ${item.acronym} recién terminada a las $end"
+                )
+            }
+        }
+
+        return null
+    }
 }
+
+enum class ClassroomStatus {
+    ONGOING,
+    JUST_ENDED
+}
+
+data class EstimatedClassroom(
+    val classItem: ClassItem,
+    val roomName: String,
+    val floorName: String,
+    val status: ClassroomStatus,
+    val explanation: String
+)
+
