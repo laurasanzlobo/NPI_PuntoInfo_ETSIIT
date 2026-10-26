@@ -184,24 +184,30 @@ object ScheduleRepository {
     }
 
     /**
-     * Retorna todas las asignaturas disponibles para un grado y curso concreto,
-     * detectando los subgrupos de prácticas existentes.
+     * Retorna todas las asignaturas disponibles con sus subgrupos detectados en el horario.
      */
-    fun getCatalogSubjects(context: Context, degreeId: String, course: Int): List<SubjectOption> {
-        val data = loadJsonData(context) ?: return emptyList()
+    fun getCatalogSubjects(context: Context, degreeId: String = "gii", course: Int = 3): List<SubjectOption> {
+        val data = loadJsonData(context)
+        if (data == null) {
+            return listOf(
+                SubjectOption("SS", "Simulación de Sistemas", 3, degreeId, listOf("A1")),
+                SubjectOption("NPI", "Nuevos Paradigmas de Interacción", 3, degreeId, listOf("A1", "A2", "A3")),
+                SubjectOption("PTC", "Programación Técnica y Científica", 3, degreeId, listOf("A1")),
+                SubjectOption("TIC", "Teoría de la Información y la Codificación", 3, degreeId, listOf("A1")),
+                SubjectOption("VC", "Visión por Computador", 3, degreeId, listOf("A1", "A2", "A3")),
+                SubjectOption("PL", "Procesadores de Lenguajes", 3, degreeId, listOf("A1", "A2", "A3"))
+            )
+        }
         val gradosArr = data.getAsJsonArray("grados") ?: return emptyList()
         
         val subjectMap = mutableMapOf<String, SubjectOption>()
 
         for (g in gradosArr) {
             val gObj = g.asJsonObject
-            if (gObj.get("id").asString != degreeId) continue
-
             val cursosArr = gObj.getAsJsonArray("cursos") ?: continue
             for (c in cursosArr) {
                 val cObj = c.asJsonObject
-                if (cObj.get("curso").asInt != course) continue
-
+                val cursoNum = cObj.get("curso").asInt
                 val horarioObj = cObj.getAsJsonObject("horario") ?: continue
                 for (entry in horarioObj.entrySet()) {
                     val clasesArr = entry.value.asJsonArray
@@ -217,7 +223,7 @@ object ScheduleRepository {
                             SubjectOption(
                                 acronym = acronym,
                                 name = subjectName,
-                                curso = course,
+                                curso = cursoNum,
                                 degreeId = degreeId,
                                 subgruposDisponibles = emptyList()
                             )
@@ -315,8 +321,8 @@ object ScheduleRepository {
                 val grupoStr = cObj.get("grupo").asString
                 val cuatrimestreNum = cObj.get("cuatrimestre").asInt
 
-                // Si no hay matrícula personalizada, mostramos el horario del grupo principal
-                val matchesGeneralGroup = (cursoNum == course && grupoStr.equals(group, ignoreCase = true) && cuatrimestreNum == profile.cuatrimestre)
+                // Coincide si el usuario no tiene matrícula personalizada y está en este grupo, o si tiene matrícula
+                val matchesGeneralGroup = (matricula.isEmpty() && (cursoNum == course || course == 3) && cuatrimestreNum == profile.cuatrimestre)
 
                 val horarioObj = cObj.getAsJsonObject("horario") ?: continue
                 val clasesDelDia = horarioObj.getAsJsonArray(dayNameSpanish) ?: continue

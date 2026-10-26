@@ -1566,7 +1566,20 @@
       "despacho": "D_309",
       "es_profesor_actual": false,
       "tutorias": "Pendiente de publicación",
-      "clases": []
+      "clases": [
+        {
+          "asignatura": "Teoría de la Información y la Codificación",
+          "tipo": "Prácticas",
+          "aula": "L_23",
+          "horario": "Martes 09:30 - 11:30"
+        },
+        {
+          "asignatura": "Teoría de la Información y la Codificación",
+          "tipo": "Teoría",
+          "aula": "A_11",
+          "horario": "Miércoles 09:30 - 11:30"
+        }
+      ]
     },
     {
       "id": "José_Gómez_Torrecillas",
