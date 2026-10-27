@@ -8,6 +8,7 @@ import android.os.VibratorManager
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -115,8 +116,9 @@ fun NavigationScreen(
     }
 
     val nodoInicio = remember(grafo, selectedEntryNodeId) {
-        if (selectedEntryNodeId != null) {
-            grafo.obtenerNodoPorId(selectedEntryNodeId)
+        val entryId = selectedEntryNodeId
+        if (entryId != null) {
+            grafo.obtenerNodoPorId(entryId)
         } else {
             grafo.obtenerNodoInicioPredeterminado()
         }
