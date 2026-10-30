@@ -1,465 +1,17 @@
 {
   "profesores": [
     {
-      "id": "Francisco_Javier_Abad_Ortega",
-      "nombre": "Francisco Javier Abad Ortega",
-      "departamento": "Departamento de Ciencias de la Computación e Inteligencia Artificial",
-      "telefono": "958248327",
-      "email": "abad@ugr.es",
-      "despacho": "D_301",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "María_Isabel_Abellán_Benítez",
-      "nombre": "María Isabel Abellán Benítez",
-      "departamento": "Departamento de Ciencias de la Computación e Inteligencia Artificial",
-      "telefono": "No disponible",
-      "email": "miab@ugr.es",
-      "despacho": "D_301",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Silvia_Acid_Carrillo",
-      "nombre": "Silvia Acid Carrillo",
-      "departamento": "Departamento de Ciencias de la Computación e Inteligencia Artificial",
-      "telefono": "958248309",
-      "email": "acid@ugr.es",
-      "despacho": "D_301",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Óscar_Ramón_Adamuz_Hinojosa",
-      "nombre": "Óscar Ramón Adamuz Hinojosa",
-      "departamento": "Departamento de Teoría de la Señal, Telemática y Comunicaciones",
-      "telefono": "No disponible",
-      "email": "oadamuz@ugr.es",
-      "despacho": "D_401",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Ángel_Luis_Agote_Martín",
-      "nombre": "Ángel Luis Agote Martín",
-      "departamento": "Departamento de Organización de Empresas II",
-      "telefono": "958241000 ext. 20540",
-      "email": "aagote@ugr.es",
-      "despacho": "D_221",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Javier_Aguilera_Caracuel",
-      "nombre": "Javier Aguilera Caracuel",
-      "departamento": "Departamento de Organización de Empresas II",
-      "telefono": "958242341",
-      "email": "javieraguilera@ugr.es",
-      "despacho": "D_221",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Ignacio_Aguilera_Martos",
-      "nombre": "Ignacio Aguilera Martos",
-      "departamento": "Departamento de Ciencias de la Computación e Inteligencia Artificial",
-      "telefono": "958241774",
-      "email": "nacheteam@ugr.es",
-      "despacho": "D_301",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Eugenio_Aguirre_Molina",
-      "nombre": "Eugenio Aguirre Molina",
-      "departamento": "Departamento de Ciencias de la Computación e Inteligencia Artificial",
-      "telefono": "958248476",
-      "email": "eaguirre@ugr.es",
-      "despacho": "D_302",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Jerónimo_Alaminos_Prats",
-      "nombre": "Jerónimo Alaminos Prats",
-      "departamento": "Departamento de Análisis Matemático",
-      "telefono": "958246308",
-      "email": "alaminos@ugr.es",
-      "despacho": "D_412",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Antonio_Alarcón_López",
-      "nombre": "Antonio Alarcón López",
-      "departamento": "Departamento de Geometría y Topología",
-      "telefono": "958243280",
-      "email": "alarcon@ugr.es",
-      "despacho": "D_426",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Sergio_Alonso_Burgos",
-      "nombre": "Sergio Alonso Burgos",
-      "departamento": "Departamento de Lenguajes y Sistemas Informáticos",
-      "telefono": "958248418",
-      "email": "zerjioi@ugr.es",
-      "despacho": "D_201",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Eusebio_Naif_Al-Soliman_Fuentes",
-      "nombre": "Eusebio Naif Al-Soliman Fuentes",
-      "departamento": "Departamento de Ingeniería de Computadores, Automática y Robótica",
-      "telefono": "No disponible",
-      "email": "eunaif@ugr.es",
-      "despacho": "D_319",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Ignacio_Álvarez_Illán",
-      "nombre": "Ignacio Álvarez Illán",
-      "departamento": "Departamento de Teoría de la Señal, Telemática y Comunicaciones",
-      "telefono": "No disponible",
-      "email": "illan@ugr.es",
-      "despacho": "D_401",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Isaac_Álvarez_Ruiz",
-      "nombre": "Isaac Álvarez Ruiz",
-      "departamento": "Departamento de Teoría de la Señal, Telemática y Comunicaciones",
-      "telefono": "958241521",
-      "email": "isamaru@ugr.es",
-      "despacho": "D_401",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Pablo_José_Ameigeiras_Gutiérrez",
-      "nombre": "Pablo José Ameigeiras Gutiérrez",
-      "departamento": "Departamento de Teoría de la Señal, Telemática y Comunicaciones",
-      "telefono": "958242306",
-      "email": "pameigeiras@ugr.es",
-      "despacho": "D_401",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Mancia_Anguita_López",
-      "nombre": "Mancia Anguita López",
-      "departamento": "Departamento de Ingeniería de Computadores, Automática y Robótica",
-      "telefono": "958246128",
-      "email": "manguita@ugr.es",
-      "despacho": "D_320",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "José_Miguel_Angulo_Ibáñez",
-      "nombre": "José Miguel Angulo Ibáñez",
-      "departamento": "Departamento de Estadística e Investigación Operativa",
-      "telefono": "958240492",
-      "email": "jmangulo@ugr.es",
-      "despacho": "D_331",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Francisco_de_P._Araque_Cuenca",
-      "nombre": "Francisco de P. Araque Cuenca",
-      "departamento": "Departamento de Lenguajes y Sistemas Informáticos",
-      "telefono": "958243176",
-      "email": "faraque@ugr.es",
-      "despacho": "D_201",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "David_Arcoya_Álvarez",
-      "nombre": "David Arcoya Álvarez",
-      "departamento": "Departamento de Análisis Matemático",
-      "telefono": "958243153",
-      "email": "darcoya@ugr.es",
-      "despacho": "D_412",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Margarita_Arias_López",
-      "nombre": "Margarita Arias López",
-      "departamento": "Departamento de Matemática Aplicada",
-      "telefono": "958249947",
-      "email": "marias@ugr.es",
-      "despacho": "D_416",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Isidro_Ariza_Reyes",
-      "nombre": "Isidro Ariza Reyes",
-      "departamento": "Departamento de Economía Financiera y Contabilidad",
-      "telefono": "958249416",
-      "email": "iariza@ugr.es",
-      "despacho": "D_224",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Germán_Arroyo_Moreno",
-      "nombre": "Germán Arroyo Moreno",
-      "departamento": "Departamento de Lenguajes y Sistemas Informáticos",
-      "telefono": "958248421",
-      "email": "arroyo@ugr.es",
-      "despacho": "D_201",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Antonio_Bautista_Bailón_Morillas",
-      "nombre": "Antonio Bautista Bailón Morillas",
-      "departamento": "Departamento de Ciencias de la Computación e Inteligencia Artificial",
-      "telefono": "958240511",
-      "email": "bailon@ugr.es",
-      "despacho": "D_302",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Francisco_Javier_Baldán_Lozano",
-      "nombre": "Francisco Javier Baldán Lozano",
-      "departamento": "Departamento de Ciencias de la Computación e Inteligencia Artificial",
-      "telefono": "No disponible",
-      "email": "fjbaldan@ugr.es",
-      "despacho": "D_302",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Jesús_Banqueri_Ozáez",
-      "nombre": "Jesús Banqueri Ozáez",
-      "departamento": "Departamento de Electrónica y Tecnología de Computadores",
-      "telefono": "958242301",
-      "email": "banqueri@ugr.es",
-      "despacho": "D_213",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Oresti_Baños_Legrán",
-      "nombre": "Oresti Baños Legrán",
-      "departamento": "Departamento de Ingeniería de Computadores, Automática y Robótica",
-      "telefono": "958241000 ext. 20629",
-      "email": "oresti@ugr.es",
-      "despacho": "D_320",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Francisco_Barranco_Expósito",
-      "nombre": "Francisco Barranco Expósito",
-      "departamento": "Departamento de Ingeniería de Computadores, Automática y Robótica",
-      "telefono": "958241775",
-      "email": "fbarranco@ugr.es",
-      "despacho": "D_320",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Manuel_Barrera_Muñoz",
-      "nombre": "Manuel Barrera Muñoz",
-      "departamento": "Departamento de Teoría e Historia Económica",
-      "telefono": "No disponible",
-      "email": "mbarmuo@ugr.es",
-      "despacho": "D_228",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Kawtar_Benghazi_Akhlaki_Sekkate",
-      "nombre": "Kawtar Benghazi Akhlaki Sekkate",
-      "departamento": "Departamento de Lenguajes y Sistemas Informáticos",
-      "telefono": "958242812",
-      "email": "benghazi@ugr.es",
-      "despacho": "D_201",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "María_del_Carmen_Benítez_Ortúzar",
-      "nombre": "María del Carmen Benítez Ortúzar",
-      "departamento": "Departamento de Teoría de la Señal, Telemática y Comunicaciones",
-      "telefono": "958240841",
-      "email": "carmen@ugr.es",
-      "despacho": "D_402",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "José_Manuel_Benítez_Sánchez",
-      "nombre": "José Manuel Benítez Sánchez",
-      "departamento": "Departamento de Ciencias de la Computación e Inteligencia Artificial",
-      "telefono": "958246143",
-      "email": "jmbs@ugr.es",
-      "despacho": "D_302",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Christoph_Norbert_Bergmeir",
-      "nombre": "Christoph Norbert Bergmeir",
-      "departamento": "Departamento de Ciencias de la Computación e Inteligencia Artificial",
-      "telefono": "No disponible",
-      "email": "bergmeir@ugr.es",
-      "despacho": "D_303",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "María_del_Campo_Bermúdez_Edo",
-      "nombre": "María del Campo Bermúdez Edo",
-      "departamento": "Departamento de Lenguajes y Sistemas Informáticos",
-      "telefono": "958248422",
-      "email": "mbe@ugr.es",
-      "despacho": "D_201",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Fernando_Berzal_Galiano",
-      "nombre": "Fernando Berzal Galiano",
-      "departamento": "Departamento de Ciencias de la Computación e Inteligencia Artificial",
-      "telefono": "958248318",
-      "email": "fberzal@ugr.es",
-      "despacho": "D_303",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Andrés_Biedma_Pérez",
-      "nombre": "Andrés Biedma Pérez",
-      "departamento": "Departamento de Teoría de la Señal, Telemática y Comunicaciones",
-      "telefono": "No disponible",
-      "email": "abieper@ugr.es",
-      "despacho": "D_402",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Víctor_Blanco_Izquierdo",
-      "nombre": "Víctor Blanco Izquierdo",
-      "departamento": "Departamento de Métodos Cuantitativos para la Economía y la Empresa",
-      "telefono": "958249637",
-      "email": "vblanco@ugr.es",
-      "despacho": "D_336",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Ignacio_José_Blanco_Medina",
-      "nombre": "Ignacio José Blanco Medina",
-      "departamento": "Departamento de Ciencias de la Computación e Inteligencia Artificial",
-      "telefono": "958240428",
-      "email": "iblanco@ugr.es",
-      "despacho": "D_303",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Daniel_Bolaños_Martínez",
-      "nombre": "Daniel Bolaños Martínez",
-      "departamento": "Departamento de Lenguajes y Sistemas Informáticos",
-      "telefono": "No disponible",
-      "email": "danibolanos@ugr.es",
-      "despacho": "D_202",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Peter_Alexander_Bouvrie_Morales",
-      "nombre": "Peter Alexander Bouvrie Morales",
-      "departamento": "Departamento de Estadística e Investigación Operativa",
-      "telefono": "No disponible",
-      "email": "bouvrie@ugr.es",
-      "despacho": "D_331",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Juan_Antonio_Bravo_Aranda",
-      "nombre": "Juan Antonio Bravo Aranda",
-      "departamento": "Departamento de Física Aplicada",
-      "telefono": "958249755",
-      "email": "jabravo@ugr.es",
-      "despacho": "D_430",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Óscar_Fernando_Bustinza_Sánchez",
-      "nombre": "Óscar Fernando Bustinza Sánchez",
-      "departamento": "Departamento de Organización de Empresas I",
-      "telefono": "958241000 ext. 20177",
-      "email": "oscarfb@ugr.es",
-      "despacho": "D_226",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Marcelino_José_Cabrera_Cuevas",
+      "id": "Marcelino_Jose_Cabrera_Cuevas",
       "nombre": "Marcelino José Cabrera Cuevas",
       "departamento": "Departamento de Lenguajes y Sistemas Informáticos",
-      "telefono": " 958248420",
+      "telefono": "958240598",
       "email": "mcabrera@ugr.es",
       "despacho": "D_225",
       "es_profesor_actual": true,
-      "tutorias": "Lunes 11:30-13:30, Jueves 12:30-14:30, Viernes 10:30-12:30",
+      "es_externo": false,
+      "campus": "Campus Aynadamar (ETSIIT)",
+      "avatar": "avatar_01",
+      "tutorias": "Lunes y Miércoles de 10:00 a 13:00",
       "clases": [
         {
           "asignatura": "Nuevos Paradigmas de Interacción",
@@ -476,58 +28,38 @@
       ]
     },
     {
-      "id": "Francisco_Javier_Cabrerizo_Lorite",
-      "nombre": "Francisco Javier Cabrerizo Lorite",
-      "departamento": "Departamento de Ciencias de la Computación e Inteligencia Artificial",
-      "telefono": "958241000 ext. 20720",
-      "email": "cabrerizo@ugr.es",
-      "despacho": "D_303",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "María_José_Cáceres_Granados",
-      "nombre": "María José Cáceres Granados",
-      "departamento": "Departamento de Matemática Aplicada",
-      "telefono": "958246301",
-      "email": "caceresg@ugr.es",
-      "despacho": "D_416",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Zoraida_Callejas_Carrión",
+      "id": "Zoraida_Callejas_Carrion",
       "nombre": "Zoraida Callejas Carrión",
       "departamento": "Departamento de Lenguajes y Sistemas Informáticos",
-      "telefono": "958241000 ext. 20049",
+      "telefono": "958240587",
       "email": "zoraida@ugr.es",
       "despacho": "D_202",
       "es_profesor_actual": true,
-      "tutorias": "Martes y Jueves 10:00 - 13:00",
-      "clases": []
+      "es_externo": false,
+      "campus": "Campus Aynadamar (ETSIIT)",
+      "avatar": "avatar_02",
+      "tutorias": "Martes y Jueves de 11:00 a 14:00",
+      "clases": [
+        {
+          "asignatura": "Programación y Diseño Orientado a Objetos",
+          "tipo": "Teoría",
+          "aula": "A_07",
+          "horario": "Martes 17:30 - 19:30"
+        }
+      ]
     },
     {
-      "id": "José_Camacho_Páez",
-      "nombre": "José Camacho Páez",
-      "departamento": "Departamento de Teoría de la Señal, Telemática y Comunicaciones",
-      "telefono": "958248898",
-      "email": "josecamacho@ugr.es",
-      "despacho": "D_402",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Luis_Miguel_Campos_Ibáñez",
+      "id": "Luis_Miguel_Campos_Ibanez",
       "nombre": "Luis Miguel Campos Ibáñez",
       "departamento": "Departamento de Ciencias de la Computación e Inteligencia Artificial",
-      "telefono": " 958243199",
-      "email": "lmcampos@ugr.es",
+      "telefono": "958240581",
+      "email": "lci@ugr.es",
       "despacho": "D_310",
       "es_profesor_actual": true,
-      "tutorias": "Lunes 9:30-11:30, Lunes 13:30-14:30, Martes 9:30-11:30, Martes 13:30-14:30",
+      "es_externo": false,
+      "campus": "Campus Aynadamar (ETSIIT)",
+      "avatar": "avatar_03",
+      "tutorias": "Lunes y Miércoles de 11:30 a 13:30",
       "clases": [
         {
           "asignatura": "Simulación de Sistemas",
@@ -544,36 +76,17 @@
       ]
     },
     {
-      "id": "Erick_Jorge_Canales_Rodriguez",
-      "nombre": "Erick Jorge Canales Rodriguez",
-      "departamento": "Departamento de Teoría de la Señal, Telemática y Comunicaciones",
-      "telefono": "No disponible",
-      "email": "ejcanalesr@ugr.es",
-      "despacho": "D_402",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Carlos_Cano_Gutiérrez",
-      "nombre": "Carlos Cano Gutiérrez",
-      "departamento": "Departamento de Ciencias de la Computación e Inteligencia Artificial",
-      "telefono": "958240593",
-      "email": "carloscano@ugr.es",
-      "despacho": "D_304",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "José_Enrique_Cano_Ocaña",
+      "id": "Jose_Enrique_Cano_Ocana",
       "nombre": "José Enrique Cano Ocaña",
       "departamento": "Departamento de Ciencias de la Computación e Inteligencia Artificial",
-      "telefono": " 958242808",
-      "email": "eco@ugr.es",
+      "telefono": "958240582",
+      "email": "jecano@ugr.es",
       "despacho": "D_309",
       "es_profesor_actual": true,
-      "tutorias": "Miércoles 8:30-11:30, Miércoles 13:30-14:30",
+      "es_externo": false,
+      "campus": "Campus Aynadamar (ETSIIT)",
+      "avatar": "avatar_04",
+      "tutorias": "Lunes de 09:30 a 12:30 y Miércoles de 11:30 a 13:30",
       "clases": [
         {
           "asignatura": "Programación Técnica y Científica",
@@ -590,972 +103,673 @@
       ]
     },
     {
-      "id": "Andrés_Cano_Utrera",
-      "nombre": "Andrés Cano Utrera",
+      "id": "Pablo_Mesejo_Santiago",
+      "nombre": "Pablo Mesejo Santiago",
       "departamento": "Departamento de Ciencias de la Computación e Inteligencia Artificial",
-      "telefono": "958240803",
-      "email": "acu@ugr.es",
-      "despacho": "D_304",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Antonio_Manuel_Cantudo_Gómez",
-      "nombre": "Antonio Manuel Cantudo Gómez",
-      "departamento": "Departamento de Electrónica y Tecnología de Computadores",
-      "telefono": "No disponible",
-      "email": "cantudo@ugr.es",
-      "despacho": "D_213",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Antonio_Cañada_Villar",
-      "nombre": "Antonio Cañada Villar",
-      "departamento": "Departamento de Análisis Matemático",
-      "telefono": "958241000 ext. 20036",
-      "email": "acanada@ugr.es",
-      "despacho": "D_412",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Antonio_Cañas_Vargas",
-      "nombre": "Antonio Cañas Vargas",
-      "departamento": "Departamento de Ingeniería de Computadores, Automática y Robótica",
-      "telefono": "958246127",
-      "email": "acanas@ugr.es",
-      "despacho": "D_320",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "José_Alfredo_Cañizo_Rincón",
-      "nombre": "José Alfredo Cañizo Rincón",
-      "departamento": "Departamento de Matemática Aplicada",
-      "telefono": "No disponible",
-      "email": "canizo@ugr.es",
-      "despacho": "D_417",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Manuel_Caño_García",
-      "nombre": "Manuel Caño García",
-      "departamento": "Departamento de Electrónica y Tecnología de Computadores",
-      "telefono": "No disponible",
-      "email": "manuel.c@ugr.es",
-      "despacho": "D_213",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Manuel_Isidoro_Capel_Tuñón",
-      "nombre": "Manuel Isidoro Capel Tuñón",
-      "departamento": "Departamento de Lenguajes y Sistemas Informáticos",
-      "telefono": "958242816",
-      "email": "manuelcapel@ugr.es",
-      "despacho": "D_202",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Santiago_Carbó_García",
-      "nombre": "Santiago Carbó García",
-      "departamento": "Departamento de Lenguajes y Sistemas Informáticos",
-      "telefono": "No disponible",
-      "email": "carbo@ugr.es",
-      "despacho": "D_202",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "María_del_Pilar_Carrasco_Carrasco",
-      "nombre": "María del Pilar Carrasco Carrasco",
-      "departamento": "Departamento de Álgebra",
-      "telefono": "958240471",
-      "email": "mcarrasc@ugr.es",
-      "despacho": "D_420",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Ana_Carrasco_Sanz",
-      "nombre": "Ana Carrasco Sanz",
-      "departamento": "Departamento de Óptica",
-      "telefono": "958246365",
-      "email": "acarrasco@ugr.es",
-      "despacho": "D_433",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Richard_Rafael_Carrillo_Sánchez",
-      "nombre": "Richard Rafael Carrillo Sánchez",
-      "departamento": "Departamento de Ingeniería de Computadores, Automática y Robótica",
-      "telefono": "No disponible",
-      "email": "rcarrillo@ugr.es",
-      "despacho": "D_321",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Pedro_Cartujo_Cassinello",
-      "nombre": "Pedro Cartujo Cassinello",
-      "departamento": "Departamento de Electrónica y Tecnología de Computadores",
-      "telefono": "958241000 ext. 20381",
-      "email": "cartujo@ugr.es",
-      "despacho": "D_213",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Miguel_Ángel_Carvajal_Rodríguez",
-      "nombre": "Miguel Ángel Carvajal Rodríguez",
-      "departamento": "Departamento de Electrónica y Tecnología de Computadores",
-      "telefono": "958242302",
-      "email": "carvajal@ugr.es",
-      "despacho": "D_214",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Jorge_Casillas_Barranquero",
-      "nombre": "Jorge Casillas Barranquero",
-      "departamento": "Departamento de Ciencias de la Computación e Inteligencia Artificial",
-      "telefono": "958248483",
-      "email": "casillas@ugr.es",
-      "despacho": "D_305",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "María_Encarnación_Castillo_Morales",
-      "nombre": "María Encarnación Castillo Morales",
-      "departamento": "Departamento de Electrónica y Tecnología de Computadores",
-      "telefono": "958248996",
-      "email": "encas@ugr.es",
-      "despacho": "D_214",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "José_Antonio_Castillo_Parrilla",
-      "nombre": "José Antonio Castillo Parrilla",
-      "departamento": "Departamento de Derecho Civil",
-      "telefono": "958246265",
-      "email": "castillop@ugr.es",
-      "despacho": "D_434",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Pedro_Ángel_Castillo_Valdivieso",
-      "nombre": "Pedro Ángel Castillo Valdivieso",
-      "departamento": "Departamento de Ingeniería de Computadores, Automática y Robótica",
       "telefono": "958240589",
-      "email": "pacv@ugr.es",
-      "despacho": "D_321",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Juan_Luis_Castro_Peña",
-      "nombre": "Juan Luis Castro Peña",
-      "departamento": "Departamento de Ciencias de la Computación e Inteligencia Artificial",
-      "telefono": "958244017",
-      "email": "jcastro@ugr.es",
-      "despacho": "D_305",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Jesús_Chamorro_Martínez",
-      "nombre": "Jesús Chamorro Martínez",
-      "departamento": "Departamento de Ciencias de la Computación e Inteligencia Artificial",
-      "telefono": "958248478",
-      "email": "jesus@ugr.es",
-      "despacho": "D_305",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Juan_Miguel_del_Cid_Gómez",
-      "nombre": "Juan Miguel del Cid Gómez",
-      "departamento": "Departamento de Economía Financiera y Contabilidad",
-      "telefono": "958249413",
-      "email": "jmdelcid@ugr.es",
-      "despacho": "D_224",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Manuel_Jesús_Cobo_Martín",
-      "nombre": "Manuel Jesús Cobo Martín",
-      "departamento": "Departamento de Ciencias de la Computación e Inteligencia Artificial",
-      "telefono": "No disponible",
-      "email": "mjcobo@ugr.es",
-      "despacho": "D_305",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Óscar_Cordón_García",
-      "nombre": "Óscar Cordón García",
-      "departamento": "Departamento de Ciencias de la Computación e Inteligencia Artificial",
-      "telefono": "958248555",
-      "email": "ocordon@ugr.es",
-      "despacho": "D_306",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Eulogio_Cordón_Pozo",
-      "nombre": "Eulogio Cordón Pozo",
-      "departamento": "Departamento de Organización de Empresas II",
-      "telefono": "958249790",
-      "email": "ecordon@ugr.es",
-      "despacho": "D_221",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Celia_Cordovilla_Sánchez",
-      "nombre": "Celia Cordovilla Sánchez",
-      "departamento": "Departamento de Álgebra",
-      "telefono": "958241000 ext. 20586",
-      "email": "ccordovilla@ugr.es",
-      "despacho": "D_421",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Francisco_José_Cortijo_Bon",
-      "nombre": "Francisco José Cortijo Bon",
-      "departamento": "Departamento de Ciencias de la Computación e Inteligencia Artificial",
-      "telefono": "958240806",
-      "email": "cb@ugr.es",
-      "despacho": "D_306",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "David_Criado_Ramón",
-      "nombre": "David Criado Ramón",
-      "departamento": "Departamento de Ciencias de la Computación e Inteligencia Artificial",
-      "telefono": "No disponible",
-      "email": "dcriado@ugr.es",
-      "despacho": "D_306",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Carlos_Alberto_Cruz_Corona",
-      "nombre": "Carlos Alberto Cruz Corona",
-      "departamento": "Departamento de Ciencias de la Computación e Inteligencia Artificial",
-      "telefono": "958240465",
-      "email": "carloscruzcorona@ugr.es",
-      "despacho": "D_306",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Susana_Cuadros_Chaves",
-      "nombre": "Susana Cuadros Chaves",
-      "departamento": "Departamento de Electrónica y Tecnología de Computadores",
-      "telefono": "No disponible",
-      "email": "susanacuadros@ugr.es",
-      "despacho": "D_214",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Juan_Carlos_Cubero_Talavera",
-      "nombre": "Juan Carlos Cubero Talavera",
-      "departamento": "Departamento de Ciencias de la Computación e Inteligencia Artificial",
-      "telefono": "958240597",
-      "email": "carlos@ugr.es",
-      "despacho": "D_307",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Miguel_Damas_Hermoso",
-      "nombre": "Miguel Damas Hermoso",
-      "departamento": "Departamento de Ingeniería de Computadores, Automática y Robótica",
-      "telefono": "958240829",
-      "email": "mdamas@ugr.es",
-      "despacho": "D_321",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Juan_Delgado_Alaminos",
-      "nombre": "Juan Delgado Alaminos",
-      "departamento": "Departamento de Economía Aplicada",
-      "telefono": "958246188",
-      "email": "delgadoj@ugr.es",
-      "despacho": "D_227",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Javier_Delgado_Ceballos",
-      "nombre": "Javier Delgado Ceballos",
-      "departamento": "Departamento de Organización de Empresas II",
-      "telefono": "958241000 ext. 20173",
-      "email": "jdc@ugr.es",
-      "despacho": "D_222",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Cecilia_Delgado_Negrete",
-      "nombre": "Cecilia Delgado Negrete",
-      "departamento": "Departamento de Lenguajes y Sistemas Informáticos",
-      "telefono": "958242814",
-      "email": "cdelgado@ugr.es",
-      "despacho": "D_203",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Antonio_Francisco_Díaz_García",
-      "nombre": "Antonio Francisco Díaz García",
-      "departamento": "Departamento de Ingeniería de Computadores, Automática y Robótica",
-      "telefono": "958246127",
-      "email": "afdiaz@ugr.es",
-      "despacho": "D_321",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Natalia_Ana_Díaz_Rodríguez",
-      "nombre": "Natalia Ana Díaz Rodríguez",
-      "departamento": "Departamento de Ciencias de la Computación e Inteligencia Artificial",
-      "telefono": "No disponible",
-      "email": "nataliadiaz@ugr.es",
-      "despacho": "D_307",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Jesús_Esteban_Díaz_Verdejo",
-      "nombre": "Jesús Esteban Díaz Verdejo",
-      "departamento": "Departamento de Teoría de la Señal, Telemática y Comunicaciones",
-      "telefono": "958242304",
-      "email": "jedv@ugr.es",
-      "despacho": "D_403",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "José_Javier_Domínguez_Ramírez",
-      "nombre": "José Javier Domínguez Ramírez",
-      "departamento": "Departamento de Métodos Cuantitativos para la Economía y la Empresa",
-      "telefono": "No disponible",
-      "email": "jjdominguez@ugr.es",
-      "despacho": "D_336",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Alberto_Jesús_Durán_López",
-      "nombre": "Alberto Jesús Durán López",
-      "departamento": "Departamento de Lenguajes y Sistemas Informáticos",
-      "telefono": "No disponible",
-      "email": "albduranlopez@ugr.es",
-      "despacho": "D_203",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Laiachi_El_Kaoutit_Zerri",
-      "nombre": "Laiachi El Kaoutit Zerri",
-      "departamento": "Departamento de Álgebra",
-      "telefono": "958244243",
-      "email": "kaoutit@ugr.es",
-      "despacho": "D_421",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Juan_José_Escobar_Pérez",
-      "nombre": "Juan José Escobar Pérez",
-      "departamento": "Departamento de Lenguajes y Sistemas Informáticos",
-      "telefono": "958248417",
-      "email": "jjescobar@ugr.es",
-      "despacho": "D_203",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Pablo_Escobedo_Araque",
-      "nombre": "Pablo Escobedo Araque",
-      "departamento": "Departamento de Electrónica y Tecnología de Computadores",
-      "telefono": "958248845",
-      "email": "pabloescobedo@ugr.es",
-      "despacho": "D_214",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Manuela_Expósito_Ruiz",
-      "nombre": "Manuela Expósito Ruiz",
-      "departamento": "Departamento de Estadística e Investigación Operativa",
-      "telefono": "No disponible",
-      "email": "mexpositoruiz@ugr.es",
-      "despacho": "D_331",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "José_Extremera_Lizana",
-      "nombre": "José Extremera Lizana",
-      "departamento": "Departamento de Análisis Matemático",
-      "telefono": "958243277",
-      "email": "jlizana@ugr.es",
-      "despacho": "D_412",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Sanae_Fauzi",
-      "nombre": "Sanae Fauzi",
-      "departamento": "Departamento de Estadística e Investigación Operativa",
-      "telefono": "No disponible",
-      "email": "sanae@ugr.es",
-      "despacho": "D_331",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Antonio_Javier_Fernández_Ares",
-      "nombre": "Antonio Javier Fernández Ares",
-      "departamento": "Departamento de Lenguajes y Sistemas Informáticos",
-      "telefono": "No disponible",
-      "email": "antares@ugr.es",
-      "despacho": "D_203",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Francisco_J._Fernández_Baldomero",
-      "nombre": "Francisco J. Fernández Baldomero",
-      "departamento": "Departamento de Ingeniería de Computadores, Automática y Robótica",
-      "telefono": "958242818",
-      "email": "jfernand@ugr.es",
-      "despacho": "D_322",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Juan_Manuel_Fernández_Luna",
-      "nombre": "Juan Manuel Fernández Luna",
-      "departamento": "Departamento de Ciencias de la Computación e Inteligencia Artificial",
-      "telefono": "958240804",
-      "email": "jmfluna@ugr.es",
-      "despacho": "D_307",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Juan_Fernández_Olivares",
-      "nombre": "Juan Fernández Olivares",
-      "departamento": "Departamento de Ciencias de la Computación e Inteligencia Artificial",
-      "telefono": "958248477",
-      "email": "faro@ugr.es",
-      "despacho": "D_307",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Mario_Alberto_Fernández_Pantoja",
-      "nombre": "Mario Alberto Fernández Pantoja",
-      "departamento": "Departamento de Electromagnetismo y Física de la Materia",
-      "telefono": "958240528",
-      "email": "mario@ugr.es",
-      "despacho": "D_432",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Lidia_Fernández_Rodríguez",
-      "nombre": "Lidia Fernández Rodríguez",
-      "departamento": "Departamento de Matemática Aplicada",
-      "telefono": "958248343",
-      "email": "lidiafr@ugr.es",
-      "despacho": "D_417",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Miguel_Ángel_Fernández_Rodríguez",
-      "nombre": "Miguel Ángel Fernández Rodríguez",
-      "departamento": "Departamento de Física Aplicada",
-      "telefono": "No disponible",
-      "email": "mafernandez@ugr.es",
-      "despacho": "D_430",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Joaquín_Fernández_Valdivia",
-      "nombre": "Joaquín Fernández Valdivia",
-      "departamento": "Departamento de Ciencias de la Computación e Inteligencia Artificial",
-      "telefono": "958243197",
-      "email": "jfv@ugr.es",
-      "despacho": "D_308",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Leonor_Ferrer_Martínez",
-      "nombre": "Leonor Ferrer Martínez",
-      "departamento": "Departamento de Geometría y Topología",
-      "telefono": "958243282",
-      "email": "lferrer@ugr.es",
-      "despacho": "D_426",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Ramón_Ferri_García",
-      "nombre": "Ramón Ferri García",
-      "departamento": "Departamento de Estadística e Investigación Operativa",
-      "telefono": "No disponible",
-      "email": "rferri@ugr.es",
-      "despacho": "D_332",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Jesús_Francisco_Fornieles_Callejón",
-      "nombre": "Jesús Francisco Fornieles Callejón",
-      "departamento": "Departamento de Electromagnetismo y Física de la Materia",
-      "telefono": "958242379",
-      "email": "jforniel@ugr.es",
-      "despacho": "D_432",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "José_Valeriano_Frías_Aceituno",
-      "nombre": "José Valeriano Frías Aceituno",
-      "departamento": "Departamento de Economía Financiera y Contabilidad",
-      "telefono": "958241000 ext. 20148",
-      "email": "jfrias@ugr.es",
-      "despacho": "D_224",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "María_José_Gacto_Colorado",
-      "nombre": "María José Gacto Colorado",
-      "departamento": "Departamento de Lenguajes y Sistemas Informáticos",
-      "telefono": "958240832",
-      "email": "mjgacto@ugr.es",
-      "despacho": "D_203",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Juan_Elías_Galeote_Cazorla",
-      "nombre": "Juan Elías Galeote Cazorla",
-      "departamento": "Departamento de Teoría de la Señal, Telemática y Comunicaciones",
-      "telefono": "No disponible",
-      "email": "juane@ugr.es",
-      "despacho": "D_403",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "José_Antonio_Gálvez_López",
-      "nombre": "José Antonio Gálvez López",
-      "departamento": "Departamento de Geometría y Topología",
-      "telefono": "958243245",
-      "email": "jagalvez@ugr.es",
-      "despacho": "D_426",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "José_Luis_Gámez_Ruiz",
-      "nombre": "José Luis Gámez Ruiz",
-      "departamento": "Departamento de Análisis Matemático",
-      "telefono": "958246344",
-      "email": "jlgamez@ugr.es",
-      "despacho": "D_413",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Francisco_Jesús_Gámiz_Pérez",
-      "nombre": "Francisco Jesús Gámiz Pérez",
-      "departamento": "Departamento de Electrónica y Tecnología de Computadores",
-      "telefono": "958246145",
-      "email": "citicdir@ugr.es",
-      "despacho": "D_215",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "María_Isabel_García_Arenas",
-      "nombre": "María Isabel García Arenas",
-      "departamento": "Departamento de Ingeniería de Computadores, Automática y Robótica",
-      "telefono": "958241515",
-      "email": "mgarenas@ugr.es",
-      "despacho": "D_322",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Pedro_García_Fernández",
-      "nombre": "Pedro García Fernández",
-      "departamento": "Departamento de Electrónica y Tecnología de Computadores",
-      "telefono": "958245179",
-      "email": "pedrogarcia@ugr.es",
-      "despacho": "D_215",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Irene_García_Garrido",
-      "nombre": "Irene García Garrido",
-      "departamento": "Departamento de Métodos Cuantitativos para la Economía y la Empresa",
-      "telefono": "958244111",
-      "email": "irenegarciag@ugr.es",
+      "email": "pmesejo@ugr.es",
       "despacho": "D_337",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
+      "es_profesor_actual": true,
+      "es_externo": false,
+      "campus": "Campus Aynadamar (ETSIIT)",
+      "avatar": "avatar_05",
+      "tutorias": "Jueves y Viernes de 09:00 a 12:00",
+      "clases": [
+        {
+          "asignatura": "Visión por Computador",
+          "tipo": "Teoría",
+          "aula": "A_05",
+          "horario": "Jueves 12:30 - 14:30"
+        },
+        {
+          "asignatura": "Visión por Computador",
+          "tipo": "Prácticas",
+          "aula": "L_26",
+          "horario": "Viernes 08:30 - 10:30"
+        },
+        {
+          "asignatura": "Visión por Computador",
+          "tipo": "Prácticas",
+          "aula": "L_310",
+          "horario": "Viernes 12:30 - 14:30"
+        }
+      ]
     },
     {
-      "id": "Diego_Jesús_García_Gil",
-      "nombre": "Diego Jesús García Gil",
+      "id": "Jorge_Revelles_Moreno",
+      "nombre": "Jorge Revelles Moreno",
       "departamento": "Departamento de Lenguajes y Sistemas Informáticos",
-      "telefono": "No disponible",
-      "email": "djgarcia@ugr.es",
-      "despacho": "D_204",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
+      "telefono": "958240590",
+      "email": "jrevelles@ugr.es",
+      "despacho": "D_304",
+      "es_profesor_actual": true,
+      "es_externo": false,
+      "campus": "Campus Aynadamar (ETSIIT)",
+      "avatar": "avatar_06",
+      "tutorias": "Jueves y Viernes de 10:30 a 13:30",
+      "clases": [
+        {
+          "asignatura": "Procesadores de Lenguajes",
+          "tipo": "Prácticas",
+          "aula": "L_28",
+          "horario": "Jueves 10:30 - 12:30"
+        },
+        {
+          "asignatura": "Procesadores de Lenguajes",
+          "tipo": "Prácticas",
+          "aula": "L_28",
+          "horario": "Viernes 08:30 - 10:30"
+        }
+      ]
     },
     {
-      "id": "Juan_Helios_García_Guzmán",
-      "nombre": "Juan Helios García Guzmán",
-      "departamento": "Departamento de Ingeniería de Computadores, Automática y Robótica",
-      "telefono": "No disponible",
-      "email": "jhelg@ugr.es",
-      "despacho": "D_322",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
+      "id": "Ramon_Lopez-Cozar_Delgado",
+      "nombre": "Ramón López-Cózar Delgado",
+      "departamento": "Departamento de Lenguajes y Sistemas Informáticos",
+      "telefono": "958240591",
+      "email": "rlopezc@ugr.es",
+      "despacho": "D_326",
+      "es_profesor_actual": true,
+      "es_externo": false,
+      "campus": "Campus Aynadamar (ETSIIT)",
+      "avatar": "avatar_07",
+      "tutorias": "Miércoles y Viernes de 10:30 a 13:30",
+      "clases": [
+        {
+          "asignatura": "Procesadores de Lenguajes",
+          "tipo": "Teoría",
+          "aula": "A_05",
+          "horario": "Viernes 10:30 - 12:30"
+        }
+      ]
     },
     {
-      "id": "Salvador_García_López",
-      "nombre": "Salvador García López",
-      "departamento": "Departamento de Ciencias de la Computación e Inteligencia Artificial",
-      "telefono": "958248485",
-      "email": "salvagl@ugr.es",
-      "despacho": "D_308",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "María_Luz_García_Martínez",
-      "nombre": "María Luz García Martínez",
-      "departamento": "Departamento de Teoría de la Señal, Telemática y Comunicaciones",
-      "telefono": "958249722",
-      "email": "luzgm@ugr.es",
-      "despacho": "D_403",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Jesús_García_Miranda",
-      "nombre": "Jesús García Miranda",
-      "departamento": "Departamento de Álgebra",
-      "telefono": "958240824",
-      "email": "jesusgm@ugr.es",
-      "despacho": "D_421",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Francisco_Miguel_García_Olmedo",
-      "nombre": "Francisco Miguel García Olmedo",
-      "departamento": "Departamento de Álgebra",
-      "telefono": "958248837",
-      "email": "folmedo@ugr.es",
-      "despacho": "D_422",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Antonio_García_Ríos",
-      "nombre": "Antonio García Ríos",
-      "departamento": "Departamento de Electrónica y Tecnología de Computadores",
-      "telefono": "958240474",
-      "email": "grios@ugr.es",
-      "despacho": "D_215",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Francisco_Javier_García_Ruiz",
-      "nombre": "Francisco Javier García Ruiz",
-      "departamento": "Departamento de Electrónica y Tecnología de Computadores",
-      "telefono": "958241579",
-      "email": "franruiz@ugr.es",
-      "despacho": "D_215",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Encarnación_García_Sánchez",
-      "nombre": "Encarnación García Sánchez",
-      "departamento": "Departamento de Organización de Empresas II",
-      "telefono": "958241000 ext. 20561",
-      "email": "infraestructur.fccee@ugr.es",
-      "despacho": "D_222",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Pablo_García_Sánchez",
-      "nombre": "Pablo García Sánchez",
-      "departamento": "Departamento de Ingeniería de Computadores, Automática y Robótica",
-      "telefono": "958241000 ext. 20207",
-      "email": "pablogarcia@ugr.es",
-      "despacho": "D_322",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Pedro_Abelardo_García_Sánchez",
-      "nombre": "Pedro Abelardo García Sánchez",
-      "departamento": "Departamento de Álgebra",
-      "telefono": "958242395",
-      "email": "calidad.ciencias@ugr.es",
-      "despacho": "D_422",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Miguel_García_Silvente",
-      "nombre": "Miguel García Silvente",
-      "departamento": "Departamento de Ciencias de la Computación e Inteligencia Artificial",
-      "telefono": "958240807",
-      "email": "mgs@ugr.es",
-      "despacho": "D_308",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "José_Antonio_García_Soria",
-      "nombre": "José Antonio García Soria",
+      "id": "Siham_Tabik_Ouled_Hrour",
+      "nombre": "Siham Tabik Ouled Hrour",
       "departamento": "Departamento de Ciencias de la Computación e Inteligencia Artificial",
       "telefono": "958240592",
-      "email": "k27507055@ugr.es",
-      "despacho": "D_308",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
+      "email": "siham@ugr.es",
+      "despacho": "D_316",
+      "es_profesor_actual": true,
+      "es_externo": false,
+      "campus": "Campus Aynadamar (ETSIIT)",
+      "avatar": "avatar_08",
+      "tutorias": "Jueves de 10:30 a 13:30 y Viernes de 11:30 a 13:30",
+      "clases": [
+        {
+          "asignatura": "Visión por Computador",
+          "tipo": "Prácticas",
+          "aula": "L_38",
+          "horario": "Jueves 10:30 - 12:30"
+        }
+      ]
     },
     {
-      "id": "Pedro_García_Teodoro",
-      "nombre": "Pedro García Teodoro",
-      "departamento": "Departamento de Teoría de la Señal, Telemática y Comunicaciones",
-      "telefono": "958242804",
-      "email": "pgteodor@ugr.es",
-      "despacho": "D_403",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Rubén_Garralón_López",
-      "nombre": "Rubén Garralón López",
+      "id": "Francisco_Javier_Abad_Ortega",
+      "nombre": "Francisco Javier Abad Ortega",
       "departamento": "Departamento de Ciencias de la Computación e Inteligencia Artificial",
-      "telefono": "No disponible",
-      "email": "rgarralon@ugr.es",
-      "despacho": "D_309",
+      "telefono": "958248327",
+      "email": "abad@ugr.es",
+      "despacho": "D_301",
       "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
+      "es_externo": false,
+      "campus": "Campus Aynadamar (ETSIIT)",
+      "avatar": "avatar_09",
+      "tutorias": "Martes y Jueves de 10:00 a 12:00",
+      "clases": [
+        {
+          "asignatura": "Informática Gráfica",
+          "tipo": "Teoría",
+          "aula": "A_02",
+          "horario": "Lunes 10:30 - 12:30"
+        }
+      ]
     },
     {
-      "id": "Jesús_Alberto_Garrido_Alcázar",
-      "nombre": "Jesús Alberto Garrido Alcázar",
-      "departamento": "Departamento de Ingeniería de Computadores, Automática y Robótica",
-      "telefono": "958241000 ext. 20633",
-      "email": "jesusgarrido@ugr.es",
-      "despacho": "D_323",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "José_Luis_Garrido_Bullejos",
-      "nombre": "José Luis Garrido Bullejos",
-      "departamento": "Departamento de Lenguajes y Sistemas Informáticos",
-      "telefono": "958244153",
-      "email": "jgarrido@ugr.es",
-      "despacho": "D_204",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Antonio_Garrido_Carrillo",
-      "nombre": "Antonio Garrido Carrillo",
+      "id": "Silvia_Acid_Carrillo",
+      "nombre": "Silvia Acid Carrillo",
       "departamento": "Departamento de Ciencias de la Computación e Inteligencia Artificial",
-      "telefono": "958242837",
-      "email": "agarrido@ugr.es",
-      "despacho": "D_309",
+      "telefono": "958248309",
+      "email": "acid@ugr.es",
+      "despacho": "D_301",
       "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
+      "es_externo": false,
+      "campus": "Campus Aynadamar (ETSIIT)",
+      "avatar": "avatar_10",
+      "tutorias": "Lunes y Miércoles de 11:00 a 13:00",
+      "clases": [
+        {
+          "asignatura": "Minería de Datos",
+          "tipo": "Teoría",
+          "aula": "A_03",
+          "horario": "Martes 09:30 - 11:30"
+        }
+      ]
     },
     {
-      "id": "Marta_Garrido_Montañes",
-      "nombre": "Marta Garrido Montañes",
-      "departamento": "Departamento de Economía Financiera y Contabilidad",
-      "telefono": "No disponible",
-      "email": "marta.garrido@ugr.es",
-      "despacho": "D_225",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Alejandro_Gárriz_Molina",
-      "nombre": "Alejandro Gárriz Molina",
-      "departamento": "Departamento de Matemática Aplicada",
-      "telefono": "No disponible",
-      "email": "alejandro.garriz@ugr.es",
-      "despacho": "D_417",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Miguel_Gea_Mejías",
-      "nombre": "Miguel Gea Mejías",
-      "departamento": "Departamento de Lenguajes y Sistemas Informáticos",
-      "telefono": "958240638",
-      "email": "mgea@ugr.es",
-      "despacho": "D_204",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Ángel_Manuel_Gómez_García",
-      "nombre": "Ángel Manuel Gómez García",
+      "id": "Oscar_Ramon_Adamuz_Hinojosa",
+      "nombre": "Óscar Ramón Adamuz Hinojosa",
       "departamento": "Departamento de Teoría de la Señal, Telemática y Comunicaciones",
-      "telefono": "958249714",
-      "email": "amgg@ugr.es",
-      "despacho": "D_404",
+      "telefono": "958240599",
+      "email": "oadamuz@ugr.es",
+      "despacho": "D_401",
       "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
+      "es_externo": false,
+      "campus": "Campus Aynadamar (ETSIIT)",
+      "avatar": "avatar_11",
+      "tutorias": "Miércoles de 09:30 a 13:30",
+      "clases": [
+        {
+          "asignatura": "Redes de Comunicaciones",
+          "tipo": "Teoría",
+          "aula": "A_04",
+          "horario": "Miércoles 08:30 - 10:30"
+        }
+      ]
     },
     {
-      "id": "José_Antonio_Gómez_Hernández",
-      "nombre": "José Antonio Gómez Hernández",
+      "id": "Angel_Luis_Agote_Martin",
+      "nombre": "Ángel Luis Agote Martín",
+      "departamento": "Departamento de Organización de Empresas II",
+      "telefono": "958248312",
+      "email": "agote@ugr.es",
+      "despacho": "D_401",
+      "es_profesor_actual": false,
+      "es_externo": false,
+      "campus": "Campus Aynadamar (ETSIIT)",
+      "avatar": "avatar_12",
+      "tutorias": "Martes y Jueves de 12:00 a 14:00",
+      "clases": [
+        {
+          "asignatura": "Gestión de Empresas de Software",
+          "tipo": "Teoría",
+          "aula": "A_06",
+          "horario": "Jueves 10:30 - 12:30"
+        }
+      ]
+    },
+    {
+      "id": "Nuria_Rico_Castro",
+      "nombre": "Nuria Rico Castro",
+      "departamento": "Departamento de Estadística e Investigación Operativa",
+      "telefono": "958240580",
+      "email": "nrico@ugr.es",
+      "despacho": "D_221",
+      "es_profesor_actual": false,
+      "es_externo": false,
+      "campus": "Campus Aynadamar (ETSIIT)",
+      "avatar": "avatar_13",
+      "tutorias": "Lunes y Miércoles de 10:00 a 12:00",
+      "clases": [
+        {
+          "asignatura": "Estadística Aplicada",
+          "tipo": "Teoría",
+          "aula": "A_07",
+          "horario": "Lunes 12:30 - 14:30"
+        }
+      ]
+    },
+    {
+      "id": "Begona_del_Pino_Prieto",
+      "nombre": "Begoña del Pino Prieto",
+      "departamento": "Departamento de Electrónica y Tecnología de Computadores",
+      "telefono": "958240583",
+      "email": "bdelpino@ugr.es",
+      "despacho": "D_302",
+      "es_profesor_actual": false,
+      "es_externo": false,
+      "campus": "Campus Aynadamar (ETSIIT)",
+      "avatar": "avatar_14",
+      "tutorias": "Martes y Jueves de 10:00 a 12:00",
+      "clases": [
+        {
+          "asignatura": "Arquitectura de Computadores",
+          "tipo": "Teoría",
+          "aula": "A_08",
+          "horario": "Martes 12:30 - 14:30"
+        }
+      ]
+    },
+    {
+      "id": "Alberto_Fernandez_Hilario",
+      "nombre": "Alberto Fernández Hilario",
+      "departamento": "Departamento de Ciencias de la Computación e Inteligencia Artificial",
+      "telefono": "958240584",
+      "email": "albertofh@ugr.es",
+      "despacho": "D_320",
+      "es_profesor_actual": false,
+      "es_externo": false,
+      "campus": "Campus Aynadamar (ETSIIT)",
+      "avatar": "avatar_15",
+      "tutorias": "Miércoles y Viernes de 11:30 a 13:30",
+      "clases": [
+        {
+          "asignatura": "Aprendizaje Automático",
+          "tipo": "Teoría",
+          "aula": "A_09",
+          "horario": "Miércoles 12:30 - 14:30"
+        }
+      ]
+    },
+    {
+      "id": "Juan_Julian_Merelo_Guervos",
+      "nombre": "Juan Julián Merelo Guervós",
+      "departamento": "Departamento de Arquitectura y Tecnología de Computadores",
+      "telefono": "958240585",
+      "email": "jmerelo@ugr.es",
+      "despacho": "D_331",
+      "es_profesor_actual": false,
+      "es_externo": false,
+      "campus": "Campus Aynadamar (ETSIIT)",
+      "avatar": "avatar_16",
+      "tutorias": "Lunes de 15:30 a 19:30",
+      "clases": [
+        {
+          "asignatura": "Infraestructura Virtual",
+          "tipo": "Teoría",
+          "aula": "A_10",
+          "horario": "Lunes 15:30 - 17:30"
+        }
+      ]
+    },
+    {
+      "id": "Maria_Jose_Martin_Bautista",
+      "nombre": "María José Martín Bautista",
+      "departamento": "Departamento de Ciencias de la Computación e Inteligencia Artificial",
+      "telefono": "958240586",
+      "email": "mbautis@ugr.es",
+      "despacho": "D_303",
+      "es_profesor_actual": false,
+      "es_externo": false,
+      "campus": "Campus Aynadamar (ETSIIT)",
+      "avatar": "avatar_17",
+      "tutorias": "Martes y Jueves de 10:00 a 12:00",
+      "clases": [
+        {
+          "asignatura": "Bases de Datos Avanzadas",
+          "tipo": "Teoría",
+          "aula": "A_11",
+          "horario": "Martes 08:30 - 10:30"
+        }
+      ]
+    },
+    {
+      "id": "Gabriel_Macia_Fernandez",
+      "nombre": "Gabriel Maciá Fernández",
+      "departamento": "Departamento de Teoría de la Señal, Telemática y Comunicaciones",
+      "telefono": "958240588",
+      "email": "gmacia@ugr.es",
+      "despacho": "D_412",
+      "es_profesor_actual": false,
+      "es_externo": false,
+      "campus": "Campus Aynadamar (ETSIIT)",
+      "avatar": "avatar_18",
+      "tutorias": "Lunes y Jueves de 11:00 a 13:00",
+      "clases": [
+        {
+          "asignatura": "Seguridad en Redes",
+          "tipo": "Teoría",
+          "aula": "A_12",
+          "horario": "Lunes 10:30 - 12:30"
+        }
+      ]
+    },
+    {
+      "id": "Rocio_Celeste_Romero_Zaliz",
+      "nombre": "Rocío Celeste Romero Zaliz",
+      "departamento": "Departamento de Ciencias de la Computación e Inteligencia Artificial",
+      "telefono": "958240593",
+      "email": "rociorz@ugr.es",
+      "despacho": "D_316",
+      "es_profesor_actual": false,
+      "es_externo": false,
+      "campus": "Campus Aynadamar (ETSIIT)",
+      "avatar": "avatar_19",
+      "tutorias": "Miércoles de 09:30 a 13:30",
+      "clases": [
+        {
+          "asignatura": "Bioinformática",
+          "tipo": "Teoría",
+          "aula": "A_13",
+          "horario": "Miércoles 10:30 - 12:30"
+        }
+      ]
+    },
+    {
+      "id": "Pedro_Angel_Castillo_Valdivieso",
+      "nombre": "Pedro Ángel Castillo Valdivieso",
+      "departamento": "Departamento de Arquitectura y Tecnología de Computadores",
+      "telefono": "958240594",
+      "email": "pacv@ugr.es",
+      "despacho": "D_331",
+      "es_profesor_actual": false,
+      "es_externo": false,
+      "campus": "Campus Aynadamar (ETSIIT)",
+      "avatar": "avatar_20",
+      "tutorias": "Martes y Jueves de 11:30 a 13:30",
+      "clases": [
+        {
+          "asignatura": "Computación Ubicua",
+          "tipo": "Teoría",
+          "aula": "A_14",
+          "horario": "Jueves 12:30 - 14:30"
+        }
+      ]
+    },
+    {
+      "id": "Carlos_Garcia_Martinez",
+      "nombre": "Carlos García Martínez",
       "departamento": "Departamento de Lenguajes y Sistemas Informáticos",
-      "telefono": "958240572",
-      "email": "jagomez@ugr.es",
-      "despacho": "D_204",
+      "telefono": "958240595",
+      "email": "cgarciam@ugr.es",
+      "despacho": "D_224",
       "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
+      "es_externo": false,
+      "campus": "Campus Aynadamar (ETSIIT)",
+      "avatar": "avatar_21",
+      "tutorias": "Viernes de 09:00 a 13:00",
+      "clases": [
+        {
+          "asignatura": "Ingeniería de Requisitos",
+          "tipo": "Teoría",
+          "aula": "A_15",
+          "horario": "Viernes 10:30 - 12:30"
+        }
+      ]
     },
     {
-      "id": "Francisco_Gómez_Mula",
-      "nombre": "Francisco Gómez Mula",
-      "departamento": "Departamento de Ingeniería de Computadores, Automática y Robótica",
-      "telefono": "958243259",
-      "email": "frgomez@ugr.es",
-      "despacho": "D_323",
+      "id": "Maria_Carmen_Pegalajar_Jimenez",
+      "nombre": "María Carmen Pegalajar Jiménez",
+      "departamento": "Departamento de Ciencias de la Computación e Inteligencia Artificial",
+      "telefono": "958240596",
+      "email": "mcarmen@ugr.es",
+      "despacho": "D_321",
       "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
+      "es_externo": false,
+      "campus": "Campus Aynadamar (ETSIIT)",
+      "avatar": "avatar_22",
+      "tutorias": "Lunes y Miércoles de 12:00 a 14:00",
+      "clases": [
+        {
+          "asignatura": "Sistemas Inteligentes",
+          "tipo": "Teoría",
+          "aula": "A_16",
+          "horario": "Lunes 08:30 - 10:30"
+        }
+      ]
+    },
+    {
+      "id": "Fernando_Berzal_Galiano",
+      "nombre": "Fernando Berzal Galiano",
+      "departamento": "Departamento de Lenguajes y Sistemas Informáticos",
+      "telefono": "958240597",
+      "email": "fberzal@ugr.es",
+      "despacho": "D_226",
+      "es_profesor_actual": false,
+      "es_externo": false,
+      "campus": "Campus Aynadamar (ETSIIT)",
+      "avatar": "avatar_23",
+      "tutorias": "Martes de 10:00 a 14:00",
+      "clases": [
+        {
+          "asignatura": "Programación Web",
+          "tipo": "Teoría",
+          "aula": "A_17",
+          "horario": "Martes 10:30 - 12:30"
+        }
+      ]
+    },
+    {
+      "id": "Ignacio_Rojas_Ruiz",
+      "nombre": "Ignacio Rojas Ruiz",
+      "departamento": "Departamento de Arquitectura y Tecnología de Computadores",
+      "telefono": "958240600",
+      "email": "irojas@ugr.es",
+      "despacho": "D_302",
+      "es_profesor_actual": false,
+      "es_externo": false,
+      "campus": "Campus Aynadamar (ETSIIT)",
+      "avatar": "avatar_24",
+      "tutorias": "Miércoles de 10:00 a 14:00",
+      "clases": [
+        {
+          "asignatura": "Sistemas Empotrados",
+          "tipo": "Teoría",
+          "aula": "A_18",
+          "horario": "Miércoles 12:30 - 14:30"
+        }
+      ]
+    },
+    {
+      "id": "Juan_Gomez_Romero",
+      "nombre": "Juan Gómez Romero",
+      "departamento": "Departamento de Ciencias de la Computación e Inteligencia Artificial",
+      "telefono": "958240601",
+      "email": "jgomez@ugr.es",
+      "despacho": "D_320",
+      "es_profesor_actual": false,
+      "es_externo": false,
+      "campus": "Campus Aynadamar (ETSIIT)",
+      "avatar": "avatar_25",
+      "tutorias": "Jueves y Viernes de 11:00 a 13:00",
+      "clases": [
+        {
+          "asignatura": "Web Semántica",
+          "tipo": "Teoría",
+          "aula": "A_19",
+          "horario": "Jueves 10:30 - 12:30"
+        }
+      ]
+    },
+    {
+      "id": "Manuel_Capel_Tunon",
+      "nombre": "Manuel Capel Tuñón",
+      "departamento": "Departamento de Lenguajes y Sistemas Informáticos",
+      "telefono": "958240602",
+      "email": "mcapel@ugr.es",
+      "despacho": "D_228",
+      "es_profesor_actual": false,
+      "es_externo": false,
+      "campus": "Campus Aynadamar (ETSIIT)",
+      "avatar": "avatar_26",
+      "tutorias": "Lunes de 11:30 a 15:30",
+      "clases": [
+        {
+          "asignatura": "Sistemas Concurrentes",
+          "tipo": "Teoría",
+          "aula": "A_20",
+          "horario": "Lunes 12:30 - 14:30"
+        }
+      ]
+    },
+    {
+      "id": "Cristina_Urdiales_Garcia",
+      "nombre": "Cristina Urdiales García",
+      "departamento": "Departamento de Teoría de la Señal, Telemática y Comunicaciones",
+      "telefono": "958240603",
+      "email": "curdiales@ugr.es",
+      "despacho": "D_416",
+      "es_profesor_actual": false,
+      "es_externo": false,
+      "campus": "Campus Aynadamar (ETSIIT)",
+      "avatar": "avatar_27",
+      "tutorias": "Martes y Miércoles de 11:00 a 13:00",
+      "clases": [
+        {
+          "asignatura": "Comunicaciones Móviles",
+          "tipo": "Teoría",
+          "aula": "A_01",
+          "horario": "Martes 09:30 - 11:30"
+        }
+      ]
+    },
+    {
+      "id": "Javier_Martinez_Baena",
+      "nombre": "Javier Martínez Baena",
+      "departamento": "Departamento de Ciencias de la Computación e Inteligencia Artificial",
+      "telefono": "958240604",
+      "email": "jbaena@ugr.es",
+      "despacho": "D_304",
+      "es_profesor_actual": false,
+      "es_externo": false,
+      "campus": "Campus Aynadamar (ETSIIT)",
+      "avatar": "avatar_28",
+      "tutorias": "Viernes de 09:00 a 13:00",
+      "clases": [
+        {
+          "asignatura": "Reconocimiento de Formas",
+          "tipo": "Teoría",
+          "aula": "A_02",
+          "horario": "Viernes 08:30 - 10:30"
+        }
+      ]
+    },
+    {
+      "id": "Antonio_Gomez_Torrente",
+      "nombre": "Antonio Gómez Torrente",
+      "departamento": "Departamento de Física Aplicada",
+      "telefono": "958243201",
+      "email": "agtorrente@ugr.es",
+      "despacho": "Despacho F-14 · Fac. Ciencias",
+      "es_profesor_actual": false,
+      "es_externo": true,
+      "campus": "Campus Fuentenueva (Facultad de Ciencias)",
+      "avatar": "avatar_29",
+      "tutorias": "Lunes y Miércoles de 10:00 a 13:00",
+      "clases": [
+        {
+          "asignatura": "Física Computacional",
+          "tipo": "Teoría",
+          "aula": "Aula C-01",
+          "horario": "Lunes 10:00 - 12:00"
+        }
+      ]
+    },
+    {
+      "id": "Laura_Martinez_Jimenez",
+      "nombre": "Laura Martínez Jiménez",
+      "departamento": "Departamento de Pintura y Escultura",
+      "telefono": "958243202",
+      "email": "lauramj@ugr.es",
+      "despacho": "Taller T-03 · Fac. Bellas Artes",
+      "es_profesor_actual": false,
+      "es_externo": true,
+      "campus": "Campus Aynadamar Exterior (Facultad de Bellas Artes)",
+      "avatar": "avatar_30",
+      "tutorias": "Martes y Jueves de 11:00 a 13:00",
+      "clases": [
+        {
+          "asignatura": "Diseño Multimedia y Arte Digital",
+          "tipo": "Teoría",
+          "aula": "Taller 03",
+          "horario": "Martes 11:00 - 13:00"
+        }
+      ]
+    },
+    {
+      "id": "Carlos_Mendoza_Vega",
+      "nombre": "Carlos Mendoza Vega",
+      "departamento": "Departamento de Anatomía y Embriología",
+      "telefono": "958243203",
+      "email": "cmendoza@ugr.es",
+      "despacho": "Despacho M-205 · Fac. Medicina",
+      "es_profesor_actual": false,
+      "es_externo": true,
+      "campus": "Campus Parque Tecnológico de la Salud (PTS)",
+      "avatar": "avatar_31",
+      "tutorias": "Miércoles de 09:00 a 13:00",
+      "clases": [
+        {
+          "asignatura": "Informática Médica",
+          "tipo": "Teoría",
+          "aula": "Aula Magna PTS",
+          "horario": "Miércoles 09:00 - 11:00"
+        }
+      ]
+    },
+    {
+      "id": "Elena_Navarro_Castillo",
+      "nombre": "Elena Navarro Castillo",
+      "departamento": "Departamento de Bioquímica y Biología Molecular",
+      "telefono": "958243204",
+      "email": "enavarro@ugr.es",
+      "despacho": "Laboratorio L-12 · Fac. Farmacia",
+      "es_profesor_actual": false,
+      "es_externo": true,
+      "campus": "Campus Cartuja (Facultad de Farmacia)",
+      "avatar": "avatar_32",
+      "tutorias": "Jueves de 10:00 a 14:00",
+      "clases": [
+        {
+          "asignatura": "Bioquímica Clínica",
+          "tipo": "Teoría",
+          "aula": "Aula Farma 2",
+          "horario": "Jueves 10:00 - 12:00"
+        }
+      ]
+    },
+    {
+      "id": "Javier_Ramos_Roldan",
+      "nombre": "Javier Ramos Roldán",
+      "departamento": "Departamento de Ingeniería Civil",
+      "telefono": "958243205",
+      "email": "jramosr@ugr.es",
+      "despacho": "Despacho C-302 · ETS Caminos",
+      "es_profesor_actual": false,
+      "es_externo": true,
+      "campus": "Campus Fuentenueva (ETS Caminos)",
+      "avatar": "avatar_33",
+      "tutorias": "Viernes de 10:00 a 14:00",
+      "clases": [
+        {
+          "asignatura": "Modelado 3D de Estructuras",
+          "tipo": "Teoría",
+          "aula": "Aula C-12",
+          "horario": "Viernes 10:00 - 12:00"
+        }
+      ]
+    },
+    {
+      "id": "Marta_Romero_Morales",
+      "nombre": "Marta Romero Morales",
+      "departamento": "Departamento de Información y Comunicación",
+      "telefono": "958243206",
+      "email": "mromerom@ugr.es",
+      "despacho": "Despacho CD-11 · Fac. Comunicación",
+      "es_profesor_actual": false,
+      "es_externo": true,
+      "campus": "Campus Cartuja (Facultad de Comunicación)",
+      "avatar": "avatar_34",
+      "tutorias": "Lunes y Jueves de 12:00 a 14:00",
+      "clases": [
+        {
+          "asignatura": "Comunicación Audiovisual",
+          "tipo": "Teoría",
+          "aula": "Plató 1",
+          "horario": "Lunes 12:00 - 14:00"
+        }
+      ]
+    },
+    {
+      "id": "David_Sanchez_Ruiz",
+      "nombre": "David Sánchez Ruiz",
+      "departamento": "Departamento de Traducción e Interpretación",
+      "telefono": "958243207",
+      "email": "dsanchezr@ugr.es",
+      "despacho": "Despacho TR-08 · Fac. Traducción",
+      "es_profesor_actual": false,
+      "es_externo": true,
+      "campus": "Campus Centro (Facultad de Traducción)",
+      "avatar": "avatar_35",
+      "tutorias": "Martes y Viernes de 10:00 a 12:00",
+      "clases": [
+        {
+          "asignatura": "Tecnologías de la Traducción",
+          "tipo": "Teoría",
+          "aula": "Aula TR-3",
+          "horario": "Martes 10:00 - 12:00"
+        }
+      ]
     },
     {
       "id": "Manuel_Gómez_Olmedo",
@@ -1580,2824 +794,6 @@
           "horario": "Miércoles 09:30 - 11:30"
         }
       ]
-    },
-    {
-      "id": "José_Gómez_Torrecillas",
-      "nombre": "José Gómez Torrecillas",
-      "departamento": "Departamento de Álgebra",
-      "telefono": "958240470",
-      "email": "gomezj@ugr.es",
-      "despacho": "D_422",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Daniel_González_Castro",
-      "nombre": "Daniel González Castro",
-      "departamento": "Departamento de Electrónica y Tecnología de Computadores",
-      "telefono": "No disponible",
-      "email": "dgonzal@ugr.es",
-      "despacho": "D_216",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "José_Andrés_González_López",
-      "nombre": "José Andrés González López",
-      "departamento": "Departamento de Teoría de la Señal, Telemática y Comunicaciones",
-      "telefono": "958241000 ext. 20619",
-      "email": "joseangl@ugr.es",
-      "despacho": "D_404",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "María_José_González_López",
-      "nombre": "María José González López",
-      "departamento": "Departamento de Economía Financiera y Contabilidad",
-      "telefono": "958249501",
-      "email": "mglopez@ugr.es",
-      "despacho": "D_225",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Enrique_González_Marín",
-      "nombre": "Enrique González Marín",
-      "departamento": "Departamento de Electrónica y Tecnología de Computadores",
-      "telefono": "958241577",
-      "email": "egmarin@ugr.es",
-      "despacho": "D_216",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Antonio_González_Muñoz",
-      "nombre": "Antonio González Muñoz",
-      "departamento": "Departamento de Ciencias de la Computación e Inteligencia Artificial",
-      "telefono": "958240596",
-      "email": "gonzalez@ugr.es",
-      "despacho": "D_309",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Jesús_González_Peñalver",
-      "nombre": "Jesús González Peñalver",
-      "departamento": "Departamento de Ingeniería de Computadores, Automática y Robótica",
-      "telefono": "958243163",
-      "email": "jesusgonzalez@ugr.es",
-      "despacho": "D_323",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Juan_Carlos_González_Quesada",
-      "nombre": "Juan Carlos González Quesada",
-      "departamento": "Departamento de Ciencias de la Computación e Inteligencia Artificial",
-      "telefono": "No disponible",
-      "email": "juancarlosgq@ugr.es",
-      "despacho": "D_310",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Álvaro_González_Redondo",
-      "nombre": "Álvaro González Redondo",
-      "departamento": "Departamento de Ingeniería de Computadores, Automática y Robótica",
-      "telefono": "No disponible",
-      "email": "alvarogr@ugr.es",
-      "despacho": "D_323",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Irene_Gosálvez_White",
-      "nombre": "Irene Gosálvez White",
-      "departamento": "Departamento de Teoría de la Señal, Telemática y Comunicaciones",
-      "telefono": "No disponible",
-      "email": "irenegwh@ugr.es",
-      "despacho": "D_404",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "David_Griol_Barres",
-      "nombre": "David Griol Barres",
-      "departamento": "Departamento de Lenguajes y Sistemas Informáticos",
-      "telefono": "No disponible",
-      "email": "dgriol@ugr.es",
-      "despacho": "D_204",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Alberto_Guillén_Perales",
-      "nombre": "Alberto Guillén Perales",
-      "departamento": "Departamento de Ingeniería de Computadores, Automática y Robótica",
-      "telefono": "958240588",
-      "email": "aguillen@ugr.es",
-      "despacho": "D_324",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "José_María_Guirao_Miras",
-      "nombre": "José María Guirao Miras",
-      "departamento": "Departamento de Lenguajes y Sistemas Informáticos",
-      "telefono": "958242813",
-      "email": "jmguirao@ugr.es",
-      "despacho": "D_205",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Agustín_Hernández_Bastida",
-      "nombre": "Agustín Hernández Bastida",
-      "departamento": "Departamento de Métodos Cuantitativos para la Economía y la Empresa",
-      "telefono": "958242977",
-      "email": "bastida@ugr.es",
-      "despacho": "D_337",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Alejandro_Hernández_Segura",
-      "nombre": "Alejandro Hernández Segura",
-      "departamento": "Departamento de Teoría de la Señal, Telemática y Comunicaciones",
-      "telefono": "No disponible",
-      "email": "alejandrohs@ugr.es",
-      "despacho": "D_404",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Juan_José_Herrera_Aranda",
-      "nombre": "Juan José Herrera Aranda",
-      "departamento": "Departamento de Ciencias de la Computación e Inteligencia Artificial",
-      "telefono": "No disponible",
-      "email": "juanjoha@ugr.es",
-      "despacho": "D_310",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Francisco_Herrera_Triguero",
-      "nombre": "Francisco Herrera Triguero",
-      "departamento": "Departamento de Ciencias de la Computación e Inteligencia Artificial",
-      "telefono": "958240598",
-      "email": "herrera@ugr.es",
-      "despacho": "D_310",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Juan_Antonio_Holgado_Terriza",
-      "nombre": "Juan Antonio Holgado Terriza",
-      "departamento": "Departamento de Lenguajes y Sistemas Informáticos",
-      "telefono": "958240570",
-      "email": "jholgado@ugr.es",
-      "despacho": "D_205",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Juan_Francisco_Huete_Guadix",
-      "nombre": "Juan Francisco Huete Guadix",
-      "departamento": "Departamento de Ciencias de la Computación e Inteligencia Artificial",
-      "telefono": "958243196",
-      "email": "jhg@ugr.es",
-      "despacho": "D_310",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "María_del_Pilar_Ibarrondo_Dávila",
-      "nombre": "María del Pilar Ibarrondo Dávila",
-      "departamento": "Departamento de Economía Financiera y Contabilidad",
-      "telefono": "958249620",
-      "email": "pdavila@ugr.es",
-      "despacho": "D_225",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Juan_Infante_Amate",
-      "nombre": "Juan Infante Amate",
-      "departamento": "Departamento de Teoría e Historia Económica",
-      "telefono": "958249910",
-      "email": "jinfama@ugr.es",
-      "despacho": "D_228",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Carmen_Jalón_Michán",
-      "nombre": "Carmen Jalón Michán",
-      "departamento": "Departamento de Estadística e Investigación Operativa",
-      "telefono": "No disponible",
-      "email": "cjalon@ugr.es",
-      "despacho": "D_332",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Pascual_Jara_Martínez",
-      "nombre": "Pascual Jara Martínez",
-      "departamento": "Departamento de Álgebra",
-      "telefono": "958243369",
-      "email": "pjara@ugr.es",
-      "despacho": "D_423",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "David_Alejandro_Jiménez_Jordán",
-      "nombre": "David Alejandro Jiménez Jordán",
-      "departamento": "Departamento de Organización de Empresas II",
-      "telefono": "No disponible",
-      "email": "dajimenez@ugr.es",
-      "despacho": "D_222",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Juan_Luis_Jiménez_Laredo",
-      "nombre": "Juan Luis Jiménez Laredo",
-      "departamento": "Departamento de Ingeniería de Computadores, Automática y Robótica",
-      "telefono": "No disponible",
-      "email": "juanlu@ugr.es",
-      "despacho": "D_324",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "José_Antonio_Jiménez_Madrid",
-      "nombre": "José Antonio Jiménez Madrid",
-      "departamento": "Departamento de Álgebra",
-      "telefono": "958243377",
-      "email": "madrid@ugr.es",
-      "despacho": "D_423",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "María_Esmeralda_Lardón_López",
-      "nombre": "María Esmeralda Lardón López",
-      "departamento": "Departamento de Organización de Empresas II",
-      "telefono": "No disponible",
-      "email": "elardon@ugr.es",
-      "despacho": "D_222",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Miguel_Lastra_Leidinger",
-      "nombre": "Miguel Lastra Leidinger",
-      "departamento": "Departamento de Lenguajes y Sistemas Informáticos",
-      "telefono": "958248427",
-      "email": "mlastral@ugr.es",
-      "despacho": "D_205",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Alejandro_José_León_Salas",
-      "nombre": "Alejandro José León Salas",
-      "departamento": "Departamento de Lenguajes y Sistemas Informáticos",
-      "telefono": "958249306",
-      "email": "aleon@ugr.es",
-      "despacho": "D_205",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Luis_López_Escudero",
-      "nombre": "Luis López Escudero",
-      "departamento": "Departamento de Lenguajes y Sistemas Informáticos",
-      "telefono": "958249307",
-      "email": "luislopez@ugr.es",
-      "despacho": "D_205",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Iván_López_Espejo",
-      "nombre": "Iván López Espejo",
-      "departamento": "Departamento de Teoría de la Señal, Telemática y Comunicaciones",
-      "telefono": "No disponible",
-      "email": "iloes@ugr.es",
-      "despacho": "D_405",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Antonio_López_Fernández",
-      "nombre": "Antonio López Fernández",
-      "departamento": "Departamento de Lenguajes y Sistemas Informáticos",
-      "telefono": "958242815",
-      "email": "alopez@ugr.es",
-      "despacho": "D_206",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Francisco_José_López_Fernández",
-      "nombre": "Francisco José López Fernández",
-      "departamento": "Departamento de Geometría y Topología",
-      "telefono": "958242052",
-      "email": "fjlopez@ugr.es",
-      "despacho": "D_427",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "José_Luis_López_Fernández",
-      "nombre": "José Luis López Fernández",
-      "departamento": "Departamento de Matemática Aplicada",
-      "telefono": "958248853",
-      "email": "jllopez@ugr.es",
-      "despacho": "D_417",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Miguel_Ángel_López_Gordo",
-      "nombre": "Miguel Ángel López Gordo",
-      "departamento": "Departamento de Teoría de la Señal, Telemática y Comunicaciones",
-      "telefono": "958249721",
-      "email": "malg@ugr.es",
-      "despacho": "D_405",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Antonio_Gabriel_López_Herrera",
-      "nombre": "Antonio Gabriel López Herrera",
-      "departamento": "Departamento de Ciencias de la Computación e Inteligencia Artificial",
-      "telefono": "958248557",
-      "email": "agabriel@ugr.es",
-      "despacho": "D_311",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Salvador_López_Joya",
-      "nombre": "Salvador López Joya",
-      "departamento": "Departamento de Ciencias de la Computación e Inteligencia Artificial",
-      "telefono": "No disponible",
-      "email": "slopezjoya@ugr.es",
-      "despacho": "D_311",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Rosa_López_López",
-      "nombre": "Rosa López López",
-      "departamento": "Departamento de Organización de Empresas II",
-      "telefono": "No disponible",
-      "email": "rosall@ugr.es",
-      "despacho": "D_223",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Francisco_Juan_López_Martín",
-      "nombre": "Francisco Juan López Martín",
-      "departamento": "Departamento de Organización de Empresas II",
-      "telefono": "958246226",
-      "email": "fjlopezm@ugr.es",
-      "despacho": "D_223",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Francisco_Javier_López_Martínez",
-      "nombre": "Francisco Javier López Martínez",
-      "departamento": "Departamento de Teoría de la Señal, Telemática y Comunicaciones",
-      "telefono": "No disponible",
-      "email": "fjlm@ugr.es",
-      "despacho": "D_405",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Antonio_Jesús_López_Montoya",
-      "nombre": "Antonio Jesús López Montoya",
-      "departamento": "Departamento de Estadística e Investigación Operativa",
-      "telefono": "No disponible",
-      "email": "ajlopez@ugr.es",
-      "despacho": "D_332",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Ginés_López_Pérez",
-      "nombre": "Ginés López Pérez",
-      "departamento": "Departamento de Análisis Matemático",
-      "telefono": "958243171",
-      "email": "glopezp@ugr.es",
-      "despacho": "D_413",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Miguel_López_Pérez",
-      "nombre": "Miguel López Pérez",
-      "departamento": "Departamento de Ciencias de la Computación e Inteligencia Artificial",
-      "telefono": "No disponible",
-      "email": "mlopezp@ugr.es",
-      "despacho": "D_311",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Nuria_López_Ruiz",
-      "nombre": "Nuria López Ruiz",
-      "departamento": "Departamento de Electrónica y Tecnología de Computadores",
-      "telefono": "958240847",
-      "email": "etsiit-relaciones@ugr.es",
-      "despacho": "D_216",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Juan_Manuel_López_Soler",
-      "nombre": "Juan Manuel López Soler",
-      "departamento": "Departamento de Teoría de la Señal, Telemática y Comunicaciones",
-      "telefono": "958242303",
-      "email": "juanma@ugr.es",
-      "despacho": "D_405",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Rafael_López_Soriano",
-      "nombre": "Rafael López Soriano",
-      "departamento": "Departamento de Análisis Matemático",
-      "telefono": "No disponible",
-      "email": "ralopezs@ugr.es",
-      "despacho": "D_413",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Manuel_Lozano_Márquez",
-      "nombre": "Manuel Lozano Márquez",
-      "departamento": "Departamento de Ciencias de la Computación e Inteligencia Artificial",
-      "telefono": "958244258",
-      "email": "lozano@ugr.es",
-      "despacho": "D_311",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Julián_Luengo_Martín",
-      "nombre": "Julián Luengo Martín",
-      "departamento": "Departamento de Ciencias de la Computación e Inteligencia Artificial",
-      "telefono": "958244235",
-      "email": "julianlm@ugr.es",
-      "despacho": "D_312",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Niceto_Rafael_Luque_Sola",
-      "nombre": "Niceto Rafael Luque Sola",
-      "departamento": "Departamento de Ingeniería de Computadores, Automática y Robótica",
-      "telefono": "958241000 ext. 20634",
-      "email": "nluque@ugr.es",
-      "despacho": "D_324",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "María_Victoria_Luzón_García",
-      "nombre": "María Victoria Luzón García",
-      "departamento": "Departamento de Lenguajes y Sistemas Informáticos",
-      "telefono": "958243727",
-      "email": "luzon@ugr.es",
-      "despacho": "D_206",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Gabriel_Maciá_Fernández",
-      "nombre": "Gabriel Maciá Fernández",
-      "departamento": "Departamento de Teoría de la Señal, Telemática y Comunicaciones",
-      "telefono": "958241000 ext. 20048",
-      "email": "vicedigital@ugr.es",
-      "despacho": "D_406",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Roberto_Magán_Carrión",
-      "nombre": "Roberto Magán Carrión",
-      "departamento": "Departamento de Teoría de la Señal, Telemática y Comunicaciones",
-      "telefono": "No disponible",
-      "email": "rmagan@ugr.es",
-      "despacho": "D_406",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Juan_Antonio_Maldonado_Jurado",
-      "nombre": "Juan Antonio Maldonado Jurado",
-      "departamento": "Departamento de Estadística e Investigación Operativa",
-      "telefono": "958243711",
-      "email": "jamaldo@ugr.es",
-      "despacho": "D_333",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Antonio_Manjavacas_Lucas",
-      "nombre": "Antonio Manjavacas Lucas",
-      "departamento": "Departamento de Ciencias de la Computación e Inteligencia Artificial",
-      "telefono": "No disponible",
-      "email": "manjavacas@ugr.es",
-      "despacho": "D_312",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "José_Miguel_Mantas_Ruiz",
-      "nombre": "José Miguel Mantas Ruiz",
-      "departamento": "Departamento de Lenguajes y Sistemas Informáticos",
-      "telefono": "958243176",
-      "email": "jmmantas@ugr.es",
-      "despacho": "D_206",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Nicolás_Marín_Ruiz",
-      "nombre": "Nicolás Marín Ruiz",
-      "departamento": "Departamento de Ciencias de la Computación e Inteligencia Artificial",
-      "telefono": "958240599",
-      "email": "nicm@ugr.es",
-      "despacho": "D_312",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "María_José_Martín_Bautista",
-      "nombre": "María José Martín Bautista",
-      "departamento": "Departamento de Ciencias de la Computación e Inteligencia Artificial",
-      "telefono": "958240805",
-      "email": "mbautis@ugr.es",
-      "despacho": "D_312",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Gerardo_Martín_Escolano",
-      "nombre": "Gerardo Martín Escolano",
-      "departamento": "Departamento de Análisis Matemático",
-      "telefono": "No disponible",
-      "email": "gemares@ugr.es",
-      "despacho": "D_413",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Clotilde_Martín_Pascual",
-      "nombre": "Clotilde Martín Pascual",
-      "departamento": "Departamento de Derecho Financiero y Tributario",
-      "telefono": "958248935",
-      "email": "cmartin@ugr.es",
-      "despacho": "D_435",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Domingo_Martín_Perandrés",
-      "nombre": "Domingo Martín Perandrés",
-      "departamento": "Departamento de Lenguajes y Sistemas Informáticos",
-      "telefono": "958242815",
-      "email": "dmartin@ugr.es",
-      "despacho": "D_206",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Rodrigo_Martín_Rojas",
-      "nombre": "Rodrigo Martín Rojas",
-      "departamento": "Departamento de Organización de Empresas II",
-      "telefono": "958241000 ext. 20545",
-      "email": "rodrigomr@ugr.es",
-      "despacho": "D_223",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Francisco_Martín_Serrano",
-      "nombre": "Francisco Martín Serrano",
-      "departamento": "Departamento de Geometría y Topología",
-      "telefono": "958242079",
-      "email": "fmartin@ugr.es",
-      "despacho": "D_427",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Miguel_Martín_Suárez",
-      "nombre": "Miguel Martín Suárez",
-      "departamento": "Departamento de Análisis Matemático",
-      "telefono": "958246311",
-      "email": "imag.subdireccion@ugr.es",
-      "despacho": "D_414",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Fernando_Martínez_Álvarez",
-      "nombre": "Fernando Martínez Álvarez",
-      "departamento": "Departamento de Estadística e Investigación Operativa",
-      "telefono": "958243155",
-      "email": "falvarez@ugr.es",
-      "despacho": "D_333",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Javier_Martínez_Baena",
-      "nombre": "Javier Martínez Baena",
-      "departamento": "Departamento de Ciencias de la Computación e Inteligencia Artificial",
-      "telefono": "958240802",
-      "email": "jbaena@ugr.es",
-      "despacho": "D_313",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Pablo_Martínez_Cañada",
-      "nombre": "Pablo Martínez Cañada",
-      "departamento": "Departamento de Ingeniería de Computadores, Automática y Robótica",
-      "telefono": "No disponible",
-      "email": "pablomc@ugr.es",
-      "despacho": "D_324",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Carmen_Josefa_Martínez_Cruz",
-      "nombre": "Carmen Josefa Martínez Cruz",
-      "departamento": "Departamento de Lenguajes y Sistemas Informáticos",
-      "telefono": "No disponible",
-      "email": "cmcruz@ugr.es",
-      "despacho": "D_207",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Miriam_Martínez_Fiestas",
-      "nombre": "Miriam Martínez Fiestas",
-      "departamento": "Departamento de Comercialización e Investigación de Mercados",
-      "telefono": "958240666",
-      "email": "mmfiestas@ugr.es",
-      "despacho": "D_229",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Pedro_Manuel_Martínez_Jiménez",
-      "nombre": "Pedro Manuel Martínez Jiménez",
-      "departamento": "Departamento de Lenguajes y Sistemas Informáticos",
-      "telefono": "958243177",
-      "email": "pmmj@ugr.es",
-      "despacho": "D_207",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Francisco_José_Martínez_López",
-      "nombre": "Francisco José Martínez López",
-      "departamento": "Departamento de Organización de Empresas I",
-      "telefono": "958242349",
-      "email": "fjmlopez@ugr.es",
-      "despacho": "D_227",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "María_Dolores_Martínez_Miranda",
-      "nombre": "María Dolores Martínez Miranda",
-      "departamento": "Departamento de Estadística e Investigación Operativa",
-      "telefono": "958240491",
-      "email": "mmiranda@ugr.es",
-      "despacho": "D_333",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Práxedes_Martínez_Moreno",
-      "nombre": "Práxedes Martínez Moreno",
-      "departamento": "Departamento de Ciencias de la Computación e Inteligencia Artificial",
-      "telefono": "No disponible",
-      "email": "praxedesmm@ugr.es",
-      "despacho": "D_313",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Francisco_Jesús_Martínez_Murcia",
-      "nombre": "Francisco Jesús Martínez Murcia",
-      "departamento": "Departamento de Teoría de la Señal, Telemática y Comunicaciones",
-      "telefono": "958241777",
-      "email": "fjesusmartinez@ugr.es",
-      "despacho": "D_406",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Eva_Martínez_Ortigosa",
-      "nombre": "Eva Martínez Ortigosa",
-      "departamento": "Departamento de Ingeniería de Computadores, Automática y Robótica",
-      "telefono": "958240848",
-      "email": "ortigosa@ugr.es",
-      "despacho": "D_325",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Miguel_Martínez_Teruel",
-      "nombre": "Miguel Martínez Teruel",
-      "departamento": "Departamento de Análisis Matemático",
-      "telefono": "No disponible",
-      "email": "mmteruel@ugr.es",
-      "despacho": "D_414",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Esteban_Martínez_Vañó",
-      "nombre": "Esteban Martínez Vañó",
-      "departamento": "Departamento de Análisis Matemático",
-      "telefono": "958243191",
-      "email": "emv@ugr.es",
-      "despacho": "D_414",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Javier_Mateos_Delgado",
-      "nombre": "Javier Mateos Delgado",
-      "departamento": "Departamento de Ciencias de la Computación e Inteligencia Artificial",
-      "telefono": "958240801",
-      "email": "jmd@ugr.es",
-      "despacho": "D_313",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Guillermo_Medialdea_Burgos",
-      "nombre": "Guillermo Medialdea Burgos",
-      "departamento": "Departamento de Lenguajes y Sistemas Informáticos",
-      "telefono": "No disponible",
-      "email": "guillerme@ugr.es",
-      "despacho": "D_207",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Cristina_Medina_Bailón",
-      "nombre": "Cristina Medina Bailón",
-      "departamento": "Departamento de Electrónica y Tecnología de Computadores",
-      "telefono": "958241000 ext. 20090",
-      "email": "cmedba@ugr.es",
-      "despacho": "D_216",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Nuria_Medina_Medina",
-      "nombre": "Nuria Medina Medina",
-      "departamento": "Departamento de Lenguajes y Sistemas Informáticos",
-      "telefono": "958240634",
-      "email": "nmedina@ugr.es",
-      "despacho": "D_207",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Javier_Medina_Quero",
-      "nombre": "Javier Medina Quero",
-      "departamento": "Departamento de Ingeniería de Computadores, Automática y Robótica",
-      "telefono": "No disponible",
-      "email": "javiermq@ugr.es",
-      "despacho": "D_325",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Juan_Miguel_Medina_Rodríguez",
-      "nombre": "Juan Miguel Medina Rodríguez",
-      "departamento": "Departamento de Ciencias de la Computación e Inteligencia Artificial",
-      "telefono": "958244079",
-      "email": "medina@ugr.es",
-      "despacho": "D_313",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Ignacio_Melchor_Ferrer",
-      "nombre": "Ignacio Melchor Ferrer",
-      "departamento": "Departamento de Electrónica y Tecnología de Computadores",
-      "telefono": "958244071",
-      "email": "abdera@ugr.es",
-      "despacho": "D_217",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Juan_Francisco_Mena_Jurado",
-      "nombre": "Juan Francisco Mena Jurado",
-      "departamento": "Departamento de Análisis Matemático",
-      "telefono": "958243274",
-      "email": "jfmena@ugr.es",
-      "despacho": "D_414",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Míriam_Mengíbar_Rodríguez",
-      "nombre": "Míriam Mengíbar Rodríguez",
-      "departamento": "Departamento de Ingeniería de Computadores, Automática y Robótica",
-      "telefono": "No disponible",
-      "email": "mirismr@ugr.es",
-      "despacho": "D_325",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Juan_Julián_Merelo_Guervos",
-      "nombre": "Juan Julián Merelo Guervos",
-      "departamento": "Departamento de Ingeniería de Computadores, Automática y Robótica",
-      "telefono": "958243162",
-      "email": "jmerelo@ugr.es",
-      "despacho": "D_325",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Francisco_Javier_Meri_de_la_Maza",
-      "nombre": "Francisco Javier Meri de la Maza",
-      "departamento": "Departamento de Análisis Matemático",
-      "telefono": "958246311",
-      "email": "jmeri@ugr.es",
-      "despacho": "D_415",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Pablo_Mesejo_Santiago",
-      "nombre": "Pablo Mesejo Santiago",
-      "departamento": "Departamento de Ciencias de la Computación e Inteligencia Artificial",
-      "telefono": "958248555",
-      "email": "pmesejo@ugr.es",
-      "despacho": "D_337",
-      "es_profesor_actual": true,
-      "tutorias": "Martes y Miércoles 10:00 - 13:00",
-      "clases": [
-        {
-          "asignatura": "Visión por Computador",
-          "tipo": "Teoría",
-          "aula": "A_05",
-          "horario": "Jueves 12:30 - 14:30"
-        },
-        {
-          "asignatura": "Visión por Computador",
-          "tipo": "Prácticas",
-          "aula": "L_26",
-          "horario": "Viernes 08:30 - 10:30"
-        },
-        {
-          "asignatura": "Visión por Computador",
-          "tipo": "Prácticas",
-          "aula": "L_310",
-          "horario": "Viernes 12:30 - 14:30"
-        }
-      ]
-    },
-    {
-      "id": "Daniel_Molina_Cabrera",
-      "nombre": "Daniel Molina Cabrera",
-      "departamento": "Departamento de Ciencias de la Computación e Inteligencia Artificial",
-      "telefono": "No disponible",
-      "email": "dmolinac@ugr.es",
-      "despacho": "D_314",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Carlos_Molina_Fernández",
-      "nombre": "Carlos Molina Fernández",
-      "departamento": "Departamento de Lenguajes y Sistemas Informáticos",
-      "telefono": "958241000 ext. 20196",
-      "email": "carlosmo@ugr.es",
-      "despacho": "D_207",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Rafael_Molina_Soriano",
-      "nombre": "Rafael Molina Soriano",
-      "departamento": "Departamento de Ciencias de la Computación e Inteligencia Artificial",
-      "telefono": "958240594",
-      "email": "rms@ugr.es",
-      "despacho": "D_314",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Rosa_Ana_Montes_Soldado",
-      "nombre": "Rosa Ana Montes Soldado",
-      "departamento": "Departamento de Lenguajes y Sistemas Informáticos",
-      "telefono": "958241000 ext. 20038",
-      "email": "rosana@ugr.es",
-      "despacho": "D_208",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Sebastián_Montiel_Gómez",
-      "nombre": "Sebastián Montiel Gómez",
-      "departamento": "Departamento de Geometría y Topología",
-      "telefono": "958242939",
-      "email": "smontiel@ugr.es",
-      "despacho": "D_427",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Antonio_Miguel_Mora_García",
-      "nombre": "Antonio Miguel Mora García",
-      "departamento": "Departamento de Teoría de la Señal, Telemática y Comunicaciones",
-      "telefono": "958248876",
-      "email": "amorag@ugr.es",
-      "despacho": "D_406",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Carmen_Lucía_Moraila_Martínez",
-      "nombre": "Carmen Lucía Moraila Martínez",
-      "departamento": "Departamento de Electrónica y Tecnología de Computadores",
-      "telefono": "No disponible",
-      "email": "cmoraila@ugr.es",
-      "despacho": "D_217",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Serafín_Moral_Callejón",
-      "nombre": "Serafín Moral Callejón",
-      "departamento": "Departamento de Ciencias de la Computación e Inteligencia Artificial",
-      "telefono": "958242819",
-      "email": "smc@ugr.es",
-      "despacho": "D_314",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Serafín_Moral_García",
-      "nombre": "Serafín Moral García",
-      "departamento": "Departamento de Ciencias de la Computación e Inteligencia Artificial",
-      "telefono": "No disponible",
-      "email": "smoralgarcia@ugr.es",
-      "despacho": "D_315",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Pablo_Morales_Álvarez",
-      "nombre": "Pablo Morales Álvarez",
-      "departamento": "Departamento de Estadística e Investigación Operativa",
-      "telefono": "No disponible",
-      "email": "pablomorales@ugr.es",
-      "despacho": "D_334",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Andrea_Morales_Garzón",
-      "nombre": "Andrea Morales Garzón",
-      "departamento": "Departamento de Ciencias de la Computación e Inteligencia Artificial",
-      "telefono": "No disponible",
-      "email": "amoralesg@ugr.es",
-      "despacho": "D_315",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Diego_Pedro_Morales_Santos",
-      "nombre": "Diego Pedro Morales Santos",
-      "departamento": "Departamento de Electrónica y Tecnología de Computadores",
-      "telefono": "958242301",
-      "email": "diegopm@ugr.es",
-      "despacho": "D_217",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "María_Dolores_Moreno_Herrero",
-      "nombre": "María Dolores Moreno Herrero",
-      "departamento": "Departamento de Economía Aplicada",
-      "telefono": "958242883",
-      "email": "mdmoreno@ugr.es",
-      "despacho": "D_228",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Juan_Antonio_Morente_Molinera",
-      "nombre": "Juan Antonio Morente Molinera",
-      "departamento": "Departamento de Ciencias de la Computación e Inteligencia Artificial",
-      "telefono": "958241000 ext. 20718",
-      "email": "jamoren@ugr.es",
-      "despacho": "D_315",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Christian_Agustín_Morillas_Gutiérrez",
-      "nombre": "Christian Agustín Morillas Gutiérrez",
-      "departamento": "Departamento de Ingeniería de Computadores, Automática y Robótica",
-      "telefono": "958240838",
-      "email": "cmg@ugr.es",
-      "despacho": "D_326",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Sonia_Mota_Fernández",
-      "nombre": "Sonia Mota Fernández",
-      "departamento": "Departamento de Teoría de la Señal, Telemática y Comunicaciones",
-      "telefono": "958248897",
-      "email": "smota@ugr.es",
-      "despacho": "D_407",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Pablo_Muñoz_Luengo",
-      "nombre": "Pablo Muñoz Luengo",
-      "departamento": "Departamento de Teoría de la Señal, Telemática y Comunicaciones",
-      "telefono": "958248876",
-      "email": "pabloml@ugr.es",
-      "despacho": "D_407",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Diego_Navarro_Cabrera",
-      "nombre": "Diego Navarro Cabrera",
-      "departamento": "Departamento de Ingeniería de Computadores, Automática y Robótica",
-      "telefono": "No disponible",
-      "email": "diegonavaca@ugr.es",
-      "despacho": "D_326",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Gabriel_Navarro_Garulo",
-      "nombre": "Gabriel Navarro Garulo",
-      "departamento": "Departamento de Álgebra",
-      "telefono": "958241000 ext. 20586",
-      "email": "gnavarro@ugr.es",
-      "despacho": "D_423",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Carlos_Navarro_Moral",
-      "nombre": "Carlos Navarro Moral",
-      "departamento": "Departamento de Electrónica y Tecnología de Computadores",
-      "telefono": "No disponible",
-      "email": "carlosnm@ugr.es",
-      "despacho": "D_217",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Jorge_Navarro_Ortiz",
-      "nombre": "Jorge Navarro Ortiz",
-      "departamento": "Departamento de Teoría de la Señal, Telemática y Comunicaciones",
-      "telefono": "958241000 ext. 20042",
-      "email": "jorgenavarro@ugr.es",
-      "despacho": "D_407",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Andrés_José_Navarro_Paule",
-      "nombre": "Andrés José Navarro Paule",
-      "departamento": "Departamento de Organización de Empresas I",
-      "telefono": "958241585",
-      "email": "anpaule@ugr.es",
-      "despacho": "D_227",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Manuel_Noguera_García",
-      "nombre": "Manuel Noguera García",
-      "departamento": "Departamento de Lenguajes y Sistemas Informáticos",
-      "telefono": "958242810",
-      "email": "mnoguera@ugr.es",
-      "despacho": "D_208",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Gonzalo_Olivares_Ruiz",
-      "nombre": "Gonzalo Olivares Ruiz",
-      "departamento": "Departamento de Ingeniería de Computadores, Automática y Robótica",
-      "telefono": "958243259",
-      "email": "gonzalo@ugr.es",
-      "despacho": "D_326",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Rubén_Ordóñez_Borrallo",
-      "nombre": "Rubén Ordóñez Borrallo",
-      "departamento": "Departamento de Organización de Empresas II",
-      "telefono": "No disponible",
-      "email": "rubenordonez@ugr.es",
-      "despacho": "D_223",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Rubén_Ortega_López",
-      "nombre": "Rubén Ortega López",
-      "departamento": "Departamento de Electrónica y Tecnología de Computadores",
-      "telefono": "No disponible",
-      "email": "rubenortega@ugr.es",
-      "despacho": "D_218",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Antonio_Jesús_Ortega_Ravelo",
-      "nombre": "Antonio Jesús Ortega Ravelo",
-      "departamento": "Departamento de Geometría y Topología",
-      "telefono": "No disponible",
-      "email": "aortegar@ugr.es",
-      "despacho": "D_428",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Rafael_Ortega_Ríos",
-      "nombre": "Rafael Ortega Ríos",
-      "departamento": "Departamento de Matemática Aplicada",
-      "telefono": "958244157",
-      "email": "rortega@ugr.es",
-      "despacho": "D_418",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Alberto_Ortega_Ruiz",
-      "nombre": "Alberto Ortega Ruiz",
-      "departamento": "Departamento de Ingeniería de Computadores, Automática y Robótica",
-      "telefono": "No disponible",
-      "email": "aoruiz@ugr.es",
-      "despacho": "D_326",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Miguel_Ortega_Titos",
-      "nombre": "Miguel Ortega Titos",
-      "departamento": "Departamento de Geometría y Topología",
-      "telefono": "958242082",
-      "email": "miortega@ugr.es",
-      "despacho": "D_428",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Raquel_Ortiz_Martín",
-      "nombre": "Raquel Ortiz Martín",
-      "departamento": "Departamento de Estadística e Investigación Operativa",
-      "telefono": "No disponible",
-      "email": "raquelortiz@ugr.es",
-      "despacho": "D_334",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Víctor_Manuel_Ortiz_Sotomayor",
-      "nombre": "Víctor Manuel Ortiz Sotomayor",
-      "departamento": "Departamento de Álgebra",
-      "telefono": "958244021",
-      "email": "vsotomayor@ugr.es",
-      "despacho": "D_424",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Bartolomé_Ortiz_Viso",
-      "nombre": "Bartolomé Ortiz Viso",
-      "departamento": "Departamento de Lenguajes y Sistemas Informáticos",
-      "telefono": "No disponible",
-      "email": "bortiz@ugr.es",
-      "despacho": "D_208",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Francisco_Manuel_Ortuño_Guzmán",
-      "nombre": "Francisco Manuel Ortuño Guzmán",
-      "departamento": "Departamento de Ingeniería de Computadores, Automática y Robótica",
-      "telefono": "958243228",
-      "email": "fortuno@ugr.es",
-      "despacho": "D_327",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Patricia_Paderewski_Rodríguez",
-      "nombre": "Patricia Paderewski Rodríguez",
-      "departamento": "Departamento de Lenguajes y Sistemas Informáticos",
-      "telefono": "958248425",
-      "email": "patricia@ugr.es",
-      "despacho": "D_208",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "José_Luis_Padilla_de_la_Torre",
-      "nombre": "José Luis Padilla de la Torre",
-      "departamento": "Departamento de Electrónica y Tecnología de Computadores",
-      "telefono": "958241584",
-      "email": "jluispt@ugr.es",
-      "despacho": "D_218",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Pablo_Padilla_de_la_Torre",
-      "nombre": "Pablo Padilla de la Torre",
-      "departamento": "Departamento de Teoría de la Señal, Telemática y Comunicaciones",
-      "telefono": "958248899",
-      "email": "pablopadilla@ugr.es",
-      "despacho": "D_407",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Alberto_José_Palma_López",
-      "nombre": "Alberto José Palma López",
-      "departamento": "Departamento de Electrónica y Tecnología de Computadores",
-      "telefono": "958242300",
-      "email": "ajpalma@ugr.es",
-      "despacho": "D_218",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "David_Palomar_Sáez",
-      "nombre": "David Palomar Sáez",
-      "departamento": "Departamento de Ingeniería de Computadores, Automática y Robótica",
-      "telefono": "No disponible",
-      "email": "dpalomar@ugr.es",
-      "despacho": "D_327",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Antonio_Francisco_Palomares_Bautista",
-      "nombre": "Antonio Francisco Palomares Bautista",
-      "departamento": "Departamento de Matemática Aplicada",
-      "telefono": "958249514",
-      "email": "anpalom@ugr.es",
-      "despacho": "D_418",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Ángel_Palomares_Caballero",
-      "nombre": "Ángel Palomares Caballero",
-      "departamento": "Departamento de Teoría de la Señal, Telemática y Comunicaciones",
-      "telefono": "No disponible",
-      "email": "angelpc@ugr.es",
-      "despacho": "D_408",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Luis_Parrilla_Roure",
-      "nombre": "Luis Parrilla Roure",
-      "departamento": "Departamento de Electrónica y Tecnología de Computadores",
-      "telefono": "958240498",
-      "email": "luis@ugr.es",
-      "despacho": "D_218",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Francisco_Pasadas_Cantos",
-      "nombre": "Francisco Pasadas Cantos",
-      "departamento": "Departamento de Electrónica y Tecnología de Computadores",
-      "telefono": "No disponible",
-      "email": "fpasadas@ugr.es",
-      "despacho": "D_219",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Manuel_Pegalajar_Cuéllar",
-      "nombre": "Manuel Pegalajar Cuéllar",
-      "departamento": "Departamento de Ciencias de la Computación e Inteligencia Artificial",
-      "telefono": "958244258",
-      "email": "manupc@ugr.es",
-      "despacho": "D_315",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "María_del_Carmen_Pegalajar_Jiménez",
-      "nombre": "María del Carmen Pegalajar Jiménez",
-      "departamento": "Departamento de Ciencias de la Computación e Inteligencia Artificial",
-      "telefono": "958248482",
-      "email": "mcarmen@ugr.es",
-      "despacho": "D_316",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Antonio_Miguel_Peinado_Herreros",
-      "nombre": "Antonio Miguel Peinado Herreros",
-      "departamento": "Departamento de Teoría de la Señal, Telemática y Comunicaciones",
-      "telefono": "958244011",
-      "email": "amp@ugr.es",
-      "despacho": "D_408",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "David_Alejandro_Pelta_Mochcovsky",
-      "nombre": "David Alejandro Pelta Mochcovsky",
-      "departamento": "Departamento de Ciencias de la Computación e Inteligencia Artificial",
-      "telefono": "958244216",
-      "email": "dpelta@ugr.es",
-      "despacho": "D_316",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Daniel_Peralta_Cámara",
-      "nombre": "Daniel Peralta Cámara",
-      "departamento": "Departamento de Ciencias de la Computación e Inteligencia Artificial",
-      "telefono": "No disponible",
-      "email": "dperalta@ugr.es",
-      "despacho": "D_316",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "José_Luis_Pérez_Córdoba",
-      "nombre": "José Luis Pérez Córdoba",
-      "departamento": "Departamento de Teoría de la Señal, Telemática y Comunicaciones",
-      "telefono": "958244011",
-      "email": "tstc-direccion@ugr.es",
-      "despacho": "D_408",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "María_del_Carmen_Pérez_López",
-      "nombre": "María del Carmen Pérez López",
-      "departamento": "Departamento de Economía Financiera y Contabilidad",
-      "telefono": "958244269",
-      "email": "marialo@ugr.es",
-      "despacho": "D_225",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Joaquín_Pérez_Muñoz",
-      "nombre": "Joaquín Pérez Muñoz",
-      "departamento": "Departamento de Geometría y Topología",
-      "telefono": "958243396",
-      "email": "jperez@ugr.es",
-      "despacho": "D_428",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Francisco_G.Raúl_Pérez_Rodríguez",
-      "nombre": "Francisco G.Raúl Pérez Rodríguez",
-      "departamento": "Departamento de Ciencias de la Computación e Inteligencia Artificial",
-      "telefono": "958242985",
-      "email": "fgr@ugr.es",
-      "despacho": "D_316",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Pablo_Antonio_Pico_Valencia",
-      "nombre": "Pablo Antonio Pico Valencia",
-      "departamento": "Departamento de Lenguajes y Sistemas Informáticos",
-      "telefono": "No disponible",
-      "email": "pablo.pico@ugr.es",
-      "despacho": "D_208",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Janet_Pigueiras_del_Real",
-      "nombre": "Janet Pigueiras del Real",
-      "departamento": "Departamento de Lenguajes y Sistemas Informáticos",
-      "telefono": "No disponible",
-      "email": "janetpr@ugr.es",
-      "despacho": "D_209",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "María_Begoña_del_Pino_Prieto",
-      "nombre": "María Begoña del Pino Prieto",
-      "departamento": "Departamento de Ingeniería de Computadores, Automática y Robótica",
-      "telefono": "958240586",
-      "email": "bpino@ugr.es",
-      "despacho": "D_327",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Miguel_Ángel_Piñar_González",
-      "nombre": "Miguel Ángel Piñar González",
-      "departamento": "Departamento de Matemática Aplicada",
-      "telefono": "958249956",
-      "email": "mpinar@ugr.es",
-      "despacho": "D_418",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Aurora_Polo_Rodríguez",
-      "nombre": "Aurora Polo Rodríguez",
-      "departamento": "Departamento de Ingeniería de Computadores, Automática y Robótica",
-      "telefono": "No disponible",
-      "email": "auro@ugr.es",
-      "despacho": "D_327",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Héctor_Emilio_Pomares_Cintas",
-      "nombre": "Héctor Emilio Pomares Cintas",
-      "departamento": "Departamento de Ingeniería de Computadores, Automática y Robótica",
-      "telefono": "958248598",
-      "email": "hector@ugr.es",
-      "despacho": "D_328",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Olga_Pons_Capote",
-      "nombre": "Olga Pons Capote",
-      "departamento": "Departamento de Ciencias de la Computación e Inteligencia Artificial",
-      "telefono": "958240595",
-      "email": "opc@ugr.es",
-      "despacho": "D_317",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Carlos_Gustavo_Porcel_Gallego",
-      "nombre": "Carlos Gustavo Porcel Gallego",
-      "departamento": "Departamento de Ciencias de la Computación e Inteligencia Artificial",
-      "telefono": "No disponible",
-      "email": "carlospg@ugr.es",
-      "despacho": "D_317",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Antonio_Manuel_Pozo_Molina",
-      "nombre": "Antonio Manuel Pozo Molina",
-      "departamento": "Departamento de Óptica",
-      "telefono": "958241907",
-      "email": "ampmolin@ugr.es",
-      "despacho": "D_433",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Jonathan_Prados_Garzón",
-      "nombre": "Jonathan Prados Garzón",
-      "departamento": "Departamento de Teoría de la Señal, Telemática y Comunicaciones",
-      "telefono": "No disponible",
-      "email": "jpg@ugr.es",
-      "despacho": "D_408",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "María_Belén_Prados_Suárez",
-      "nombre": "María Belén Prados Suárez",
-      "departamento": "Departamento de Lenguajes y Sistemas Informáticos",
-      "telefono": "958248810",
-      "email": "belenps@ugr.es",
-      "despacho": "D_209",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Beatriz_Prieto_Campos",
-      "nombre": "Beatriz Prieto Campos",
-      "departamento": "Departamento de Ingeniería de Computadores, Automática y Robótica",
-      "telefono": "958241000 ext. 26203",
-      "email": "beap@ugr.es",
-      "despacho": "D_328",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "José_Juan_Quesada_Molina",
-      "nombre": "José Juan Quesada Molina",
-      "departamento": "Departamento de Matemática Aplicada",
-      "telefono": "958249022",
-      "email": "jquesada@ugr.es",
-      "despacho": "D_418",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Javier_Ramírez_Pérez_de_Inestrosa",
-      "nombre": "Javier Ramírez Pérez de Inestrosa",
-      "departamento": "Departamento de Teoría de la Señal, Telemática y Comunicaciones",
-      "telefono": "958241285",
-      "email": "javierrp@ugr.es",
-      "despacho": "D_409",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Eva_María_Ramos_Ábalos",
-      "nombre": "Eva María Ramos Ábalos",
-      "departamento": "Departamento de Estadística e Investigación Operativa",
-      "telefono": "958240493",
-      "email": "ramosa@ugr.es",
-      "despacho": "D_334",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Juan_José_Ramos_Muñoz",
-      "nombre": "Juan José Ramos Muñoz",
-      "departamento": "Departamento de Teoría de la Señal, Telemática y Comunicaciones",
-      "telefono": "958240820",
-      "email": "jjramos@ugr.es",
-      "despacho": "D_409",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Daniel_Raya_Quero",
-      "nombre": "Daniel Raya Quero",
-      "departamento": "Departamento de Derecho Mercantil y Derecho Romano",
-      "telefono": "No disponible",
-      "email": "rayad@ugr.es",
-      "despacho": "D_435",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Salvador_Rayo_Cantón",
-      "nombre": "Salvador Rayo Cantón",
-      "departamento": "Departamento de Economía Financiera y Contabilidad",
-      "telefono": "958243703",
-      "email": "srayo@ugr.es",
-      "despacho": "D_226",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Jorge_Revelles_Moreno",
-      "nombre": "Jorge Revelles Moreno",
-      "departamento": "Departamento de Lenguajes y Sistemas Informáticos",
-      "telefono": "958240575",
-      "email": "jrevelle@ugr.es",
-      "despacho": "D_304",
-      "es_profesor_actual": true,
-      "tutorias": "Martes 9:30-12:30, Jueves 9:30-10:30",
-      "clases": [
-        {
-          "asignatura": "Procesadores de Lenguajes",
-          "tipo": "Prácticas",
-          "aula": "L_28",
-          "horario": "Jueves 10:30 - 12:30"
-        },
-        {
-          "asignatura": "Procesadores de Lenguajes",
-          "tipo": "Prácticas",
-          "aula": "L_28",
-          "horario": "Viernes 08:30 - 10:30"
-        }
-      ]
-    },
-    {
-      "id": "Ramón_Lopez_Cozar_Delgado",
-      "nombre": "Ramón López-Cózar Delgado",
-      "departamento": "Departamento de Lenguajes y Sistemas Informáticos",
-      "telefono": "958240576",
-      "email": "rlopezc@ugr.es",
-      "despacho": "D_326",
-      "es_profesor_actual": true,
-      "tutorias": "Martes 10:30 - 13:30, Miércoles 10:30 - 13:30",
-      "clases": [
-        {
-          "asignatura": "Procesadores de Lenguajes",
-          "tipo": "Teoría",
-          "aula": "A_05",
-          "horario": "Viernes 10:30 - 12:30"
-        }
-      ]
-    },
-    {
-      "id": "Nuria_Rico_Castro",
-      "nombre": "Nuria Rico Castro",
-      "departamento": "Departamento de Estadística e Investigación Operativa",
-      "telefono": "958246306",
-      "email": "nrico@ugr.es",
-      "despacho": "D_335",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Aurora_Inés_del_Río_Cabeza",
-      "nombre": "Aurora Inés del Río Cabeza",
-      "departamento": "Departamento de Álgebra",
-      "telefono": "958248835",
-      "email": "adelrio@ugr.es",
-      "despacho": "D_424",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Marta_Riquelme_Medina",
-      "nombre": "Marta Riquelme Medina",
-      "departamento": "Departamento de Organización de Empresas I",
-      "telefono": "958249597",
-      "email": "martariquelme@ugr.es",
-      "despacho": "D_227",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Manuel_María_Ritore_Cortés",
-      "nombre": "Manuel María Ritore Cortés",
-      "departamento": "Departamento de Geometría y Topología",
-      "telefono": "958240472",
-      "email": "ritore@ugr.es",
-      "despacho": "D_429",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Almudena_Rivadeneyra_Torres",
-      "nombre": "Almudena Rivadeneyra Torres",
-      "departamento": "Departamento de Electrónica y Tecnología de Computadores",
-      "telefono": "958240053",
-      "email": "arivadeneyra@ugr.es",
-      "despacho": "D_219",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Gustavo_Rivas_Gervilla",
-      "nombre": "Gustavo Rivas Gervilla",
-      "departamento": "Departamento de Estadística e Investigación Operativa",
-      "telefono": "No disponible",
-      "email": "griger@ugr.es",
-      "despacho": "D_335",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Aureliano_M._Robles_Pérez",
-      "nombre": "Aureliano M. Robles Pérez",
-      "departamento": "Departamento de Matemática Aplicada",
-      "telefono": "958243285",
-      "email": "arobles@ugr.es",
-      "despacho": "D_419",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "María_Luisa_Rodríguez_Almendros",
-      "nombre": "María Luisa Rodríguez Almendros",
-      "departamento": "Departamento de Lenguajes y Sistemas Informáticos",
-      "telefono": "958242811",
-      "email": "mlra@ugr.es",
-      "despacho": "D_209",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Manuel_Rodríguez_Álvarez",
-      "nombre": "Manuel Rodríguez Álvarez",
-      "departamento": "Departamento de Ingeniería de Computadores, Automática y Robótica",
-      "telefono": "958240583",
-      "email": "manolo@ugr.es",
-      "despacho": "D_328",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Laura_Rodríguez_Arco",
-      "nombre": "Laura Rodríguez Arco",
-      "departamento": "Departamento de Física Aplicada",
-      "telefono": "No disponible",
-      "email": "l_rodriguezarco@ugr.es",
-      "despacho": "D_431",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Nuria_Rodríguez_Barroso",
-      "nombre": "Nuria Rodríguez Barroso",
-      "departamento": "Departamento de Ciencias de la Computación e Inteligencia Artificial",
-      "telefono": "No disponible",
-      "email": "rbnuria@ugr.es",
-      "despacho": "D_317",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Francisco_Javier_Rodríguez_Díaz",
-      "nombre": "Francisco Javier Rodríguez Díaz",
-      "departamento": "Departamento de Ciencias de la Computación e Inteligencia Artificial",
-      "telefono": "No disponible",
-      "email": "fjrodriguez@ugr.es",
-      "despacho": "D_317",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "María_José_Rodríguez_Fortiz",
-      "nombre": "María José Rodríguez Fortiz",
-      "departamento": "Departamento de Lenguajes y Sistemas Informáticos",
-      "telefono": "958249387",
-      "email": "mjfortiz@ugr.es",
-      "despacho": "D_210",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Ciro_Rodríguez_León",
-      "nombre": "Ciro Rodríguez León",
-      "departamento": "Departamento de Ingeniería de Computadores, Automática y Robótica",
-      "telefono": "No disponible",
-      "email": "crleon@ugr.es",
-      "despacho": "D_328",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "María_Magdalena_Rodríguez_Pérez",
-      "nombre": "María Magdalena Rodríguez Pérez",
-      "departamento": "Departamento de Geometría y Topología",
-      "telefono": "958243278",
-      "email": "magdarp@ugr.es",
-      "despacho": "D_429",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Rosa_María_Rodríguez_Sánchez",
-      "nombre": "Rosa María Rodríguez Sánchez",
-      "departamento": "Departamento de Ciencias de la Computación e Inteligencia Artificial",
-      "telefono": "958242837",
-      "email": "rosars@ugr.es",
-      "despacho": "D_318",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Noel_Rodríguez_Santiago",
-      "nombre": "Noel Rodríguez Santiago",
-      "departamento": "Departamento de Electrónica y Tecnología de Computadores",
-      "telefono": "958241000 ext. 20053",
-      "email": "noel@ugr.es",
-      "despacho": "D_219",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Victoria_Rodríguez-Rico_Roldán",
-      "nombre": "Victoria Rodríguez-Rico Roldán",
-      "departamento": "Departamento de Derecho del Trabajo y de la Seguridad Social",
-      "telefono": "No disponible",
-      "email": "victoriarrico@ugr.es",
-      "despacho": "D_435",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Fernando_José_Rojas_Ruiz",
-      "nombre": "Fernando José Rojas Ruiz",
-      "departamento": "Departamento de Ingeniería de Computadores, Automática y Robótica",
-      "telefono": "958241333",
-      "email": "frojas@ugr.es",
-      "despacho": "D_329",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Ignacio_Rojas_Ruiz",
-      "nombre": "Ignacio Rojas Ruiz",
-      "departamento": "Departamento de Ingeniería de Computadores, Automática y Robótica",
-      "telefono": "958246128",
-      "email": "irojas@ugr.es",
-      "despacho": "D_329",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Andrés_María_Roldán_Aranda",
-      "nombre": "Andrés María Roldán Aranda",
-      "departamento": "Departamento de Electrónica y Tecnología de Computadores",
-      "telefono": "958244010",
-      "email": "amroldan@ugr.es",
-      "despacho": "D_219",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Juan_Bautista_Roldán_Aranda",
-      "nombre": "Juan Bautista Roldán Aranda",
-      "departamento": "Departamento de Electrónica y Tecnología de Computadores",
-      "telefono": "958244071",
-      "email": "jroldan@ugr.es",
-      "despacho": "D_220",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "María_Isabel_Román_Martínez",
-      "nombre": "María Isabel Román Martínez",
-      "departamento": "Departamento de Economía Financiera y Contabilidad",
-      "telefono": "958248341",
-      "email": "iroman@ugr.es",
-      "despacho": "D_226",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Samuel_Francisco_Romero_García",
-      "nombre": "Samuel Francisco Romero García",
-      "departamento": "Departamento de Ingeniería de Computadores, Automática y Robótica",
-      "telefono": "958244174",
-      "email": "sromero@ugr.es",
-      "despacho": "D_329",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Gustavo_Romero_López",
-      "nombre": "Gustavo Romero López",
-      "departamento": "Departamento de Ingeniería de Computadores, Automática y Robótica",
-      "telefono": "958240821",
-      "email": "gustavo@ugr.es",
-      "despacho": "D_329",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Francisco_Javier_Romero_Maldonado",
-      "nombre": "Francisco Javier Romero Maldonado",
-      "departamento": "Departamento de Electrónica y Tecnología de Computadores",
-      "telefono": "No disponible",
-      "email": "franromero@ugr.es",
-      "despacho": "D_220",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Brunil_Dalila_Romero_Mariño",
-      "nombre": "Brunil Dalila Romero Mariño",
-      "departamento": "Departamento de Lenguajes y Sistemas Informáticos",
-      "telefono": "No disponible",
-      "email": "bdromero@ugr.es",
-      "despacho": "D_210",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Desiré_Romero_Molina",
-      "nombre": "Desiré Romero Molina",
-      "departamento": "Departamento de Estadística e Investigación Operativa",
-      "telefono": "958246306",
-      "email": "deromero@ugr.es",
-      "despacho": "D_335",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Francisco_Javier_Romero_Mora",
-      "nombre": "Francisco Javier Romero Mora",
-      "departamento": "Departamento de Óptica",
-      "telefono": "958244241",
-      "email": "jromero@ugr.es",
-      "despacho": "D_434",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Antonio_Ros_Mulero",
-      "nombre": "Antonio Ros Mulero",
-      "departamento": "Departamento de Geometría y Topología",
-      "telefono": "958242053",
-      "email": "aros@ugr.es",
-      "despacho": "D_429",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Eduardo_Ros_Vidal",
-      "nombre": "Eduardo Ros Vidal",
-      "departamento": "Departamento de Ingeniería de Computadores, Automática y Robótica",
-      "telefono": "958246128",
-      "email": "eros@ugr.es",
-      "despacho": "D_330",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "José_Carlos_Rosales_González",
-      "nombre": "José Carlos Rosales González",
-      "departamento": "Departamento de Álgebra",
-      "telefono": "958242863",
-      "email": "jrosales@ugr.es",
-      "despacho": "D_424",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Abraham_Rueda_Zoca",
-      "nombre": "Abraham Rueda Zoca",
-      "departamento": "Departamento de Análisis Matemático",
-      "telefono": "958241000 ext. 20066",
-      "email": "abrahamrueda@ugr.es",
-      "despacho": "D_415",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Juan_Ruiz_de_Miras",
-      "nombre": "Juan Ruiz de Miras",
-      "departamento": "Departamento de Lenguajes y Sistemas Informáticos",
-      "telefono": "958240574",
-      "email": "demiras@ugr.es",
-      "despacho": "D_210",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Antonio_Ruiz_Moya",
-      "nombre": "Antonio Ruiz Moya",
-      "departamento": "Departamento de Teoría de la Señal, Telemática y Comunicaciones",
-      "telefono": "958241430",
-      "email": "aruiz@ugr.es",
-      "despacho": "D_409",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Diego_Pablo_Ruiz_Padillo",
-      "nombre": "Diego Pablo Ruiz Padillo",
-      "departamento": "Departamento de Física Aplicada",
-      "telefono": "958244161",
-      "email": "druiz@ugr.es",
-      "despacho": "D_431",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Ángel_Ruiz_Zafra",
-      "nombre": "Ángel Ruiz Zafra",
-      "departamento": "Departamento de Lenguajes y Sistemas Informáticos",
-      "telefono": "No disponible",
-      "email": "angelr@ugr.es",
-      "despacho": "D_210",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Miguel_David_Ruiz-Cabello_Núñez",
-      "nombre": "Miguel David Ruiz-Cabello Núñez",
-      "departamento": "Departamento de Electromagnetismo y Física de la Materia",
-      "telefono": "958241000 ext. 20838",
-      "email": "mcabello@ugr.es",
-      "despacho": "D_432",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Pedro_Saavedra_Ortiz",
-      "nombre": "Pedro Saavedra Ortiz",
-      "departamento": "Departamento de Análisis Matemático",
-      "telefono": "No disponible",
-      "email": "psaavedraortiz@ugr.es",
-      "despacho": "D_415",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "José_Luis_Sáez_Lozano",
-      "nombre": "José Luis Sáez Lozano",
-      "departamento": "Departamento de Economía Internacional y de España",
-      "telefono": "958240927",
-      "email": "josaez@ugr.es",
-      "despacho": "D_229",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Diego_Salas_González",
-      "nombre": "Diego Salas González",
-      "departamento": "Departamento de Teoría de la Señal, Telemática y Comunicaciones",
-      "telefono": "958243193",
-      "email": "dsalas@ugr.es",
-      "despacho": "D_409",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "José_Antonio_Salinas_Fernández",
-      "nombre": "José Antonio Salinas Fernández",
-      "departamento": "Departamento de Economía Internacional y de España",
-      "telefono": "958241000 ext. 20326",
-      "email": "jasalinas@ugr.es",
-      "despacho": "D_229",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "José_Samos_Jiménez",
-      "nombre": "José Samos Jiménez",
-      "departamento": "Departamento de Lenguajes y Sistemas Informáticos",
-      "telefono": "958248823",
-      "email": "jsamos@ugr.es",
-      "despacho": "D_211",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Victoria_Eugenia_Sánchez_Calle",
-      "nombre": "Victoria Eugenia Sánchez Calle",
-      "departamento": "Departamento de Teoría de la Señal, Telemática y Comunicaciones",
-      "telefono": "958249713",
-      "email": "victoria@ugr.es",
-      "despacho": "D_410",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "José_Sánchez_Campillo",
-      "nombre": "José Sánchez Campillo",
-      "departamento": "Departamento de Economía Aplicada",
-      "telefono": "958249916",
-      "email": "jsanchez@ugr.es",
-      "despacho": "D_228",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Daniel_Sánchez_Fernández",
-      "nombre": "Daniel Sánchez Fernández",
-      "departamento": "Departamento de Ciencias de la Computación e Inteligencia Artificial",
-      "telefono": "958246397",
-      "email": "daniels@ugr.es",
-      "despacho": "D_318",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Ignacio_F._Sánchez_García",
-      "nombre": "Ignacio F. Sánchez García",
-      "departamento": "Departamento de Electromagnetismo y Física de la Materia",
-      "telefono": "958242311",
-      "email": "isanchez@ugr.es",
-      "despacho": "D_433",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Carlos_Sánchez_González",
-      "nombre": "Carlos Sánchez González",
-      "departamento": "Departamento de Métodos Cuantitativos para la Economía y la Empresa",
-      "telefono": "958249909",
-      "email": "csanchez@ugr.es",
-      "despacho": "D_337",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Ana_María_Sánchez_López",
-      "nombre": "Ana María Sánchez López",
-      "departamento": "Departamento de Lenguajes y Sistemas Informáticos",
-      "telefono": "958248429",
-      "email": "amlopez@ugr.es",
-      "despacho": "D_211",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Pablo_Sánchez_Moreno",
-      "nombre": "Pablo Sánchez Moreno",
-      "departamento": "Departamento de Matemática Aplicada",
-      "telefono": "958245174",
-      "email": "pablos@ugr.es",
-      "despacho": "D_419",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Óscar_Sánchez_Romero",
-      "nombre": "Óscar Sánchez Romero",
-      "departamento": "Departamento de Matemática Aplicada",
-      "telefono": "958249059",
-      "email": "ossanche@ugr.es",
-      "despacho": "D_419",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Gonzalo_Sánchez_Vizcaino",
-      "nombre": "Gonzalo Sánchez Vizcaino",
-      "departamento": "Departamento de Organización de Empresas II",
-      "telefono": "958241000 ext. 20536",
-      "email": "gonzalos@ugr.es",
-      "despacho": "D_224",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Evangelina_Santos_Aláez",
-      "nombre": "Evangelina Santos Aláez",
-      "departamento": "Departamento de Álgebra",
-      "telefono": "958240823",
-      "email": "esantos@ugr.es",
-      "despacho": "D_425",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "María_del_Carmen_Segovia_García",
-      "nombre": "María del Carmen Segovia García",
-      "departamento": "Departamento de Estadística e Investigación Operativa",
-      "telefono": "No disponible",
-      "email": "msegovia@ugr.es",
-      "despacho": "D_336",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Fermín_Segovia_Román",
-      "nombre": "Fermín Segovia Román",
-      "departamento": "Departamento de Teoría de la Señal, Telemática y Comunicaciones",
-      "telefono": "958241000 ext. 20618",
-      "email": "fsegovia@ugr.es",
-      "despacho": "D_410",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Cleofás_Segura_Gómez",
-      "nombre": "Cleofás Segura Gómez",
-      "departamento": "Departamento de Teoría de la Señal, Telemática y Comunicaciones",
-      "telefono": "958241717",
-      "email": "cleofas@ugr.es",
-      "despacho": "D_410",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Nicolás_Segura_Kunsagi",
-      "nombre": "Nicolás Segura Kunsagi",
-      "departamento": "Departamento de Ciencias de la Computación e Inteligencia Artificial",
-      "telefono": "No disponible",
-      "email": "nkunsagi@ugr.es",
-      "despacho": "D_318",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "José_Ángel_Segura_Muros",
-      "nombre": "José Ángel Segura Muros",
-      "departamento": "Departamento de Lenguajes y Sistemas Informáticos",
-      "telefono": "No disponible",
-      "email": "josesegmur@ugr.es",
-      "despacho": "D_211",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Pieralberto_Sicbaldi",
-      "nombre": "Pieralberto Sicbaldi",
-      "departamento": "Departamento de Análisis Matemático",
-      "telefono": "958241000 ext. 20046",
-      "email": "pieralberto@ugr.es",
-      "despacho": "D_415",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Andrés_Silva_Pérez",
-      "nombre": "Andrés Silva Pérez",
-      "departamento": "Departamento de Lenguajes y Sistemas Informáticos",
-      "telefono": "No disponible",
-      "email": "asilva@ugr.es",
-      "despacho": "D_211",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Juan_Segundo_Soler_Vizcaino",
-      "nombre": "Juan Segundo Soler Vizcaino",
-      "departamento": "Departamento de Matemática Aplicada",
-      "telefono": "958243287",
-      "email": "jsoler@ugr.es",
-      "despacho": "D_419",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "José_Manuel_Soto_Hidalgo",
-      "nombre": "José Manuel Soto Hidalgo",
-      "departamento": "Departamento de Ingeniería de Computadores, Automática y Robótica",
-      "telefono": "958241000 ext. 20632",
-      "email": "jmsoto@ugr.es",
-      "despacho": "D_330",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Caterina_Sportelli",
-      "nombre": "Caterina Sportelli",
-      "departamento": "Departamento de Análisis Matemático",
-      "telefono": "No disponible",
-      "email": "caterina.sp@ugr.es",
-      "despacho": "D_416",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Juan_Luis_Suárez_Díaz",
-      "nombre": "Juan Luis Suárez Díaz",
-      "departamento": "Departamento de Ciencias de la Computación e Inteligencia Artificial",
-      "telefono": "No disponible",
-      "email": "jlsuarezdiaz@ugr.es",
-      "despacho": "D_318",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Siham_Tabik_Ouled_Hrour",
-      "nombre": "Siham Tabik Ouled Hrour",
-      "departamento": "Departamento de Ciencias de la Computación e Inteligencia Artificial",
-      "telefono": "No disponible",
-      "email": "siham@ugr.es",
-      "despacho": "D_316",
-      "es_profesor_actual": true,
-      "tutorias": "Lunes 14:30-15:30, Miércoles 14:00-15:30, Jueves 8:00-10:30, Jueves 14:30-15:30",
-      "clases": [
-        {
-          "asignatura": "Visión por Computador",
-          "tipo": "Prácticas",
-          "aula": "L_38",
-          "horario": "Jueves 10:30 - 12:30"
-        }
-      ]
-    },
-    {
-      "id": "Isabel_María_Tienda_Luna",
-      "nombre": "Isabel María Tienda Luna",
-      "departamento": "Departamento de Electrónica y Tecnología de Computadores",
-      "telefono": "958241578",
-      "email": "isabelt@ugr.es",
-      "despacho": "D_220",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Manuel_Marcelino_Titos_Luzón",
-      "nombre": "Manuel Marcelino Titos Luzón",
-      "departamento": "Departamento de Teoría de la Señal, Telemática y Comunicaciones",
-      "telefono": "No disponible",
-      "email": "mmtitos@ugr.es",
-      "despacho": "D_410",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Víctor_Toral_López",
-      "nombre": "Víctor Toral López",
-      "departamento": "Departamento de Electrónica y Tecnología de Computadores",
-      "telefono": "No disponible",
-      "email": "vtoral@ugr.es",
-      "despacho": "D_220",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Francisco_Torralbo_Torralbo",
-      "nombre": "Francisco Torralbo Torralbo",
-      "departamento": "Departamento de Geometría y Topología",
-      "telefono": "958243279",
-      "email": "ftorralbo@ugr.es",
-      "despacho": "D_430",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Ángel_de_la_Torre_Vega",
-      "nombre": "Ángel de la Torre Vega",
-      "departamento": "Departamento de Teoría de la Señal, Telemática y Comunicaciones",
-      "telefono": "958240842",
-      "email": "atv@ugr.es",
-      "despacho": "D_411",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Juan_Carlos_Torres_Cantero",
-      "nombre": "Juan Carlos Torres Cantero",
-      "departamento": "Departamento de Lenguajes y Sistemas Informáticos",
-      "telefono": "958249307",
-      "email": "jctorres@ugr.es",
-      "despacho": "D_212",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Pedro_José_Torres_Villarroya",
-      "nombre": "Pedro José Torres Villarroya",
-      "departamento": "Departamento de Matemática Aplicada",
-      "telefono": "958242941",
-      "email": "ptorres@ugr.es",
-      "despacho": "D_420",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Isaac_Triguero_Velázquez",
-      "nombre": "Isaac Triguero Velázquez",
-      "departamento": "Departamento de Ciencias de la Computación e Inteligencia Artificial",
-      "telefono": "No disponible",
-      "email": "isaaktriguero@ugr.es",
-      "despacho": "D_319",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Javier_Ubago_Rodríguez",
-      "nombre": "Javier Ubago Rodríguez",
-      "departamento": "Departamento de Ingeniería de Computadores, Automática y Robótica",
-      "telefono": "No disponible",
-      "email": "jubago@ugr.es",
-      "despacho": "D_330",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Juan_Manuel_Urbano_Blanco",
-      "nombre": "Juan Manuel Urbano Blanco",
-      "departamento": "Departamento de Álgebra",
-      "telefono": "958243290",
-      "email": "jurbano@ugr.es",
-      "despacho": "D_425",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Antonio_Jesús_Ureña_Alcázar",
-      "nombre": "Antonio Jesús Ureña Alcázar",
-      "departamento": "Departamento de Matemática Aplicada",
-      "telefono": "958241318",
-      "email": "ajurena@ugr.es",
-      "despacho": "D_420",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Carlos_Ureña_Almagro",
-      "nombre": "Carlos Ureña Almagro",
-      "departamento": "Departamento de Lenguajes y Sistemas Informáticos",
-      "telefono": "958240577",
-      "email": "curena@ugr.es",
-      "despacho": "D_212",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Joaquín_Tomás_Valderrama_Valenzuela",
-      "nombre": "Joaquín Tomás Valderrama Valenzuela",
-      "departamento": "Departamento de Teoría de la Señal, Telemática y Comunicaciones",
-      "telefono": "No disponible",
-      "email": "jvalderrama@ugr.es",
-      "despacho": "D_411",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Olga_Valenzuela_Cansino",
-      "nombre": "Olga Valenzuela Cansino",
-      "departamento": "Departamento de Matemática Aplicada",
-      "telefono": "958248082",
-      "email": "olgavc@ugr.es",
-      "despacho": "D_420",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Juan_Francisco_Valenzuela_Valdés",
-      "nombre": "Juan Francisco Valenzuela Valdés",
-      "departamento": "Departamento de Teoría de la Señal, Telemática y Comunicaciones",
-      "telefono": "958240849",
-      "email": "citic-infraes@ugr.es",
-      "despacho": "D_411",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Cristóbal_Vázquez_García",
-      "nombre": "Cristóbal Vázquez García",
-      "departamento": "Departamento de Teoría de la Señal, Telemática y Comunicaciones",
-      "telefono": "No disponible",
-      "email": "crisvgarcia@ugr.es",
-      "despacho": "D_411",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Víctor_Vázquez_Rodríguez",
-      "nombre": "Víctor Vázquez Rodríguez",
-      "departamento": "Departamento de Ingeniería de Computadores, Automática y Robótica",
-      "telefono": "No disponible",
-      "email": "victorvazrod@ugr.es",
-      "despacho": "D_330",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Carlos_Vela_Cabello",
-      "nombre": "Carlos Vela Cabello",
-      "departamento": "Departamento de Álgebra",
-      "telefono": "No disponible",
-      "email": "carlos.vela@ugr.es",
-      "despacho": "D_425",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Francisco_Velasco_Anguita",
-      "nombre": "Francisco Velasco Anguita",
-      "departamento": "Departamento de Lenguajes y Sistemas Informáticos",
-      "telefono": "958246144",
-      "email": "fvelasco@ugr.es",
-      "despacho": "D_212",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Natalia_Elizabeth_Vigano_Martínez",
-      "nombre": "Natalia Elizabeth Vigano Martínez",
-      "departamento": "Departamento de Derecho Civil",
-      "telefono": "No disponible",
-      "email": "nataliavigano@ugr.es",
-      "despacho": "D_434",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Samuel_Villalba_Torres",
-      "nombre": "Samuel Villalba Torres",
-      "departamento": "Departamento de Física Aplicada",
-      "telefono": "No disponible",
-      "email": "samuelvillalba@ugr.es",
-      "despacho": "D_431",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Pedro_Villar_Castro",
-      "nombre": "Pedro Villar Castro",
-      "departamento": "Departamento de Lenguajes y Sistemas Informáticos",
-      "telefono": "958240637",
-      "email": "pvillarc@ugr.es",
-      "despacho": "D_212",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Armando_Reyes_Villena_Muñoz",
-      "nombre": "Armando Reyes Villena Muñoz",
-      "departamento": "Departamento de Análisis Matemático",
-      "telefono": "958246307",
-      "email": "avillena@ugr.es",
-      "despacho": "D_416",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Marco_Antonio_Villena_Sanchez",
-      "nombre": "Marco Antonio Villena Sanchez",
-      "departamento": "Departamento de Electrónica y Tecnología de Computadores",
-      "telefono": "No disponible",
-      "email": "mavillena@ugr.es",
-      "despacho": "D_221",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "Elisabet_Zafra_Gómez",
-      "nombre": "Elisabet Zafra Gómez",
-      "departamento": "Departamento de Economía Financiera y Contabilidad",
-      "telefono": "No disponible",
-      "email": "elisabethzafra@ugr.es",
-      "despacho": "D_226",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "María_del_Carmen_Zarco_Fernández",
-      "nombre": "María del Carmen Zarco Fernández",
-      "departamento": "Departamento de Comercialización e Investigación de Mercados",
-      "telefono": "No disponible",
-      "email": "carmen.zarco@ugr.es",
-      "despacho": "D_229",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
-    },
-    {
-      "id": "María_Cristina_Zuheros_Montes",
-      "nombre": "María Cristina Zuheros Montes",
-      "departamento": "Departamento de Ciencias de la Computación e Inteligencia Artificial",
-      "telefono": "No disponible",
-      "email": "czuheros@ugr.es",
-      "despacho": "D_319",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
-      "clases": []
     }
   ]
 }

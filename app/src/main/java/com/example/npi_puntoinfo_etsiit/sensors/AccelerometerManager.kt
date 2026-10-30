@@ -50,7 +50,8 @@ class AccelerometerManager(context: Context) : SensorEventListener {
     var onShakeProgress: ((count: Int, total: Int) -> Unit)? = null
     var onShakeDetected: (() -> Unit)? = null
     var onTakeMeThereGesture: (() -> Unit)? = null // Giro de muñeca hacia la izquierda
-    var onForwardTiltGesture: (() -> Unit)? = null // Inclinar hacia delante: confirmar acción en comedores
+    var onNodStarted: (() -> Unit)? = null         // Inclinación hacia adelante iniciada (Fase 1: salir del campo de visión)
+    var onForwardTiltGesture: (() -> Unit)? = null // Inclinación y retorno completado (Fase 2: reentrada al campo de visión)
     var onDeviceLifted: (() -> Unit)? = null       // Levantamiento a vertical estricto
     var onPostureModeChanged: ((isVertical: Boolean) -> Unit)? = null
     var onOrientationChanged: ((DeviceOrientation) -> Unit)? = null
@@ -128,6 +129,9 @@ class AccelerometerManager(context: Context) : SensorEventListener {
                 )
                 if (previous != forwardNodDetector.phaseName) {
                     Log.d(gestureTag, "Gesto: $previous -> ${forwardNodDetector.phaseName}")
+                    if (previous == "IDLE" && forwardNodDetector.phaseName == "DOWN") {
+                        onNodStarted?.invoke()
+                    }
                 }
                 if (detected) {
                     Log.i(gestureTag, "Cabeceo completo detectado: bajar y volver")
