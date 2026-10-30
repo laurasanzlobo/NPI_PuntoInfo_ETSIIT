@@ -30,7 +30,7 @@ sealed class Screen(
         }
     }
     data object Dining : Screen("dining", "Comedores", Icons.Default.Restaurant)
-    data object Outdoor : Screen("outdoor", "Mapa exterior", Icons.Default.Navigation) {
+    data object Outdoor : Screen("outdoor", "Guiado exterior", Icons.Default.Navigation) {
         const val routePattern = com.example.npi_puntoinfo_etsiit.outdoor.OutdoorNavigationRoute.pattern
         fun createRoute(destinationId: String): String =
             com.example.npi_puntoinfo_etsiit.outdoor.OutdoorNavigationRoute.create(destinationId)

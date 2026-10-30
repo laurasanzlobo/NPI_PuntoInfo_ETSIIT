@@ -76,7 +76,7 @@ class DeviceLocationProvider(context: Context) : DeviceLocationSource {
                 else Priority.PRIORITY_BALANCED_POWER_ACCURACY
             )
             .setGranularity(Granularity.GRANULARITY_PERMISSION_LEVEL)
-            .setMaxUpdateAgeMillis(0) // El cálculo puntual de la ruta a pie conserva su fijación nueva.
+            .setMaxUpdateAgeMillis(0) // Una consulta puntual solicita una fijación nueva.
             .setDurationMillis(15_000)
             .build()
         return withTimeoutOrNull(20_000) {
@@ -113,7 +113,7 @@ class DeviceLocationProvider(context: Context) : DeviceLocationSource {
             .setMinUpdateIntervalMillis(intervalMillis)
             .setMaxUpdateAgeMillis(30_000) // Reutilizar una posición reciente al iniciar/reanudar la proximidad.
             .setMaxUpdateDelayMillis(0)
-            .setWaitForAccurateLocation(false) // ArrivalDetector valida edad, precisión y proximidad.
+            .setWaitForAccurateLocation(false) // FixedRouteTracker valida edad, precisión y proximidad.
             .setGranularity(Granularity.GRANULARITY_PERMISSION_LEVEL)
             .build()
         var previousFix: Long? = null

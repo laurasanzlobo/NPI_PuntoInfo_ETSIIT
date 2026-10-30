@@ -15,7 +15,7 @@ import org.junit.runner.RunWith
 class WalkingStepPresentationTest {
     @get:Rule val compose = createComposeRule()
 
-    @Test fun rendersProviderDistanceAndInstructionWithoutRawHtmlOrInventedProgress() {
+    @Test fun rendersLocalDistanceAndInstructionWithoutRawHtmlOrInventedProgress() {
         compose.setContent {
             MaterialTheme {
                 WalkingStepRow(WalkingStep("Gira a la <b>derecha</b> &amp; continúa", 25.0, Maneuver.RIGHT), 2)
@@ -25,5 +25,11 @@ class WalkingStepPresentationTest {
         compose.onNodeWithText("2 · 25 m").assertIsDisplayed()
         compose.onNodeWithText("<b>", substring = true).assertDoesNotExist()
         compose.onNodeWithText("Siguiente", substring = true).assertDoesNotExist()
+    }
+
+    @Test fun unknownDistanceDoesNotFabricateZeroMeters() {
+        compose.setContent { MaterialTheme { WalkingStepRow(WalkingStep("Pendiente de validar", null), 1) } }
+        compose.onNodeWithText("Pendiente de validar").assertIsDisplayed()
+        compose.onNodeWithText("0 m", substring = true).assertDoesNotExist()
     }
 }

@@ -1,9 +1,6 @@
 # Plantilla de configuración local para Gradle.
 # Copia este archivo como local.properties y ajusta sdk.dir a la ruta del Android SDK.
-# No compartas ni subas local.properties: contiene configuración y credenciales locales.
+# No compartas ni subas local.properties: contiene configuración local.
 sdk.dir=/ruta/a/tu/Android/Sdk
 
-# Clave de openrouteservice para las rutas peatonales (opcional para compilar;
-# necesaria para solicitar rutas exteriores). También puede definirse como variable
-# de entorno ORS_API_KEY, que tiene prioridad sobre este valor.
-ORS_API_KEY=PEGA_AQUI_TU_CLAVE_DE_OPENROUTESERVICE
+# El guiado exterior fijo es local y no necesita claves de servicios de rutas.

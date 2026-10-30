@@ -27,7 +27,7 @@ object OutdoorDestinations {
         ?.let { forDiningHall(it.id) }
 }
 
-/** Los argumentos de destino final sobreviven a recreaciones y al regreso desde el mapa interior. */
+/** Compatibilidad con botones/voz históricos. OutdoorEntryPolicy filtra antes de abrir una pantalla. */
 object OutdoorNavigationRoute {
     const val base = "outdoor"
     const val pattern = "outdoor?destinationId={destinationId}&finalDestination={finalDestination}&finalLocation={finalLocation}&finalNodeId={finalNodeId}"

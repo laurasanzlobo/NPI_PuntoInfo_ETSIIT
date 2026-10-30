@@ -1,6 +1,7 @@
 package com.example.npi_puntoinfo_etsiit.outdoor
 
-/** Zona amplia alrededor del acceso del catálogo, sin afirmar que se ha cruzado la puerta. */
+/** Modelo histórico de proximidad al edificio principal; NO se usa en la demo al auxiliar.
+ * El guiado fijo utiliza exclusivamente TrackingPolicy y FixedRouteTracker. */
 data class ArrivalPolicy(
     val radiusMeters: Double = 150.0,
     val exitRadiusMeters: Double = 200.0,

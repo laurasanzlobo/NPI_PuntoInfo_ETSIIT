@@ -1,5 +1,8 @@
 # Navegación: mejoras finales
 
+> **Histórico:** las pantallas y servicios exteriores aquí descritos se han sustituido.
+> Estado actual: [GUIADO_EXTERIOR_FIJO.md](GUIADO_EXTERIOR_FIJO.md).
+
 ## Alcance
 
 - Rama: `feat/gps-comedores`. Se conservaron los cambios locales previos, sin commits ni cambios de rama.

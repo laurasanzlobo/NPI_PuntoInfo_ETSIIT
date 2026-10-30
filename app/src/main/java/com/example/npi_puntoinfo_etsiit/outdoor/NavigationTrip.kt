@@ -34,12 +34,20 @@ data class NavigationTrip(
 
     fun finish(): NavigationTrip = copy(phase = TripPhase.FINISHED)
 
+    /** Cambiar de modo es explícito y no certifica una llegada ni haber cruzado una puerta. */
+    fun selectIndoorMode(): NavigationTrip = copy(phase = TripPhase.INDOOR)
+    fun selectOutdoorMode(): NavigationTrip = copy(phase = TripPhase.OUTDOOR)
+
     // Solo identificadores y estado de UI: nunca posiciones GPS, rutas exteriores ni historial.
     fun savedValues(): List<String> = listOf(id, destinationId, indoor?.target?.name.orEmpty(),
         indoor?.target?.location.orEmpty(), indoor?.target?.nodeId.orEmpty(), indoor?.entryNodeId.orEmpty(),
         arrivalNotified.toString(), presentation.name, phase.name)
 
     companion object {
+        /** El destino interior se conserva mientras se recorre auxiliar → ETSIIT. */
+        fun startFixedOutdoor(indoor: NavigationJourney.Indoor? = null): NavigationTrip = NavigationTrip(UUID.randomUUID().toString(),
+            EtsiitAuxiliaryRoute.destinationId, indoor = indoor)
+
         fun start(journey: NavigationJourney): NavigationTrip = when (journey) {
             is NavigationJourney.Combined -> NavigationTrip(UUID.randomUUID().toString(), journey.destination.id, journey.indoor)
             is NavigationJourney.Outdoor -> NavigationTrip(UUID.randomUUID().toString(), journey.destination.id, null)

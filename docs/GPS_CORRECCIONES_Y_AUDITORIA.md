@@ -1,5 +1,8 @@
 # Correcciones GPS / transición interior (2026-10-20)
 
+> **Auditoría histórica:** se conservan los datos contrastados del grafo, pero el flujo exterior ha cambiado.
+> Véase [GUIADO_EXTERIOR_FIJO.md](GUIADO_EXTERIOR_FIJO.md).
+
 ## Comparación dirigida con develop
 
 Consulta exclusivamente de `/home/pablo/Projects/NPI/NPI_develop_original` (`develop`, limpio).

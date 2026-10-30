@@ -2,122 +2,67 @@ package com.example.npi_puntoinfo_etsiit.outdoor
 
 import com.example.npi_puntoinfo_etsiit.sensors.GpsLocationReader
 import com.example.npi_puntoinfo_etsiit.sensors.GpsLocationState
-import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.launch
-import kotlin.coroutines.coroutineContext
 
-data class OutdoorUiState(
-    val destination: OutdoorDestination?,
-    val location: GpsLocationState,
-    val route: WalkingRouteResult? = null,
-    val routing: Boolean = false
-)
-
-/** Estado de una sola pantalla; las comprobaciones activas dependen del ciclo de vida de su UI. */
-class OutdoorNavigator(
-    private val gps: GpsLocationReader,
-    private val routes: WalkingRouteSource,
-    initialDestinationId: String?
-) {
-    private val mutableState = MutableStateFlow(OutdoorUiState(
-        OutdoorDestinations.find(initialDestinationId), gps.accessState()))
+/** Adaptador GPS del motor puro. No conoce servicios de rutas ni proveedores cartográficos. */
+class OutdoorNavigator(val tracker: FixedRouteTracker, private val gps: GpsLocationReader) {
+    private val mutableState = MutableStateFlow(tracker.state)
     val state = mutableState.asStateFlow()
-    private var job: Job? = null
-    private var requestVersion = 0
 
-    fun selectDestination(id: String) {
-        requestVersion++
-        job?.cancel()
-        mutableState.value = mutableState.value.copy(
-            destination = OutdoorDestinations.find(id), route = null, routing = false,
-            location = mutableState.value.location.takeUnless { it == GpsLocationState.Loading }
-                ?: gps.accessState())
-    }
+    fun start() { tracker.start(); publish() }
+    fun next() { tracker.next(); publish() }
+    fun previous() { tracker.previous(); publish() }
+    fun restart() { tracker.restart(); publish() }
+    fun finish() { tracker.finish(); publish() }
+    fun manual() { tracker.selectManualMode(); publish() }
+    fun resumeGps() { tracker.resumeGps(); publish() }
+    fun confirmSuggestedStep() { tracker.confirmSuggestedStep(); publish() }
+    fun dismissSuggestedStep() { tracker.dismissSuggestedStep(); publish() }
+    fun pause() { tracker.pauseGps(); publish() }
+    private fun publish() { mutableState.value = tracker.state }
 
-    fun refreshLocation(scope: CoroutineScope) {
-        if (job?.isActive == true) return
-        requestVersion++
-        mutableState.value = mutableState.value.copy(location = GpsLocationState.Loading, route = null)
-        job = scope.launch {
-            val location = gps.read()
-            coroutineContext.ensureActive()
-            mutableState.value = mutableState.value.copy(location = location)
+    /** La UI cancela esta función al dejar RESUMED, desactivar GPS o terminar el recorrido. */
+    suspend fun track(nowMillis: () -> Long) = coroutineScope {
+        if (!tracker.state.started || tracker.state.arrived || !tracker.route.gpsReady) return@coroutineScope
+        // También informar si el proveedor no emite ni siquiera una primera posición.
+        // El flujo sigue vivo: una fijación posterior selecciona el nodo inmediatamente.
+        var expiry: Job? = launch {
+            delay(tracker.policy.firstFixTimeoutMillis)
+            tracker.pauseGps("No se recibe ubicación del móvil. Activa la ubicación o utiliza el avance manual.")
+            publish()
         }
-    }
-
-    /** Tras consentimiento explícito. Obtiene una fijación nueva en cada cálculo. */
-    fun requestRoute(scope: CoroutineScope) {
-        if (job?.isActive == true || mutableState.value.destination == null) return
-        val destination = mutableState.value.destination!!
-        val version = ++requestVersion
-        mutableState.value = mutableState.value.copy(location = GpsLocationState.Loading, route = null, routing = true)
-        job = scope.launch {
-            try {
-                val location = gps.read()
-                coroutineContext.ensureActive()
-                mutableState.value = mutableState.value.copy(location = location)
-                if (location is GpsLocationState.Available) {
-                    val point = location.coordinates.let { GeoPoint(it.latitude, it.longitude) }
-                    val result = routes.route(point, destination.point)
-                    coroutineContext.ensureActive()
-                    mutableState.value = mutableState.value.copy(route = result)
+        try {
+            gps.updates(tracker.policy.updateIntervalMillis).collect { location ->
+                expiry?.cancel()
+                val observedAt = nowMillis()
+                when (location) {
+                    is GpsLocationState.Available -> tracker.observe(location.coordinates, observedAt)
+                    else -> tracker.pauseGps(when (location) {
+                        GpsLocationState.PermissionDenied -> "Sin permiso de ubicación. Continúa manualmente."
+                        GpsLocationState.LocationDisabled -> "Ubicación desactivada. Continúa manualmente."
+                        else -> "GPS no disponible. Continúa manualmente."
+                    })
                 }
-            } finally {
-                if (requestVersion == version) mutableState.value = mutableState.value.copy(routing = false)
+                publish()
+                // Si el proveedor queda silencioso, no mantener distancia/precisión obsoletas.
+                val age = (location as? GpsLocationState.Available)?.coordinates?.elapsedRealtimeMillis
+                    ?.let { (observedAt - it).coerceAtLeast(0) } ?: 0
+                expiry = launch {
+                    delay((tracker.policy.maxFixAgeMillis - age).coerceAtLeast(0))
+                    tracker.pauseGps("Sin posición GPS reciente. Continúa manualmente.")
+                    publish()
+                }
             }
+        } finally {
+            expiry?.cancel()
+            tracker.pauseGps(if (tracker.state.segment != null) "Seguimiento GPS pausado. Puedes avanzar manualmente."
+                else tracker.state.gpsMessage)
+            publish()
         }
-    }
-
-    fun onStart() {
-        val access = gps.accessState()
-        if (access != GpsLocationState.Idle) {
-            requestVersion++
-            job?.cancel()
-            mutableState.value = mutableState.value.copy(location = access, route = null, routing = false)
-        }
-    }
-
-    /** Refresca solo el marcador/proximidad, sin recalcular ni reenviar posiciones a ORS. */
-    suspend fun updateActivePosition() {
-        if (job?.isActive == true || mutableState.value.route !is WalkingRouteResult.Success) return
-        val version = requestVersion
-        val location = gps.read()
-        coroutineContext.ensureActive()
-        if (requestVersion == version && mutableState.value.route is WalkingRouteResult.Success) {
-            mutableState.value = mutableState.value.copy(location = location)
-        }
-    }
-
-    /** La cancelación del scope STARTED retira la suscripción, sin consultar ORS. */
-    suspend fun trackActivePosition(
-        intervalMillis: Long,
-        requireRoute: Boolean = true,
-        onLocation: (GpsLocationState) -> Unit
-    ) {
-        fun canTrack() = mutableState.value.destination != null &&
-            (!requireRoute || mutableState.value.route is WalkingRouteResult.Success)
-        if (!canTrack()) return
-        val version = requestVersion
-        val destinationId = mutableState.value.destination?.id
-        gps.updates(intervalMillis).collect { location ->
-            coroutineContext.ensureActive()
-            // Refrescar/calcular la ruta no debe silenciar la proximidad independiente de ORS.
-            val sameRequest = if (requireRoute) requestVersion == version
-                else mutableState.value.destination?.id == destinationId
-            if (sameRequest && canTrack()) {
-                mutableState.value = mutableState.value.copy(location = location)
-                onLocation(location)
-            }
-        }
-    }
-
-    fun onStop() {
-        requestVersion++
-        job?.cancel()
-        mutableState.value = mutableState.value.copy(location = gps.accessState(), route = null, routing = false)
     }
 }

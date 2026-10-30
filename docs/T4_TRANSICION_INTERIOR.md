@@ -1,5 +1,8 @@
 # T4/T9 — Integración exterior → interior
 
+> **Histórico:** sustituido por [GUIADO_EXTERIOR_FIJO.md](GUIADO_EXTERIOR_FIJO.md).
+> El edificio auxiliar no se asocia a la entrada PB del edificio principal; el interior sigue siendo independiente.
+
 Este documento actualiza el comportamiento y los resultados de `T4_EXTERIOR.md`.
 
 ## Uso

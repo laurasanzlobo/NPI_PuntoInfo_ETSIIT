@@ -1,6 +1,7 @@
 package com.example.npi_puntoinfo_etsiit.ui.components
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.AltRoute
@@ -10,11 +11,15 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.stateDescription
 import androidx.core.text.HtmlCompat
 import com.example.npi_puntoinfo_etsiit.outdoor.*
 
 @Composable
-fun WalkingStepRow(step: WalkingStep, number: Int) {
+fun WalkingStepRow(step: WalkingStep, number: Int, modifier: Modifier = Modifier,
+                   active: Boolean = false, completed: Boolean = false) {
     val icon = when (step.maneuver) {
         Maneuver.LEFT, Maneuver.KEEP_LEFT -> Icons.Default.TurnLeft
         Maneuver.RIGHT, Maneuver.KEEP_RIGHT -> Icons.Default.TurnRight
@@ -28,7 +33,12 @@ fun WalkingStepRow(step: WalkingStep, number: Int) {
         Maneuver.ARRIVAL -> Icons.Default.Flag
         Maneuver.UNKNOWN -> Icons.AutoMirrored.Filled.AltRoute
     }
-    Surface(shape = RoundedCornerShape(12.dp), color = MaterialTheme.colorScheme.surfaceContainerLow) {
+    Surface(modifier = modifier.semantics {
+        selected = active
+        stateDescription = when { active -> "Instrucción actual"; completed -> "Completada"; else -> "Pendiente" }
+    }, shape = RoundedCornerShape(12.dp),
+        border = if (active) BorderStroke(2.dp, MaterialTheme.colorScheme.primary) else null,
+        color = if (active) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainerLow) {
         Row(Modifier.fillMaxWidth().padding(10.dp), verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             Surface(shape = RoundedCornerShape(10.dp), color = MaterialTheme.colorScheme.primaryContainer) {
@@ -36,7 +46,9 @@ fun WalkingStepRow(step: WalkingStep, number: Int) {
                     tint = MaterialTheme.colorScheme.onPrimaryContainer)
             }
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                Text("$number · ${formatOutdoorDistance(step.distanceMeters)}",
+                if (active || completed) Text(if (active) "Instrucción actual" else "Completada",
+                    style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
+                Text("$number" + (step.distanceMeters?.let { " · ${formatOutdoorDistance(it)}" } ?: ""),
                     style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
                 Text(HtmlCompat.fromHtml(step.instruction, HtmlCompat.FROM_HTML_MODE_LEGACY).toString().trim(),
                     style = MaterialTheme.typography.bodyMedium)

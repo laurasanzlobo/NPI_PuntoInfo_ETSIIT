@@ -2,177 +2,113 @@ package com.example.npi_puntoinfo_etsiit.outdoor
 
 import com.example.npi_puntoinfo_etsiit.sensors.*
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.channels.Channel
 import org.junit.Assert.*
 import org.junit.Test
 
 class OutdoorNavigatorTest {
-    private class LocationSource : DeviceLocationSource {
-        var permission = LocationPermission.PRECISE
-        var enabled = true
-        var coordinates: DeviceCoordinates? = DeviceCoordinates(
-            CampusLocationManager.ETSIIT_LATITUDE, CampusLocationManager.ETSIIT_LONGITUDE, 8f)
+    @Test fun missingFirstFixShowsAnExplanationAndALateFixStillSelectsItsNode() = runBlocking {
+        val fixes = Channel<DeviceCoordinates>(Channel.UNLIMITED)
+        val source = object : DeviceLocationSource {
+            override fun permission() = LocationPermission.PRECISE
+            override fun isLocationEnabled() = true
+            override suspend fun currentLocation(permission: LocationPermission): DeviceCoordinates? = null
+            override fun updates(permission: LocationPermission, intervalMillis: Long) = flow {
+                for (fix in fixes) emit(fix)
+            }
+        }
+        val navigator = OutdoorNavigator(FixedRouteTracker(SyntheticRoute.route,
+            TrackingPolicy(firstFixTimeoutMillis = 30)), GpsLocationReader(source))
+        navigator.start()
+        val job = launch { navigator.track { 1_000L } }
+        withTimeout(2_000) { navigator.state.first { it.gpsMessage.contains("No se recibe ubicación") } }
+        assertTrue(navigator.state.value.gpsProblem)
+        fixes.send(SyntheticRoute.fix(50.0, 0.0, 1_000, 25f))
+        withTimeout(2_000) { navigator.state.first { it.positionConfirmed } }
+        assertEquals(1, navigator.state.value.stepIndex)
+        assertFalse(navigator.state.value.gpsProblem)
+        job.cancelAndJoin()
+    }
+
+    @Test fun manualDemonstrationNeedsNeitherGpsNorNetwork() {
         var reads = 0
-        override fun permission() = permission
-        override fun isLocationEnabled() = enabled
-        override suspend fun currentLocation(permission: LocationPermission): DeviceCoordinates? {
-            reads++
-            return coordinates
+        val source = object : DeviceLocationSource {
+            override fun permission() = LocationPermission.DENIED
+            override fun isLocationEnabled() = false
+            override suspend fun currentLocation(permission: LocationPermission): DeviceCoordinates? { reads++; return null }
         }
+        val navigator = OutdoorNavigator(FixedRouteTracker(EtsiitAuxiliaryRoute.route), GpsLocationReader(source))
+        navigator.start(); repeat(EtsiitAuxiliaryRoute.route.waypoints.lastIndex) { navigator.next() }
+        assertTrue(navigator.state.value.arrived)
+        assertEquals(ProgressSource.MANUAL, navigator.state.value.source)
+        repeat(EtsiitAuxiliaryRoute.route.waypoints.lastIndex) { navigator.previous() }
+        assertEquals(0, navigator.state.value.stepIndex)
+        navigator.restart()
+        assertEquals(GuidanceState(), navigator.state.value)
+        navigator.start(); navigator.finish()
+        assertFalse(navigator.state.value.started)
+        assertEquals(0, reads)
     }
 
-    private class Routes : WalkingRouteSource {
-        var calls = 0
-        var requestedDestination: GeoPoint? = null
-        var result: WalkingRouteResult = WalkingRouteResult.Failure(RouteError.NO_ROUTE)
-        var onRequest: suspend () -> Unit = {}
-        override suspend fun route(origin: GeoPoint, destination: GeoPoint): WalkingRouteResult {
-            calls++
-            requestedDestination = destination
-            onRequest()
-            return result
+    @Test fun deniedPermissionDoesNotPreventManualProgress() = runBlocking {
+        val source = object : DeviceLocationSource {
+            override fun permission() = LocationPermission.DENIED
+            override fun isLocationEnabled() = true
+            override suspend fun currentLocation(permission: LocationPermission): DeviceCoordinates? = error("No debe leer")
         }
-    }
-
-    @Test fun openingScreenAndSelectingDestinationNeverSendLocation() {
-        val source = LocationSource()
-        val routes = Routes()
-        val navigator = OutdoorNavigator(GpsLocationReader(source), routes, "dining-aynadamar")
-        navigator.onStart()
-        navigator.selectDestination("etsiit")
-        assertEquals("etsiit", navigator.state.value.destination?.id)
-        assertEquals(0, source.reads)
-        assertEquals(0, routes.calls)
-    }
-
-    @Test fun locationOnlyDoesNotContactRoutingProvider() = runBlocking {
-        val source = LocationSource()
-        val routes = Routes()
-        val navigator = OutdoorNavigator(GpsLocationReader(source), routes, "dining-aynadamar")
-        navigator.refreshLocation(this)
+        val navigator = OutdoorNavigator(FixedRouteTracker(SyntheticRoute.route), GpsLocationReader(source))
+        navigator.start()
+        val job = launch { navigator.track { 1_000L } }
         yield()
-        assertTrue(navigator.state.value.location is GpsLocationState.Available)
-        assertEquals(0, routes.calls)
+        assertTrue(navigator.state.value.gpsMessage.contains("Sin permiso"))
+        navigator.next()
+        assertEquals(1, navigator.state.value.stepIndex)
+        job.cancelAndJoin()
     }
 
-    @Test fun invalidDestinationDoesNotStartRequests() = runBlocking {
-        val source = LocationSource()
-        val routes = Routes()
-        val navigator = OutdoorNavigator(GpsLocationReader(source), routes, "unknown")
-        navigator.requestRoute(this)
-        yield()
-        assertNull(navigator.state.value.destination)
-        assertEquals(0, source.reads)
-        assertEquals(0, routes.calls)
-    }
-
-    @Test fun deniedDisabledAndUnavailableLocationNeverReachRoutingService() = runBlocking {
-        listOf<LocationSource.() -> Unit>(
-            { permission = LocationPermission.DENIED }, { enabled = false }, { coordinates = null }
-        ).forEach { configure ->
-            val source = LocationSource().apply(configure)
-            val routes = Routes()
-            val navigator = OutdoorNavigator(GpsLocationReader(source), routes, "dining-aynadamar")
-            navigator.requestRoute(this)
-            yield()
-            assertEquals(0, routes.calls)
-            assertFalse(navigator.state.value.routing)
-            assertNull(navigator.state.value.route)
+    @Test fun cancellationRemovesSubscriptionAndGpsEvidenceButKeepsManualProgress() = runBlocking {
+        var subscribed = false
+        val source = object : DeviceLocationSource {
+            override fun permission() = LocationPermission.PRECISE
+            override fun isLocationEnabled() = true
+            override suspend fun currentLocation(permission: LocationPermission): DeviceCoordinates? = null
+            override fun updates(permission: LocationPermission, intervalMillis: Long) = flow<DeviceCoordinates?> {
+                subscribed = true
+                try { emit(SyntheticRoute.fix(0.0, 0.0, 1_000)); awaitCancellation() }
+                finally { subscribed = false }
+            }
         }
+        val navigator = OutdoorNavigator(FixedRouteTracker(SyntheticRoute.route), GpsLocationReader(source))
+        navigator.start()
+        val job = launch { navigator.track { 1_000L } }
+        yield()
+        assertTrue(subscribed)
+        job.cancelAndJoin()
+        assertFalse(subscribed)
+        assertTrue(navigator.state.value.started)
+        assertNull(navigator.state.value.segment)
+        assertNull(navigator.state.value.remainingMeters)
     }
 
-    @Test fun explicitRequestsUseSelectedDestinationAndFreshGps() = runBlocking {
-        val source = LocationSource()
-        val routes = Routes()
-        val navigator = OutdoorNavigator(GpsLocationReader(source), routes, "dining-aynadamar")
-        navigator.requestRoute(this)
-        yield()
-        navigator.selectDestination("dining-pts")
-        assertNull(navigator.state.value.route)
-        navigator.requestRoute(this)
-        yield()
-        assertEquals(2, source.reads)
-        assertEquals(2, routes.calls)
-        assertEquals(OutdoorDestinations.forDiningHall("pts")!!.point, routes.requestedDestination)
-        assertEquals(WalkingRouteResult.Failure(RouteError.NO_ROUTE), navigator.state.value.route)
-    }
-
-    @Test fun doubleClickDoesNotDuplicatePendingRequest() = runBlocking {
-        val routes = Routes().apply { onRequest = { awaitCancellation() } }
-        val navigator = OutdoorNavigator(GpsLocationReader(LocationSource()), routes, "etsiit")
-        navigator.requestRoute(this)
-        yield()
-        navigator.requestRoute(this)
-        yield()
-        assertEquals(1, routes.calls)
-        navigator.onStop()
-        yield()
-        assertFalse(navigator.state.value.routing)
-    }
-
-    @Test fun destinationChangeCancelsOldRouteAndNeverPublishesIt() = runBlocking {
-        val routes = Routes().apply { onRequest = { awaitCancellation() } }
-        val navigator = OutdoorNavigator(GpsLocationReader(LocationSource()), routes, "etsiit")
-        navigator.requestRoute(this)
-        yield()
-        navigator.selectDestination("dining-cartuja")
-        yield()
-        assertNull(navigator.state.value.route)
-        assertFalse(navigator.state.value.routing)
-        assertEquals("dining-cartuja", navigator.state.value.destination?.id)
-    }
-
-    @Test fun leavingScreenClearsPositionRouteAndPendingRequests() = runBlocking {
-        val navigator = OutdoorNavigator(GpsLocationReader(LocationSource()), Routes(), "etsiit")
-        navigator.requestRoute(this)
-        yield()
-        assertTrue(navigator.state.value.location is GpsLocationState.Available)
-        assertNotNull(navigator.state.value.route)
-        navigator.onStop()
-        assertEquals(GpsLocationState.Idle, navigator.state.value.location)
-        assertNull(navigator.state.value.route)
-    }
-
-    @Test fun permissionRevocationOnReturnRemovesPosition() = runBlocking {
-        val source = LocationSource()
-        val navigator = OutdoorNavigator(GpsLocationReader(source), Routes(), "etsiit")
-        navigator.refreshLocation(this)
-        yield()
-        source.permission = LocationPermission.DENIED
-        navigator.onStart()
-        assertEquals(GpsLocationState.PermissionDenied, navigator.state.value.location)
-        assertNull(navigator.state.value.route)
-    }
-
-    @Test fun activePositionUpdatesPreserveRouteAndNeverContactServiceAgain() = runBlocking {
-        val source = LocationSource()
-        val route = WalkingRoute(listOf(GeoPoint(37.19, -3.62), GeoPoint(37.20, -3.63)), 200.0, 150.0, emptyList())
-        val routes = Routes().apply { result = WalkingRouteResult.Success(route) }
-        val navigator = OutdoorNavigator(GpsLocationReader(source), routes, "etsiit")
-        navigator.requestRoute(this)
-        yield()
-        source.coordinates = DeviceCoordinates(37.1971, -3.6244, 5f)
-        navigator.updateActivePosition()
-        assertEquals(2, source.reads)
-        assertEquals(1, routes.calls)
-        assertEquals(route, (navigator.state.value.route as WalkingRouteResult.Success).route)
-        assertEquals(source.coordinates, (navigator.state.value.location as GpsLocationState.Available).coordinates)
-        navigator.onStop()
-        navigator.updateActivePosition()
-        assertEquals(2, source.reads)
-    }
-
-    @Test fun lostPermissionDuringNavigationDoesNotInventArrivalOrDiscardRoute() = runBlocking {
-        val source = LocationSource()
-        val routes = Routes().apply {
-            result = WalkingRouteResult.Success(WalkingRoute(emptyList(), 0.0, null, emptyList()))
+    @Test fun silentProviderExpiresTheLastPositionWithoutAdvancing() = runBlocking {
+        val source = object : DeviceLocationSource {
+            override fun permission() = LocationPermission.PRECISE
+            override fun isLocationEnabled() = true
+            override suspend fun currentLocation(permission: LocationPermission): DeviceCoordinates? = null
+            override fun updates(permission: LocationPermission, intervalMillis: Long) = flow<DeviceCoordinates?> {
+                emit(SyntheticRoute.fix(0.0, 0.0, 1_000)); awaitCancellation()
+            }
         }
-        val navigator = OutdoorNavigator(GpsLocationReader(source), routes, "dining-pts")
-        navigator.requestRoute(this)
-        yield()
-        source.permission = LocationPermission.DENIED
-        navigator.updateActivePosition()
-        assertEquals(GpsLocationState.PermissionDenied, navigator.state.value.location)
-        assertEquals("dining-pts", navigator.state.value.destination!!.id)
-        assertEquals(1, routes.calls)
+        val navigator = OutdoorNavigator(FixedRouteTracker(SyntheticRoute.route,
+            TrackingPolicy(maxFixAgeMillis = 50)), GpsLocationReader(source))
+        navigator.start()
+        val job = launch { navigator.track { 1_000L } }
+        withTimeout(2_000) { navigator.state.first { it.segment != null } }
+        withTimeout(2_000) { navigator.state.first { it.gpsMessage.contains("Sin posición GPS reciente") } }
+        assertEquals(0, navigator.state.value.stepIndex)
+        assertNull(navigator.state.value.remainingMeters)
+        job.cancelAndJoin()
     }
 }

@@ -1,5 +1,8 @@
 # T4, etapa 2 — mapa y rutas peatonales
 
+> **Histórico, sustituido:** el flujo actual no usa mapas, claves ni proveedores de rutas.
+> Consulta [GUIADO_EXTERIOR_FIJO.md](GUIADO_EXTERIOR_FIJO.md). No seguir la configuración ORS de este documento.
+
 ## Uso y configuración
 
 1. Crea una cuenta y una clave para **Directions** en <https://account.heigit.org/> (openrouteservice/HeiGIT). El servicio ofrece acceso gratuito con cuota, no es un servidor de demostración. Consulta los límites vigentes de tu cuenta: <https://account.heigit.org/info/plans> y sus condiciones: <https://account.heigit.org/info/tos>. No se ha creado una cuenta ni aceptado condiciones en nombre del equipo.

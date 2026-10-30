@@ -1,17 +1,7 @@
-import java.util.Properties
-
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
 }
-
-// T4: credencial local, nunca en el repositorio. También admite ORS_API_KEY en el entorno.
-val outdoorProperties = Properties().apply {
-    val local = rootProject.file("local.properties")
-    if (local.exists()) local.inputStream().use { load(it) }
-}
-val orsApiKey = providers.environmentVariable("ORS_API_KEY")
-    .orElse(outdoorProperties.getProperty("ORS_API_KEY", "")).get()
 
 android {
     namespace = "com.example.npi_puntoinfo_etsiit"
@@ -27,7 +17,6 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-        buildConfigField("String", "ORS_API_KEY", "\"${orsApiKey.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "").replace("\r", "")}\"")
     }
 
     buildTypes {
@@ -60,7 +49,6 @@ dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation("com.google.android.gms:play-services-location:21.3.0")
-    implementation("org.maplibre.gl:android-sdk:13.7.1")
     testImplementation(libs.junit)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
