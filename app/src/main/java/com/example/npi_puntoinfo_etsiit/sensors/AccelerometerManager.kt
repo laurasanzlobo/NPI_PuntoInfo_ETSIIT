@@ -27,8 +27,9 @@ enum class DeviceOrientation(val label: String) {
  * Todos los gestos parten de cómo el usuario sujeta normalmente el móvil (un poco inclinado)
  * y ejecutan la acción únicamente cuando el móvil regresa a esa posición inicial de lectura:
  *
- * 1. Gesto de Clase Actual (3 inclinaciones hacia adelante y volver):
- *    - Sujetando el móvil normalmente (un poco inclinado), echar la punta superior hacia adelante 3 veces (1, 2, 3) y volver a la posición.
+ * 1. Gesto de Clase Actual (3 inclinaciones rápidas hacia adelante y volver):
+ *    - 3 cabeceos consecutivos y enérgicos hacia adelante en < 1.6 s (máximo 600 ms entre cabeceos).
+ *    - Si se tarda más, el contador se resetea a cero de inmediato para evitar acumulaciones involuntarias.
  * 2. Gesto «¡Llévame!» (Inclinar totalmente a la izquierda y volver):
  *    - Girar el móvil hasta que la pantalla mire claramente hacia la izquierda (x >= 7.5 m/s²) y volver a ponerlo recto frente al usuario.
  * 3. Gesto de Acción Rápida (Desde inclinado, llevarlo a vertical hacia ti y volver):
@@ -63,7 +64,6 @@ class AccelerometerManager(context: Context) : SensorEventListener {
     // =========================================================================
     // Parámetros Gesto 1 («¡Llévame!»): Pantalla totalmente hacia la izquierda y volver
     // =========================================================================
-    // Exige ~60º-85º de inclinación lateral izquierda (pantalla mirando a la izquierda)
     private val TILT_LEFT_STRONG_THRESHOLD = 7.5f
     private val RETURN_NEUTRAL_MAX_X = 2.4f
     private val MIN_TILT_LEFT_DURATION_MS = 80L
@@ -150,7 +150,7 @@ class AccelerometerManager(context: Context) : SensorEventListener {
                     onShakeProgress?.invoke(newCount, 3)
                 }
                 if (triggered) {
-                    Log.i(gestureTag, "3 inclinaciones hacia adelante y retorno completadas")
+                    Log.i(gestureTag, "3 inclinaciones consecutivas hacia adelante completadas")
                     lastPitchGestureTime = System.currentTimeMillis()
                     isTiltedLeftForTakeMe = false
                     isAtVerticalForAction = false
@@ -173,12 +173,14 @@ class AccelerometerManager(context: Context) : SensorEventListener {
         // 2. RESPALDO ACELERÓMETRO PARA 3 INCLINACIONES HACIA ADELANTE (sin giroscopio)
         // =========================================================================
         if (gyroscope == null && onShakeDetected != null) {
-            if (accelForwardTiltCount > 0 && now - accelFirstForwardTiltTime > 3500L) {
+            // Ventana máxima estricta de 1.6 s y máximo 650 ms entre inclinaciones
+            if (accelForwardTiltCount > 0 && now - accelFirstForwardTiltTime > 1600L) {
                 accelForwardTiltCount = 0
                 accelInForwardPush = false
                 accelWaitingFinalReturn = false
+                onShakeProgress?.invoke(0, 3)
             }
-            if (!accelInForwardPush && !accelWaitingFinalReturn && z > 8.2f && abs(x) < 4.0f) {
+            if (!accelInForwardPush && !accelWaitingFinalReturn && z > 8.5f && abs(x) < 3.5f) {
                 accelInForwardPush = true
                 if (accelForwardTiltCount == 0) accelFirstForwardTiltTime = now
                 accelForwardTiltCount++
@@ -190,7 +192,7 @@ class AccelerometerManager(context: Context) : SensorEventListener {
                 accelInForwardPush = false
             }
 
-            if (accelWaitingFinalReturn && z in 3.0f..7.2f && abs(x) < 3.5f) {
+            if (accelWaitingFinalReturn && z in 3.0f..7.0f && abs(x) < 3.2f) {
                 accelForwardTiltCount = 0
                 accelInForwardPush = false
                 accelWaitingFinalReturn = false
@@ -323,9 +325,12 @@ class AccelerometerManager(context: Context) : SensorEventListener {
 
 /**
  * Detector del gesto de Consulta de Clase Actual:
- * Funciona desde cualquier ángulo cómodo en el que el usuario sujete el móvil (normalmente un poco inclinado).
- * Detecta 3 inclinaciones de la punta superior hacia adelante (1, 2, 3) y dispara la acción
- * cuando el usuario devuelve el móvil a su posición tras la 3ª inclinación.
+ * Exige realizar 3 inclinaciones consecutivas hacia adelante (1, 2, 3) en una ventana rápida de tiempo.
+ *
+ * Temporización estricta:
+ * - Ventana máxima total: 1.6 segundos para las 3 repeticiones.
+ * - Pausa máxima entre cabeceos: 600 ms. Si pasa más de 600 ms sin hacer el siguiente, se resetea a 0.
+ * - Exige movimiento de cabeceo deliberado (gx < -0.80 rad/s) y dominante en el eje X para no confundirse con giros o pasos al andar.
  */
 internal class TripleForwardTiltDetector {
     private enum class State {
@@ -340,17 +345,19 @@ internal class TripleForwardTiltDetector {
 
     private var previousTimestampNs = 0L
     private var firstTiltNs = 0L
-    private var lastActivityNs = 0L
+    private var lastTiltCompletedNs = 0L
     private var enteredReturnNs = 0L
     private var lastTriggeredNs = -3_000_000_000L
 
     private var currentForwardAngle = 0f
     private var finalReturnAngle = 0f
 
-    private val minPushSpeed = 0.45f          // rad/s hacia adelante (gx < -0.45)
-    private val minForwardAngle = 0.13f       // radianes (~7.5º) por cada inclinación hacia adelante
-    private val maxPauseBetweenTiltsNs = 1_500_000_000L
-    private val maxTotalSequenceNs = 4_200_000_000L
+    // Velocidad angular mínima: movimiento intencionado y rápido de cabeceo
+    private val minPushSpeed = 0.80f          // rad/s (gx < -0.80)
+    private val minForwardAngle = 0.16f       // radianes (~9.5º)
+    // Límites de tiempo estrictos: 600 ms de pausa máxima entre cabeceos y 1.6 s en total
+    private val maxPauseBetweenTiltsNs = 600_000_000L
+    private val maxTotalSequenceNs = 1_600_000_000L
     private val cooldownNs = 1_500_000_000L
 
     fun reset() {
@@ -358,7 +365,7 @@ internal class TripleForwardTiltDetector {
         currentCount = 0
         previousTimestampNs = 0L
         firstTiltNs = 0L
-        lastActivityNs = 0L
+        lastTiltCompletedNs = 0L
         enteredReturnNs = 0L
         currentForwardAngle = 0f
         finalReturnAngle = 0f
@@ -378,37 +385,40 @@ internal class TripleForwardTiltDetector {
         }
         if (timestampNs - lastTriggeredNs < cooldownNs) return false
 
+        // Control de tiempo estricto: si pasa demasiado tiempo entre cabeceos o en total, resetear a 0
         if (currentCount > 0 || state != State.WAITING_FORWARD_PUSH) {
-            if (timestampNs - lastActivityNs > maxPauseBetweenTiltsNs ||
-                (firstTiltNs > 0L && timestampNs - firstTiltNs > maxTotalSequenceNs)
-            ) {
+            val timeSinceFirst = if (firstTiltNs > 0L) timestampNs - firstTiltNs else 0L
+            val timeSinceLast = if (lastTiltCompletedNs > 0L) timestampNs - lastTiltCompletedNs else 0L
+
+            if (timeSinceFirst > maxTotalSequenceNs || (currentCount in 1..2 && timeSinceLast > maxPauseBetweenTiltsNs)) {
                 reset()
                 previousTimestampNs = timestampNs
+                return false
             }
         }
 
-        // Permitimos cierta holgura lateral de la muñeca al sujetar el móvil inclinado
-        val xIsPrimaryAxis = abs(x) >= 0.55f * abs(y) && abs(x) >= 0.55f * abs(z)
+        // Exige que el cabeceo (eje X) sea claramente dominante respecto a giros laterales de muñeca
+        val xIsPrimaryAxis = abs(x) >= 0.75f * abs(y) && abs(x) >= 0.75f * abs(z)
 
         when (state) {
             State.WAITING_FORWARD_PUSH -> {
-                // Empuje de la punta superior hacia adelante (gx negativo)
+                // Empuje decidido hacia adelante (gx < -0.80)
                 if (x < -minPushSpeed && xIsPrimaryAxis) {
                     state = State.IN_FORWARD_PUSH
                     currentForwardAngle = abs(x) * dt
-                    if (currentCount == 0) firstTiltNs = timestampNs
-                    lastActivityNs = timestampNs
+                    if (currentCount == 0) {
+                        firstTiltNs = timestampNs
+                    }
                 }
             }
             State.IN_FORWARD_PUSH -> {
-                if (x < -0.12f) {
+                if (x < -0.20f) {
                     currentForwardAngle += abs(x) * dt
-                    lastActivityNs = timestampNs
-                } else if (x >= 0.10f || (currentForwardAngle >= minForwardAngle && x >= -0.05f)) {
-                    // Terminó el empuje hacia adelante y empieza a regresar (o pausa tras completar el ángulo)
+                } else if (x >= 0.15f || (currentForwardAngle >= minForwardAngle && x >= -0.05f)) {
+                    // Terminó el empuje hacia adelante y empieza a retroceder a la posición
                     if (currentForwardAngle >= minForwardAngle) {
                         currentCount++
-                        lastActivityNs = timestampNs
+                        lastTiltCompletedNs = timestampNs
                         if (currentCount >= 3) {
                             state = State.WAITING_FINAL_RETURN
                             enteredReturnNs = timestampNs
@@ -417,22 +427,21 @@ internal class TripleForwardTiltDetector {
                             state = State.WAITING_FORWARD_PUSH
                             currentForwardAngle = 0f
                         }
-                    } else if (x > 0.35f) {
-                        // Movimiento muy pequeño descartado
+                    } else if (x > 0.40f) {
+                        // Movimiento insuficiente, descartar este intento
                         state = State.WAITING_FORWARD_PUSH
                         currentForwardAngle = 0f
                     }
                 }
             }
             State.WAITING_FINAL_RETURN -> {
-                if (x > 0.08f) {
+                if (x > 0.10f) {
                     finalReturnAngle += x * dt
-                    lastActivityNs = timestampNs
                 }
                 val returnElapsedNs = timestampNs - enteredReturnNs
-                // Se dispara en cuanto el móvil vuelve hacia el usuario y se detiene en su posición
-                val returnedAndSettled = (finalReturnAngle >= 0.10f && x < 0.55f) ||
-                        (returnElapsedNs >= 160_000_000L && abs(x) < 0.65f)
+                // Se dispara cuando el móvil regresa a la posición y se estabiliza
+                val returnedAndSettled = (finalReturnAngle >= 0.12f && x < 0.50f) ||
+                        (returnElapsedNs >= 180_000_000L && abs(x) < 0.60f)
 
                 if (returnedAndSettled) {
                     lastTriggeredNs = timestampNs
