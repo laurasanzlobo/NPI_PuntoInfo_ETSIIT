@@ -9,10 +9,10 @@
       "nombre": "Grado en Ingeniería Informática",
       "cursos": [
         {
-          "curso": 3,
+          "curso": 4,
           "grupo": "A",
           "cuatrimestre": 1,
-          "mencion": "Computación y Sistemas Inteligentes",
+          "mencion": "",
           "horario": {
             "Lunes": [
               {
@@ -58,7 +58,7 @@
                 "room_code": "2.3",
                 "planta": "P2",
                 "tipo_espacio": "laboratorio",
-                "professor": "Manuel Gómez Olmedo",
+                "professor": "Manuel Pegalajar Cuéllar",
                 "isPractice": true,
                 "isCurrent": false
               },
@@ -90,7 +90,7 @@
                 "room_code": "1.1",
                 "planta": "P1",
                 "tipo_espacio": "aula",
-                "professor": "Manuel Gómez Olmedo",
+                "professor": "Manuel Pegalajar Cuéllar",
                 "isPractice": false,
                 "isCurrent": false
               },

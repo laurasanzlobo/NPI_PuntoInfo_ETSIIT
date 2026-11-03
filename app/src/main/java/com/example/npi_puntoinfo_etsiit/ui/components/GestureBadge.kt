@@ -4,17 +4,12 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Mic
-import androidx.compose.material.icons.filled.PanTool
-import androidx.compose.material.icons.filled.ScreenRotation
-import androidx.compose.material.icons.filled.TouchApp
 import androidx.compose.material.icons.filled.Vibration
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -28,15 +23,15 @@ import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.PathNode
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.npi_puntoinfo_etsiit.ui.theme.*
 
 /**
- * Icono personalizado para el gesto de giro de muñeca («¡Llévame!»):
- * Representa un móvil vertical con una flecha que sale de la derecha,
- * cruza por delante de la pantalla y rota hacia la izquierda.
+ * Icono personalizado para el gesto «¡Llévame!» (Inclinar a la izquierda y volver):
+ * Representa un móvil vertical con una flecha curva hacia la izquierda.
  */
 val WristTwistIcon: ImageVector by lazy {
     ImageVector.Builder(
@@ -104,6 +99,78 @@ val WristTwistIcon: ImageVector by lazy {
 }
 
 /**
+ * Icono personalizado para el Gesto de Acción (Inclinar hacia ti):
+ * Muestra el móvil a la izquierda y una flecha recta vertical hacia abajo (↓) a la derecha,
+ * dejando el móvil visible y comunicando de forma directa y limpia el movimiento hacia abajo / hacia ti.
+ */
+val TiltTowardsUserIcon: ImageVector by lazy {
+    ImageVector.Builder(
+        name = "TiltTowardsUserIcon",
+        defaultWidth = 24.dp,
+        defaultHeight = 24.dp,
+        viewportWidth = 24f,
+        viewportHeight = 24f
+    ).addPath(
+        // Contorno exterior del móvil (lado izquierdo)
+        pathData = listOf(
+            PathNode.MoveTo(4.5f, 3.5f),
+            PathNode.HorizontalTo(12.5f),
+            PathNode.CurveTo(13.6f, 3.5f, 14.5f, 4.4f, 14.5f, 5.5f),
+            PathNode.VerticalTo(18.5f),
+            PathNode.CurveTo(14.5f, 19.6f, 13.6f, 20.5f, 12.5f, 20.5f),
+            PathNode.HorizontalTo(4.5f),
+            PathNode.CurveTo(3.4f, 20.5f, 2.5f, 19.6f, 2.5f, 18.5f),
+            PathNode.VerticalTo(5.5f),
+            PathNode.CurveTo(2.5f, 4.4f, 3.4f, 3.5f, 4.5f, 3.5f),
+            PathNode.Close
+        ),
+        stroke = SolidColor(Color.Black),
+        strokeLineWidth = 1.5f,
+        strokeLineCap = StrokeCap.Round,
+        strokeLineJoin = StrokeJoin.Round
+    ).addPath(
+        // Altavoz superior del móvil
+        pathData = listOf(
+            PathNode.MoveTo(6.8f, 5.5f),
+            PathNode.HorizontalTo(10.2f)
+        ),
+        stroke = SolidColor(Color.Black),
+        strokeLineWidth = 1.4f,
+        strokeLineCap = StrokeCap.Round
+    ).addPath(
+        // Barra inferior de navegación
+        pathData = listOf(
+            PathNode.MoveTo(6.5f, 18.5f),
+            PathNode.HorizontalTo(10.5f)
+        ),
+        stroke = SolidColor(Color.Black),
+        strokeLineWidth = 1.4f,
+        strokeLineCap = StrokeCap.Round
+    ).addPath(
+        // Línea vertical recta descendente de la flecha (lado derecho)
+        pathData = listOf(
+            PathNode.MoveTo(19.0f, 4.5f),
+            PathNode.LineTo(19.0f, 15.0f)
+        ),
+        stroke = SolidColor(Color.Black),
+        strokeLineWidth = 2.2f,
+        strokeLineCap = StrokeCap.Round
+    ).addPath(
+        // Punta de flecha hacia abajo
+        pathData = listOf(
+            PathNode.MoveTo(19.0f, 20.0f),
+            PathNode.LineTo(15.2f, 14.0f),
+            PathNode.LineTo(22.8f, 14.0f),
+            PathNode.Close
+        ),
+        fill = SolidColor(Color.Black),
+        stroke = SolidColor(Color.Black),
+        strokeLineWidth = 0.6f,
+        strokeLineJoin = StrokeJoin.Round
+    ).build()
+}
+
+/**
  * Tipos de gestos físicos soportados en la aplicación Punto Info ETSIIT.
  */
 enum class GestureType(
@@ -116,47 +183,47 @@ enum class GestureType(
     val badgeColor: Color
 ) {
     TAKE_ME_THERE(
-        title = "Gesto «¡Llévame!»",
-        gestureName = "Giro de muñeca",
-        description = "Gira el terminal verticalmente hacia la izquierda con un giro de muñeca para iniciar el guiado y ver la ruta hasta este destino.",
-        howTo = "Gira el móvil de pie hacia la izquierda con un giro rápido de muñeca.",
-        whatFor = "Inicia el mapa y traza automáticamente la ruta guiada hacia el destino (comedor, despacho o aula).",
+        title = "Llévame",
+        gestureName = "Inclinar a la izquierda",
+        description = "Inclina el móvil hacia la izquierda y devuélvelo a tu posición inicial para iniciar el guiado hasta el destino.",
+        howTo = "Inclina el móvil hacia la izquierda.",
+        whatFor = "Te guía directamente hasta el destino indicado.",
         icon = WristTwistIcon,
         badgeColor = CampusTeal
     ),
-    ACTION_TRIGGER(
-        title = "Gesto de Acción",
-        gestureName = "Movimiento físico de acción",
-        description = "Realiza el gesto de acción rápida para encargar comida para llevar o enviar un correo al profesor.",
-        howTo = "Realiza un movimiento rápido de inclinación/toque hacia el frente.",
-        whatFor = "Ejecuta al instante la acción principal de la tarjeta: encargar comida para llevar en comedores o redactar un correo al profesor.",
-        icon = Icons.Default.TouchApp,
-        badgeColor = WarningAmber
-    ),
-    LIFT_PHONE(
-        title = "Guiado Paso a Paso",
-        gestureName = "Levantar el terminal",
-        description = "Levanta el móvil verticalmente para ver el guiado paso a paso con fotos del recorrido, o bájalo horizontalmente para volver al mapa 2D.",
-        howTo = "Levanta el terminal a posición vertical frente a ti; bájalo a posición horizontal para volver al plano 2D.",
-        whatFor = "Alterna durante una ruta entre la vista de plano general 2D y el guiado inmersivo con fotografías reales de cada pasillo de la ETSIIT.",
-        icon = Icons.Default.ArrowUpward,
-        badgeColor = EtsiitBlue
-    ),
     TRIPLE_SHAKE(
-        title = "Consulta de Próxima Clase",
-        gestureName = "Agitar 3 veces",
-        description = "Agita el teléfono 3 veces consecutivas en cualquier pantalla de la app para consultar tu clase actual o próxima y su aula correspondiente.",
-        howTo = "Agita el móvil con energía de un lado a otro 3 veces seguidas.",
-        whatFor = "Abre una ventana emergente en cualquier pantalla mostrando la clase que tienes ahora o la siguiente, el horario, el aula y acceso directo para guiarte.",
+        title = "Clase actual",
+        gestureName = "3 veces hacia adelante",
+        description = "Echa la punta superior del móvil hacia adelante 3 veces (1, 2, 3) y vuelve a tu posición para consultar tu clase actual o próxima.",
+        howTo = "Inclina la punta superior 3 veces hacia adelante.",
+        whatFor = "Muestra tu clase actual o próxima y su aula.",
         icon = Icons.Default.Vibration,
         badgeColor = UgrRed
     ),
+    ACTION_TRIGGER(
+        title = "Acción rápida",
+        gestureName = "Inclinar hacia ti",
+        description = "Inclina el móvil hacia ti y vuelve a la posición inicial para encargar menú en comedores o enviar un correo al profesor.",
+        howTo = "Inclina el móvil hacia ti.",
+        whatFor = "Reserva el menú para llevar en Comedores o escribe al profesor.",
+        icon = TiltTowardsUserIcon,
+        badgeColor = WarningAmber
+    ),
+    LIFT_PHONE(
+        title = "Guiado paso a paso",
+        gestureName = "Levantar el móvil",
+        description = "Levanta el móvil en vertical frente a ti para ver el guiado paso a paso con fotos reales del recorrido.",
+        howTo = "Sube el móvil en vertical frente a ti.",
+        whatFor = "Cambia de ver el mapa 2D a un guiado paso a paso con fotos reales.",
+        icon = Icons.Default.ArrowUpward,
+        badgeColor = EtsiitBlue
+    ),
     PROXIMITY_VOICE(
-        title = "Búsqueda por Voz",
-        gestureName = "Pasar la mano / Proximidad",
-        description = "Pasa la mano por donde está la cámara, en la parte superior del móvil (o acércatelo a la oreja), para activar el asistente de voz y buscar un destino en cualquier pantalla de la app.",
-        howTo = "Pasa la mano por encima de la cámara frontal en la parte superior del móvil.",
-        whatFor = "Activa el reconocimiento de voz para buscar aulas, comedores, cafetería, biblioteca o profesores y trazar la ruta automáticamente en el mapa con Dijkstra.",
+        title = "Búsqueda por voz",
+        gestureName = "Acercar la mano",
+        description = "Acerca la mano al sensor superior del móvil (junto a la cámara frontal) para activar el asistente de voz y buscar cualquier destino.",
+        howTo = "Acerca la mano a poca distancia de la parte superior del móvil.",
+        whatFor = "Búsqueda por voz para guiarte a aulas, comedores o profesores.",
         icon = Icons.Default.Mic,
         badgeColor = VoicePurple
     )
@@ -177,19 +244,26 @@ fun GestureBadge(
 ) {
     var showDialog by remember { mutableStateOf(false) }
 
+    val isInteractive = onClick != null || showTooltipOnClick
+    val clickModifier = if (isInteractive) {
+        Modifier.clickable {
+            if (onClick != null) {
+                onClick()
+            } else if (showTooltipOnClick) {
+                showDialog = true
+            }
+        }
+    } else {
+        Modifier
+    }
+
     Box(
         modifier = modifier
             .size(size)
             .clip(CircleShape)
             .background(type.badgeColor.copy(alpha = 0.12f))
             .border(1.dp, type.badgeColor.copy(alpha = 0.35f), CircleShape)
-            .clickable {
-                if (onClick != null) {
-                    onClick()
-                } else if (showTooltipOnClick) {
-                    showDialog = true
-                }
-            },
+            .then(clickModifier),
         contentAlignment = Alignment.Center
     ) {
         Icon(
@@ -353,7 +427,7 @@ fun GestureExplanationDialog(
 
 /**
  * Botón con la «i» de información sobre los gestos del acelerómetro.
- * Muestra un circulito gris sutil y al pulsarlo abre la guía completa de gestos.
+ * Muestra un circulito gris sutil y al pulsarlo abre la pantalla de guía de gestos.
  */
 @Composable
 fun GestureGuideButton(
@@ -373,7 +447,7 @@ fun GestureGuideButton(
     ) {
         Icon(
             imageVector = Icons.Default.Info,
-            contentDescription = "Guía de gestos del acelerómetro",
+            contentDescription = "Guía de gestos",
             tint = TextSecondary,
             modifier = Modifier.size(iconSize)
         )
@@ -381,159 +455,115 @@ fun GestureGuideButton(
 }
 
 /**
- * Diálogo emergente que lista todas las funcionalidades de gestos del acelerómetro de la app.
- * A la izquierda muestra el loguito correspondiente y a la derecha cómo realizar el gesto y para qué sirve.
+ * Pantalla completa (pestaña sin scroll vertical) con la Guía de Gestos Físicos.
+ * Todos los gestos se distribuyen equitativamente en la pantalla mediante Modifier.weight(1f)
+ * para que quepan siempre en una sola vista sin necesidad de deslizar hacia abajo.
  */
 @Composable
-fun AccelerometerGesturesGuideDialog(
-    onDismiss: () -> Unit
-) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        containerColor = SurfaceWhite,
-        title = {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(34.dp)
-                        .clip(CircleShape)
-                        .background(TextSecondary.copy(alpha = 0.12f))
-                        .border(1.dp, TextSecondary.copy(alpha = 0.35f), CircleShape),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Info,
-                        contentDescription = null,
-                        tint = TextSecondary,
-                        modifier = Modifier.size(20.dp)
-                    )
-                }
-                Column {
-                    Text(
-                        text = "Sensores y Gestos Físicos",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 17.sp,
-                        color = TextPrimary
-                    )
-                    Text(
-                        text = "Acelerómetro, proximidad y voz",
-                        fontSize = 12.sp,
-                        color = TextSecondary
-                    )
-                }
-            }
-        },
-        text = {
-            Column(
+fun GesturesGuideScreen() {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(BackgroundLight)
+            .padding(horizontal = 14.dp, vertical = 12.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        // Tarjetas de los 5 gestos repartidas equitativamente sin scroll
+        GestureType.entries.forEach { gesture ->
+            Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .verticalScroll(rememberScrollState()),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+                    .weight(1f),
+                shape = RoundedCornerShape(14.dp),
+                colors = CardDefaults.cardColors(containerColor = SurfaceWhite),
+                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+                border = androidx.compose.foundation.BorderStroke(1.dp, SurfaceBorder)
             ) {
-                Text(
-                    text = "La aplicación utiliza los sensores del dispositivo (acelerómetro y proximidad) para ofrecer atajos y acciones físicas rápidas mediante gestos:",
-                    fontSize = 12.sp,
-                    color = TextSecondary,
-                    lineHeight = 16.sp
-                )
-
-                HorizontalDivider(color = SurfaceBorder.copy(alpha = 0.7f))
-
-                GestureType.values().forEach { gesture ->
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.Top,
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                Row(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = 12.dp, vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    // Icono circular grande a la izquierda
+                    Box(
+                        modifier = Modifier
+                            .size(44.dp)
+                            .clip(CircleShape)
+                            .background(gesture.badgeColor.copy(alpha = 0.14f))
+                            .border(1.dp, gesture.badgeColor.copy(alpha = 0.40f), CircleShape),
+                        contentAlignment = Alignment.Center
                     ) {
-                        // Loguito correspondiente a la izquierda
-                        Box(
-                            modifier = Modifier
-                                .size(36.dp)
-                                .clip(CircleShape)
-                                .background(gesture.badgeColor.copy(alpha = 0.15f))
-                                .border(1.dp, gesture.badgeColor.copy(alpha = 0.4f), CircleShape),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                imageVector = gesture.icon,
-                                contentDescription = null,
-                                tint = gesture.badgeColor,
-                                modifier = Modifier.size(20.dp)
-                            )
-                        }
+                        Icon(
+                            imageVector = gesture.icon,
+                            contentDescription = gesture.title,
+                            tint = gesture.badgeColor,
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
 
-                        // Explicación de cómo es y para qué sirve a la derecha
-                        Column(
-                            modifier = Modifier.weight(1f),
-                            verticalArrangement = Arrangement.spacedBy(3.dp)
+                    // Textos breves y directos a la derecha
+                    Column(
+                        modifier = Modifier.weight(1f),
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Text(
                                 text = gesture.title,
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 14.sp,
-                                color = TextPrimary
+                                color = TextPrimary,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
                             )
-                            Text(
-                                text = "Gesto: ${gesture.gestureName}",
-                                fontWeight = FontWeight.SemiBold,
-                                fontSize = 11.sp,
-                                color = gesture.badgeColor
-                            )
-
-                            Spacer(modifier = Modifier.height(2.dp))
-
-                            Text(
-                                text = "• Cómo es el gesto:",
-                                fontWeight = FontWeight.SemiBold,
-                                fontSize = 11.sp,
-                                color = TextPrimary
-                            )
-                            Text(
-                                text = gesture.howTo,
-                                fontSize = 12.sp,
-                                color = TextSecondary,
-                                lineHeight = 16.sp
-                            )
-
-                            Spacer(modifier = Modifier.height(2.dp))
-
-                            Text(
-                                text = "• Para qué sirve:",
-                                fontWeight = FontWeight.SemiBold,
-                                fontSize = 11.sp,
-                                color = TextPrimary
-                            )
-                            Text(
-                                text = gesture.whatFor,
-                                fontSize = 12.sp,
-                                color = TextSecondary,
-                                lineHeight = 16.sp
-                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Surface(
+                                shape = RoundedCornerShape(10.dp),
+                                color = gesture.badgeColor.copy(alpha = 0.12f)
+                            ) {
+                                Text(
+                                    text = gesture.gestureName,
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 11.sp,
+                                    color = gesture.badgeColor,
+                                    maxLines = 1,
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.5.dp)
+                                )
+                            }
                         }
-                    }
 
-                    if (gesture != GestureType.values().last()) {
-                        HorizontalDivider(
-                            color = SurfaceBorder.copy(alpha = 0.5f),
-                            modifier = Modifier.padding(vertical = 2.dp)
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        // Frase directa de cómo realizar el gesto (sin "Cómo:")
+                        Text(
+                            text = gesture.howTo,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = TextPrimary,
+                            lineHeight = 15.sp,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis
+                        )
+
+                        Spacer(modifier = Modifier.height(4.dp))
+
+                        // Para qué sirve (con "Uso:")
+                        Text(
+                            text = "Uso: ${gesture.whatFor}",
+                            fontSize = 11.5.sp,
+                            color = TextSecondary,
+                            lineHeight = 14.sp,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis
                         )
                     }
                 }
             }
-        },
-        confirmButton = {
-            TextButton(onClick = onDismiss) {
-                Text(
-                    text = "Entendido",
-                    color = UgrRed,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 14.sp
-                )
-            }
         }
-    )
+    }
 }
-

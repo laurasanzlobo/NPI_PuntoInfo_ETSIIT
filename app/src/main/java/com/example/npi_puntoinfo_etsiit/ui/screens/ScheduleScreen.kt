@@ -1,6 +1,7 @@
 package com.example.npi_puntoinfo_etsiit.ui.screens
 
 import android.content.Context
+import android.net.Uri
 import android.os.Build
 import android.os.VibrationEffect
 import android.os.Vibrator
@@ -16,6 +17,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowForwardIos
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.EventBusy
 import androidx.compose.material.icons.filled.Info
@@ -171,72 +173,6 @@ fun ScheduleScreen(
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
-        Text(
-            text = "Desliza horizontalmente para consultar otros días",
-            fontSize = 13.sp,
-            color = TextSecondary
-        )
-
-        // Indicador del estado de matrícula del estudiante
-        if (profile.isLoggedIn) {
-            Surface(
-                shape = RoundedCornerShape(10.dp),
-                color = EtsiitBlue.copy(alpha = 0.08f),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Row(
-                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            imageVector = Icons.Default.School,
-                            contentDescription = null,
-                            tint = EtsiitBlue,
-                            modifier = Modifier.size(16.dp)
-                        )
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text(
-                            text = profile.degreeName.ifBlank { "Horario Personalizado" }.replace("Grado en ", ""),
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = EtsiitBlue
-                        )
-                    }
-                    Text(
-                        text = "${profile.matricula.size} asignaturas",
-                        fontSize = 11.sp,
-                        color = TextSecondary
-                    )
-                }
-            }
-        } else {
-            Surface(
-                shape = RoundedCornerShape(10.dp),
-                color = SurfaceWhite,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Row(
-                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Info,
-                        contentDescription = null,
-                        tint = TextSecondary,
-                        modifier = Modifier.size(16.dp)
-                    )
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text(
-                        text = "Escanea tu TUI en Perfil para ver tus asignaturas y subgrupos personalizados.",
-                        fontSize = 11.sp,
-                        color = TextSecondary
-                    )
-                }
-            }
-        }
-
         // Indicador del día actual y puntos (dots) de la semana (diseño idéntico a Comedor)
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -300,27 +236,26 @@ fun ScheduleScreen(
             val dayClasses = daysSchedule[page].classes
 
             if (dayClasses.isEmpty()) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .verticalScroll(rememberScrollState()),
-                    contentAlignment = Alignment.TopCenter
+                Column(
+                    modifier = Modifier.fillMaxSize(),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     Card(
                         modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(16.dp),
-                        colors = CardDefaults.cardColors(containerColor = SurfaceWhite)
+                        shape = RoundedCornerShape(20.dp),
+                        colors = CardDefaults.cardColors(containerColor = SurfaceWhite),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, SurfaceBorder),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
                     ) {
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(28.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.Center
+                                .padding(24.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
                         ) {
                             Box(
                                 modifier = Modifier
-                                    .size(64.dp)
+                                    .size(56.dp)
                                     .clip(CircleShape)
                                     .background(UgrRed.copy(alpha = 0.10f)),
                                 contentAlignment = Alignment.Center
@@ -329,23 +264,20 @@ fun ScheduleScreen(
                                     imageVector = Icons.Default.EventBusy,
                                     contentDescription = null,
                                     tint = UgrRed,
-                                    modifier = Modifier.size(32.dp)
+                                    modifier = Modifier.size(28.dp)
                                 )
                             }
-                            Spacer(modifier = Modifier.height(16.dp))
+                            Spacer(modifier = Modifier.height(14.dp))
                             Text(
                                 text = if (page == 0) "Hoy no tienes clase" else "El ${daysSchedule[page].dayName} no tienes clase",
                                 fontWeight = FontWeight.Bold,
-                                fontSize = 18.sp,
+                                fontSize = 17.sp,
                                 color = TextPrimary
                             )
-                            Spacer(modifier = Modifier.height(8.dp))
+                            Spacer(modifier = Modifier.height(6.dp))
                             Text(
-                                text = if (page == 0)
-                                    "No tienes clases programadas para hoy."
-                                else
-                                    "No tienes clases programadas para el ${daysSchedule[page].dayName}.",
-                                fontSize = 14.sp,
+                                text = "Fin de semana libre sin docencia programada en la ETSIIT.",
+                                fontSize = 13.sp,
                                 color = TextSecondary,
                                 textAlign = TextAlign.Center
                             )
@@ -354,10 +286,8 @@ fun ScheduleScreen(
                 }
             } else {
                 Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .verticalScroll(rememberScrollState()),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                    modifier = Modifier.fillMaxSize(),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
                     dayClasses.forEach { item ->
                         ClassCard(
@@ -409,17 +339,36 @@ fun ScheduleScreen(
                         modifier = Modifier.fillMaxWidth()
                     )
                     Spacer(modifier = Modifier.height(6.dp))
-                    Surface(
-                        shape = RoundedCornerShape(6.dp),
-                        color = if (item.isPractice) CampusTeal.copy(alpha = 0.12f) else Color(0xFFF1F5F9)
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text(
-                            text = if (item.isPractice) "PRÁCTICAS (${item.acronym})" else "TEORÍA (${item.acronym})",
-                            color = if (item.isPractice) CampusTeal else TextSecondary,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 11.sp,
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
-                        )
+                        Surface(
+                            shape = RoundedCornerShape(6.dp),
+                            color = Color(0xFFF1F5F9)
+                        ) {
+                            Text(
+                                text = if (item.isPractice) "PRÁCTICAS" else "TEORÍA",
+                                color = TextSecondary,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 11.sp,
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                            )
+                        }
+                        if (item.acronym.isNotBlank()) {
+                            Surface(
+                                shape = RoundedCornerShape(6.dp),
+                                color = Color(0xFFE2E8F0)
+                            ) {
+                                Text(
+                                    text = item.acronym,
+                                    color = TextPrimary,
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 11.sp,
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                                )
+                            }
+                        }
                     }
                 }
             },
@@ -470,9 +419,10 @@ fun ScheduleScreen(
                                     )
                                     Spacer(modifier = Modifier.width(8.dp))
                                     Text(
-                                        text = "Aula: ${item.room}",
+                                        text = item.room,
                                         fontSize = 13.sp,
-                                        color = TextPrimary
+                                        color = TextPrimary,
+                                        fontWeight = FontWeight.SemiBold
                                     )
                                 }
                                 // Loguito del gesto «¡Llévame!» hacia el aula
@@ -489,43 +439,78 @@ fun ScheduleScreen(
                         }
                     }
 
-                    // Profesor asignado
+                    // Profesor asignado (pulsable para ver su ficha completa en Profesores)
                     Card(
+                        onClick = {
+                            if (item.professor.isNotBlank() && item.professor != "Profesor por asignar") {
+                                selectedClass = null
+                                onNavigate("${Screen.Professors.route}?nombre=${Uri.encode(item.professor)}")
+                            }
+                        },
                         colors = CardDefaults.cardColors(containerColor = BackgroundLight),
                         shape = RoundedCornerShape(12.dp),
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Row(
-                            modifier = Modifier.padding(14.dp),
-                            verticalAlignment = Alignment.CenterVertically
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(14.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            Icon(
-                                imageVector = Icons.Default.Person,
-                                contentDescription = null,
-                                tint = CampusTeal,
-                                modifier = Modifier.size(20.dp)
-                            )
-                            Spacer(modifier = Modifier.width(10.dp))
-                            Column {
-                                Text(
-                                    text = "Profesor/a:",
-                                    fontSize = 11.sp,
-                                    color = TextSecondary
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Person,
+                                    contentDescription = null,
+                                    tint = CampusTeal,
+                                    modifier = Modifier.size(20.dp)
                                 )
-                                Text(
-                                    text = item.professor,
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 14.sp,
-                                    color = TextPrimary
-                                )
+                                Spacer(modifier = Modifier.width(10.dp))
+                                Column {
+                                    Text(
+                                        text = "Profesor/a:",
+                                        fontSize = 11.sp,
+                                        color = TextSecondary
+                                    )
+                                    Text(
+                                        text = item.professor,
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 14.sp,
+                                        color = TextPrimary
+                                    )
+                                }
                             }
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.ArrowForwardIos,
+                                contentDescription = "Ver ficha del profesor",
+                                tint = CampusTeal,
+                                modifier = Modifier.size(14.dp)
+                            )
                         }
                     }
                 }
             },
             confirmButton = {
-                TextButton(onClick = { selectedClass = null }) {
-                    Text("Cerrar", color = TextPrimary, fontWeight = FontWeight.Bold)
+                Button(
+                    onClick = { selectedClass = null },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = UgrRed,
+                        contentColor = Color.White
+                    ),
+                    shape = RoundedCornerShape(10.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(42.dp)
+                ) {
+                    Text(
+                        text = "Cerrar",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 14.sp,
+                        color = Color.White
+                    )
                 }
             }
         )
@@ -537,14 +522,32 @@ private fun ClassCard(
     item: ClassItem,
     onClick: () -> Unit
 ) {
+    // Si la clase está en curso: verde menta con borde esmeralda.
+    // Si es teoría: fondo blanco limpio con borde sutil.
+    // Si es prácticas: fondo gris clarito (estilo oficial facultad).
+    val cardBg = when {
+        item.isCurrent -> Color(0xFFDCFCE7)
+        item.isPractice -> Color(0xFFF1F5F9)
+        else -> SurfaceWhite
+    }
+    val borderColor = when {
+        item.isCurrent -> CampusGreen
+        item.isPractice -> Color(0xFFE2E8F0)
+        else -> SurfaceBorder
+    }
+
     Card(
         onClick = onClick,
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = SurfaceWhite),
-        elevation = CardDefaults.cardElevation(defaultElevation = if (item.isCurrent) 3.dp else 1.dp)
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 2.dp),
+        shape = RoundedCornerShape(18.dp),
+        colors = CardDefaults.cardColors(containerColor = cardBg),
+        border = androidx.compose.foundation.BorderStroke(if (item.isCurrent) 2.dp else 1.dp, borderColor),
+        elevation = CardDefaults.cardElevation(defaultElevation = if (item.isCurrent) 4.dp else 1.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
+            // Fila superior: Hora y Badges (Teoría / Prácticas + En Curso)
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -561,7 +564,7 @@ private fun ClassCard(
                     Text(
                         text = item.time,
                         fontSize = 13.sp,
-                        fontWeight = FontWeight.SemiBold,
+                        fontWeight = if (item.isCurrent) FontWeight.Bold else FontWeight.SemiBold,
                         color = if (item.isCurrent) CampusGreen else TextSecondary
                     )
                 }
@@ -570,14 +573,20 @@ private fun ClassCard(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
-                    // Badge de Teoría (fondo gris) o Prácticas (fondo blanco/teal)
+                    // Badge de Teoría o Prácticas
                     Surface(
                         shape = RoundedCornerShape(6.dp),
-                        color = if (item.isPractice) CampusTeal.copy(alpha = 0.12f) else Color(0xFFF1F5F9)
+                        color = if (item.isCurrent) {
+                            CampusGreen.copy(alpha = 0.20f)
+                        } else if (item.isPractice) {
+                            SurfaceWhite
+                        } else {
+                            Color(0xFFF1F5F9)
+                        }
                     ) {
                         Text(
                             text = if (item.isPractice) "PRÁCTICAS" else "TEORÍA",
-                            color = if (item.isPractice) CampusTeal else TextSecondary,
+                            color = if (item.isCurrent) CampusGreen else TextSecondary,
                             fontWeight = FontWeight.Bold,
                             fontSize = 10.sp,
                             modifier = Modifier.padding(horizontal = 7.dp, vertical = 3.dp)
@@ -587,14 +596,14 @@ private fun ClassCard(
                     if (item.isCurrent) {
                         Surface(
                             shape = RoundedCornerShape(6.dp),
-                            color = CampusGreen.copy(alpha = 0.15f)
+                            color = CampusGreen
                         ) {
                             Text(
                                 text = "EN CURSO",
                                 fontSize = 10.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = CampusGreen,
-                                modifier = Modifier.padding(horizontal = 7.dp, vertical = 3.dp)
+                                fontWeight = FontWeight.ExtraBold,
+                                color = Color.White,
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
                             )
                         }
                     }
@@ -603,28 +612,89 @@ private fun ClassCard(
 
             Spacer(modifier = Modifier.height(10.dp))
 
-            Text(
-                text = "${item.subject} (${item.acronym})",
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Bold,
-                color = TextPrimary
-            )
-
-            Spacer(modifier = Modifier.height(6.dp))
-
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(
-                    imageVector = Icons.Default.MeetingRoom,
-                    contentDescription = null,
-                    tint = TextSecondary,
-                    modifier = Modifier.size(16.dp)
-                )
-                Spacer(modifier = Modifier.width(6.dp))
+            // Fila central: Chip del Acrónimo y Nombre Completo
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Surface(
+                    shape = RoundedCornerShape(8.dp),
+                    color = when {
+                        item.isCurrent -> CampusGreen
+                        item.isPractice -> SurfaceWhite
+                        else -> Color(0xFFF1F5F9)
+                    }
+                ) {
+                    Text(
+                        text = item.acronym,
+                        fontWeight = FontWeight.ExtraBold,
+                        fontSize = 14.sp,
+                        color = when {
+                            item.isCurrent -> Color.White
+                            else -> TextPrimary
+                        },
+                        modifier = Modifier.padding(horizontal = 9.dp, vertical = 5.dp)
+                    )
+                }
+                Spacer(modifier = Modifier.width(10.dp))
                 Text(
-                    text = item.room,
-                    fontSize = 13.sp,
-                    color = TextSecondary
+                    text = item.subject,
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = if (item.isCurrent) Color(0xFF064E3B) else TextPrimary,
+                    maxLines = 2,
+                    lineHeight = 19.sp,
+                    modifier = Modifier.weight(1f)
                 )
+            }
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            // Fila inferior: Aula y Profesor asignado
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.MeetingRoom,
+                        contentDescription = null,
+                        tint = if (item.isCurrent) CampusGreen else TextSecondary,
+                        modifier = Modifier.size(15.dp)
+                    )
+                    Spacer(modifier = Modifier.width(5.dp))
+                    Text(
+                        text = item.room,
+                        fontSize = 12.sp,
+                        color = if (item.isCurrent) Color(0xFF065F46) else TextSecondary,
+                        fontWeight = if (item.isCurrent) FontWeight.SemiBold else FontWeight.Normal,
+                        maxLines = 1,
+                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                    )
+                }
+
+                if (item.professor.isNotBlank()) {
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = Icons.Default.Person,
+                            contentDescription = null,
+                            tint = TextSecondary,
+                            modifier = Modifier.size(14.dp)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = item.professor.split(" ").take(2).joinToString(" "),
+                            fontSize = 12.sp,
+                            color = TextSecondary,
+                            fontWeight = FontWeight.Normal
+                        )
+                    }
+                }
             }
         }
     }

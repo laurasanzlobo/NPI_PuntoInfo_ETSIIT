@@ -20,13 +20,14 @@ data class UserProfile(
     val colectivo: String = "ESTUDIANTE",
     val degreeId: String = "gii",
     val degreeName: String = "Grado en Ingeniería Informática",
-    val primaryCourse: Int = 3,
+    val primaryCourse: Int = 4,
     val primaryGroup: String = "A",
     val cuatrimestre: Int = 1,
     // Mapeo de asignaturas matriculadas: Acrónimo -> Subgrupo de prácticas asignado
     // Ejemplo: {"NPI": "A1", "VC": "A2", "ED": "B1"}
     // Si el valor es "", significa que solo asiste a Teoría
     val matricula: Map<String, String> = emptyMap(),
+    val isAccessibleRouting: Boolean = false, // Modo accesibilidad: ascensor en vez de escaleras
     val isLoggedIn: Boolean = false
 )
 
