@@ -244,19 +244,26 @@ fun GestureBadge(
 ) {
     var showDialog by remember { mutableStateOf(false) }
 
+    val isInteractive = onClick != null || showTooltipOnClick
+    val clickModifier = if (isInteractive) {
+        Modifier.clickable {
+            if (onClick != null) {
+                onClick()
+            } else if (showTooltipOnClick) {
+                showDialog = true
+            }
+        }
+    } else {
+        Modifier
+    }
+
     Box(
         modifier = modifier
             .size(size)
             .clip(CircleShape)
             .background(type.badgeColor.copy(alpha = 0.12f))
             .border(1.dp, type.badgeColor.copy(alpha = 0.35f), CircleShape)
-            .clickable {
-                if (onClick != null) {
-                    onClick()
-                } else if (showTooltipOnClick) {
-                    showDialog = true
-                }
-            },
+            .then(clickModifier),
         contentAlignment = Alignment.Center
     ) {
         Icon(

@@ -208,7 +208,7 @@ fun ProfileScreen(
                                 color = Color.White.copy(alpha = 0.22f)
                             ) {
                                 Text(
-                                    text = "4º Año Matriculado",
+                                    text = "4º Año",
                                     color = Color.White,
                                     fontSize = 13.sp,
                                     fontWeight = FontWeight.Bold,

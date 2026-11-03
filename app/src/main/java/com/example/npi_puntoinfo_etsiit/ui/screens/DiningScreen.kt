@@ -377,299 +377,303 @@ fun DiningScreen(
         }
 
         // ==========================================
-        // 2. PARTE CENTRAL: TARJETA VISUAL DEL MENÚ DEL DÍA (HORIZONTAL PAGER)
+        // 2. PARTE CENTRAL E INFERIOR: PÁGINA DEL DÍA (MENÚ + ENCARGO) EN HORIZONTAL PAGER
         // ==========================================
         HorizontalPager(
             state = pagerState,
             pageSpacing = 16.dp,
-            modifier = Modifier
-                .fillMaxWidth()
-                .weight(1f, fill = false)
+            modifier = Modifier.fillMaxWidth()
         ) { page ->
             val menu = menuList[page]
+            val dayOrderedType = ordersPlaced[menu.date.toString()]
+            val isThisDayOrdered = !dayOrderedType.isNullOrBlank()
 
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 2.dp),
-                shape = RoundedCornerShape(22.dp),
-                colors = CardDefaults.cardColors(containerColor = SurfaceWhite),
-                border = androidx.compose.foundation.BorderStroke(1.dp, SurfaceBorder),
-                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
-                Column(
+                Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(18.dp)
+                        .height(365.dp)
+                        .padding(horizontal = 2.dp),
+                    shape = RoundedCornerShape(22.dp),
+                    colors = CardDefaults.cardColors(containerColor = SurfaceWhite),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, SurfaceBorder),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
                 ) {
-                    // Cabecera: Selector de tipo de menú (Tradicional / Vegetariano) y Tarifa oficial (4.00 €)
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        modifier = Modifier.fillMaxWidth()
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(16.dp),
+                        verticalArrangement = Arrangement.SpaceBetween
                     ) {
-                        // Selector segmentado: Tradicional vs Vegetariano (sin títulos redundantes como "Menú del Día")
+                        // Cabecera: Selector de tipo de menú (Tradicional / Vegetariano) y Tarifa oficial (4.00 €)
                         Row(
-                            modifier = Modifier
-                                .weight(1f)
-                                .clip(RoundedCornerShape(12.dp))
-                                .background(BackgroundLight)
-                                .padding(3.dp),
-                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            modifier = Modifier.fillMaxWidth()
                         ) {
-                            DiningMenuType.values().forEach { type ->
-                                val isSelected = selectedMenuType == type
-                                Surface(
-                                    modifier = Modifier.weight(1f),
-                                    shape = RoundedCornerShape(9.dp),
-                                    color = if (isSelected) SurfaceWhite else Color.Transparent,
-                                    shadowElevation = if (isSelected) 1.dp else 0.dp,
-                                    onClick = { selectedMenuType = type }
-                                ) {
-                                    Row(
-                                        modifier = Modifier.padding(vertical = 7.dp),
-                                        horizontalArrangement = Arrangement.Center,
-                                        verticalAlignment = Alignment.CenterVertically
+                            // Selector segmentado: Tradicional vs Vegetariano (sin títulos redundantes como "Menú del Día")
+                            Row(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .background(BackgroundLight)
+                                    .padding(3.dp),
+                                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                DiningMenuType.values().forEach { type ->
+                                    val isSelected = selectedMenuType == type
+                                    Surface(
+                                        modifier = Modifier.weight(1f),
+                                        shape = RoundedCornerShape(9.dp),
+                                        color = if (isSelected) SurfaceWhite else Color.Transparent,
+                                        shadowElevation = if (isSelected) 1.dp else 0.dp,
+                                        onClick = { selectedMenuType = type }
                                     ) {
-                                        if (type == DiningMenuType.VEGETARIAN) {
-                                            Icon(
-                                                imageVector = Icons.Default.Eco,
-                                                contentDescription = null,
-                                                tint = if (isSelected) CampusGreen else TextSecondary,
-                                                modifier = Modifier.size(15.dp)
+                                        Row(
+                                            modifier = Modifier.padding(vertical = 7.dp),
+                                            horizontalArrangement = Arrangement.Center,
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            if (type == DiningMenuType.VEGETARIAN) {
+                                                Icon(
+                                                    imageVector = Icons.Default.Eco,
+                                                    contentDescription = null,
+                                                    tint = if (isSelected) CampusGreen else TextSecondary,
+                                                    modifier = Modifier.size(15.dp)
+                                                )
+                                                Spacer(modifier = Modifier.width(4.dp))
+                                            }
+                                            Text(
+                                                text = type.label,
+                                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                                fontSize = 12.sp,
+                                                color = if (isSelected) (if (type == DiningMenuType.VEGETARIAN) CampusGreen else UgrRed) else TextSecondary
                                             )
-                                            Spacer(modifier = Modifier.width(4.dp))
                                         }
-                                        Text(
-                                            text = type.label,
-                                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                                            fontSize = 12.sp,
-                                            color = if (isSelected) (if (type == DiningMenuType.VEGETARIAN) CampusGreen else UgrRed) else TextSecondary
-                                        )
                                     }
                                 }
                             }
+
+                            Spacer(modifier = Modifier.width(10.dp))
+
+                            // Tarifa oficial de comedor
+                            Surface(
+                                shape = RoundedCornerShape(10.dp),
+                                color = UgrRed.copy(alpha = 0.10f)
+                            ) {
+                                Text(
+                                    text = "4.00 €",
+                                    fontWeight = FontWeight.ExtraBold,
+                                    fontSize = 15.sp,
+                                    color = UgrRed,
+                                    modifier = Modifier.padding(horizontal = 11.dp, vertical = 7.dp)
+                                )
+                            }
                         }
 
-                        Spacer(modifier = Modifier.width(10.dp))
-
-                        // Tarifa oficial de comedor
-                        Surface(
-                            shape = RoundedCornerShape(10.dp),
-                            color = UgrRed.copy(alpha = 0.10f)
+                        // Platos agrupados con separación equilibrada y legible
+                        val courses = if (selectedMenuType == DiningMenuType.TRADITIONAL) menu.traditional else menu.vegetarian
+                        Column(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            Text(
-                                text = "4.00 €",
-                                fontWeight = FontWeight.ExtraBold,
-                                fontSize = 15.sp,
-                                color = UgrRed,
-                                modifier = Modifier.padding(horizontal = 11.dp, vertical = 7.dp)
+                            DishVisualRow(
+                                dishNumber = "1",
+                                category = "Primer Plato",
+                                dishName = courses.firstCourse,
+                                badgeColor = EtsiitBlue
+                            )
+                            HorizontalDivider(color = SurfaceBorder.copy(alpha = 0.5f))
+                            DishVisualRow(
+                                dishNumber = "2",
+                                category = "Segundo Plato",
+                                dishName = courses.secondCourse,
+                                badgeColor = WarningAmber
+                            )
+                            HorizontalDivider(color = SurfaceBorder.copy(alpha = 0.5f))
+                            DishVisualRow(
+                                dishNumber = "3",
+                                category = "Postre",
+                                dishName = courses.dessert,
+                                badgeColor = CampusGreen
                             )
                         }
-                    }
 
-                    Spacer(modifier = Modifier.height(14.dp))
-
-                    // Platos agrupados con separación equilibrada y legible
-                    val courses = if (selectedMenuType == DiningMenuType.TRADITIONAL) menu.traditional else menu.vegetarian
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 4.dp),
-                        verticalArrangement = Arrangement.spacedBy(14.dp)
-                    ) {
-                        DishVisualRow(
-                            dishNumber = "1",
-                            category = "Primer Plato",
-                            dishName = courses.firstCourse,
-                            badgeColor = EtsiitBlue
-                        )
-                        HorizontalDivider(color = SurfaceBorder.copy(alpha = 0.5f))
-                        DishVisualRow(
-                            dishNumber = "2",
-                            category = "Segundo Plato",
-                            dishName = courses.secondCourse,
-                            badgeColor = WarningAmber
-                        )
-                        HorizontalDivider(color = SurfaceBorder.copy(alpha = 0.5f))
-                        DishVisualRow(
-                            dishNumber = "3",
-                            category = "Postre",
-                            dishName = courses.dessert,
-                            badgeColor = CampusGreen
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.height(14.dp))
-
-                    // Barra inferior de comedor más cercano (LIMPIA: sin nombre de campus)
-                    Surface(
-                        onClick = { showAllHallsDialog = true },
-                        shape = RoundedCornerShape(14.dp),
-                        color = BackgroundLight,
-                        border = androidx.compose.foundation.BorderStroke(1.dp, SurfaceBorder.copy(alpha = 0.8f)),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 14.dp, vertical = 10.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
+                        // Barra inferior de comedor más cercano (LIMPIA: sin nombre de campus)
+                        Surface(
+                            onClick = { showAllHallsDialog = true },
+                            shape = RoundedCornerShape(14.dp),
+                            color = BackgroundLight,
+                            border = androidx.compose.foundation.BorderStroke(1.dp, SurfaceBorder.copy(alpha = 0.8f)),
+                            modifier = Modifier.fillMaxWidth()
                         ) {
                             Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 14.dp, vertical = 10.dp),
                                 verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier.weight(1f)
+                                horizontalArrangement = Arrangement.SpaceBetween
                             ) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(32.dp)
-                                        .clip(CircleShape)
-                                        .background(UgrRed.copy(alpha = 0.12f)),
-                                    contentAlignment = Alignment.Center
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier.weight(1f)
                                 ) {
-                                    Icon(
-                                        imageVector = Icons.Default.Place,
-                                        contentDescription = null,
-                                        tint = UgrRed,
-                                        modifier = Modifier.size(18.dp)
-                                    )
+                                    Box(
+                                        modifier = Modifier
+                                            .size(32.dp)
+                                            .clip(CircleShape)
+                                            .background(UgrRed.copy(alpha = 0.12f)),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.Place,
+                                            contentDescription = null,
+                                            tint = UgrRed,
+                                            modifier = Modifier.size(18.dp)
+                                        )
+                                    }
+                                    Spacer(modifier = Modifier.width(10.dp))
+                                    Column {
+                                        Text(
+                                            text = if (distanceFormatted != null) "Comedor más cercano (a $distanceFormatted):" else "Comedor más cercano:",
+                                            fontSize = 11.sp,
+                                            color = TextSecondary
+                                        )
+                                        Text(
+                                            text = nearestDiningHall.name, // SOLO el nombre (sin campus)
+                                            fontSize = 14.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = TextPrimary
+                                        )
+                                    }
                                 }
-                                Spacer(modifier = Modifier.width(10.dp))
-                                Column {
-                                    Text(
-                                        text = if (distanceFormatted != null) "Comedor más cercano (a $distanceFormatted):" else "Comedor más cercano:",
-                                        fontSize = 11.sp,
-                                        color = TextSecondary
-                                    )
-                                    Text(
-                                        text = nearestDiningHall.name, // SOLO el nombre (sin campus)
-                                        fontSize = 14.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = TextPrimary
-                                    )
-                                }
-                            }
 
-                            GestureBadge(
-                                type = GestureType.TAKE_ME_THERE,
-                                size = 28.dp,
-                                iconSize = 16.dp,
-                                onClick = { navigateToDining() }
-                            )
+                                GestureBadge(
+                                    type = GestureType.TAKE_ME_THERE,
+                                    size = 28.dp,
+                                    iconSize = 16.dp,
+                                    onClick = { navigateToDining() }
+                                )
+                            }
                         }
                     }
                 }
-            }
-        }
 
-        // ==========================================
-        // 3. PARTE INFERIOR: TARJETA DE ENCARGO / RESERVA DE COMIDA (Solo visible si ha iniciado sesión)
-        // ==========================================
-        if (isLoggedIn) {
-            if (currentMenu.isToday && !isDayOrdered) {
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color(0xFFF1F5F9))
-                ) {
-                    Row(
-                        modifier = Modifier.padding(14.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Info,
-                            contentDescription = null,
-                            tint = TextSecondary,
-                            modifier = Modifier.size(22.dp)
-                        )
-                        Spacer(modifier = Modifier.width(10.dp))
-                        Text(
-                            text = "El encargo para llevar debe realizarse con antelación. Desliza hacia la izquierda para encargar los días posteriores.",
-                            fontSize = 12.sp,
-                            color = TextSecondary,
-                            lineHeight = 16.sp
-                        )
-                    }
-                }
-            } else {
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable(enabled = !isDayOrdered && currentMenu.date.isAfter(today)) {
-                            pendingOrderDate = currentMenu.date
-                        },
-                    shape = RoundedCornerShape(18.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = if (isDayOrdered) Color(0xFFDCFCE7) else SurfaceWhite
-                    ),
-                    border = androidx.compose.foundation.BorderStroke(
-                        1.2.dp,
-                        if (isDayOrdered) CampusGreen else WarningAmber.copy(alpha = 0.5f)
-                    ),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 14.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(12.dp),
-                            modifier = Modifier.weight(1f)
+                // Tarjeta de encargo / reserva de comida para ESTE DÍA (Solo visible si ha iniciado sesión)
+                if (isLoggedIn) {
+                    if (menu.isToday && !isThisDayOrdered) {
+                        Card(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(108.dp),
+                            shape = RoundedCornerShape(18.dp),
+                            colors = CardDefaults.cardColors(containerColor = Color(0xFFF1F5F9))
                         ) {
-                            Box(
+                            Row(
                                 modifier = Modifier
-                                    .size(44.dp)
-                                    .clip(RoundedCornerShape(12.dp))
-                                    .background(if (isDayOrdered) CampusGreen.copy(alpha = 0.15f) else WarningAmber.copy(alpha = 0.15f)),
-                                contentAlignment = Alignment.Center
+                                    .fillMaxSize()
+                                    .padding(horizontal = 16.dp, vertical = 14.dp),
+                                verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Icon(
-                                    imageVector = if (isDayOrdered) Icons.Default.CheckCircle else Icons.Default.Fastfood,
+                                    imageVector = Icons.Default.Info,
                                     contentDescription = null,
-                                    tint = if (isDayOrdered) CampusGreen else WarningAmber,
-                                    modifier = Modifier.size(24.dp)
+                                    tint = TextSecondary,
+                                    modifier = Modifier.size(22.dp)
                                 )
-                            }
-
-                            Column(
-                                modifier = Modifier.weight(1f),
-                                verticalArrangement = Arrangement.spacedBy(2.dp)
-                            ) {
+                                Spacer(modifier = Modifier.width(10.dp))
                                 Text(
-                                    text = if (isDayOrdered) "¡Menú $currentDayOrderedType reservado!" else "Encargar menú para llevar",
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 15.sp,
-                                    color = if (isDayOrdered) Color(0xFF065F46) else TextPrimary
-                                )
-                                Text(
-                                    text = "Para el ${currentMenu.dayLabel}",
+                                    text = "El encargo para llevar debe realizarse con antelación. Desliza hacia la izquierda para encargar los días posteriores.",
                                     fontSize = 12.sp,
-                                    color = if (isDayOrdered) Color(0xFF047857) else TextSecondary,
-                                    fontWeight = FontWeight.Medium
-                                )
-                                Text(
-                                    text = if (isDayOrdered)
-                                        "Recogida a las 14:15 h en ventanilla express"
-                                    else
-                                        "5.50 €",
-                                    fontSize = if (isDayOrdered) 12.sp else 13.sp,
-                                    fontWeight = if (isDayOrdered) FontWeight.Normal else FontWeight.ExtraBold,
-                                    color = if (isDayOrdered) TextSecondary else UgrRed
+                                    color = TextSecondary,
+                                    lineHeight = 16.sp
                                 )
                             }
                         }
+                    } else {
+                        Card(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(108.dp)
+                                .clickable(enabled = !isThisDayOrdered && menu.date.isAfter(today)) {
+                                    pendingOrderDate = menu.date
+                                },
+                            shape = RoundedCornerShape(18.dp),
+                            colors = CardDefaults.cardColors(
+                                containerColor = if (isThisDayOrdered) Color(0xFFDCFCE7) else SurfaceWhite
+                            ),
+                            border = androidx.compose.foundation.BorderStroke(
+                                1.2.dp,
+                                if (isThisDayOrdered) CampusGreen else WarningAmber.copy(alpha = 0.5f)
+                            ),
+                            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                    modifier = Modifier.weight(1f)
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(44.dp)
+                                            .clip(RoundedCornerShape(12.dp))
+                                            .background(if (isThisDayOrdered) CampusGreen.copy(alpha = 0.15f) else WarningAmber.copy(alpha = 0.15f)),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(
+                                            imageVector = if (isThisDayOrdered) Icons.Default.CheckCircle else Icons.Default.Fastfood,
+                                            contentDescription = null,
+                                            tint = if (isThisDayOrdered) CampusGreen else WarningAmber,
+                                            modifier = Modifier.size(24.dp)
+                                        )
+                                    }
 
-                        if (!isDayOrdered && currentMenu.date.isAfter(today)) {
-                            GestureBadge(
-                                type = GestureType.ACTION_TRIGGER,
-                                size = 28.dp,
-                                iconSize = 16.dp
-                            )
+                                    Column(
+                                        modifier = Modifier.weight(1f),
+                                        verticalArrangement = Arrangement.spacedBy(3.dp)
+                                    ) {
+                                        Text(
+                                            text = if (isThisDayOrdered) "¡Menú $dayOrderedType reservado!" else "Encargar menú para llevar",
+                                            fontWeight = FontWeight.Bold,
+                                            fontSize = 15.sp,
+                                            color = if (isThisDayOrdered) Color(0xFF065F46) else TextPrimary
+                                        )
+                                        Text(
+                                            text = "Para el ${menu.dayLabel}",
+                                            fontSize = 12.sp,
+                                            color = if (isThisDayOrdered) Color(0xFF047857) else TextSecondary,
+                                            fontWeight = FontWeight.Medium
+                                        )
+                                        Text(
+                                            text = if (isThisDayOrdered)
+                                                "Recoger a partir de las 13:00 h"
+                                            else
+                                                "5.50 €",
+                                            fontSize = if (isThisDayOrdered) 12.sp else 14.sp,
+                                            fontWeight = if (isThisDayOrdered) FontWeight.Normal else FontWeight.ExtraBold,
+                                            color = if (isThisDayOrdered) TextSecondary else UgrRed
+                                        )
+                                    }
+                                }
+
+                                if (!isThisDayOrdered && menu.date.isAfter(today)) {
+                                    GestureBadge(
+                                        type = GestureType.ACTION_TRIGGER,
+                                        size = 28.dp,
+                                        iconSize = 16.dp
+                                    )
+                                }
+                            }
                         }
                     }
                 }

@@ -34,7 +34,7 @@
       "telefono": "958240587",
       "email": "zoraida@ugr.es",
       "despacho": "D_202",
-      "es_profesor_actual": true,
+      "es_profesor_actual": false,
       "es_externo": false,
       "campus": "Campus Aynadamar (ETSIIT)",
       "avatar": "avatar_02",
@@ -772,14 +772,17 @@
       ]
     },
     {
-      "id": "Manuel_Gómez_Olmedo",
-      "nombre": "Manuel Gómez Olmedo",
+      "id": "Manuel_Pegalajar_Cuellar",
+      "nombre": "Manuel Pegalajar Cuéllar",
       "departamento": "Departamento de Ciencias de la Computación e Inteligencia Artificial",
-      "telefono": "958242791",
-      "email": "mgolmedo@ugr.es",
-      "despacho": "D_309",
-      "es_profesor_actual": false,
-      "tutorias": "Pendiente de publicación",
+      "telefono": "958244258",
+      "email": "manupc@ugr.es",
+      "despacho": "D_319",
+      "es_profesor_actual": true,
+      "es_externo": false,
+      "campus": "Campus Aynadamar (ETSIIT)",
+      "avatar": "avatar_36",
+      "tutorias": "Lunes y Martes de 11:30 a 13:30",
       "clases": [
         {
           "asignatura": "Teoría de la Información y la Codificación",

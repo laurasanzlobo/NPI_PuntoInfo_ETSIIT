@@ -280,11 +280,16 @@ fun AppNavigation() {
         }
     }
 
-    fun launchGlobalVoiceSearch() {
+    fun launchGlobalVoiceSearch(promptText: String? = null) {
+        val defaultPrompt = if (currentRoute?.startsWith(Screen.Professors.route) == true) {
+            "Di el nombre, apellido o departamento"
+        } else {
+            "¿A dónde quieres ir o a qué profesor buscas?"
+        }
         val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
             putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
             putExtra(RecognizerIntent.EXTRA_LANGUAGE, "es-ES")
-            putExtra(RecognizerIntent.EXTRA_PROMPT, "¿A dónde quieres ir?")
+            putExtra(RecognizerIntent.EXTRA_PROMPT, promptText ?: defaultPrompt)
         }
         try {
             isListeningSpeechGlobal = true
@@ -295,7 +300,7 @@ fun AppNavigation() {
         }
     }
 
-    val currentLaunchGlobalVoiceSearch by rememberUpdatedState(::launchGlobalVoiceSearch)
+    val currentLaunchGlobalVoiceSearch by rememberUpdatedState { launchGlobalVoiceSearch() }
 
     // Estado reactivo global de sesión: actualiza automáticamente la TopAppBar y los sensores al iniciar o cerrar sesión
     val currentUserProfile = UserSessionRepository.getProfile(context)
@@ -422,27 +427,28 @@ fun AppNavigation() {
                         }
                     },
                     actions = {
-                        // Loguito del gesto global de micrófono / sensor de proximidad (morado)
-                        GestureBadge(
-                            type = GestureType.PROXIMITY_VOICE,
-                            size = 26.dp,
-                            iconSize = 14.dp,
-                            onClick = { launchGlobalVoiceSearch() }
-                        )
+                        // Indicador visual del sensor de proximidad (morado) — En Profesores se integra directamente en la barra de búsqueda
+                        if (currentRoute?.startsWith(Screen.Professors.route) != true) {
+                            GestureBadge(
+                                type = GestureType.PROXIMITY_VOICE,
+                                size = 26.dp,
+                                iconSize = 14.dp,
+                                showTooltipOnClick = false,
+                                onClick = null
+                            )
 
-                        Spacer(modifier = Modifier.width(6.dp))
+                            Spacer(modifier = Modifier.width(6.dp))
+                        }
 
-                        // Loguito del gesto global de 3 inclinaciones hacia adelante para ver la clase actual (rojo) — Solo si ha iniciado sesión
+                        // Indicador visual del gesto de 3 inclinaciones para clase actual (rojo) — Solo si ha iniciado sesión
                         val isUserLoggedIn = UserSessionRepository.getProfile(context).isLoggedIn
                         if (isUserLoggedIn) {
                             GestureBadge(
                                 type = GestureType.TRIPLE_SHAKE,
                                 size = 26.dp,
                                 iconSize = 14.dp,
-                                onClick = {
-                                    activeClassForDialog = ScheduleRepository.getCurrentOrUpcomingClass(context = context)
-                                    showCurrentClassDialog = true
-                                }
+                                showTooltipOnClick = false,
+                                onClick = null
                             )
 
                             Spacer(modifier = Modifier.width(6.dp))

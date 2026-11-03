@@ -61,7 +61,7 @@ object ScheduleRepository {
             subject = "Teoría de la Información y la Codificación",
             acronym = "TIC",
             room = "Laboratorio 2.3 · Planta 2",
-            professor = "Manuel Gómez Olmedo",
+            professor = "Manuel Pegalajar Cuéllar",
             isPractice = true,
             subgroup = "A1"
         ),
@@ -81,7 +81,7 @@ object ScheduleRepository {
             subject = "Teoría de la Información y la Codificación",
             acronym = "TIC",
             room = "Aula 1.1 · Planta 1",
-            professor = "Manuel Gómez Olmedo",
+            professor = "Manuel Pegalajar Cuéllar",
             isPractice = false
         ),
         ClassItem(

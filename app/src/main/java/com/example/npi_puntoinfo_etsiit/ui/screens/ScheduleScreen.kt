@@ -1,6 +1,7 @@
 package com.example.npi_puntoinfo_etsiit.ui.screens
 
 import android.content.Context
+import android.net.Uri
 import android.os.Build
 import android.os.VibrationEffect
 import android.os.Vibrator
@@ -16,6 +17,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowForwardIos
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.EventBusy
 import androidx.compose.material.icons.filled.Info
@@ -337,17 +339,36 @@ fun ScheduleScreen(
                         modifier = Modifier.fillMaxWidth()
                     )
                     Spacer(modifier = Modifier.height(6.dp))
-                    Surface(
-                        shape = RoundedCornerShape(6.dp),
-                        color = if (item.isPractice) CampusTeal.copy(alpha = 0.12f) else Color(0xFFF1F5F9)
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text(
-                            text = if (item.isPractice) "PRÁCTICAS (${item.acronym})" else "TEORÍA (${item.acronym})",
-                            color = if (item.isPractice) CampusTeal else TextSecondary,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 11.sp,
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
-                        )
+                        Surface(
+                            shape = RoundedCornerShape(6.dp),
+                            color = Color(0xFFF1F5F9)
+                        ) {
+                            Text(
+                                text = if (item.isPractice) "PRÁCTICAS" else "TEORÍA",
+                                color = TextSecondary,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 11.sp,
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                            )
+                        }
+                        if (item.acronym.isNotBlank()) {
+                            Surface(
+                                shape = RoundedCornerShape(6.dp),
+                                color = Color(0xFFE2E8F0)
+                            ) {
+                                Text(
+                                    text = item.acronym,
+                                    color = TextPrimary,
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 11.sp,
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                                )
+                            }
+                        }
                     }
                 }
             },
@@ -398,9 +419,10 @@ fun ScheduleScreen(
                                     )
                                     Spacer(modifier = Modifier.width(8.dp))
                                     Text(
-                                        text = "Aula: ${item.room}",
+                                        text = item.room,
                                         fontSize = 13.sp,
-                                        color = TextPrimary
+                                        color = TextPrimary,
+                                        fontWeight = FontWeight.SemiBold
                                     )
                                 }
                                 // Loguito del gesto «¡Llévame!» hacia el aula
@@ -417,43 +439,78 @@ fun ScheduleScreen(
                         }
                     }
 
-                    // Profesor asignado
+                    // Profesor asignado (pulsable para ver su ficha completa en Profesores)
                     Card(
+                        onClick = {
+                            if (item.professor.isNotBlank() && item.professor != "Profesor por asignar") {
+                                selectedClass = null
+                                onNavigate("${Screen.Professors.route}?nombre=${Uri.encode(item.professor)}")
+                            }
+                        },
                         colors = CardDefaults.cardColors(containerColor = BackgroundLight),
                         shape = RoundedCornerShape(12.dp),
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Row(
-                            modifier = Modifier.padding(14.dp),
-                            verticalAlignment = Alignment.CenterVertically
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(14.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            Icon(
-                                imageVector = Icons.Default.Person,
-                                contentDescription = null,
-                                tint = CampusTeal,
-                                modifier = Modifier.size(20.dp)
-                            )
-                            Spacer(modifier = Modifier.width(10.dp))
-                            Column {
-                                Text(
-                                    text = "Profesor/a:",
-                                    fontSize = 11.sp,
-                                    color = TextSecondary
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Person,
+                                    contentDescription = null,
+                                    tint = CampusTeal,
+                                    modifier = Modifier.size(20.dp)
                                 )
-                                Text(
-                                    text = item.professor,
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 14.sp,
-                                    color = TextPrimary
-                                )
+                                Spacer(modifier = Modifier.width(10.dp))
+                                Column {
+                                    Text(
+                                        text = "Profesor/a:",
+                                        fontSize = 11.sp,
+                                        color = TextSecondary
+                                    )
+                                    Text(
+                                        text = item.professor,
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 14.sp,
+                                        color = TextPrimary
+                                    )
+                                }
                             }
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.ArrowForwardIos,
+                                contentDescription = "Ver ficha del profesor",
+                                tint = CampusTeal,
+                                modifier = Modifier.size(14.dp)
+                            )
                         }
                     }
                 }
             },
             confirmButton = {
-                TextButton(onClick = { selectedClass = null }) {
-                    Text("Cerrar", color = TextPrimary, fontWeight = FontWeight.Bold)
+                Button(
+                    onClick = { selectedClass = null },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = UgrRed,
+                        contentColor = Color.White
+                    ),
+                    shape = RoundedCornerShape(10.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(42.dp)
+                ) {
+                    Text(
+                        text = "Cerrar",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 14.sp,
+                        color = Color.White
+                    )
                 }
             }
         )
@@ -466,18 +523,17 @@ private fun ClassCard(
     onClick: () -> Unit
 ) {
     // Si la clase está en curso: verde menta con borde esmeralda.
-    // Si es teoría: fondo rojito UGR muy clarito y sutil (Color(0xFFFFF1F2)).
-    // Si es prácticas: fondo azulito ETSIIT muy clarito y sutil (Color(0xFFEFF6FF)).
-    // Esto garantiza un contraste nítido y evita confusión cromática con la clase en curso.
+    // Si es teoría: fondo blanco limpio con borde sutil.
+    // Si es prácticas: fondo gris clarito (estilo oficial facultad).
     val cardBg = when {
         item.isCurrent -> Color(0xFFDCFCE7)
-        item.isPractice -> Color(0xFFEFF6FF)
-        else -> Color(0xFFFFF1F2)
+        item.isPractice -> Color(0xFFF1F5F9)
+        else -> SurfaceWhite
     }
     val borderColor = when {
         item.isCurrent -> CampusGreen
-        item.isPractice -> Color(0xFFBFDBFE)
-        else -> Color(0xFFFECDD3)
+        item.isPractice -> Color(0xFFE2E8F0)
+        else -> SurfaceBorder
     }
 
     Card(
@@ -517,20 +573,20 @@ private fun ClassCard(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
-                    // Badge de Teoría (Rojito UGR) o Prácticas (Azulito ETSIIT)
+                    // Badge de Teoría o Prácticas
                     Surface(
                         shape = RoundedCornerShape(6.dp),
                         color = if (item.isCurrent) {
                             CampusGreen.copy(alpha = 0.20f)
                         } else if (item.isPractice) {
-                            EtsiitBlue.copy(alpha = 0.12f)
+                            SurfaceWhite
                         } else {
-                            UgrRed.copy(alpha = 0.12f)
+                            Color(0xFFF1F5F9)
                         }
                     ) {
                         Text(
                             text = if (item.isPractice) "PRÁCTICAS" else "TEORÍA",
-                            color = if (item.isCurrent) CampusGreen else if (item.isPractice) EtsiitBlue else UgrRed,
+                            color = if (item.isCurrent) CampusGreen else TextSecondary,
                             fontWeight = FontWeight.Bold,
                             fontSize = 10.sp,
                             modifier = Modifier.padding(horizontal = 7.dp, vertical = 3.dp)
@@ -556,7 +612,7 @@ private fun ClassCard(
 
             Spacer(modifier = Modifier.height(10.dp))
 
-            // Fila central: Chip del Acrónimo (con color coherente a Teoría/Prácticas) y Nombre Completo
+            // Fila central: Chip del Acrónimo y Nombre Completo
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.fillMaxWidth()
@@ -565,8 +621,8 @@ private fun ClassCard(
                     shape = RoundedCornerShape(8.dp),
                     color = when {
                         item.isCurrent -> CampusGreen
-                        item.isPractice -> EtsiitBlue.copy(alpha = 0.14f)
-                        else -> UgrRed.copy(alpha = 0.14f)
+                        item.isPractice -> SurfaceWhite
+                        else -> Color(0xFFF1F5F9)
                     }
                 ) {
                     Text(
@@ -575,8 +631,7 @@ private fun ClassCard(
                         fontSize = 14.sp,
                         color = when {
                             item.isCurrent -> Color.White
-                            item.isPractice -> EtsiitBlue
-                            else -> UgrRed
+                            else -> TextPrimary
                         },
                         modifier = Modifier.padding(horizontal = 9.dp, vertical = 5.dp)
                     )
