@@ -435,19 +435,25 @@ internal class TripleForwardTiltDetector {
                 }
             }
             State.WAITING_FINAL_RETURN -> {
-                if (x > 0.10f) {
+                // Acumular la rotación de regreso a la posición base (gx > 0)
+                if (x > 0.08f) {
                     finalReturnAngle += x * dt
                 }
                 val returnElapsedNs = timestampNs - enteredReturnNs
-                // Se dispara cuando el móvil regresa a la posición y se estabiliza
-                val returnedAndSettled = (finalReturnAngle >= 0.12f && x < 0.50f) ||
-                        (returnElapsedNs >= 180_000_000L && abs(x) < 0.60f)
 
-                if (returnedAndSettled) {
+                // Exige un retorno real hacia el usuario (gx > 0) y que se detenga en la posición base
+                val hasReturnedToPosition = finalReturnAngle >= (currentForwardAngle * 0.70f).coerceAtLeast(minForwardAngle * 0.85f)
+                val settledAtRest = abs(x) < 0.40f
+
+                if (hasReturnedToPosition && settledAtRest) {
                     lastTriggeredNs = timestampNs
                     reset()
                     previousTimestampNs = timestampNs
                     return true
+                } else if (returnElapsedNs > 900_000_000L) {
+                    // Si pasaron 900ms sin volver a la posición base, cancelar
+                    reset()
+                    previousTimestampNs = timestampNs
                 }
             }
         }
