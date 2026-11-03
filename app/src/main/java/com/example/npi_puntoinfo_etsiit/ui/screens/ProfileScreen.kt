@@ -1,29 +1,40 @@
 package com.example.npi_puntoinfo_etsiit.ui.screens
 
 import android.Manifest
-import android.app.Activity
+import android.annotation.SuppressLint
+import android.content.Context
 import android.content.pm.PackageManager
-import android.graphics.Bitmap
-import android.graphics.ImageDecoder
-import android.net.Uri
-import android.os.Build
-import android.provider.MediaStore
+import android.graphics.SurfaceTexture
+import android.hardware.camera2.CameraCaptureSession
+import android.hardware.camera2.CameraCharacteristics
+import android.hardware.camera2.CameraDevice
+import android.hardware.camera2.CameraManager
+import android.hardware.camera2.CaptureRequest
+import android.os.Handler
+import android.os.Looper
+import android.view.Surface
+import android.view.TextureView
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.Login
+import androidx.compose.material.icons.automirrored.filled.Accessible
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.DirectionsWalk
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -31,746 +42,690 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
-import com.example.npi_puntoinfo_etsiit.data.ScheduleRepository
-import com.example.npi_puntoinfo_etsiit.data.SubjectOption
+import com.example.npi_puntoinfo_etsiit.R
 import com.example.npi_puntoinfo_etsiit.data.UserProfile
 import com.example.npi_puntoinfo_etsiit.data.UserSessionRepository
-import com.example.npi_puntoinfo_etsiit.ocr.TuiOcrScanner
-import com.example.npi_puntoinfo_etsiit.ocr.TuiScannedData
-import com.example.npi_puntoinfo_etsiit.sensors.NfcCardReader
 import com.example.npi_puntoinfo_etsiit.ui.theme.*
+import com.google.mlkit.vision.barcode.BarcodeScannerOptions
+import com.google.mlkit.vision.barcode.BarcodeScanning
+import com.google.mlkit.vision.barcode.common.Barcode
+import com.google.mlkit.vision.common.InputImage
+import kotlinx.coroutines.delay
 
-@OptIn(ExperimentalMaterial3Api::class)
+/**
+ * Pantalla de Mi Perfil sin scroll vertical:
+ * - Si NO ha iniciado sesión: abre directamente la cámara en vivo con el recuadro de enfoque
+ *   y el mensaje "Enfoca tu TUI o escanea el código QR de la TUI" para iniciar sesión al instante.
+ * - Si HA iniciado sesión: muestra la ficha completa de la estudiante (Elena Morales Vega),
+ *   expediente académico UGR, preferencias de navegación accesible y cierre de sesión.
+ */
 @Composable
-fun ProfileScreen() {
+fun ProfileScreen(
+    onBack: () -> Unit = {},
+    onLoggedOut: () -> Unit = onBack
+) {
     val context = LocalContext.current
-    val activity = context as? Activity
+    val profile = UserSessionRepository.getProfile(context)
+    var isLoggingOut by remember { mutableStateOf(false) }
 
-    var profile by remember { mutableStateOf(UserSessionRepository.getProfile(context)) }
-
-    // Estados del flujo de Login TUI
-    var isProcessingOcr by remember { mutableStateOf(false) }
-    var scannedTuiData by remember { mutableStateOf<TuiScannedData?>(null) }
-    var nfcVerifiedUid by remember { mutableStateOf<String?>(null) }
-    var showSubjectEditorDialog by remember { mutableStateOf(false) }
-
-    // Campos de asignaturas y matrícula
-    val degreeId = "gii"
-    val degreeName = "Grado en Ingeniería Informática"
-    val course = 3
-    val group = "A"
-    var userMatricula by remember { mutableStateOf<Map<String, String>>(emptyMap()) }
-
-    // Cargar catálogo de asignaturas disponibles
-    val allDegreeSubjects = remember(context) {
-        ScheduleRepository.getCatalogSubjects(context, degreeId, course)
+    // Función para iniciar sesión inmediatamente con el perfil oficial preconfigurado
+    fun loginConPerfilOficial() {
+        isLoggingOut = false
+        val loggedInProfile = UserSessionRepository.loginWithOfficialProfile(
+            context = context,
+            isAccessibleRouting = profile.isAccessibleRouting
+        )
+        Toast.makeText(context, "¡TUI verificada! Sesión iniciada como ${loggedInProfile.name}", Toast.LENGTH_SHORT).show()
     }
 
-    // Inicializar asignaturas con todas marcadas por defecto con su primer subgrupo
-    LaunchedEffect(allDegreeSubjects) {
-        if (allDegreeSubjects.isNotEmpty() && userMatricula.isEmpty()) {
-            val defaultMatricula = mutableMapOf<String, String>()
-            allDegreeSubjects.forEach { subj ->
-                val defaultSubgroup = subj.subgruposDisponibles.firstOrNull() ?: "Único"
-                defaultMatricula[subj.acronym] = defaultSubgroup
-            }
-            userMatricula = defaultMatricula
-        }
-    }
-
-    // Listener universal del sensor NFC (acepta cualquier tarjeta física)
-    DisposableEffect(activity, scannedTuiData, nfcVerifiedUid) {
-        if (activity != null && scannedTuiData != null && nfcVerifiedUid == null) {
-            val nfcReader = NfcCardReader(activity)
-            nfcReader.onCardDiscovered = { uid ->
-                nfcVerifiedUid = uid
-                Toast.makeText(context, "Tarjeta NFC detectada y verificada: $uid", Toast.LENGTH_SHORT).show()
-            }
-            nfcReader.startListening()
-
-            onDispose {
-                nfcReader.stopListening()
-            }
-        } else {
-            onDispose {}
-        }
-    }
-
-    // Procesador seguro de Bitmap
-    fun processBitmapSafe(bitmap: Bitmap?) {
-        if (bitmap == null) return
-        isProcessingOcr = true
-        try {
-            TuiOcrScanner.processImage(
-                bitmap = bitmap,
-                onSuccess = { data ->
-                    isProcessingOcr = false
-                    scannedTuiData = data
-                    Toast.makeText(context, "TUI leída: ${data.name}", Toast.LENGTH_SHORT).show()
-                },
-                onError = { e ->
-                    isProcessingOcr = false
-                    Toast.makeText(context, "Error OCR: ${e.localizedMessage ?: "desconocido"}", Toast.LENGTH_SHORT).show()
-                }
-            )
-        } catch (e: Exception) {
-            isProcessingOcr = false
-            Toast.makeText(context, "Excepción al procesar imagen: ${e.message}", Toast.LENGTH_SHORT).show()
-        }
-    }
-
-    // Launcher de cámara protegido con try-catch
-    val takePhotoLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.TakePicturePreview()
-    ) { bitmap: Bitmap? ->
-        processBitmapSafe(bitmap)
-    }
-
-    // Launcher para solicitar permiso de cámara en tiempo de ejecución (evita crash)
-    val cameraPermissionLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.RequestPermission()
-    ) { isGranted: Boolean ->
-        if (isGranted) {
-            try {
-                takePhotoLauncher.launch(null)
-            } catch (e: Exception) {
-                Toast.makeText(context, "No se pudo abrir la cámara: ${e.message}", Toast.LENGTH_SHORT).show()
-            }
-        } else {
-            Toast.makeText(context, "Permiso de cámara denegado. Puedes usar la galería o TUI demo.", Toast.LENGTH_LONG).show()
-        }
-    }
-
-    // Launcher de galería (alternativa sin necesidad de cámara)
-    val pickImageLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.GetContent()
-    ) { uri: Uri? ->
-        if (uri != null) {
-            try {
-                val bitmap = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                    val source = ImageDecoder.createSource(context.contentResolver, uri)
-                    ImageDecoder.decodeBitmap(source)
-                } else {
-                    @Suppress("DEPRECATION")
-                    MediaStore.Images.Media.getBitmap(context.contentResolver, uri)
-                }
-                processBitmapSafe(bitmap)
-            } catch (e: Exception) {
-                Toast.makeText(context, "Error cargando imagen de galería: ${e.message}", Toast.LENGTH_SHORT).show()
-            }
-        }
-    }
-
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(BackgroundLight)
-            .verticalScroll(rememberScrollState())
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        if (profile.isLoggedIn) {
+    if (profile.isLoggedIn || isLoggingOut) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(BackgroundLight)
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp)
+        ) {
             // ==========================================
-            // VISTA CON SESIÓN INICIADA
+            // 1. CABECERA DESGLOSADA: FOTO Y DATOS PERSONALES
             // ==========================================
-
             Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(220.dp),
-                shape = RoundedCornerShape(20.dp),
-                elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(22.dp),
+                colors = CardDefaults.cardColors(containerColor = SurfaceWhite),
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(18.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    // Foto real de la estudiante con borde rojo UGR
+                    Image(
+                        painter = painterResource(id = R.drawable.foto_estudiante),
+                        contentDescription = "Foto de perfil",
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier
+                            .size(76.dp)
+                            .clip(CircleShape)
+                            .border(2.5.dp, UgrRed, CircleShape)
+                    )
+
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = if (profile.name.isNotBlank() && !profile.name.contains("José", ignoreCase = true))
+                                profile.name
+                            else
+                                "Elena Morales Vega",
+                            color = TextPrimary,
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.ExtraBold,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                        Spacer(modifier = Modifier.height(3.dp))
+                        Text(
+                            text = "DNI ${if (profile.dni.isNotBlank() && profile.dni != "75932717") (if (profile.dni.matches(Regex(""".*[A-Za-z]$"""))) profile.dni else "${profile.dni}R") else "48291054R"}",
+                            color = TextSecondary,
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                        Spacer(modifier = Modifier.height(2.dp))
+                        Surface(
+                            shape = RoundedCornerShape(6.dp),
+                            color = UgrRedLight
+                        ) {
+                            Text(
+                                text = "ESTUDIANTE",
+                                color = UgrRed,
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.ExtraBold,
+                                modifier = Modifier.padding(horizontal = 7.dp, vertical = 2.dp)
+                            )
+                        }
+                    }
+                }
+            }
+
+            // ==========================================
+            // 2. BLOQUE ACADÉMICO (ROJO UGR ELEGANTE, SIN MENCIÓN)
+            // ==========================================
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(22.dp),
+                elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
+                colors = CardDefaults.cardColors(containerColor = Color.Transparent)
             ) {
                 Box(
                     modifier = Modifier
-                        .fillMaxSize()
+                        .fillMaxWidth()
                         .background(
-                            Brush.linearGradient(
-                                colors = listOf(UgrRedDark, UgrRed, Color(0xFF6B111F))
+                            Brush.horizontalGradient(
+                                colors = listOf(UgrRed, UgrRedDark)
                             )
                         )
                         .padding(20.dp)
                 ) {
-                    Column(
-                        modifier = Modifier.fillMaxSize(),
-                        verticalArrangement = Arrangement.SpaceBetween
-                    ) {
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text(
+                            text = "EXPEDIENTE ACADÉMICO",
+                            color = Color.White.copy(alpha = 0.80f),
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.ExtraBold,
+                            letterSpacing = 1.sp
+                        )
+                        Text(
+                            text = "Grado en Ingeniería Informática",
+                            color = Color.White,
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold
+                        )
                         Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            Text(
-                                text = "UNIVERSIDAD DE GRANADA",
-                                color = Color.White.copy(alpha = 0.9f),
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.Bold,
-                                letterSpacing = 1.sp
-                            )
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(
-                                    imageVector = Icons.Default.Nfc,
-                                    contentDescription = "NFC Verificado",
-                                    tint = Color(0xFF4ADE80),
-                                    modifier = Modifier.size(20.dp)
-                                )
-                                Spacer(modifier = Modifier.width(4.dp))
+                            Surface(
+                                shape = RoundedCornerShape(8.dp),
+                                color = Color.White.copy(alpha = 0.22f)
+                            ) {
                                 Text(
-                                    text = profile.nfcUid,
-                                    color = Color.White.copy(alpha = 0.85f),
-                                    fontSize = 11.sp,
-                                    fontWeight = FontWeight.Bold
+                                    text = "4º Año Matriculado",
+                                    color = Color.White,
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                                )
+                            }
+                            Surface(
+                                shape = RoundedCornerShape(8.dp),
+                                color = Color.White.copy(alpha = 0.22f)
+                            ) {
+                                Text(
+                                    text = "Grupo A",
+                                    color = Color.White,
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
                                 )
                             }
                         }
+                    }
+                }
+            }
 
-                        Row(verticalAlignment = Alignment.CenterVertically) {
+            // ==========================================
+            // 3. PREFERENCIAS DE ACCESIBILIDAD (EVALUACIÓN)
+            // ==========================================
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(20.dp),
+                colors = CardDefaults.cardColors(containerColor = SurfaceWhite),
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+            ) {
+                Column(
+                    modifier = Modifier.padding(18.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Text(
+                        text = "Preferencias de Navegación",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 15.sp,
+                        color = TextPrimary
+                    )
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                            modifier = Modifier.weight(1f)
+                        ) {
                             Box(
                                 modifier = Modifier
-                                    .size(54.dp)
-                                    .clip(CircleShape)
-                                    .background(Color.White.copy(alpha = 0.2f)),
+                                    .size(44.dp)
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .background(CampusTeal.copy(alpha = 0.12f)),
                                 contentAlignment = Alignment.Center
                             ) {
                                 Icon(
-                                    imageVector = Icons.Default.Person,
+                                    imageVector = if (profile.isAccessibleRouting) Icons.AutoMirrored.Filled.Accessible else Icons.AutoMirrored.Filled.DirectionsWalk,
                                     contentDescription = null,
-                                    tint = Color.White,
-                                    modifier = Modifier.size(32.dp)
+                                    tint = CampusTeal,
+                                    modifier = Modifier.size(24.dp)
                                 )
                             }
-                            Spacer(modifier = Modifier.width(14.dp))
                             Column {
                                 Text(
-                                    text = profile.name,
-                                    color = Color.White,
-                                    fontSize = 18.sp,
-                                    fontWeight = FontWeight.Bold
-                                )
-                                Text(
-                                    text = profile.degreeName,
-                                    color = Color.White.copy(alpha = 0.9f),
-                                    fontSize = 13.sp
-                                )
-                                Text(
-                                    text = "${profile.primaryCourse}º Curso · Grupo ${profile.primaryGroup} · DNI ${profile.dni}",
-                                    color = Color.White.copy(alpha = 0.75f),
-                                    fontSize = 12.sp
-                                )
-                            }
-                        }
-
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(
-                                text = "TUI: ${profile.tuiCardNumber.chunked(4).joinToString(" ")}",
-                                color = Color.White.copy(alpha = 0.75f),
-                                fontSize = 11.sp
-                            )
-                            Surface(
-                                shape = RoundedCornerShape(6.dp),
-                                color = Color.White.copy(alpha = 0.2f)
-                            ) {
-                                Text(
-                                    text = profile.colectivo,
-                                    color = Color.White,
-                                    fontSize = 10.sp,
+                                    text = if (profile.isAccessibleRouting) "Ruta Accesible (Ascensor)" else "Ruta Rápida (Escaleras)",
+                                    fontSize = 14.sp,
                                     fontWeight = FontWeight.Bold,
-                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
+                                    color = TextPrimary
+                                )
+                                Text(
+                                    text = if (profile.isAccessibleRouting)
+                                        "Prioriza ascensores para movilidad reducida"
+                                    else
+                                        "Usa escaleras y tramos directos entre plantas",
+                                    fontSize = 12.sp,
+                                    color = TextSecondary,
+                                    lineHeight = 16.sp
                                 )
                             }
                         }
+
+                        Switch(
+                            checked = profile.isAccessibleRouting,
+                            onCheckedChange = { isChecked ->
+                                val updated = profile.copy(isAccessibleRouting = isChecked)
+                                UserSessionRepository.saveProfile(context, updated)
+                            },
+                            colors = SwitchDefaults.colors(
+                                checkedThumbColor = Color.White,
+                                checkedTrackColor = CampusTeal
+                            )
+                        )
                     }
                 }
             }
 
-            // Sección de asignaturas matriculadas
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = SurfaceWhite)
-            ) {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Column {
-                            Text(
-                                text = "Mis Asignaturas (${profile.matricula.size})",
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 15.sp,
-                                color = TextPrimary
-                            )
-                            Text(
-                                text = "Horario filtrado por tus materias y subgrupos",
-                                fontSize = 12.sp,
-                                color = TextSecondary
-                            )
-                        }
-                        IconButton(onClick = { showSubjectEditorDialog = true }) {
-                            Icon(imageVector = Icons.Default.Edit, contentDescription = "Editar matrícula", tint = EtsiitBlue)
-                        }
-                    }
+            Spacer(modifier = Modifier.weight(1f))
 
-                    profile.matricula.forEach { (acronym, subgroup) ->
-                        val subName = allDegreeSubjects.find { it.acronym == acronym }?.name ?: acronym
-                        Card(
-                            modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(10.dp),
-                            colors = CardDefaults.cardColors(containerColor = BackgroundLight)
-                        ) {
-                            Column(modifier = Modifier.padding(10.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Text(text = acronym, fontWeight = FontWeight.Bold, fontSize = 14.sp, color = TextPrimary)
-                                    Surface(
-                                        shape = RoundedCornerShape(6.dp),
-                                        color = CampusTeal.copy(alpha = 0.15f)
-                                    ) {
-                                        Text(
-                                            text = if (subgroup == "Único" || subgroup.isBlank()) "Grupo Único" else "Prácticas: $subgroup",
-                                            fontSize = 11.sp,
-                                            fontWeight = FontWeight.Bold,
-                                            color = CampusTeal,
-                                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-                                        )
-                                    }
-                                }
-                                Text(text = subName, fontSize = 12.sp, color = TextSecondary, maxLines = 1)
-                            }
-                        }
-                    }
-                }
-            }
-
+            // ==========================================
+            // 4. BOTÓN CERRAR SESIÓN
+            // ==========================================
             OutlinedButton(
                 onClick = {
+                    isLoggingOut = true
+                    onLoggedOut()
                     UserSessionRepository.logout(context)
-                    profile = UserProfile()
-                    scannedTuiData = null
-                    nfcVerifiedUid = null
                     Toast.makeText(context, "Sesión cerrada", Toast.LENGTH_SHORT).show()
                 },
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(50.dp),
+                shape = RoundedCornerShape(14.dp),
                 colors = ButtonDefaults.outlinedButtonColors(contentColor = UgrRed)
             ) {
                 Icon(imageVector = Icons.AutoMirrored.Filled.Logout, contentDescription = null, modifier = Modifier.size(18.dp))
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("Cerrar Sesión")
+                Text("Cerrar Sesión", fontWeight = FontWeight.Bold)
             }
+        }
+    } else {
+        // ==========================================
+        // VISTA SIN SESIÓN: CÁMARA EN DIRECTO ABIERTA PARA ESCANEAR TUI / QR
+        // ==========================================
+        LiveTuiQrCameraScanner(
+            onScanSuccess = { loginConPerfilOficial() },
+            onBack = onBack
+        )
+    }
+}
 
-        } else {
-            // ==========================================
-            // VISTA SIN SESIÓN (ASISTENTE DE LOGIN)
-            // ==========================================
+/**
+ * Vista de cámara abierta en directo a pantalla completa con visor para escanear
+ * el código QR del reverso de la TUI.
+ * Utiliza Google ML Kit Barcode Scanning configurado exclusivamente en formato QR.
+ * NO inicia sesión hasta que se detecta un código QR real frente a la cámara.
+ */
+@Composable
+private fun LiveTuiQrCameraScanner(
+    onScanSuccess: () -> Unit,
+    onBack: () -> Unit
+) {
+    val context = LocalContext.current
+    var hasCameraPermission by remember {
+        mutableStateOf(
+            ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED
+        )
+    }
 
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = SurfaceWhite)
-            ) {
-                Column(
-                    modifier = Modifier.padding(18.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Text(
-                        text = "Inicio de Sesión TUI + NFC",
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = TextPrimary
-                    )
-                    Text(
-                        text = "Identifícate con tu carné universitario físico para cargar tu horario exacto y filtrar solo tus asignaturas y subgrupos.",
-                        fontSize = 13.sp,
-                        color = TextSecondary,
-                        lineHeight = 18.sp
-                    )
-                }
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        hasCameraPermission = granted
+    }
+
+    LaunchedEffect(Unit) {
+        if (!hasCameraPermission) {
+            permissionLauncher.launch(Manifest.permission.CAMERA)
+        }
+    }
+
+    val currentOnScanSuccess by rememberUpdatedState(onScanSuccess)
+    var isScanningTriggered by remember { mutableStateOf(false) }
+    var textureViewRef by remember { mutableStateOf<TextureView?>(null) }
+
+    // Escáner de Google ML Kit especializado estrictamente en códigos QR
+    val qrScanner = remember {
+        val options = BarcodeScannerOptions.Builder()
+            .setBarcodeFormats(Barcode.FORMAT_QR_CODE)
+            .build()
+        BarcodeScanning.getClient(options)
+    }
+
+    // Escaneo continuo en vivo sobre la vista de cámara: busca únicamente códigos QR
+    LaunchedEffect(hasCameraPermission, textureViewRef) {
+        val tv = textureViewRef ?: return@LaunchedEffect
+        if (!hasCameraPermission) return@LaunchedEffect
+
+        while (!isScanningTriggered) {
+            delay(350L) // Analiza 3 fotogramas por segundo para máxima respuesta sin saturar CPU
+            val bmp = try {
+                if (tv.isAvailable) tv.getBitmap(480, 480) else null
+            } catch (_: Exception) {
+                null
             }
-
-            // PASO 1: Captura Óptica
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = SurfaceWhite)
-            ) {
-                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Surface(
-                            shape = CircleShape,
-                            color = (if (scannedTuiData != null) Color(0xFF10B981) else UgrRed).copy(alpha = 0.15f),
-                            modifier = Modifier.size(32.dp)
-                        ) {
-                            Box(contentAlignment = Alignment.Center) {
-                                Text("1", fontWeight = FontWeight.Bold, color = if (scannedTuiData != null) Color(0xFF10B981) else UgrRed)
-                            }
-                        }
-                        Spacer(modifier = Modifier.width(10.dp))
-                        Text("Captura de la TUI", fontWeight = FontWeight.Bold, fontSize = 15.sp, color = TextPrimary)
-                    }
-
-                    if (scannedTuiData == null) {
-                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                Button(
-                                    onClick = {
-                                        val hasPermission = ContextCompat.checkSelfPermission(
-                                            context,
-                                            Manifest.permission.CAMERA
-                                        ) == PackageManager.PERMISSION_GRANTED
-
-                                        if (hasPermission) {
-                                            try {
-                                                takePhotoLauncher.launch(null)
-                                            } catch (e: Exception) {
-                                                Toast.makeText(context, "Error al abrir cámara: ${e.message}", Toast.LENGTH_SHORT).show()
-                                            }
-                                        } else {
-                                            cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
-                                        }
-                                    },
-                                    modifier = Modifier.weight(1f),
-                                    shape = RoundedCornerShape(10.dp),
-                                    colors = ButtonDefaults.buttonColors(containerColor = UgrRed)
-                                ) {
-                                    Icon(Icons.Default.PhotoCamera, contentDescription = null, modifier = Modifier.size(18.dp))
-                                    Spacer(modifier = Modifier.width(6.dp))
-                                    Text("Cámara", fontSize = 13.sp)
-                                }
-
-                                OutlinedButton(
-                                    onClick = { pickImageLauncher.launch("image/*") },
-                                    modifier = Modifier.weight(1f),
-                                    shape = RoundedCornerShape(10.dp)
-                                ) {
-                                    Icon(Icons.Default.Image, contentDescription = null, modifier = Modifier.size(18.dp))
-                                    Spacer(modifier = Modifier.width(6.dp))
-                                    Text("Galería", fontSize = 13.sp)
-                                }
-                            }
-
-                            OutlinedButton(
-                                onClick = {
-                                    scannedTuiData = TuiOcrScanner.getDemoTui()
-                                    Toast.makeText(context, "Cargada TUI demo de Laura Sanz", Toast.LENGTH_SHORT).show()
-                                },
-                                modifier = Modifier.fillMaxWidth(),
-                                shape = RoundedCornerShape(10.dp)
-                            ) {
-                                Text("Probar con TUI Demo (Sin foto)", fontSize = 13.sp)
-                            }
-                        }
-
-                        if (isProcessingOcr) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
-                                horizontalArrangement = Arrangement.Center,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text("Analizando texto con ML Kit...", fontSize = 12.sp, color = TextSecondary)
-                            }
-                        }
-                    } else {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clip(RoundedCornerShape(10.dp))
-                                .background(BackgroundLight)
-                                .padding(12.dp),
-                            verticalArrangement = Arrangement.spacedBy(4.dp)
-                        ) {
-                            Text("Estudiante: ${scannedTuiData?.name}", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = TextPrimary)
-                            Text("DNI: ${scannedTuiData?.dni} · TUI: ${scannedTuiData?.cardNumber?.chunked(4)?.joinToString(" ")}", fontSize = 12.sp, color = TextSecondary)
-                            Text("Colectivo: ${scannedTuiData?.colectivo}", fontSize = 12.sp, color = CampusTeal, fontWeight = FontWeight.Bold)
+            if (bmp != null) {
+                val inputImage = InputImage.fromBitmap(bmp, 0)
+                qrScanner.process(inputImage)
+                    .addOnSuccessListener { barcodes ->
+                        val foundQr = barcodes.firstOrNull { it.format == Barcode.FORMAT_QR_CODE }
+                        if (foundQr != null && !isScanningTriggered) {
+                            isScanningTriggered = true
+                            currentOnScanSuccess()
                         }
                     }
-                }
-            }
-
-            // PASO 2: Verificación NFC Universal
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = SurfaceWhite)
-            ) {
-                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Surface(
-                            shape = CircleShape,
-                            color = (if (nfcVerifiedUid != null) Color(0xFF10B981) else EtsiitBlue).copy(alpha = 0.15f),
-                            modifier = Modifier.size(32.dp)
-                        ) {
-                            Box(contentAlignment = Alignment.Center) {
-                                Text("2", fontWeight = FontWeight.Bold, color = if (nfcVerifiedUid != null) Color(0xFF10B981) else EtsiitBlue)
-                            }
-                        }
-                        Spacer(modifier = Modifier.width(10.dp))
-                        Text("Verificación NFC Física", fontWeight = FontWeight.Bold, fontSize = 15.sp, color = TextPrimary)
+                    .addOnFailureListener {
+                        // Si no hay QR en el frame, sigue esperando
                     }
-
-                    if (nfcVerifiedUid == null) {
-                        Text(
-                            text = if (scannedTuiData != null)
-                                "Acerca cualquier tarjeta física TUI al lector NFC del móvil para capturar su UID inmutable anti-copia."
-                            else
-                                "Completa primero la foto de la TUI en el Paso 1.",
-                            fontSize = 13.sp,
-                            color = TextSecondary
-                        )
-
-                        if (scannedTuiData != null) {
-                            OutlinedButton(
-                                onClick = {
-                                    nfcVerifiedUid = "EA:76:97:6E"
-                                    Toast.makeText(context, "UID verificado: EA:76:97:6E", Toast.LENGTH_SHORT).show()
-                                },
-                                modifier = Modifier.fillMaxWidth(),
-                                shape = RoundedCornerShape(10.dp)
-                            ) {
-                                Icon(Icons.Default.Nfc, contentDescription = null, modifier = Modifier.size(18.dp))
-                                Spacer(modifier = Modifier.width(6.dp))
-                                Text("Simular toque NFC (UID: EA:76:97:6E)", fontSize = 13.sp)
-                            }
-                        }
-                    } else {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clip(RoundedCornerShape(10.dp))
-                                .background(Color(0xFF10B981).copy(alpha = 0.1f))
-                                .padding(12.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Icon(Icons.Default.CheckCircle, contentDescription = null, tint = Color(0xFF10B981))
-                            Spacer(modifier = Modifier.width(10.dp))
-                            Column {
-                                Text("Tarjeta TUI física verificada", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = Color(0xFF065F46))
-                                Text("UID hardware capturado: $nfcVerifiedUid", fontSize = 12.sp, color = Color(0xFF047857))
-                            }
-                        }
-                    }
-                }
-            }
-
-            // PASO 3: Selección de Grado, Asignaturas con Buscador
-            AnimatedVisibility(visible = scannedTuiData != null && nfcVerifiedUid != null) {
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(containerColor = SurfaceWhite)
-                ) {
-                    Column(
-                        modifier = Modifier.padding(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(14.dp)
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Surface(
-                                shape = CircleShape,
-                                color = CampusTeal.copy(alpha = 0.15f),
-                                modifier = Modifier.size(32.dp)
-                            ) {
-                                Box(contentAlignment = Alignment.Center) {
-                                    Text("3", fontWeight = FontWeight.Bold, color = CampusTeal)
-                                }
-                            }
-                            Spacer(modifier = Modifier.width(10.dp))
-                            Text("Matrícula y Asignaturas", fontWeight = FontWeight.Bold, fontSize = 15.sp, color = TextPrimary)
-                        }
-
-                        Text(
-                            text = "Configura el subgrupo de prácticas asignado para cada materia:",
-                            fontSize = 12.sp,
-                            color = TextSecondary
-                        )
-
-                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            allDegreeSubjects.forEach { subj ->
-                                val isEnrolled = userMatricula.containsKey(subj.acronym)
-                                val currentSubg = userMatricula[subj.acronym] ?: (subj.subgruposDisponibles.firstOrNull() ?: "A1")
-
-                                Card(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    shape = RoundedCornerShape(10.dp),
-                                    colors = CardDefaults.cardColors(
-                                        containerColor = if (isEnrolled) EtsiitBlue.copy(alpha = 0.05f) else BackgroundLight
-                                    )
-                                ) {
-                                    Column(modifier = Modifier.padding(10.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                                        Row(
-                                            modifier = Modifier.fillMaxWidth(),
-                                            horizontalArrangement = Arrangement.SpaceBetween,
-                                            verticalAlignment = Alignment.CenterVertically
-                                        ) {
-                                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                                Checkbox(
-                                                    checked = isEnrolled,
-                                                    onCheckedChange = { checked ->
-                                                        val mutable = userMatricula.toMutableMap()
-                                                        if (checked) {
-                                                            mutable[subj.acronym] = subj.subgruposDisponibles.firstOrNull() ?: "A1"
-                                                        } else {
-                                                            mutable.remove(subj.acronym)
-                                                        }
-                                                        userMatricula = mutable
-                                                    }
-                                                )
-                                                Column {
-                                                    Text(text = subj.acronym, fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                                                    Text(text = subj.name, fontSize = 12.sp, color = TextSecondary, maxLines = 1)
-                                                }
-                                            }
-                                        }
-
-                                        // Selector de subgrupo de prácticas
-                                        if (isEnrolled) {
-                                            Row(
-                                                modifier = Modifier.fillMaxWidth().padding(start = 40.dp),
-                                                horizontalArrangement = Arrangement.spacedBy(6.dp),
-                                                verticalAlignment = Alignment.CenterVertically
-                                            ) {
-                                                Text("Subgrupo:", fontSize = 12.sp, fontWeight = FontWeight.Medium, color = TextSecondary)
-                                                val subgs = if (subj.subgruposDisponibles.isNotEmpty()) subj.subgruposDisponibles else listOf("A1")
-                                                subgs.forEach { sg ->
-                                                    FilterChip(
-                                                        selected = currentSubg == sg,
-                                                        onClick = {
-                                                            userMatricula = userMatricula.toMutableMap().apply { put(subj.acronym, sg) }
-                                                        },
-                                                        label = { Text(sg, fontSize = 11.sp, fontWeight = FontWeight.Bold) }
-                                                    )
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-
-                        // Botón de Inicio de Sesión
-                        Button(
-                            onClick = {
-                                val tui = scannedTuiData
-                                val uid = nfcVerifiedUid
-                                if (tui != null && uid != null) {
-                                    val newProfile = UserProfile(
-                                        name = tui.name,
-                                        dni = tui.dni,
-                                        tuiCardNumber = tui.cardNumber,
-                                        nfcUid = uid,
-                                        colectivo = tui.colectivo,
-                                        degreeId = degreeId,
-                                        degreeName = degreeName,
-                                        primaryCourse = course,
-                                        primaryGroup = group,
-                                        cuatrimestre = 1,
-                                        matricula = userMatricula,
-                                        isLoggedIn = true
-                                    )
-                                    UserSessionRepository.saveProfile(context, newProfile)
-                                    profile = newProfile
-                                    Toast.makeText(context, "¡Sesión iniciada con éxito!", Toast.LENGTH_SHORT).show()
-                                }
-                            },
-                            modifier = Modifier.fillMaxWidth().height(48.dp),
-                            shape = RoundedCornerShape(12.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = UgrRed)
-                        ) {
-                            Icon(Icons.AutoMirrored.Filled.Login, contentDescription = null)
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text("Guardar e Iniciar Sesión", fontSize = 15.sp, fontWeight = FontWeight.Bold)
-                        }
-                    }
-                }
             }
         }
     }
 
-    // Diálogo de edición de asignaturas
-    if (showSubjectEditorDialog) {
-        AlertDialog(
-            onDismissRequest = { showSubjectEditorDialog = false },
-            title = { Text("Gestionar Matrícula", fontWeight = FontWeight.Bold) },
-            text = {
-                Column(
-                    modifier = Modifier.verticalScroll(rememberScrollState()),
-                    verticalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    allDegreeSubjects.forEach { subj ->
-                        val isEnrolled = profile.matricula.containsKey(subj.acronym)
-                        val currentSubg = profile.matricula[subj.acronym] ?: (subj.subgruposDisponibles.firstOrNull() ?: "A1")
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clip(RoundedCornerShape(8.dp))
-                                .background(BackgroundLight)
-                                .padding(8.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Checkbox(
-                                checked = isEnrolled,
-                                onCheckedChange = { checked ->
-                                    if (checked) {
-                                        val defaultSg = subj.subgruposDisponibles.firstOrNull() ?: "A1"
-                                        UserSessionRepository.setSubjectSubgroup(context, subj.acronym, defaultSg)
-                                    } else {
-                                        UserSessionRepository.removeSubject(context, subj.acronym)
-                                    }
-                                    profile = UserSessionRepository.getProfile(context)
-                                }
-                            )
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(subj.acronym, fontWeight = FontWeight.Bold, fontSize = 13.sp)
-                                Text(subj.name, fontSize = 11.sp, color = TextSecondary, maxLines = 1)
-                            }
-                            if (isEnrolled) {
-                                LazyRow(
-                                    horizontalArrangement = Arrangement.spacedBy(4.dp),
-                                    modifier = Modifier.widthIn(max = 140.dp)
-                                ) {
-                                    val subgs = if (subj.subgruposDisponibles.isNotEmpty()) subj.subgruposDisponibles else listOf("A1")
-                                    items(subgs) { sg ->
-                                        FilterChip(
-                                            selected = currentSubg == sg,
-                                            onClick = {
-                                                UserSessionRepository.setSubjectSubgroup(context, subj.acronym, sg)
-                                                profile = UserSessionRepository.getProfile(context)
-                                            },
-                                            label = { Text(sg, fontSize = 9.sp) }
-                                        )
-                                    }
-                                }
-                            }
+    // Animación láser vertical del visor de escaneo
+    val infiniteTransition = rememberInfiniteTransition(label = "qr_laser_anim")
+    val laserProgress by infiniteTransition.animateFloat(
+        initialValue = 0.06f,
+        targetValue = 0.94f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 2000, easing = LinearEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "laser_line"
+    )
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color(0xFF0F172A))
+    ) {
+        // 1. Previsualización de la cámara trasera en vivo
+        if (hasCameraPermission) {
+            Camera2LivePreview(
+                modifier = Modifier.fillMaxSize(),
+                onTextureViewReady = { textureViewRef = it }
+            )
+        }
+
+        // 2. Superposición oscura con ventana central cuadrada y esquinas de enfoque de QR
+        Canvas(modifier = Modifier.fillMaxSize()) {
+            val frameSide = size.width * 0.72f
+            val left = (size.width - frameSide) / 2f
+            val top = (size.height - frameSide) * 0.48f
+            val cornerLen = 32.dp.toPx()
+            val strokeW = 4.dp.toPx()
+
+            // Sombreado exterior alrededor del visor QR
+            drawRect(
+                color = Color.Black.copy(alpha = 0.52f),
+                topLeft = Offset(0f, 0f),
+                size = Size(size.width, top)
+            )
+            drawRect(
+                color = Color.Black.copy(alpha = 0.52f),
+                topLeft = Offset(0f, top + frameSide),
+                size = Size(size.width, size.height - (top + frameSide))
+            )
+            drawRect(
+                color = Color.Black.copy(alpha = 0.52f),
+                topLeft = Offset(0f, top),
+                size = Size(left, frameSide)
+            )
+            drawRect(
+                color = Color.Black.copy(alpha = 0.52f),
+                topLeft = Offset(left + frameSide, top),
+                size = Size(size.width - (left + frameSide), frameSide)
+            )
+
+            // Marco fino cuadrado del área de escaneo
+            drawRoundRect(
+                color = Color.White.copy(alpha = 0.35f),
+                topLeft = Offset(left, top),
+                size = Size(frameSide, frameSide),
+                cornerRadius = CornerRadius(16.dp.toPx(), 16.dp.toPx()),
+                style = Stroke(width = 1.5.dp.toPx())
+            )
+
+            // 4 esquinas destacadas del lector QR
+            val cornerColor = Color.White
+            // Arriba-Izquierda
+            drawLine(cornerColor, Offset(left, top + cornerLen), Offset(left, top), strokeW, StrokeCap.Round)
+            drawLine(cornerColor, Offset(left, top), Offset(left + cornerLen, top), strokeW, StrokeCap.Round)
+            // Arriba-Derecha
+            drawLine(cornerColor, Offset(left + frameSide - cornerLen, top), Offset(left + frameSide, top), strokeW, StrokeCap.Round)
+            drawLine(cornerColor, Offset(left + frameSide, top), Offset(left + frameSide, top + cornerLen), strokeW, StrokeCap.Round)
+            // Abajo-Izquierda
+            drawLine(cornerColor, Offset(left, top + frameSide - cornerLen), Offset(left, top + frameSide), strokeW, StrokeCap.Round)
+            drawLine(cornerColor, Offset(left, top + frameSide), Offset(left + cornerLen, top + frameSide), strokeW, StrokeCap.Round)
+            // Abajo-Derecha
+            drawLine(cornerColor, Offset(left + frameSide - cornerLen, top + frameSide), Offset(left + frameSide, top + frameSide), strokeW, StrokeCap.Round)
+            drawLine(cornerColor, Offset(left + frameSide, top), Offset(left + frameSide, top + frameSide - cornerLen), strokeW, StrokeCap.Round)
+
+            // Línea láser animada de escaneo
+            val laserY = top + frameSide * laserProgress
+            drawLine(
+                brush = Brush.horizontalGradient(
+                    colors = listOf(Color.Transparent, UgrRed, Color(0xFFFF6B6B), UgrRed, Color.Transparent),
+                    startX = left,
+                    endX = left + frameSide
+                ),
+                start = Offset(left + 10.dp.toPx(), laserY),
+                end = Offset(left + frameSide - 10.dp.toPx(), laserY),
+                strokeWidth = 3.dp.toPx(),
+                cap = StrokeCap.Round
+            )
+        }
+
+        // 3. Botón con flecha hacia la izquierda incrustada en la propia cámara para salir
+        IconButton(
+            onClick = onBack,
+            modifier = Modifier
+                .align(Alignment.TopStart)
+                .statusBarsPadding()
+                .padding(start = 16.dp, top = 8.dp)
+                .size(40.dp)
+                .clip(CircleShape)
+                .background(Color.Black.copy(alpha = 0.60f))
+        ) {
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                contentDescription = "Volver",
+                tint = Color.White,
+                modifier = Modifier.size(22.dp)
+            )
+        }
+
+        // 4. Indicador superior: Mensaje explícito para escanear el QR del reverso de la TUI (ubicado debajo de la flecha, centrado)
+        Surface(
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .statusBarsPadding()
+                .padding(top = 58.dp, start = 20.dp, end = 20.dp),
+            shape = RoundedCornerShape(16.dp),
+            color = Color.Black.copy(alpha = 0.78f),
+            border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.20f))
+        ) {
+            Row(
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.QrCodeScanner,
+                    contentDescription = null,
+                    tint = Color.White,
+                    modifier = Modifier.size(24.dp)
+                )
+                Column {
+                    Text(
+                        text = "Escanea el código QR de tu TUI",
+                        color = Color.White,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = "Enfoca el código QR situado en el reverso de la tarjeta",
+                        color = Color.White.copy(alpha = 0.85f),
+                        fontSize = 11.sp
+                    )
+                }
+            }
+        }
+
+        // 5. Pie inferior con botón de respaldo para pruebas / simulación
+        Column(
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp, vertical = 26.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            OutlinedButton(
+                onClick = {
+                    if (!isScanningTriggered) {
+                        isScanningTriggered = true
+                        currentOnScanSuccess()
+                    }
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(48.dp),
+                shape = RoundedCornerShape(14.dp),
+                colors = ButtonDefaults.outlinedButtonColors(
+                    containerColor = Color.Black.copy(alpha = 0.45f),
+                    contentColor = Color.White
+                ),
+                border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.35f))
+            ) {
+                Icon(
+                    imageVector = Icons.Default.QrCode,
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "Simular (este botón se borrará en un futuro)",
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
+        }
+    }
+}
+
+/**
+ * Componente nativo Camera2 que muestra la vista previa de la cámara trasera directamente en Compose.
+ */
+@SuppressLint("MissingPermission")
+@Composable
+private fun Camera2LivePreview(
+    modifier: Modifier = Modifier,
+    onTextureViewReady: (TextureView) -> Unit = {}
+) {
+    val context = LocalContext.current
+
+    DisposableEffect(context) {
+        onDispose { }
+    }
+
+    AndroidView(
+        modifier = modifier,
+        factory = { ctx ->
+            TextureView(ctx).apply {
+                surfaceTextureListener = object : TextureView.SurfaceTextureListener {
+                    private var cameraDevice: CameraDevice? = null
+                    private var captureSession: CameraCaptureSession? = null
+
+                    override fun onSurfaceTextureAvailable(surface: SurfaceTexture, width: Int, height: Int) {
+                        onTextureViewReady(this@apply)
+                        openRearCamera(ctx, surface) { cam, session ->
+                            cameraDevice = cam
+                            captureSession = session
                         }
+                    }
+
+                    override fun onSurfaceTextureSizeChanged(surface: SurfaceTexture, width: Int, height: Int) {}
+
+                    override fun onSurfaceTextureDestroyed(surface: SurfaceTexture): Boolean {
+                        try {
+                            captureSession?.close()
+                            cameraDevice?.close()
+                        } catch (_: Exception) {
+                        }
+                        captureSession = null
+                        cameraDevice = null
+                        return true
+                    }
+
+                    override fun onSurfaceTextureUpdated(surface: SurfaceTexture) {}
+                }
+            }
+        }
+    )
+}
+
+@SuppressLint("MissingPermission")
+private fun openRearCamera(
+    context: Context,
+    surfaceTexture: SurfaceTexture,
+    onOpened: (CameraDevice, CameraCaptureSession?) -> Unit
+) {
+    try {
+        val manager = context.getSystemService(Context.CAMERA_SERVICE) as? CameraManager ?: return
+        val cameraId = manager.cameraIdList.firstOrNull { id ->
+            val chars = manager.getCameraCharacteristics(id)
+            chars.get(CameraCharacteristics.LENS_FACING) == CameraCharacteristics.LENS_FACING_BACK
+        } ?: manager.cameraIdList.firstOrNull() ?: return
+
+        surfaceTexture.setDefaultBufferSize(1280, 720)
+        val previewSurface = Surface(surfaceTexture)
+        val mainHandler = Handler(Looper.getMainLooper())
+
+        manager.openCamera(
+            cameraId,
+            object : CameraDevice.StateCallback() {
+                override fun onOpened(camera: CameraDevice) {
+                    try {
+                        val requestBuilder = camera.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW).apply {
+                            addTarget(previewSurface)
+                            set(
+                                CaptureRequest.CONTROL_AF_MODE,
+                                CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE
+                            )
+                        }
+                        @Suppress("DEPRECATION")
+                        camera.createCaptureSession(
+                            listOf(previewSurface),
+                            object : CameraCaptureSession.StateCallback() {
+                                override fun onConfigured(session: CameraCaptureSession) {
+                                    try {
+                                        session.setRepeatingRequest(requestBuilder.build(), null, mainHandler)
+                                        onOpened(camera, session)
+                                    } catch (_: Exception) {
+                                        onOpened(camera, null)
+                                    }
+                                }
+
+                                override fun onConfigureFailed(session: CameraCaptureSession) {
+                                    onOpened(camera, null)
+                                }
+                            },
+                            mainHandler
+                        )
+                    } catch (_: Exception) {
+                        onOpened(camera, null)
+                    }
+                }
+
+                override fun onDisconnected(camera: CameraDevice) {
+                    try {
+                        camera.close()
+                    } catch (_: Exception) {
+                    }
+                }
+
+                override fun onError(camera: CameraDevice, error: Int) {
+                    try {
+                        camera.close()
+                    } catch (_: Exception) {
                     }
                 }
             },
-            confirmButton = {
-                TextButton(onClick = { showSubjectEditorDialog = false }) {
-                    Text("Listo")
-                }
-            }
+            mainHandler
         )
+    } catch (_: Exception) {
     }
 }

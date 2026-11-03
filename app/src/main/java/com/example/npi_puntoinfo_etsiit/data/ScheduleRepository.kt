@@ -34,22 +34,22 @@ object ScheduleRepository {
     private val gson = Gson()
     private var cachedJsonData: JsonObject? = null
 
-    // Horario de respaldo por defecto (3º GII)
+    // Horario de respaldo oficial (Computación y Sistemas Inteligentes - 1er cuatrimestre)
     val fallbackMondayClasses = listOf(
         ClassItem(
             time = "09:30 - 11:30",
             subject = "Programación Técnica y Científica",
             acronym = "PTC",
             room = "Aula 1.8 · Planta 1",
-            professor = "Ignacio Requena",
+            professor = "José Enrique Cano Ocaña",
             isPractice = false
         ),
         ClassItem(
             time = "11:30 - 13:30",
             subject = "Simulación de Sistemas",
             acronym = "SS",
-            room = "Aula 2.7 · Planta 2",
-            professor = "Javier Martínez",
+            room = "Laboratorio 2.7 · Planta 2",
+            professor = "Luis Miguel Campos Ibáñez",
             isPractice = true,
             subgroup = "A1"
         )
@@ -60,8 +60,8 @@ object ScheduleRepository {
             time = "09:30 - 11:30",
             subject = "Teoría de la Información y la Codificación",
             acronym = "TIC",
-            room = "Aula 2.3 · Planta 2",
-            professor = "Manuel Gómez",
+            room = "Laboratorio 2.3 · Planta 2",
+            professor = "Manuel Gómez Olmedo",
             isPractice = true,
             subgroup = "A1"
         ),
@@ -70,7 +70,7 @@ object ScheduleRepository {
             subject = "Simulación de Sistemas",
             acronym = "SS",
             room = "Aula 0.1 · Planta Baja",
-            professor = "Javier Martínez",
+            professor = "Luis Miguel Campos Ibáñez",
             isPractice = false
         )
     )
@@ -81,15 +81,15 @@ object ScheduleRepository {
             subject = "Teoría de la Información y la Codificación",
             acronym = "TIC",
             room = "Aula 1.1 · Planta 1",
-            professor = "Manuel Gómez",
+            professor = "Manuel Gómez Olmedo",
             isPractice = false
         ),
         ClassItem(
             time = "11:30 - 13:30",
             subject = "Programación Técnica y Científica",
             acronym = "PTC",
-            room = "Aula 3.5 · Planta 3",
-            professor = "Ignacio Requena",
+            room = "Laboratorio 3.5 · Planta 3",
+            professor = "José Enrique Cano Ocaña",
             isPractice = true,
             subgroup = "A1"
         )
@@ -101,15 +101,15 @@ object ScheduleRepository {
             subject = "Nuevos Paradigmas de Interacción",
             acronym = "NPI",
             room = "Aula 0.5 · Planta Baja",
-            professor = "Roberto Pérez",
+            professor = "Marcelino José Cabrera Cuevas",
             isPractice = false
         ),
         ClassItem(
             time = "10:30 - 12:30",
             subject = "Visión por Computador",
             acronym = "VC",
-            room = "Aula 3.8 · Planta 3",
-            professor = "Nicolás Pérez",
+            room = "Laboratorio 3.8 · Planta 3",
+            professor = "Siham Tabik Ouled Hrour",
             isPractice = true,
             subgroup = "A1"
         ),
@@ -118,7 +118,7 @@ object ScheduleRepository {
             subject = "Visión por Computador",
             acronym = "VC",
             room = "Aula 0.5 · Planta Baja",
-            professor = "Nicolás Pérez",
+            professor = "Pablo Mesejo Santiago",
             isPractice = false
         )
     )
@@ -128,8 +128,8 @@ object ScheduleRepository {
             time = "08:30 - 10:30",
             subject = "Procesadores de Lenguajes",
             acronym = "PL",
-            room = "Aula 2.8 · Planta 2",
-            professor = "Juan Carlos Cubero",
+            room = "Laboratorio 2.8 · Planta 2",
+            professor = "Jorge Revelles Moreno",
             isPractice = true,
             subgroup = "A1"
         ),
@@ -138,15 +138,15 @@ object ScheduleRepository {
             subject = "Procesadores de Lenguajes",
             acronym = "PL",
             room = "Aula 0.5 · Planta Baja",
-            professor = "Juan Carlos Cubero",
+            professor = "Ramón López-Cózar Delgado",
             isPractice = false
         ),
         ClassItem(
             time = "12:30 - 14:30",
             subject = "Nuevos Paradigmas de Interacción",
             acronym = "NPI",
-            room = "Aula 2.7 · Planta 2",
-            professor = "Roberto Pérez",
+            room = "Laboratorio 2.7 · Planta 2",
+            professor = "Marcelino José Cabrera Cuevas",
             isPractice = true,
             subgroup = "A1"
         )
@@ -306,7 +306,12 @@ object ScheduleRepository {
         val degreeId = profile.degreeId.ifBlank { "gii" }
         val course = profile.primaryCourse
         val group = profile.primaryGroup.ifBlank { "A" }
-        val matricula = profile.matricula
+        val officialMatricula = mapOf("PTC" to "A1", "SS" to "A1", "TIC" to "A1", "NPI" to "A1", "VC" to "A1", "PL" to "A1")
+        val matricula = if (profile.matricula.isNotEmpty() && officialMatricula.keys.any { profile.matricula.containsKey(it) }) {
+            profile.matricula
+        } else {
+            officialMatricula
+        }
 
         val resultClasses = mutableListOf<ClassItem>()
 
@@ -321,8 +326,8 @@ object ScheduleRepository {
                 val grupoStr = cObj.get("grupo").asString
                 val cuatrimestreNum = cObj.get("cuatrimestre").asInt
 
-                // Coincide si el usuario no tiene matrícula personalizada y está en este grupo, o si tiene matrícula
-                val matchesGeneralGroup = (matricula.isEmpty() && (cursoNum == course || course == 3) && cuatrimestreNum == profile.cuatrimestre)
+                // En esta versión acotada a nuestras 6 asignaturas oficiales, se cargan siempre las materias del curso
+                val matchesGeneralGroup = (matricula.isEmpty() && cuatrimestreNum == profile.cuatrimestre)
 
                 val horarioObj = cObj.getAsJsonObject("horario") ?: continue
                 val clasesDelDia = horarioObj.getAsJsonArray(dayNameSpanish) ?: continue
@@ -358,7 +363,9 @@ object ScheduleRepository {
                                 // Para prácticas: si es grupo único (subg == null o elegido "Único"),
                                 // o si coincide con el subgrupo elegido (ej. "A1", "1", etc.)
                                 val isSinglePractice = subg == null || targetSubgroup.isNullOrBlank() || targetSubgroup.equals("Único", ignoreCase = true)
-                                val matchesPractice = isSinglePractice || targetSubgroup.equals(subg, ignoreCase = true)
+                                val matchesPractice = isSinglePractice ||
+                                    targetSubgroup.equals(subg, ignoreCase = true) ||
+                                    targetSubgroup.replace("A", "").equals(subg?.replace("A", ""), ignoreCase = true)
                                 if (matchesPractice) {
                                     resultClasses.add(classItem)
                                 }

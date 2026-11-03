@@ -9,10 +9,10 @@
       "nombre": "Grado en Ingeniería Informática",
       "cursos": [
         {
-          "curso": 3,
+          "curso": 4,
           "grupo": "A",
           "cuatrimestre": 1,
-          "mencion": "Computación y Sistemas Inteligentes",
+          "mencion": "",
           "horario": {
             "Lunes": [
               {
