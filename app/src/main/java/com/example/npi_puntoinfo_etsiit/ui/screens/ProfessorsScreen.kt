@@ -289,7 +289,6 @@ fun ProfessorsScreen(onNavigate: (String) -> Unit, searchedName: String? = null)
     val profile = UserSessionRepository.getProfile(context)
     val isLoggedIn = profile.isLoggedIn
     var selectedProfessor by remember { mutableStateOf<Professor?>(null) }
-    var emailGestureConfirmProf by remember { mutableStateOf<Professor?>(null) }
     var searchQuery by remember { mutableStateOf(searchedName ?: "") }
     var selectedFilterCategory by remember { mutableStateOf("Todos") }
 
@@ -483,17 +482,16 @@ fun ProfessorsScreen(onNavigate: (String) -> Unit, searchedName: String? = null)
                 }
             }
 
-            manager.onNodStarted = {
-                // Fase 1: Inclinación hacia adelante (sale del campo de visión)
-                triggerVibration(context, durationMs = 35)
-            }
-
             manager.onForwardTiltGesture = {
-                // Fase 2: Retorno a la postura erguida (vuelve al campo de visión)
+                // Retorno a la postura de lectura: abre directamente el correo
                 triggerVibration(context, durationMs = 150)
                 val prof = selectedProfessor
                 if (prof != null) {
-                    emailGestureConfirmProf = prof
+                    val intent = Intent(Intent.ACTION_SENDTO).apply {
+                        data = android.net.Uri.parse("mailto:${prof.email}")
+                        putExtra(Intent.EXTRA_SUBJECT, "Tutoría: [Indica tu motivo]")
+                    }
+                    context.startActivity(intent)
                 }
             }
 
@@ -943,71 +941,6 @@ fun ProfessorsScreen(onNavigate: (String) -> Unit, searchedName: String? = null)
                     Text("Cerrar", color = TextPrimary, fontWeight = FontWeight.Bold)
                 }
             }
-        )
-    }
-
-    // Diálogo visual temporal del gesto de inclinación (espera al campo de visión y abre el correo automáticamente)
-    if (emailGestureConfirmProf != null) {
-        val prof = emailGestureConfirmProf!!
-
-        LaunchedEffect(prof) {
-            delay(1800L) // Da 1.8 segundos para leer el mensaje con tranquilidad antes de abrir el correo
-            val intent = Intent(Intent.ACTION_SENDTO).apply {
-                data = android.net.Uri.parse("mailto:${prof.email}")
-                putExtra(Intent.EXTRA_SUBJECT, "Tutoría: [Indica tu motivo]")
-            }
-            context.startActivity(intent)
-            emailGestureConfirmProf = null
-        }
-
-        AlertDialog(
-            onDismissRequest = { emailGestureConfirmProf = null },
-            icon = {
-                Box(
-                    modifier = Modifier
-                        .size(52.dp)
-                        .clip(CircleShape)
-                        .background(CampusTeal.copy(alpha = 0.15f)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    GestureBadge(
-                        type = GestureType.ACTION_TRIGGER,
-                        size = 32.dp,
-                        iconSize = 18.dp
-                    )
-                }
-            },
-            title = {
-                Text(
-                    text = "Gesto completado",
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 18.sp,
-                    textAlign = TextAlign.Center
-                )
-            },
-            text = {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text(
-                        text = "El terminal ha vuelto a tu campo de visión.\nAbriendo correo para ${prof.name}...",
-                        fontSize = 13.sp,
-                        color = TextSecondary,
-                        textAlign = TextAlign.Center
-                    )
-                    Spacer(modifier = Modifier.height(14.dp))
-                    LinearProgressIndicator(
-                        modifier = Modifier
-                            .fillMaxWidth(0.75f)
-                            .height(4.dp)
-                            .clip(RoundedCornerShape(2.dp)),
-                        color = CampusTeal,
-                        trackColor = CampusTeal.copy(alpha = 0.2f)
-                    )
-                }
-            },
-            confirmButton = {}
         )
     }
 
