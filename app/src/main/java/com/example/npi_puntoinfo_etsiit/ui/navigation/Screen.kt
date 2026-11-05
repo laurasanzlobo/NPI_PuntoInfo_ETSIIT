@@ -4,6 +4,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Navigation
 import androidx.compose.material.icons.filled.Restaurant
 import androidx.compose.material.icons.filled.School
@@ -36,7 +37,8 @@ sealed class Screen(
             com.example.npi_puntoinfo_etsiit.outdoor.OutdoorNavigationRoute.create(destinationId)
     }
     data object Professors : Screen("professors", "Profesores", Icons.Default.School)
-    data object Profile : Screen("profile", "Mi TUI", Icons.Default.AccountCircle)
+    data object Profile : Screen("profile", "Mi Perfil", Icons.Default.AccountCircle)
+    data object GesturesGuide : Screen("gestures_guide", "Guía de Gestos", Icons.Default.Info)
 }
 
 val bottomNavItems = listOf(

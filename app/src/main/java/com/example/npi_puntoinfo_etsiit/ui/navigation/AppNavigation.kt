@@ -29,9 +29,10 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.saveable.listSaver
 import com.example.npi_puntoinfo_etsiit.data.ClassItem
 import com.example.npi_puntoinfo_etsiit.data.ScheduleRepository
+import com.example.npi_puntoinfo_etsiit.data.UserSessionRepository
 import com.example.npi_puntoinfo_etsiit.ui.components.GestureBadge
 import com.example.npi_puntoinfo_etsiit.ui.components.GestureGuideButton
-import com.example.npi_puntoinfo_etsiit.ui.components.AccelerometerGesturesGuideDialog
+import com.example.npi_puntoinfo_etsiit.ui.components.GesturesGuideScreen
 import com.example.npi_puntoinfo_etsiit.ui.components.GestureType
 import java.time.LocalTime
 import androidx.compose.ui.Alignment
@@ -107,12 +108,12 @@ fun AppNavigation() {
         }
     }
 
-    // Diálogo emergente global de Clase Actual (Gesto de agitar 3 veces el terminal)
+    // Diálogo emergente global de Clase Actual (Gesto de 3 inclinaciones hacia adelante)
     var showCurrentClassDialog by remember { mutableStateOf(false) }
     var activeClassForDialog by remember { mutableStateOf<ClassItem?>(null) }
 
-    // Diálogo emergente de Guía de Gestos del Acelerómetro (botón 'i' en cabecera)
-    var showGesturesGuideDialog by remember { mutableStateOf(false) }
+    // Guarda temporal al pulsar el botón superior izquierdo de retroceso para evitar disparar proximidad por roce
+    var lastBackClickTimeMs by remember { mutableLongStateOf(0L) }
 
     // Contadores para forzar el reinicio a 'Hoy' al entrar o pulsar en Horario y Comedores
     var diningNavCounter by remember { mutableIntStateOf(0) }
@@ -279,11 +280,16 @@ fun AppNavigation() {
         }
     }
 
-    fun launchGlobalVoiceSearch() {
+    fun launchGlobalVoiceSearch(promptText: String? = null) {
+        val defaultPrompt = if (currentRoute?.startsWith(Screen.Professors.route) == true) {
+            "Di el nombre, apellido o departamento"
+        } else {
+            "¿A dónde quieres ir o a qué profesor buscas?"
+        }
         val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
             putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
             putExtra(RecognizerIntent.EXTRA_LANGUAGE, "es-ES")
-            putExtra(RecognizerIntent.EXTRA_PROMPT, "¿A dónde quieres ir?")
+            putExtra(RecognizerIntent.EXTRA_PROMPT, promptText ?: defaultPrompt)
         }
         try {
             isListeningSpeechGlobal = true
@@ -294,208 +300,198 @@ fun AppNavigation() {
         }
     }
 
-    val currentLaunchGlobalVoiceSearch by rememberUpdatedState(::launchGlobalVoiceSearch)
+    val currentLaunchGlobalVoiceSearch by rememberUpdatedState { launchGlobalVoiceSearch() }
 
-    // Sensor de Proximidad GLOBAL: activo en todas las pantallas de la app.
-    // Al pasar la mano por la cámara frontal / parte superior del móvil o acercarlo a la oreja,
-    // se activa el asistente de voz y se calcula la ruta guiada en el mapa.
-    DisposableEffect(context) {
-        val proximityManager = ProximityManager(context)
+    // Estado reactivo global de sesión: actualiza automáticamente la TopAppBar y los sensores al iniciar o cerrar sesión
+    val currentUserProfile = UserSessionRepository.getProfile(context)
+    val isUserLoggedIn = currentUserProfile.isLoggedIn
+    var isExitingProfileOnLogout by remember { mutableStateOf(false) }
 
-        proximityManager.onNear = {
-            if (!isListeningSpeechGlobal) {
-                triggerVibration(context, durationMs = 80)
-                currentLaunchGlobalVoiceSearch()
-            }
-        }
-
-        proximityManager.startListening()
-
-        onDispose {
-            proximityManager.stopListening()
+    LaunchedEffect(currentRoute) {
+        if (currentRoute != Screen.Profile.route) {
+            isExitingProfileOnLogout = false
         }
     }
 
-    // Gesto de agitación (Triple Shake): activo GLOBALMENTE en toda la app y en cualquier pestaña.
-    // Detecta dinámicamente si hay una clase en curso o próxima (con 30 minutos de antelación).
-    // Si hay clase, el gesto de «¡Llévame!» (giro de muñeca) guía directamente a su aula.
-    DisposableEffect(context, showCurrentClassDialog, activeClassForDialog) {
-        val accelerometerManager = AccelerometerManager(context)
+    // Indica si el usuario está en la vista inmersiva de cámara escaneando el código QR de la TUI
+    val isScanningQrMode = currentRoute == Screen.Profile.route && !isUserLoggedIn && !isExitingProfileOnLogout
 
-        accelerometerManager.onShakeDetected = {
-            triggerVibration(context, durationMs = 150)
-            activeClassForDialog = ScheduleRepository.getCurrentOrUpcomingClass()
-            showCurrentClassDialog = true
-        }
+    // Sensor de Proximidad GLOBAL: activo en todas las pantallas de la app EXCEPTO al escanear QR con la cámara.
+    // Al pasar la mano por la cámara frontal / parte superior del móvil o acercarlo a la oreja,
+    // se activa el asistente de voz y se calcula la ruta guiada en el mapa.
+    DisposableEffect(context, isScanningQrMode) {
+        if (isScanningQrMode) {
+            onDispose { }
+        } else {
+            val proximityManager = ProximityManager(context)
 
-        if (showCurrentClassDialog && activeClassForDialog != null) {
-            val targetClass = activeClassForDialog!!
-            accelerometerManager.onTakeMeThereGesture = {
-                triggerVibration(context, durationMs = 150)
-                val roomName = targetClass.room.split("·")[0].trim()
-                val floorName = targetClass.room.split("·").getOrElse(1) { "ETSIIT" }.trim()
-                showCurrentClassDialog = false
-                activeClassForDialog = null
-                handleNavigation(Screen.Navigation.createRoute(roomName, floorName))
+            proximityManager.onNear = {
+                val now = System.currentTimeMillis()
+                if (!isListeningSpeechGlobal && !isScanningQrMode && (now - lastBackClickTimeMs > 800L)) {
+                    triggerVibration(context, durationMs = 80)
+                    currentLaunchGlobalVoiceSearch()
+                }
+            }
+
+            proximityManager.startListening()
+
+            onDispose {
+                proximityManager.stopListening()
             }
         }
+    }
 
-        accelerometerManager.startListening()
+    // Gesto de agitación (Triple Shake): activo GLOBALMENTE EXCEPTO al escanear QR con la cámara.
+    // Detecta dinámicamente si hay una clase en curso o próxima (con 30 minutos de antelación).
+    // Si hay clase, el gesto de «¡Llévame!» (giro de muñeca) guía directamente a su aula.
+    DisposableEffect(context, showCurrentClassDialog, activeClassForDialog, isScanningQrMode, isUserLoggedIn) {
+        if (isScanningQrMode) {
+            onDispose { }
+        } else {
+            val accelerometerManager = AccelerometerManager(context)
 
-        onDispose {
-            accelerometerManager.stopListening()
+            accelerometerManager.onShakeDetected = {
+                if (isUserLoggedIn && !isScanningQrMode) {
+                    triggerVibration(context, durationMs = 150)
+                    activeClassForDialog = ScheduleRepository.getCurrentOrUpcomingClass(context = context)
+                    showCurrentClassDialog = true
+                }
+            }
+
+            if (showCurrentClassDialog && activeClassForDialog != null) {
+                val targetClass = activeClassForDialog!!
+                accelerometerManager.onTakeMeThereGesture = {
+                    triggerVibration(context, durationMs = 150)
+                    val roomName = targetClass.room.split("·")[0].trim()
+                    val floorName = targetClass.room.split("·").getOrElse(1) { "ETSIIT" }.trim()
+                    showCurrentClassDialog = false
+                    activeClassForDialog = null
+                    handleNavigation(Screen.Navigation.createRoute(roomName, floorName))
+                }
+            }
+
+            accelerometerManager.startListening()
+
+            onDispose {
+                accelerometerManager.stopListening()
+            }
         }
     }
 
     // Título superior dinámico según la pantalla activa
     val currentTitle = when {
-        currentRoute == Screen.Home.route -> "ETSIIT"
+        currentRoute == Screen.Home.route -> ""
         currentRoute == Screen.Schedule.route -> "Mi Horario"
         currentRoute?.startsWith("navigation") == true -> {
             if (isVerticalGuidanceActive && !activeDestination.isNullOrBlank()) "Guiado Paso a Paso" else "Mapa ETSIIT"
         }
         currentRoute == Screen.Dining.route -> "Comedores"
         currentRoute == Screen.Outdoor.routePattern -> "Mapa exterior"
-        currentRoute == Screen.Professors.route -> "Profesores"
-        currentRoute == Screen.Profile.route -> "Tarjeta Universitaria (TUI)"
-        else -> "ETSIIT UGR"
+        currentRoute == Screen.Professors.route || currentRoute?.startsWith(Screen.Professors.route) == true -> "Profesores"
+        currentRoute == Screen.Profile.route -> "Mi Perfil"
+        currentRoute == Screen.GesturesGuide.route -> "Guía de Gestos"
+        else -> ""
     }
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = currentTitle,
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = TextPrimary
-                    )
-                },
-                navigationIcon = {
-                    val showBack = currentRoute == Screen.Profile.route || currentRoute == Screen.Outdoor.routePattern
-                    if (showBack) {
-                        IconButton(onClick = {
-                            if (currentRoute == Screen.Outdoor.routePattern) {
-                                activeTrip = null
-                                clearHandoff()
-                            }
-                            navController.popBackStack()
-                        }) {
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                                contentDescription = "Atrás",
-                                tint = TextPrimary
-                            )
-                        }
-                    }
-                },
-                actions = {
-                    // Loguito del gesto global de micrófono / sensor de proximidad (morado)
-                    GestureBadge(
-                        type = GestureType.PROXIMITY_VOICE,
-                        size = 26.dp,
-                        iconSize = 14.dp,
-                        onClick = { launchGlobalVoiceSearch() }
-                    )
-
-                    Spacer(modifier = Modifier.width(6.dp))
-
-                    // Loguito del gesto global de triple agitación para ver la clase actual (rojo)
-                    GestureBadge(
-                        type = GestureType.TRIPLE_SHAKE,
-                        size = 26.dp,
-                        iconSize = 14.dp,
-                        onClick = {
-                            activeClassForDialog = ScheduleRepository.getCurrentOrUpcomingClass()
-                            showCurrentClassDialog = true
-                        }
-                    )
-
-                    Spacer(modifier = Modifier.width(6.dp))
-
-                    // Botón con la 'i' de información sobre gestos (circulito gris sutil, se mantiene igual)
-                    GestureGuideButton(
-                        size = 32.dp,
-                        iconSize = 18.dp,
-                        onClick = { showGesturesGuideDialog = true }
-                    )
-
-                    // Icono de perfil de usuario a la derecha
-                    if (currentRoute != Screen.Profile.route) {
-                        IconButton(onClick = { navController.navigate(Screen.Profile.route) }) {
-                            Icon(
-                                imageVector = Icons.Default.AccountCircle,
-                                contentDescription = "Perfil",
-                                tint = UgrRed
-                            )
-                        }
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = SurfaceWhite,
-                    scrolledContainerColor = SurfaceWhite,
-                    titleContentColor = TextPrimary,
-                    navigationIconContentColor = TextPrimary,
-                    actionIconContentColor = UgrRed
-                )
-            )
-        },
-        bottomBar = {
-            NavigationBar(
-                containerColor = SurfaceWhite,
-                tonalElevation = NavigationBarDefaults.Elevation
-            ) {
-                bottomNavItems.forEach { screen ->
-                    val isNavigationSelected = screen == Screen.Navigation &&
-                        (currentRoute == Screen.Navigation.route ||
-                         currentRoute?.startsWith("navigation") == true ||
-                         currentRoute == Screen.Outdoor.routePattern ||
-                         currentRoute?.startsWith("outdoor") == true)
-                    val selected = (currentRoute == screen.route && !isNavigationSelected) || (screen == Screen.Navigation && isNavigationSelected)
-                    NavigationBarItem(
-                        selected = selected,
-                        onClick = {
-                            if (screen == Screen.Navigation) {
-                                if (activeTrip != null && activeTrip?.phase == TripPhase.OUTDOOR) {
-                                    returnToOutdoor()
-                                } else {
-                                    navigateToTab(Screen.Navigation.route)
+            if (!isScanningQrMode) {
+                TopAppBar(
+                    title = {
+                        Text(
+                            text = currentTitle,
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = TextPrimary
+                        )
+                    },
+                    navigationIcon = {
+                        val isHome = currentRoute == Screen.Home.route || currentRoute == null
+                        if (!isHome) {
+                            IconButton(onClick = {
+                                lastBackClickTimeMs = System.currentTimeMillis()
+                                if (currentRoute == Screen.Outdoor.routePattern) {
+                                    activeTrip = null
+                                    clearHandoff()
                                 }
-                            } else {
-                                if (!selected) {
-                                    navigateToTab(screen.route)
-                                } else {
-                                    if (screen == Screen.Dining) {
-                                        diningNavCounter++
-                                    } else if (screen == Screen.Schedule) {
-                                        scheduleNavCounter++
+                                if (!navController.popBackStack()) {
+                                    navigateToTab(Screen.Home.route)
+                                }
+                            }) {
+                                Icon(
+                                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                    contentDescription = "Volver a Inicio",
+                                    tint = TextPrimary
+                                )
+                            }
+                        }
+                    },
+                    actions = {
+                        // Indicador visual del sensor de proximidad (morado) — En Profesores se integra directamente en la barra de búsqueda
+                        if (currentRoute?.startsWith(Screen.Professors.route) != true) {
+                            GestureBadge(
+                                type = GestureType.PROXIMITY_VOICE,
+                                size = 26.dp,
+                                iconSize = 14.dp,
+                                showTooltipOnClick = false,
+                                onClick = null
+                            )
+
+                            Spacer(modifier = Modifier.width(6.dp))
+                        }
+
+                        // Indicador visual del gesto de 3 inclinaciones para clase actual (rojo) — Solo si ha iniciado sesión
+                        val isUserLoggedIn = UserSessionRepository.getProfile(context).isLoggedIn
+                        if (isUserLoggedIn) {
+                            GestureBadge(
+                                type = GestureType.TRIPLE_SHAKE,
+                                size = 26.dp,
+                                iconSize = 14.dp,
+                                showTooltipOnClick = false,
+                                onClick = null
+                            )
+
+                            Spacer(modifier = Modifier.width(6.dp))
+                        }
+
+                        // Botón con la 'i' de información sobre gestos: abre la pestaña dedicada de Guía de Gestos
+                        val isGesturesGuideScreen = currentRoute == Screen.GesturesGuide.route
+                        GestureGuideButton(
+                            size = 32.dp,
+                            iconSize = 18.dp,
+                            onClick = {
+                                if (!isGesturesGuideScreen) {
+                                    navController.navigate(Screen.GesturesGuide.route) {
+                                        launchSingleTop = true
                                     }
                                 }
                             }
-                        },
-                        icon = {
-                            Icon(
-                                imageVector = screen.icon,
-                                contentDescription = screen.title
-                            )
-                        },
-                        label = {
-                            Text(
-                                text = screen.title,
-                                fontSize = 11.sp,
-                                fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal
-                            )
-                        },
-                        colors = NavigationBarItemDefaults.colors(
-                            selectedIconColor = UgrRed,
-                            selectedTextColor = UgrRed,
-                            indicatorColor = UgrRed.copy(alpha = 0.12f),
-                            unselectedIconColor = TextSecondary,
-                            unselectedTextColor = TextSecondary
                         )
+
+                        // Icono de perfil de usuario siempre presente a la derecha para que los iconos de gestos no bailen de posición
+                        val isProfileScreen = currentRoute == Screen.Profile.route
+                        IconButton(
+                            onClick = {
+                                if (!isProfileScreen) {
+                                    navController.navigate(Screen.Profile.route)
+                                }
+                            }
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.AccountCircle,
+                                contentDescription = "Perfil",
+                                tint = if (isProfileScreen) UgrRedDark else UgrRed
+                            )
+                        }
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = SurfaceWhite,
+                        scrolledContainerColor = SurfaceWhite,
+                        titleContentColor = TextPrimary,
+                        navigationIconContentColor = TextPrimary,
+                        actionIconContentColor = UgrRed
                     )
-                }
+                )
             }
         }
     ) { innerPadding ->
@@ -505,7 +501,10 @@ fun AppNavigation() {
             modifier = Modifier.padding(innerPadding)
         ) {
             composable(Screen.Home.route) {
-                HomeScreen(onNavigate = { route -> handleNavigation(route) })
+                HomeScreen(
+                    onNavigate = { route -> handleNavigation(route) },
+                    onLaunchVoiceSearch = { launchGlobalVoiceSearch() }
+                )
             }
             composable(Screen.Schedule.route) {
                 ScheduleScreen(
@@ -634,7 +633,21 @@ fun AppNavigation() {
             }
             
             composable(Screen.Profile.route) {
-                ProfileScreen()
+                ProfileScreen(
+                    onBack = {
+                        if (!navController.popBackStack()) {
+                            navigateToTab(Screen.Home.route)
+                        }
+                    },
+                    onLoggedOut = {
+                        isExitingProfileOnLogout = true
+                        navigateToTab(Screen.Home.route)
+                    }
+                )
+            }
+
+            composable(Screen.GesturesGuide.route) {
+                GesturesGuideScreen()
             }
         }
 
@@ -757,13 +770,6 @@ fun AppNavigation() {
                         Text("Cerrar", color = TextPrimary, fontWeight = FontWeight.Bold)
                     }
                 }
-            )
-        }
-
-        // Diálogo informativo: Guía completa de gestos del acelerómetro
-        if (showGesturesGuideDialog) {
-            AccelerometerGesturesGuideDialog(
-                onDismiss = { showGesturesGuideDialog = false }
             )
         }
     }

@@ -151,8 +151,8 @@ object TuiOcrScanner {
         }
 
         // Fallbacks por defecto si la foto o iluminación no permitieron leer algún campo
-        if (name.isBlank()) name = "José Pedregosa García"
-        if (dni.isBlank()) dni = "75932717"
+        if (name.isBlank()) name = "Elena Morales Vega"
+        if (dni.isBlank()) dni = "48291054R"
         if (cardNumber.isBlank()) cardNumber = "5901443933640558"
 
         return TuiScannedData(
@@ -170,11 +170,11 @@ object TuiOcrScanner {
      */
     fun getDemoTui(): TuiScannedData {
         return TuiScannedData(
-            name = "José Pedregosa García",
-            dni = "75932717",
+            name = "Elena Morales Vega",
+            dni = "48291054R",
             cardNumber = "5901443933640558",
             colectivo = "ESTUDIANTE",
-            rawText = "TARJETA UNIVERSITARIA INTELIGENTE - UNIVERSIDAD DE GRANADA\n590144 393364055 8\nJOSE PEDREGOSA GARCIA\n75932717\nCaduca: Final 09/2029\nESTUDIANTE"
+            rawText = "TARJETA UNIVERSITARIA INTELIGENTE - UNIVERSIDAD DE GRANADA\n590144 393364055 8\nELENA MORALES VEGA\n48291054R\nCaduca: Final 09/2029\nESTUDIANTE"
         )
     }
 }
