@@ -86,13 +86,13 @@ class OutdoorNavigatorTest {
         val navigator = OutdoorNavigator(GpsLocationReader(source), routes, "dining-aynadamar")
         navigator.requestRoute(this)
         yield()
-        navigator.selectDestination("dining-pts")
+        navigator.selectDestination("etsiit-auxiliar")
         assertNull(navigator.state.value.route)
         navigator.requestRoute(this)
         yield()
         assertEquals(2, source.reads)
         assertEquals(2, routes.calls)
-        assertEquals(OutdoorDestinations.forDiningHall("pts")!!.point, routes.requestedDestination)
+        assertEquals(OutdoorDestinations.find("etsiit-auxiliar")!!.point, routes.requestedDestination)
         assertEquals(WalkingRouteResult.Failure(RouteError.NO_ROUTE), navigator.state.value.route)
     }
 
@@ -114,11 +114,11 @@ class OutdoorNavigatorTest {
         val navigator = OutdoorNavigator(GpsLocationReader(LocationSource()), routes, "etsiit")
         navigator.requestRoute(this)
         yield()
-        navigator.selectDestination("dining-cartuja")
+        navigator.selectDestination("etsiit-auxiliar")
         yield()
         assertNull(navigator.state.value.route)
         assertFalse(navigator.state.value.routing)
-        assertEquals("dining-cartuja", navigator.state.value.destination?.id)
+        assertEquals("etsiit-auxiliar", navigator.state.value.destination?.id)
     }
 
     @Test fun leavingScreenClearsPositionRouteAndPendingRequests() = runBlocking {
@@ -166,13 +166,13 @@ class OutdoorNavigatorTest {
         val routes = Routes().apply {
             result = WalkingRouteResult.Success(WalkingRoute(emptyList(), 0.0, null, emptyList()))
         }
-        val navigator = OutdoorNavigator(GpsLocationReader(source), routes, "dining-pts")
+        val navigator = OutdoorNavigator(GpsLocationReader(source), routes, "etsiit-auxiliar")
         navigator.requestRoute(this)
         yield()
         source.permission = LocationPermission.DENIED
         navigator.updateActivePosition()
         assertEquals(GpsLocationState.PermissionDenied, navigator.state.value.location)
-        assertEquals("dining-pts", navigator.state.value.destination!!.id)
+        assertEquals("etsiit-auxiliar", navigator.state.value.destination!!.id)
         assertEquals(1, routes.calls)
     }
 }

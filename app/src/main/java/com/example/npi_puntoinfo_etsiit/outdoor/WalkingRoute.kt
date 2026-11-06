@@ -4,7 +4,17 @@ import java.util.Locale
 import kotlin.math.ceil
 import kotlin.math.roundToInt
 
-data class WalkingStep(val instruction: String, val distanceMeters: Double, val maneuver: Maneuver = Maneuver.UNKNOWN)
+data class WalkingStep(
+    val instruction: String,
+    val distanceMeters: Double,
+    val maneuver: Maneuver = Maneuver.UNKNOWN,
+    val photo: String? = null,
+    val heading: Int? = null,
+    val ejeXCamino: Double = 0.5,
+    val nodeName: String? = null,
+    val nodeId: String? = null,
+    val point: GeoPoint? = null
+)
 
 enum class Maneuver {
     LEFT, RIGHT, SHARP_LEFT, SHARP_RIGHT, SLIGHT_LEFT, SLIGHT_RIGHT, STRAIGHT,

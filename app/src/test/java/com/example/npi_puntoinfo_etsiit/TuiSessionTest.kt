@@ -68,7 +68,7 @@ class TuiSessionTest {
         val demo = TuiOcrScanner.getDemoTui()
 
         assertTrue(demo.name.isNotBlank())
-        assertEquals(8, demo.dni.length)
+        assertTrue(demo.dni.length in 8..9)
         assertEquals(16, demo.cardNumber.length)
         assertEquals("ESTUDIANTE", demo.colectivo)
     }

@@ -104,11 +104,20 @@ class AccelerometerManager(context: Context) : SensorEventListener {
     private var lastPitchGestureTime = 0L
 
     // --- Parámetros Gesto 4: Levantar el móvil (Guiado paso a paso en Mapa) ---
-    var verticalMaxZThreshold: Float = 3.0f
+    // Histéresis amplia: se activa al subir el móvil vertical (y >= 7.8, |z| <= 4.5)
+    // y NO se desactiva con el movimiento normal al andar o girar, sino únicamente cuando
+    // el usuario baja claramente el móvil hacia posición horizontal (|z| >= 7.5 e y <= 4.8).
+    var verticalMaxZThreshold: Float = 4.5f
     var verticalMinYThreshold: Float = 7.8f
-    var flatMinZThreshold: Float = 3.8f
+    var flatMinZThreshold: Float = 7.5f
+    var flatMaxYThreshold: Float = 4.8f
 
     private var isCurrentlyVertical = false
+    private var postureInitialized = false
+    private var postureSmoothX = 0f
+    private var postureSmoothY = 0f
+    private var postureSmoothZ = 0f
+    private var loweredStartTimeMs = 0L
     private var currentOrientation: DeviceOrientation = DeviceOrientation.UNKNOWN
 
     fun startListening() {
@@ -132,6 +141,8 @@ class AccelerometerManager(context: Context) : SensorEventListener {
         accelForwardTiltCount = 0
         accelInForwardPush = false
         accelWaitingFinalReturn = false
+        postureInitialized = false
+        loweredStartTimeMs = 0L
     }
 
     override fun onSensorChanged(event: SensorEvent?) {
@@ -320,27 +331,51 @@ class AccelerometerManager(context: Context) : SensorEventListener {
         // =========================================================================
         // 5. GESTO LEVANTAR EL MÓVIL (Guiado paso a paso en navegación) Y BAJARLO (Ver mapa)
         // =========================================================================
-        val isVertical = abs(z) <= verticalMaxZThreshold && y >= verticalMinYThreshold && abs(x) < 4.0f
-        val isLowered = abs(z) >= flatMinZThreshold || y < 7.2f || abs(x) >= 4.8f
+        if (!postureInitialized) {
+            postureSmoothX = x
+            postureSmoothY = y
+            postureSmoothZ = z
+            postureInitialized = true
+        } else {
+            val alpha = 0.15f
+            postureSmoothX += alpha * (x - postureSmoothX)
+            postureSmoothY += alpha * (y - postureSmoothY)
+            postureSmoothZ += alpha * (z - postureSmoothZ)
+        }
+
+        val isVertical = abs(postureSmoothZ) <= verticalMaxZThreshold &&
+            postureSmoothY >= verticalMinYThreshold &&
+            abs(postureSmoothX) < 4.5f
+
+        // Solo se considera bajado cuando el usuario inclina el móvil claramente hacia abajo (hacia horizontal)
+        val isClearlyLowered = abs(postureSmoothZ) >= flatMinZThreshold && postureSmoothY <= flatMaxYThreshold
 
         if (isVertical) {
+            loweredStartTimeMs = 0L
             if (!isCurrentlyVertical) {
                 isCurrentlyVertical = true
                 onPostureModeChanged?.invoke(true)
                 onDeviceLifted?.invoke()
             }
-        } else if (isLowered) {
+        } else if (isClearlyLowered) {
             if (isCurrentlyVertical) {
-                isCurrentlyVertical = false
-                onPostureModeChanged?.invoke(false)
+                if (loweredStartTimeMs == 0L) {
+                    loweredStartTimeMs = now
+                } else if (now - loweredStartTimeMs >= 250L) {
+                    isCurrentlyVertical = false
+                    loweredStartTimeMs = 0L
+                    onPostureModeChanged?.invoke(false)
+                }
             }
+        } else {
+            loweredStartTimeMs = 0L
         }
 
         val newOrientation = when {
             x >= TILT_LEFT_STRONG_THRESHOLD -> DeviceOrientation.TILTED_LEFT
             x <= -TILT_LEFT_STRONG_THRESHOLD -> DeviceOrientation.TILTED_RIGHT
-            isVertical -> DeviceOrientation.VERTICAL
-            isLowered -> DeviceOrientation.FLAT
+            isCurrentlyVertical -> DeviceOrientation.VERTICAL
+            isClearlyLowered -> DeviceOrientation.FLAT
             else -> DeviceOrientation.UNKNOWN
         }
 

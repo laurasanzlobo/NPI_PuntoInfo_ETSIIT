@@ -72,7 +72,7 @@ class NavigationTripTest {
     }
 
     @Test fun outdoorOnlyTripNeverOffersIndoorAction() {
-        var trip = NavigationTrip.start(NavigationJourney.Outdoor(OutdoorDestinations.find("dining-pts")!!))
+        var trip = NavigationTrip.start(NavigationJourney.Outdoor(OutdoorDestinations.find("etsiit-auxiliar")!!))
         trip = trip.onArrival().stayOutside().enterIndoors().returnOutdoors()
         assertNull(trip.indoor)
         assertEquals(TripPhase.OUTDOOR, trip.phase)
@@ -99,7 +99,7 @@ class NavigationTripTest {
 
     @Test fun proximityToOutdoorOnlyDestinationNeverEnablesIndoorTransition() {
         val detector = ArrivalDetector()
-        val trip = NavigationTrip.start(NavigationJourney.Outdoor(OutdoorDestinations.find("dining-pts")!!))
+        val trip = NavigationTrip.start(NavigationJourney.Outdoor(OutdoorDestinations.find("etsiit-auxiliar")!!))
         assertTrue(detector.observe(50.0, 60.0, 100_000))
         val arrived = trip.onArrival()
         assertEquals(ArrivalPresentation.WAITING, arrived.presentation)
