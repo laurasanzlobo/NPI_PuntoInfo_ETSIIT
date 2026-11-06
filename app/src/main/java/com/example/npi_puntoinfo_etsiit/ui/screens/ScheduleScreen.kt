@@ -98,9 +98,9 @@ fun ScheduleScreen(
 
         if (selectedClass != null) {
             manager.onTakeMeThereGesture = {
-                triggerVibration(context, durationMs = 150)
                 val currentClass = selectedClass
                 if (currentClass != null) {
+                    triggerVibration(context, durationMs = 150)
                     val roomName = currentClass.room.split("·")[0].trim()
                     val floorName = currentClass.room.split("·").getOrElse(1) { "ETSIIT" }.trim()
                     selectedClass = null

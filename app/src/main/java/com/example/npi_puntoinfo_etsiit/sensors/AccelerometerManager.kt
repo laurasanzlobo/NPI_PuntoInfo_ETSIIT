@@ -44,6 +44,7 @@ class AccelerometerManager(context: Context) : SensorEventListener {
     private val gyroscope: Sensor? = sensorManager?.getDefaultSensor(Sensor.TYPE_GYROSCOPE)
 
     private val tripleForwardTiltDetector = TripleForwardTiltDetector()
+    private val singleTiltActionDetector = SingleTiltActionDetector()
 
     val isAvailable: Boolean
         get() = accelerometer != null
@@ -52,9 +53,9 @@ class AccelerometerManager(context: Context) : SensorEventListener {
     var onSensorValuesChanged: ((x: Float, y: Float, z: Float) -> Unit)? = null
     var onShakeProgress: ((count: Int, total: Int) -> Unit)? = null
     var onShakeDetected: (() -> Unit)? = null       // 3 inclinaciones hacia adelante + volver
-    var onTakeMeThereGesture: (() -> Unit)? = null  // Inclinar totalmente a la izquierda + volver
+    var onTakeMeThereGesture: (() -> Unit)? = null  // Inclinar deliberadamente a la izquierda + volver
     var onNodStarted: (() -> Unit)? = null          // Fase 1 de llevar a vertical iniciada
-    var onForwardTiltGesture: (() -> Unit)? = null  // Llevar de inclinado a vertical + volver a inclinado
+    var onForwardTiltGesture: (() -> Unit)? = null  // Inclinar hacia ti + volver a posición de lectura
     var onDeviceLifted: (() -> Unit)? = null        // Levantamiento a vertical estricto
     var onPostureModeChanged: ((isVertical: Boolean) -> Unit)? = null
     var onOrientationChanged: ((DeviceOrientation) -> Unit)? = null
@@ -62,36 +63,38 @@ class AccelerometerManager(context: Context) : SensorEventListener {
     private val gestureTag = "NPI_GESTOS"
 
     // =========================================================================
-    // Parámetros Gesto 1 («¡Llévame!»): Pantalla totalmente hacia la izquierda y volver
+    // Parámetros Gesto 1 («¡Llévame!»): Pantalla inclinada a la izquierda y volver
+    // Margen de tiempo estricto: si se mantiene inclinado más de 850 ms sin volver, se cancela
     // =========================================================================
-    private val TILT_LEFT_STRONG_THRESHOLD = 7.5f
-    private val RETURN_NEUTRAL_MAX_X = 2.4f
-    private val MIN_TILT_LEFT_DURATION_MS = 80L
-    private val MAX_TILT_LEFT_WINDOW_MS = 2400L
-    private val FLICK_COOLDOWN = 1600L
+    private val TILT_LEFT_STRONG_THRESHOLD = 5.8f     // Inclinación deliberada (~36º hacia la izquierda)
+    private val RETURN_NEUTRAL_MAX_X = 2.6f           // Retorno a posición frontal
+    private val MAX_TAKE_ME_WINDOW_MS = 850L          // Margen de tiempo máximo para ida y vuelta
+    private val FLICK_COOLDOWN = 1500L                // Evitar disparos dobles
 
-    private var isTiltedLeftForTakeMe = false
-    private var tiltedLeftStartTime = 0L
+    private enum class FlickState {
+        NEUTRAL,
+        TILTED,
+        TIMED_OUT
+    }
+
+    private var takeMeThereState = FlickState.NEUTRAL
+    private var takeMeThereStartTime = 0L
     private var lastFlickTriggeredTime = 0L
 
     // =========================================================================
     // Parámetros Gesto 3 (Acción Rápida: Correo / Reserva Comedor):
-    // Partir de móvil inclinado (Z >= 3.8) -> Llevarlo a vertical (Z <= 2.1, Y >= 8.1) -> Volver a inclinado (Z >= 3.8)
+    // Cabeceo dinámico hacia ti y retorno (detectado por giroscopio con fallback de acelerómetro dinámico)
     // =========================================================================
-    private val INCLINED_MIN_Z = 3.8f
-    private val VERTICAL_MAX_Z_FOR_ACTION = 2.1f
-    private val VERTICAL_MIN_Y_FOR_ACTION = 8.1f
-    private val MIN_Z_SWING_FOR_ACTION = 2.6f
-    private val MAX_VERTICAL_ACTION_WINDOW_MS = 2200L
-    private val MIN_VERTICAL_HOLD_MS = 60L
-    private val ACTION_COOLDOWN_MS = 1600L
-
-    private var hasInclinedBaseline = false
-    private var baselineInclinedZ = 6.0f
-    private var isAtVerticalForAction = false
-    private var reachedVerticalTime = 0L
-    private var minVerticalZReached = 2.1f
     private var lastActionTriggeredTime = 0L
+
+    // Respaldo dinámico por acelerómetro (solo si el móvil no cuenta con giroscopio)
+    private var accelActionState = 0
+    private var accelActionDirection = 0
+    private var accelActionStartZ = 0f
+    private var accelActionStartTime = 0L
+    private var accelActionReturnStartTime = 0L
+    private var lastSampleZ = 0f
+    private var lastAccelActionTime = 0L
 
     // Respaldo con acelerómetro para las 3 inclinaciones hacia adelante (si no hubiera giroscopio)
     private var accelForwardTiltCount = 0
@@ -123,9 +126,9 @@ class AccelerometerManager(context: Context) : SensorEventListener {
     fun stopListening() {
         sensorManager?.unregisterListener(this)
         tripleForwardTiltDetector.reset()
-        isTiltedLeftForTakeMe = false
-        hasInclinedBaseline = false
-        isAtVerticalForAction = false
+        singleTiltActionDetector.reset()
+        takeMeThereState = FlickState.NEUTRAL
+        accelActionState = 0
         accelForwardTiltCount = 0
         accelInForwardPush = false
         accelWaitingFinalReturn = false
@@ -135,14 +138,15 @@ class AccelerometerManager(context: Context) : SensorEventListener {
         if (event == null) return
 
         // =========================================================================
-        // 1. GIROSCOPIO: Gesto de 3 inclinaciones hacia adelante y volver (Clase Actual)
+        // 1. GIROSCOPIO: Gestos dinámicos de cabeceo (Clase Actual y Acción Rápida)
         // =========================================================================
         if (event.sensor.type == Sensor.TYPE_GYROSCOPE) {
-            if (onShakeDetected != null) {
-                val gx = event.values[0]
-                val gy = event.values[1]
-                val gz = event.values[2]
+            val gx = event.values[0]
+            val gy = event.values[1]
+            val gz = event.values[2]
 
+            // 1A. Gesto de 3 inclinaciones consecutivas hacia adelante (Clase Actual)
+            if (onShakeDetected != null) {
                 val prevCount = tripleForwardTiltDetector.currentCount
                 val triggered = tripleForwardTiltDetector.onRotation(gx, gy, gz, event.timestamp)
                 val newCount = tripleForwardTiltDetector.currentCount
@@ -152,9 +156,19 @@ class AccelerometerManager(context: Context) : SensorEventListener {
                 if (triggered) {
                     Log.i(gestureTag, "3 inclinaciones consecutivas hacia adelante completadas")
                     lastPitchGestureTime = System.currentTimeMillis()
-                    isTiltedLeftForTakeMe = false
-                    isAtVerticalForAction = false
+                    takeMeThereState = FlickState.NEUTRAL
+                    singleTiltActionDetector.reset()
                     onShakeDetected?.invoke()
+                }
+            }
+
+            // 1B. Gesto de Acción Rápida (Correo / Reserva Comedor): Inclinar hacia ti y volver
+            if (onForwardTiltGesture != null && tripleForwardTiltDetector.currentCount == 0 && takeMeThereState == FlickState.NEUTRAL) {
+                if (singleTiltActionDetector.onRotation(gx, gy, gz, event.timestamp)) {
+                    Log.i(gestureTag, "Gesto Acción Rápida completado (inclinación hacia ti y retorno)")
+                    lastActionTriggeredTime = System.currentTimeMillis()
+                    lastPitchGestureTime = System.currentTimeMillis()
+                    onForwardTiltGesture?.invoke()
                 }
             }
             return
@@ -202,85 +216,103 @@ class AccelerometerManager(context: Context) : SensorEventListener {
         }
 
         // =========================================================================
-        // 3. GESTO DE ACCIÓN (Correo / Reserva Comedor):
-        //    De postura normal inclinada (Z >= 3.8) -> Llevar a vertical (Z <= 2.1, Y >= 8.1) -> Volver a inclinado (Z >= 3.8)
+        // 3. GESTO DE ACCIÓN (Correo / Reserva Comedor) — Respaldo dinámico solo si NO hay giroscopio
         // =========================================================================
-        if (onForwardTiltGesture != null) {
-            if (tripleForwardTiltDetector.currentCount >= 2 || isTiltedLeftForTakeMe) {
-                isAtVerticalForAction = false
-            } else if (!isAtVerticalForAction) {
-                // Registrar la postura inclinada normal con la que el usuario sujeta el móvil
-                if (z >= INCLINED_MIN_Z && y >= 2.0f && abs(x) < 4.2f) {
-                    hasInclinedBaseline = true
-                    baselineInclinedZ = max(INCLINED_MIN_Z, min(9.0f, baselineInclinedZ * 0.8f + z * 0.2f))
-                }
+        if (gyroscope == null && onForwardTiltGesture != null) {
+            val dt = if (lastAccelActionTime > 0L) (now - lastAccelActionTime) / 1000f else 0.02f
+            lastAccelActionTime = now
 
-                // Fase 1: El usuario levanta/inclina el móvil hacia sí hasta ponerlo en VERTICAL
-                if (hasInclinedBaseline &&
-                    z <= VERTICAL_MAX_Z_FOR_ACTION &&
-                    y >= VERTICAL_MIN_Y_FOR_ACTION &&
-                    abs(x) < 4.2f &&
-                    (baselineInclinedZ - z) >= MIN_Z_SWING_FOR_ACTION &&
-                    (now - lastActionTriggeredTime > ACTION_COOLDOWN_MS)
-                ) {
-                    isAtVerticalForAction = true
-                    reachedVerticalTime = now
-                    minVerticalZReached = z
-                    Log.d(gestureTag, "Acción Fase 1: móvil llevado a vertical (z=$z desde baseline=$baselineInclinedZ)")
-                    onNodStarted?.invoke()
-                }
-            } else {
-                // Fase 2: El usuario devuelve el móvil desde vertical a su posición inclinada inicial
-                minVerticalZReached = min(minVerticalZReached, z)
-                val elapsed = now - reachedVerticalTime
+            if (dt in 0.005f..0.25f) {
+                val dz = z - lastSampleZ
+                val zVelocity = abs(dz / dt) // m/s^3 velocidad dinámica de cambio
 
-                if (elapsed > MAX_VERTICAL_ACTION_WINDOW_MS || abs(x) >= 5.5f) {
-                    isAtVerticalForAction = false
-                } else if (elapsed >= MIN_VERTICAL_HOLD_MS &&
-                    z >= INCLINED_MIN_Z &&
-                    (z - minVerticalZReached) >= MIN_Z_SWING_FOR_ACTION &&
-                    y >= 2.5f &&
-                    abs(x) < 4.2f
-                ) {
-                    isAtVerticalForAction = false
-                    hasInclinedBaseline = true
-                    baselineInclinedZ = z
-                    lastActionTriggeredTime = now
-                    lastPitchGestureTime = now
-                    Log.i(gestureTag, "Acción Fase 2 completada: móvil devuelto a posición inclinada (z=$z)")
-                    onForwardTiltGesture?.invoke()
+                when (accelActionState) {
+                    0 -> { // IDLE: esperar movimiento dinámico rápido
+                        if (zVelocity >= 5.0f && abs(x) < 4.5f) {
+                            accelActionDirection = if (dz > 0) 1 else -1
+                            accelActionStartZ = lastSampleZ
+                            accelActionStartTime = now
+                            accelActionState = 1
+                            onNodStarted?.invoke()
+                        }
+                    }
+                    1 -> { // EN INCLINACIÓN
+                        val elapsed = now - accelActionStartTime
+                        if (elapsed > 850L) {
+                            accelActionState = 3 // TIMED_OUT: se mantuvo inclinado demasiado tiempo
+                        } else {
+                            val deltaZ = (z - accelActionStartZ) * accelActionDirection
+                            if (deltaZ >= 1.8f) {
+                                accelActionState = 2
+                                accelActionReturnStartTime = now
+                            }
+                        }
+                    }
+                    2 -> { // RETORNANDO A POSICIÓN BASE
+                        val totalElapsed = now - accelActionStartTime
+                        if (totalElapsed > 850L) {
+                            accelActionState = 3 // TIMED_OUT
+                        } else {
+                            val returnedDelta = abs(z - accelActionStartZ)
+                            if (returnedDelta <= 1.3f && zVelocity < 2.5f) {
+                                accelActionState = 0
+                                lastActionTriggeredTime = now
+                                lastPitchGestureTime = now
+                                Log.i(gestureTag, "Acción rápida por acelerómetro completada")
+                                onForwardTiltGesture?.invoke()
+                            }
+                        }
+                    }
+                    3 -> { // TIMED_OUT: esperar a que el usuario regrese a reposo sin disparar
+                        val returnedDelta = abs(z - accelActionStartZ)
+                        if (returnedDelta <= 1.3f && zVelocity < 2.0f) {
+                            accelActionState = 0
+                        }
+                    }
                 }
             }
+            lastSampleZ = z
         }
 
         // =========================================================================
         // 4. GESTO «¡LLÉVAME!»:
-        //    Poner el móvil totalmente inclinado hacia la izquierda (X >= 7.5) y volver a posición recta (abs(X) <= 2.4)
+        //    Inclinar el móvil deliberadamente a la izquierda (x >= 5.8 m/s²) y volver al frente (|x| <= 2.6 m/s²)
+        //    Margen de tiempo: si se mantiene inclinado más de 850 ms sin volver, se cancela y no se activa al regresar.
         // =========================================================================
         if (onTakeMeThereGesture != null) {
-            if (!isTiltedLeftForTakeMe) {
-                // Fase 1: Pantalla mirando claramente hacia la izquierda (gesto amplio y exagerado)
-                if (x >= TILT_LEFT_STRONG_THRESHOLD && abs(z) < 7.5f) {
-                    if (now - lastFlickTriggeredTime > FLICK_COOLDOWN && now - lastPitchGestureTime > 600L) {
-                        isTiltedLeftForTakeMe = true
-                        tiltedLeftStartTime = now
-                        isAtVerticalForAction = false
-                        Log.d(gestureTag, "Llévame Fase 1: móvil totalmente inclinado a la izquierda (x=$x)")
+            when (takeMeThereState) {
+                FlickState.NEUTRAL -> {
+                    // Fase 1: Pantalla inclinada deliberadamente hacia la izquierda (x >= 5.8 m/s², ~36º)
+                    if (x >= TILT_LEFT_STRONG_THRESHOLD && abs(z) < 7.5f) {
+                        if (now - lastFlickTriggeredTime > FLICK_COOLDOWN && now - lastPitchGestureTime > 600L) {
+                            takeMeThereState = FlickState.TILTED
+                            takeMeThereStartTime = now
+                            Log.d(gestureTag, "Llévame: iniciado giro a la izquierda (x=$x)")
+                        }
                     }
                 }
-            } else {
-                // Fase 2: Volver a la posición horizontalmente recta frente al usuario
-                val elapsed = now - tiltedLeftStartTime
-                if (elapsed > MAX_TILT_LEFT_WINDOW_MS || x < -4.5f) {
-                    isTiltedLeftForTakeMe = false
-                } else if (elapsed >= MIN_TILT_LEFT_DURATION_MS &&
-                    abs(x) <= RETURN_NEUTRAL_MAX_X &&
-                    (y >= 2.5f || z >= 2.5f)
-                ) {
-                    isTiltedLeftForTakeMe = false
-                    lastFlickTriggeredTime = now
-                    Log.i(gestureTag, "Llévame Fase 2 completada: móvil de vuelta en posición inicial (x=$x)")
-                    onTakeMeThereGesture?.invoke()
+                FlickState.TILTED -> {
+                    val elapsed = now - takeMeThereStartTime
+                    if (elapsed > MAX_TAKE_ME_WINDOW_MS) {
+                        // Se mantuvo de lado más tiempo del margen permitido: CANCELAR
+                        takeMeThereState = FlickState.TIMED_OUT
+                        Log.d(gestureTag, "Llévame: superado margen de tiempo (${elapsed}ms). Gesto cancelado.")
+                    } else if (x < -3.5f) {
+                        takeMeThereState = FlickState.NEUTRAL
+                    } else if (abs(x) <= RETURN_NEUTRAL_MAX_X && (y >= 2.0f || z >= 2.0f)) {
+                        // De vuelta al frente dentro del margen de tiempo: ¡ACCIÓN!
+                        takeMeThereState = FlickState.NEUTRAL
+                        lastFlickTriggeredTime = now
+                        Log.i(gestureTag, "Llévame: completado con éxito en ${elapsed}ms")
+                        onTakeMeThereGesture?.invoke()
+                    }
+                }
+                FlickState.TIMED_OUT -> {
+                    // El gesto caducó. Esperar a que el usuario devuelva el móvil al centro para volver a NEUTRAL
+                    if (abs(x) <= RETURN_NEUTRAL_MAX_X) {
+                        takeMeThereState = FlickState.NEUTRAL
+                        Log.d(gestureTag, "Llévame: móvil devuelto al centro tras cancelación. Listo.")
+                    }
                 }
             }
         }
@@ -454,6 +486,144 @@ internal class TripleForwardTiltDetector {
                     // Si pasaron 900ms sin volver a la posición base, cancelar
                     reset()
                     previousTimestampNs = timestampNs
+                }
+            }
+        }
+        return false
+    }
+}
+
+/**
+ * Detector de precisión para el gesto de Acción Rápida (Correo / Reserva Comedor):
+ * «Inclinar el móvil hacia ti y volver a la posición de lectura».
+ *
+ * Utiliza el giroscopio para medir la velocidad angular del cabeceo (eje X, pitch)
+ * e integrarla en un ángulo de rotación:
+ * 1. Detección de rotación intencionada de cabeceo (|gx| >= 0.55 rad/s) alcanzando >= 0.09 rad (~5.2º).
+ * 2. Inmediato movimiento de retorno en sentido contrario hacia la posición de partida.
+ * 3. Reposo en la posición inicial.
+ *
+ * Ventajas fundamentales:
+ * - Es IMPOSIBLE que se active por sostener el móvil en vertical o en reposo (gx = 0).
+ * - Calibrado estrictamente para no dispararse al tocar la pantalla, deslizar o mover la mano (~16º deliberados hacia ti).
+ */
+internal class SingleTiltActionDetector {
+    private enum class State {
+        IDLE,
+        IN_TILT,
+        RETURNING,
+        TIMED_OUT
+    }
+
+    private var state = State.IDLE
+    private var previousTimestampNs = 0L
+    private var tiltStartNs = 0L
+    private var returnStartNs = 0L
+    private var accumulatedTiltAngle = 0f
+    private var accumulatedReturnAngle = 0f
+    private var lastTriggeredNs = 0L
+
+    // Margen de tiempo estricto: si se mantiene inclinado más de 850 ms sin volver, se cancela
+    private val minAngularSpeed = 1.30f            // rad/s (~75º/s)
+    private val minTiltAngle = 0.28f                // radianes (~16 grados de cabeceo claro)
+    private val maxTiltHoldNs = 550_000_000L       // 550 ms máx para completar la ida hacia ti
+    private val maxTotalWindowNs = 850_000_000L    // 850 ms máx para todo el ciclo (ida + vuelta)
+    private val cooldownNs = 1_800_000_000L        // Cooldown estricto tras disparo
+
+    fun reset() {
+        state = State.IDLE
+        previousTimestampNs = 0L
+        tiltStartNs = 0L
+        returnStartNs = 0L
+        accumulatedTiltAngle = 0f
+        accumulatedReturnAngle = 0f
+    }
+
+    fun onRotation(gx: Float, gy: Float, gz: Float, timestampNs: Long): Boolean {
+        if (previousTimestampNs == 0L) {
+            previousTimestampNs = timestampNs
+            return false
+        }
+        val dt = (timestampNs - previousTimestampNs) / 1_000_000_000f
+        previousTimestampNs = timestampNs
+
+        if (dt <= 0f || dt > 0.25f) {
+            reset()
+            return false
+        }
+
+        if (timestampNs - lastTriggeredNs < cooldownNs) {
+            return false
+        }
+
+        // El cabeceo hacia el usuario (gx > 0) debe ser claramente dominante sobre giros laterales o desviaciones
+        val isPitchDominant = gx >= 1.35f * abs(gy) && gx >= 1.35f * abs(gz)
+
+        when (state) {
+            State.IDLE -> {
+                // Solo se inicia con un cabeceo enérgico hacia ti (gx > 0)
+                if (gx >= minAngularSpeed && isPitchDominant) {
+                    state = State.IN_TILT
+                    tiltStartNs = timestampNs
+                    accumulatedTiltAngle = gx * dt
+                    accumulatedReturnAngle = 0f
+                }
+            }
+
+            State.IN_TILT -> {
+                val tiltElapsed = timestampNs - tiltStartNs
+                if (tiltElapsed > maxTiltHoldNs) {
+                    // Superado el margen de tiempo: se mantuvo inclinado hacia ti. CANCELAR
+                    state = State.TIMED_OUT
+                    return false
+                }
+
+                if (gx > 0.15f) {
+                    accumulatedTiltAngle += gx * dt
+                } else if (-gx >= 0.35f || (accumulatedTiltAngle >= minTiltAngle && -gx >= 0.10f)) {
+                    // Ha terminado la inclinación hacia ti y empieza el retroceso hacia la posición de lectura
+                    if (accumulatedTiltAngle >= minTiltAngle) {
+                        state = State.RETURNING
+                        returnStartNs = timestampNs
+                        accumulatedReturnAngle = if (-gx > 0f) (-gx) * dt else 0f
+                    } else if (-gx >= 0.40f) {
+                        reset()
+                    }
+                }
+            }
+
+            State.RETURNING -> {
+                val totalElapsed = timestampNs - tiltStartNs
+
+                if (totalElapsed > maxTotalWindowNs) {
+                    // Superado el margen total de 850 ms sin completar el retorno: CANCELAR
+                    state = State.TIMED_OUT
+                    return false
+                }
+
+                if (-gx > 0.10f) {
+                    accumulatedReturnAngle += (-gx) * dt
+                }
+
+                // Ha recuperado al menos el 65% de la inclinación y se ha detenido en reposo en la posición base
+                val hasReturnedEnough = accumulatedReturnAngle >= accumulatedTiltAngle * 0.65f
+                val settledAtRest = abs(gx) < 0.45f && abs(gy) < 0.45f
+
+                if (hasReturnedEnough && settledAtRest) {
+                    lastTriggeredNs = timestampNs
+                    reset()
+                    return true
+                }
+            }
+
+            State.TIMED_OUT -> {
+                // El gesto caducó porque se mantuvo inclinado más de 850 ms.
+                // Esperar a que el usuario termine el movimiento y regrese al reposo para resetear a IDLE sin disparar.
+                if (abs(gx) < 0.35f && abs(gy) < 0.35f && abs(gz) < 0.35f) {
+                    val timeSinceTimeout = timestampNs - tiltStartNs
+                    if (timeSinceTimeout > maxTotalWindowNs + 150_000_000L) {
+                        reset()
+                    }
                 }
             }
         }

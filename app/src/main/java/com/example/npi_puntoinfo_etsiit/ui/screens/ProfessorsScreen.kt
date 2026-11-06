@@ -501,9 +501,9 @@ fun ProfessorsScreen(onNavigate: (String) -> Unit, searchedName: String? = null)
 
         if (selectedProfessor != null) {
             manager.onTakeMeThereGesture = {
-                triggerVibration(context, durationMs = 150)
                 val prof = selectedProfessor
                 if (prof != null) {
+                    triggerVibration(context, durationMs = 150)
                     if (prof.isExternal) {
                         Toast.makeText(context, "El profesor se encuentra en ${prof.campus}", Toast.LENGTH_LONG).show()
                     } else {
@@ -518,9 +518,9 @@ fun ProfessorsScreen(onNavigate: (String) -> Unit, searchedName: String? = null)
 
             manager.onForwardTiltGesture = {
                 // Retorno a la postura de lectura: abre directamente el correo
-                triggerVibration(context, durationMs = 150)
                 val prof = selectedProfessor
                 if (prof != null) {
+                    triggerVibration(context, durationMs = 150)
                     val intent = Intent(Intent.ACTION_SENDTO).apply {
                         data = android.net.Uri.parse("mailto:${prof.email}")
                         putExtra(Intent.EXTRA_SUBJECT, "Tutoría: [Indica tu motivo]")

@@ -7,6 +7,7 @@ import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
 import android.util.Log
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
@@ -279,25 +280,37 @@ fun DiningScreen(
         val accelerometerManager = AccelerometerManager(context)
         if (!isCurrentClassDialogVisible) {
             accelerometerManager.onTakeMeThereGesture = {
-                if (pendingOrderDate == null && paymentSuccessDialog == null) currentNavigateToDining(null)
+                if (!pagerState.isScrollInProgress && pendingOrderDate == null && paymentSuccessDialog == null) {
+                    currentNavigateToDining(null)
+                }
             }
             accelerometerManager.onForwardTiltGesture = {
-                if (isLoggedIn) {
-                    val day = pagerState.currentPage
-                    val selected = menuList.getOrNull(day)
-                    val dateKey = selected?.date?.toString()
-                    val isOrdered = dateKey?.let { !ordersPlaced[it].isNullOrBlank() } ?: false
+                if (!pagerState.isScrollInProgress) {
+                    if (isLoggedIn) {
+                        val day = pagerState.currentPage
+                        val selected = menuList.getOrNull(day)
+                        val dateKey = selected?.date?.toString()
+                        val isOrdered = dateKey?.let { !ordersPlaced[it].isNullOrBlank() } ?: false
 
-                    if (selected != null &&
-                        selected.date.isAfter(LocalDate.now()) &&
-                        !isOrdered &&
-                        pendingOrderDate == null &&
-                        paymentSuccessDialog == null &&
-                        !pagerState.isScrollInProgress
-                    ) {
-                        triggerVibration(context, durationMs = 80)
-                        orderMenuType = selectedMenuType
-                        pendingOrderDate = selected.date
+                        if (selected != null &&
+                            selected.date.isAfter(LocalDate.now()) &&
+                            !isOrdered &&
+                            pendingOrderDate == null &&
+                            paymentSuccessDialog == null
+                        ) {
+                            triggerVibration(context, durationMs = 80)
+                            orderMenuType = selectedMenuType
+                            pendingOrderDate = selected.date
+                        } else if (selected != null && !selected.date.isAfter(LocalDate.now())) {
+                            triggerVibration(context, durationMs = 40)
+                            Toast.makeText(context, "El encargo para llevar es para días posteriores (desliza a mañana)", Toast.LENGTH_SHORT).show()
+                        } else if (isOrdered) {
+                            triggerVibration(context, durationMs = 40)
+                            Toast.makeText(context, "Ya tienes un menú encargado para este día", Toast.LENGTH_SHORT).show()
+                        }
+                    } else {
+                        triggerVibration(context, durationMs = 40)
+                        Toast.makeText(context, "Inicia sesión para encargar tu menú con gestos", Toast.LENGTH_SHORT).show()
                     }
                 }
             }
