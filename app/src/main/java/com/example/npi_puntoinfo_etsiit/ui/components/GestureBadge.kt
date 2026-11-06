@@ -201,7 +201,7 @@ enum class GestureType(
         badgeColor = UgrRed
     ),
     ACTION_TRIGGER(
-        title = "Acción rápida",
+        title = "Confirmar / Enviar",
         gestureName = "Inclinar hacia ti",
         description = "Inclina el móvil hacia ti y vuelve a la posición inicial para encargar menú en comedores o enviar un correo al profesor.",
         howTo = "Inclina el móvil hacia ti.",

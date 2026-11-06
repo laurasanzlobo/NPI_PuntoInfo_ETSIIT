@@ -66,8 +66,8 @@ class AccelerometerManager(context: Context) : SensorEventListener {
     // Parámetros Gesto 1 («¡Llévame!»): Pantalla inclinada a la izquierda y volver
     // Margen de tiempo estricto: si se mantiene inclinado más de 850 ms sin volver, se cancela
     // =========================================================================
-    private val TILT_LEFT_STRONG_THRESHOLD = 5.8f     // Inclinación deliberada (~36º hacia la izquierda)
-    private val RETURN_NEUTRAL_MAX_X = 2.6f           // Retorno a posición frontal
+    private val TILT_LEFT_STRONG_THRESHOLD = 6.8f     // Inclinación amplia y deliberada (~44º hacia la izquierda)
+    private val RETURN_NEUTRAL_MAX_X = 2.5f           // Retorno a posición frontal
     private val MAX_TAKE_ME_WINDOW_MS = 850L          // Margen de tiempo máximo para ida y vuelta
     private val FLICK_COOLDOWN = 1500L                // Evitar disparos dobles
 
@@ -242,7 +242,7 @@ class AccelerometerManager(context: Context) : SensorEventListener {
                             accelActionState = 3 // TIMED_OUT: se mantuvo inclinado demasiado tiempo
                         } else {
                             val deltaZ = (z - accelActionStartZ) * accelActionDirection
-                            if (deltaZ >= 1.8f) {
+                            if (deltaZ >= 2.5f) {
                                 accelActionState = 2
                                 accelActionReturnStartTime = now
                             }
@@ -505,7 +505,7 @@ internal class TripleForwardTiltDetector {
  *
  * Ventajas fundamentales:
  * - Es IMPOSIBLE que se active por sostener el móvil en vertical o en reposo (gx = 0).
- * - Calibrado estrictamente para no dispararse al tocar la pantalla, deslizar o mover la mano (~16º deliberados hacia ti).
+ * - Exige un cabeceo amplio y claro hacia ti (~23º) para no dispararse con gestos pequeños o temblores.
  */
 internal class SingleTiltActionDetector {
     private enum class State {
@@ -524,8 +524,8 @@ internal class SingleTiltActionDetector {
     private var lastTriggeredNs = 0L
 
     // Margen de tiempo estricto: si se mantiene inclinado más de 850 ms sin volver, se cancela
-    private val minAngularSpeed = 1.30f            // rad/s (~75º/s)
-    private val minTiltAngle = 0.28f                // radianes (~16 grados de cabeceo claro)
+    private val minAngularSpeed = 1.45f            // rad/s (~83º/s, cabeceo decidido)
+    private val minTiltAngle = 0.40f                // radianes (~23 grados de cabeceo amplio)
     private val maxTiltHoldNs = 550_000_000L       // 550 ms máx para completar la ida hacia ti
     private val maxTotalWindowNs = 850_000_000L    // 850 ms máx para todo el ciclo (ida + vuelta)
     private val cooldownNs = 1_800_000_000L        // Cooldown estricto tras disparo
