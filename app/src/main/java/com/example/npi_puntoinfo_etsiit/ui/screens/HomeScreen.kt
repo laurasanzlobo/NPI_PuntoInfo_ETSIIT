@@ -32,6 +32,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.npi_puntoinfo_etsiit.R
+import com.example.npi_puntoinfo_etsiit.data.ClassItem
 import com.example.npi_puntoinfo_etsiit.data.ScheduleRepository
 import com.example.npi_puntoinfo_etsiit.data.UserSessionRepository
 import com.example.npi_puntoinfo_etsiit.ui.navigation.Screen
@@ -55,7 +56,8 @@ data class NewsItem(
 @Composable
 fun HomeScreen(
     onNavigate: (String) -> Unit,
-    onLaunchVoiceSearch: () -> Unit = {}
+    onLaunchVoiceSearch: () -> Unit = {},
+    onShowCurrentClassDialog: ((ClassItem?) -> Unit)? = null
 ) {
     val context = LocalContext.current
     val profile = UserSessionRepository.getProfile(context)
@@ -119,7 +121,13 @@ fun HomeScreen(
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clickable { onNavigate(Screen.Schedule.route) },
+                    .clickable {
+                        if (onShowCurrentClassDialog != null) {
+                            onShowCurrentClassDialog(currentOrNextClass)
+                        } else {
+                            onNavigate(Screen.Schedule.route)
+                        }
+                    },
                 shape = RoundedCornerShape(20.dp),
                 elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
                 colors = CardDefaults.cardColors(containerColor = Color.Transparent)

@@ -634,8 +634,23 @@ fun ProfessorsScreen(onNavigate: (String) -> Unit, searchedName: String? = null)
                 }
             },
             confirmButton = {
-                TextButton(onClick = { showDemoDialog = false }) {
-                    Text("Cerrar", color = CampusTeal)
+                Button(
+                    onClick = { showDemoDialog = false },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = UgrRed,
+                        contentColor = Color.White
+                    ),
+                    shape = RoundedCornerShape(10.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(42.dp)
+                ) {
+                    Text(
+                        text = "Cerrar",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 14.sp,
+                        color = Color.White
+                    )
                 }
             }
         )
@@ -1115,12 +1130,27 @@ fun ProfessorsScreen(onNavigate: (String) -> Unit, searchedName: String? = null)
                 }
             },
             confirmButton = {
-                TextButton(onClick = {
-                    selectedProfessor = null
-                    tts?.stop()
-                    isSpeaking = false
-                }) {
-                    Text("Cerrar", color = TextPrimary, fontWeight = FontWeight.Bold)
+                Button(
+                    onClick = {
+                        selectedProfessor = null
+                        tts?.stop()
+                        isSpeaking = false
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = UgrRed,
+                        contentColor = Color.White
+                    ),
+                    shape = RoundedCornerShape(10.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(42.dp)
+                ) {
+                    Text(
+                        text = "Cerrar",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 14.sp,
+                        color = Color.White
+                    )
                 }
             }
         )

@@ -503,7 +503,11 @@ fun AppNavigation() {
             composable(Screen.Home.route) {
                 HomeScreen(
                     onNavigate = { route -> handleNavigation(route) },
-                    onLaunchVoiceSearch = { launchGlobalVoiceSearch() }
+                    onLaunchVoiceSearch = { launchGlobalVoiceSearch() },
+                    onShowCurrentClassDialog = { targetClass ->
+                        activeClassForDialog = targetClass ?: ScheduleRepository.getCurrentOrUpcomingClass(context = context)
+                        showCurrentClassDialog = true
+                    }
                 )
             }
             composable(Screen.Schedule.route) {
@@ -763,11 +767,26 @@ fun AppNavigation() {
                     }
                 },
                 confirmButton = {
-                    TextButton(onClick = {
-                        showCurrentClassDialog = false
-                        activeClassForDialog = null
-                    }) {
-                        Text("Cerrar", color = TextPrimary, fontWeight = FontWeight.Bold)
+                    Button(
+                        onClick = {
+                            showCurrentClassDialog = false
+                            activeClassForDialog = null
+                        },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = UgrRed,
+                            contentColor = Color.White
+                        ),
+                        shape = RoundedCornerShape(10.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(42.dp)
+                    ) {
+                        Text(
+                            text = "Cerrar",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 14.sp,
+                            color = Color.White
+                        )
                     }
                 }
             )

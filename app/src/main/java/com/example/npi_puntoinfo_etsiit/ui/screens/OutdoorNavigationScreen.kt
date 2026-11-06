@@ -26,11 +26,13 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.core.net.toUri
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
@@ -258,7 +260,26 @@ fun OutdoorNavigationScreen(
                     "está pendiente de validación sobre el terreno. El GPS no confirma que estés dentro.")
                 OutdoorAttribution()
             } },
-            confirmButton = { TextButton(onClick = { showInfo = false }) { Text("Cerrar") } })
+            confirmButton = {
+                Button(
+                    onClick = { showInfo = false },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = UgrRed,
+                        contentColor = Color.White
+                    ),
+                    shape = RoundedCornerShape(10.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(42.dp)
+                ) {
+                    Text(
+                        text = "Cerrar",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 14.sp,
+                        color = Color.White
+                    )
+                }
+            })
     }
     if ((automaticPromptVisible || showManualEntry) && indoor != null) {
         IndoorArrivalDialog(manual = showManualEntry,

@@ -1049,8 +1049,23 @@ fun DiningScreen(
                 }
             },
             confirmButton = {
-                TextButton(onClick = { showAllHallsDialog = false }) {
-                    Text("Cerrar", color = TextSecondary)
+                Button(
+                    onClick = { showAllHallsDialog = false },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = UgrRed,
+                        contentColor = Color.White
+                    ),
+                    shape = RoundedCornerShape(10.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(42.dp)
+                ) {
+                    Text(
+                        text = "Cerrar",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 14.sp,
+                        color = Color.White
+                    )
                 }
             }
         )
