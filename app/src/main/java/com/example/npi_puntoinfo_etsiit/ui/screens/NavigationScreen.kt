@@ -27,6 +27,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import com.example.npi_puntoinfo_etsiit.R
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -57,6 +59,7 @@ fun NavigationScreen(
     onReturnOutdoors: (() -> Unit)? = null
 ) {
     val context = LocalContext.current
+    val profile = com.example.npi_puntoinfo_etsiit.data.UserSessionRepository.getProfile(context)
     val hasActiveRoute = !destinationName.isNullOrBlank()
     val activeDestination = destinationName ?: ""
     val activeLocation = destinationLocation ?: ""
@@ -146,6 +149,31 @@ fun NavigationScreen(
     val currentOnSelectDestination by rememberUpdatedState(onSelectDestination)
     var isManualGuidanceLocked by rememberSaveable { mutableStateOf(false) }
 
+    // Ciclo de vida y estado del recorrido interior basado en Pedómetro
+    var indoorTripState by remember(rutaCalculada, profile.language) {
+        mutableStateOf(
+            if (rutaCalculada != null) {
+                com.example.npi_puntoinfo_etsiit.indoor.IndoorTripState.buildFromRoute("trip_${rutaCalculada.destino.id}", rutaCalculada, context)
+            } else null
+        )
+    }
+
+    // Pedómetro: monitorea pasos en interiores para avanzar automáticamente entre waypoints de la ruta
+    DisposableEffect(context, hasActiveRoute, rutaCalculada) {
+        val pedometerManager = com.example.npi_puntoinfo_etsiit.sensors.PedometerManager(context)
+
+        if (hasActiveRoute && rutaCalculada != null) {
+            pedometerManager.onStepDetected = {
+                indoorTripState = indoorTripState?.onStepDetected()
+            }
+            pedometerManager.startListening()
+        }
+
+        onDispose {
+            pedometerManager.stopListening()
+        }
+    }
+
     LaunchedEffect(isVerticalGuidanceActive) {
         if (!isVerticalGuidanceActive) {
             isManualGuidanceLocked = false
@@ -220,100 +248,27 @@ fun NavigationScreen(
             .fillMaxSize()
             .background(BackgroundLight)
     ) {
-        // 1. EL MAPA INTERIOR A PANTALLA COMPLETA O GUIADO VERTICAL
+        // 1. EL MAPA INTERIOR A PANTALLA COMPLETA O GUIADO VERTICAL POR PEDÓMETRO
         if (hasActiveRoute && rutaCalculada != null && isVerticalGuidanceActive) {
-            // Modo guiado vertical paso a paso completo
-            Surface(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(top = 90.dp, bottom = 16.dp, start = 16.dp, end = 16.dp),
-                shape = RoundedCornerShape(20.dp),
-                color = SurfaceWhite,
-                shadowElevation = 6.dp,
-                border = BorderStroke(1.dp, SurfaceBorder.copy(alpha = 0.5f))
-            ) {
-                Column(
+            val currentTrip = indoorTripState
+            if (currentTrip != null) {
+                Box(
                     modifier = Modifier
                         .fillMaxSize()
-                        .verticalScroll(rememberScrollState())
-                        .padding(20.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                        .padding(top = 90.dp, bottom = 16.dp, start = 16.dp, end = 16.dp)
                 ) {
-                    Surface(
-                        shape = CircleShape,
-                        color = EtsiitBlue.copy(alpha = 0.12f),
-                        modifier = Modifier.size(56.dp)
-                    ) {
-                        Box(contentAlignment = Alignment.Center) {
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Filled.DirectionsWalk,
-                                contentDescription = null,
-                                tint = EtsiitBlue,
-                                modifier = Modifier.size(30.dp)
-                            )
+                    com.example.npi_puntoinfo_etsiit.ui.components.IndoorStepGuidanceCard(
+                        tripState = currentTrip,
+                        onStepSimulated = {
+                            indoorTripState = indoorTripState?.onStepDetected()
+                        },
+                        onNextManual = {
+                            indoorTripState = indoorTripState?.nextStepManual()
+                        },
+                        onPreviousManual = {
+                            indoorTripState = indoorTripState?.previousStepManual()
                         }
-                    }
-
-                    Text(
-                        text = "Guiado Paso a Paso (Dijkstra)",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 17.sp,
-                        color = TextPrimary
                     )
-
-                    Text(
-                        text = "Vas desde ${rutaCalculada.origen.nombre.replace('_', ' ')} hasta ${rutaCalculada.destino.nombre.replace('_', ' ')} y recorres ${rutaCalculada.nodos.size} nodos (${rutaCalculada.distanciaMetros} metros · ${rutaCalculada.tiempoEstimadoFormateado}).",
-                        fontSize = 13.sp,
-                        color = TextSecondary,
-                        textAlign = TextAlign.Center,
-                        lineHeight = 20.sp
-                    )
-
-                    Spacer(modifier = Modifier.height(4.dp))
-
-                    Surface(
-                        shape = RoundedCornerShape(14.dp),
-                        color = BackgroundLight,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Column(
-                            modifier = Modifier.padding(14.dp),
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text(
-                                    text = "Secuencia de paso",
-                                    fontSize = 13.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = TextPrimary
-                                )
-                                Surface(
-                                    shape = RoundedCornerShape(6.dp),
-                                    color = CampusTeal.copy(alpha = 0.12f)
-                                ) {
-                                    Text(
-                                        text = "${rutaCalculada.nodos.size} nodos",
-                                        fontSize = 11.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = CampusTeal,
-                                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-                                    )
-                                }
-                            }
-
-                            Text(
-                                text = rutaCalculada.nodos.joinToString(" → ") { it.nombre.replace('_', ' ') },
-                                fontSize = 12.sp,
-                                color = TextSecondary,
-                                lineHeight = 18.sp
-                            )
-                        }
-                    }
                 }
             }
         } else {
@@ -353,7 +308,7 @@ fun NavigationScreen(
                     )
                     Spacer(modifier = Modifier.height(12.dp))
                     Text(
-                        text = "Calculando ruta a $primaryTitle...",
+                        text = stringResource(R.string.calculating_route, primaryTitle),
                         fontSize = 14.sp,
                         color = TextSecondary
                     )
@@ -407,7 +362,7 @@ fun NavigationScreen(
                         Spacer(modifier = Modifier.width(10.dp))
                         Column {
                             Text(
-                                text = if (hasActiveRoute) formattedTitle else "Mapa ETSIIT",
+                                text = if (hasActiveRoute) formattedTitle else stringResource(R.string.indoor_map_title),
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 15.sp,
                                 color = TextPrimary,
@@ -422,7 +377,7 @@ fun NavigationScreen(
                                 )
                             } else if (!hasActiveRoute) {
                                 Text(
-                                    text = "Plano interactivo del edificio",
+                                    text = stringResource(R.string.indoor_map_subtitle),
                                     fontSize = 12.sp,
                                     color = TextSecondary,
                                     maxLines = 1
@@ -448,7 +403,7 @@ fun NavigationScreen(
                                                 .background(Color(0xFF10B981))
                                         )
                                         Text(
-                                            text = "Desde: ${com.example.npi_puntoinfo_etsiit.ui.components.formatearNombreNodoAmigable(nodoInicio)}",
+                                            text = stringResource(R.string.from_label, com.example.npi_puntoinfo_etsiit.ui.components.formatearNombreNodoAmigable(nodoInicio)),
                                             fontSize = 10.sp,
                                             fontWeight = FontWeight.Bold,
                                             color = EtsiitBlue
@@ -483,7 +438,7 @@ fun NavigationScreen(
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.Close,
-                                    contentDescription = "Cancelar ruta",
+                                    contentDescription = stringResource(R.string.cancel_route),
                                     tint = TextSecondary,
                                     modifier = Modifier.size(18.dp)
                                 )
@@ -534,7 +489,7 @@ fun NavigationScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = "Planta:",
+                            text = stringResource(R.string.floor_label),
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Bold,
                             color = TextSecondary
@@ -589,14 +544,14 @@ fun NavigationScreen(
                                     horizontalArrangement = Arrangement.spacedBy(4.dp)
                                 ) {
                                     Box(Modifier.size(7.dp).clip(CircleShape).background(Color(0xFF10B981)))
-                                    Text("Inicio", fontSize = 11.sp, color = TextSecondary)
+                                    Text(stringResource(R.string.legend_start), fontSize = 11.sp, color = TextSecondary)
                                 }
                                 Row(
                                     verticalAlignment = Alignment.CenterVertically,
                                     horizontalArrangement = Arrangement.spacedBy(4.dp)
                                 ) {
                                     Box(Modifier.size(7.dp).clip(CircleShape).background(Color(0xFF7C3AED)))
-                                    Text("Destino", fontSize = 11.sp, color = TextSecondary)
+                                    Text(stringResource(R.string.legend_destination), fontSize = 11.sp, color = TextSecondary)
                                 }
                                 if (plantasEnRuta.size > 1) {
                                     Row(
@@ -604,7 +559,7 @@ fun NavigationScreen(
                                         horizontalArrangement = Arrangement.spacedBy(4.dp)
                                     ) {
                                         Box(Modifier.size(7.dp).clip(CircleShape).background(Color(0xFFF59E0B)))
-                                        Text("Escalera / Ascensor", fontSize = 11.sp, color = TextSecondary)
+                                        Text(stringResource(R.string.legend_stairs_elevator), fontSize = 11.sp, color = TextSecondary)
                                     }
                                 }
                             }
@@ -625,7 +580,7 @@ fun NavigationScreen(
                         }
                     } else if (!hasActiveRoute) {
                         Text(
-                            text = "Toca una planta para explorar su distribución arquitectónica",
+                            text = stringResource(R.string.explore_floors_hint),
                             fontSize = 11.sp,
                             color = TextSecondary
                         )

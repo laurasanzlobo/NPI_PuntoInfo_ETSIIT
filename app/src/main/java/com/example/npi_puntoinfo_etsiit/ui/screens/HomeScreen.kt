@@ -28,6 +28,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -72,30 +73,28 @@ fun HomeScreen(
     }
 
     // Noticias oficiales reales de la ETSIIT con sus fotografías oficiales
-    val newsList = remember {
-        listOf(
-            NewsItem(
-                title = "IV Olimpiada Informática de Granada",
-                subtitle = "Fase clasificatoria provincial integrada en la Olimpiada de Andalucía.",
-                imageRes = R.drawable.noticia_olimpiada
-            ),
-            NewsItem(
-                title = "Liderazgo en el Ranking Shanghai 2026",
-                subtitle = "La ETSIIT y la UGR se consolidan en el top internacional de informática.",
-                imageRes = R.drawable.noticia_shanghai
-            ),
-            NewsItem(
-                title = "Emisión Instantánea de la TUI 2026/27",
-                subtitle = "Puntos de emisión activa en el campus para obtener tu carné universitario.",
-                imageRes = R.drawable.noticia_tui
-            ),
-            NewsItem(
-                title = "Plan de Tutorización Nuevos Alumnos",
-                subtitle = "Apoyo y mentoría para estudiantes que inician sus estudios en la escuela.",
-                imageRes = R.drawable.noticia_tutorizacion
-            )
+    val newsList = listOf(
+        NewsItem(
+            title = stringResource(R.string.news_1_title),
+            subtitle = stringResource(R.string.news_1_subtitle),
+            imageRes = R.drawable.noticia_olimpiada
+        ),
+        NewsItem(
+            title = stringResource(R.string.news_2_title),
+            subtitle = stringResource(R.string.news_2_subtitle),
+            imageRes = R.drawable.noticia_shanghai
+        ),
+        NewsItem(
+            title = stringResource(R.string.news_3_title),
+            subtitle = stringResource(R.string.news_3_subtitle),
+            imageRes = R.drawable.noticia_tui
+        ),
+        NewsItem(
+            title = stringResource(R.string.news_4_title),
+            subtitle = stringResource(R.string.news_4_subtitle),
+            imageRes = R.drawable.noticia_tutorizacion
         )
-    }
+    )
 
     val pagerState = rememberPagerState(pageCount = { newsList.size })
 
@@ -135,13 +134,13 @@ fun HomeScreen(
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = if (profile.language == "en") "Welcome to ETSIIT" else "Bienvenido a la ETSIIT",
+                            text = stringResource(R.string.welcome_title),
                             fontWeight = FontWeight.Bold,
                             fontSize = 15.sp,
                             color = TextPrimary
                         )
                         Text(
-                            text = if (profile.language == "en") "Tap the flag to change language" else "Toca la bandera para cambiar de idioma",
+                            text = stringResource(R.string.welcome_subtitle),
                             fontSize = 12.sp,
                             color = TextSecondary
                         )
@@ -235,7 +234,7 @@ fun HomeScreen(
 
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(
-                                    text = "PRÓXIMA CLASE",
+                                    text = stringResource(R.string.next_class_header),
                                     fontSize = 11.sp,
                                     fontWeight = FontWeight.ExtraBold,
                                     color = Color.White.copy(alpha = 0.85f),
@@ -283,7 +282,7 @@ fun HomeScreen(
                                     modifier = Modifier.size(18.dp)
                                 )
                                 Text(
-                                    text = "Ir",
+                                    text = stringResource(R.string.go),
                                     color = UgrRed,
                                     fontWeight = FontWeight.ExtraBold,
                                     fontSize = 15.sp
@@ -401,8 +400,8 @@ fun HomeScreen(
             // Botón 1: Mi Horario (Solo visible cuando el estudiante ha iniciado sesión)
             if (profile.isLoggedIn) {
                 HomeFlatButton(
-                    title = "Mi Horario",
-                    subtitle = "Consulta de clases y aulas",
+                    title = stringResource(R.string.nav_schedule_title),
+                    subtitle = stringResource(R.string.nav_schedule_subtitle),
                     icon = Icons.Default.DateRange,
                     accentColor = Color(0xFF1D4ED8),
                     bgColor = Color(0xFFF0F7FF),
@@ -415,8 +414,8 @@ fun HomeScreen(
 
             // Botón 2: Comedores (Ámbar gastronómico elegante)
             HomeFlatButton(
-                title = "Comedores",
-                subtitle = if (profile.isLoggedIn) "Menú diario y encargos" else "Consulta del menú diario",
+                title = stringResource(R.string.nav_dining_title),
+                subtitle = if (profile.isLoggedIn) stringResource(R.string.nav_dining_subtitle) else stringResource(R.string.nav_dining_subtitle_guest),
                 icon = Icons.Default.Restaurant,
                 accentColor = Color(0xFFD97706),
                 bgColor = Color(0xFFFFFBEB),
@@ -428,8 +427,8 @@ fun HomeScreen(
 
             // Botón 3: Profesores (Verde azulado académico elegante)
             HomeFlatButton(
-                title = "Profesores",
-                subtitle = "Tutorías y despachos",
+                title = stringResource(R.string.nav_professors_title),
+                subtitle = stringResource(R.string.nav_professors_subtitle),
                 icon = Icons.Default.School,
                 accentColor = Color(0xFF0F766E),
                 bgColor = Color(0xFFF0FDFA),

@@ -39,6 +39,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import com.example.npi_puntoinfo_etsiit.R
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -414,17 +416,17 @@ fun AppNavigation() {
     // Título superior dinámico según la pantalla activa
     val currentTitle = when {
         currentRoute == Screen.Home.route -> ""
-        currentRoute == Screen.Schedule.route -> "Mi Horario"
+        currentRoute == Screen.Schedule.route -> stringResource(R.string.nav_schedule_title)
         currentRoute?.startsWith("navigation") == true -> {
-            if (isVerticalGuidanceActive && !activeDestination.isNullOrBlank()) "Guiado Paso a Paso" else "Mapa ETSIIT"
+            if (isVerticalGuidanceActive && !activeDestination.isNullOrBlank()) stringResource(R.string.title_step_by_step) else stringResource(R.string.indoor_map_title)
         }
         currentRoute == Screen.Dining.route -> {
-            if (isDiningPaymentActive) "Pago Comedor" else "Comedores"
+            if (isDiningPaymentActive) "Pago Comedor" else stringResource(R.string.title_dining)
         }
-        currentRoute == Screen.Outdoor.routePattern -> "Mapa exterior"
-        currentRoute == Screen.Professors.route || currentRoute?.startsWith(Screen.Professors.route) == true -> "Profesores"
-        currentRoute == Screen.Profile.route -> "Mi Perfil"
-        currentRoute == Screen.GesturesGuide.route -> "Guía de Gestos"
+        currentRoute == Screen.Outdoor.routePattern -> stringResource(R.string.title_outdoor_map)
+        currentRoute == Screen.Professors.route || currentRoute?.startsWith(Screen.Professors.route) == true -> stringResource(R.string.title_professors)
+        currentRoute == Screen.Profile.route -> stringResource(R.string.title_profile)
+        currentRoute == Screen.GesturesGuide.route -> stringResource(R.string.title_gestures_guide)
         else -> ""
     }
 

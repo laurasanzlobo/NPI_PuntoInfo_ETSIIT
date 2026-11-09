@@ -52,6 +52,7 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -246,7 +247,7 @@ fun ProfileScreen(
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     Text(
-                        text = "Preferencias de Navegación",
+                        text = stringResource(R.string.profile_preferences),
                         fontWeight = FontWeight.Bold,
                         fontSize = 15.sp,
                         color = TextPrimary
@@ -278,16 +279,16 @@ fun ProfileScreen(
                             }
                             Column {
                                 Text(
-                                    text = if (profile.isAccessibleRouting) "Ruta Accesible (Ascensor)" else "Ruta Rápida (Escaleras)",
+                                    text = if (profile.isAccessibleRouting) stringResource(R.string.profile_accessible_route) else stringResource(R.string.profile_fast_route),
                                     fontSize = 14.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = TextPrimary
                                 )
                                 Text(
                                     text = if (profile.isAccessibleRouting)
-                                        "Prioriza ascensores para movilidad reducida"
+                                        stringResource(R.string.profile_accessible_desc)
                                     else
-                                        "Usa escaleras y tramos directos entre plantas",
+                                        stringResource(R.string.profile_fast_desc),
                                     fontSize = 12.sp,
                                     color = TextSecondary,
                                     lineHeight = 16.sp
@@ -337,13 +338,13 @@ fun ProfileScreen(
                             }
                             Column {
                                 Text(
-                                    text = if (profile.language == "en") "App Language" else "Idioma de la Aplicación",
+                                    text = if (profile.language == "en") stringResource(R.string.profile_app_language_en) else stringResource(R.string.profile_app_language),
                                     fontSize = 14.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = TextPrimary
                                 )
                                 Text(
-                                    text = if (profile.language == "en") "English (Inglés)" else "Español (Spanish)",
+                                    text = if (profile.language == "en") stringResource(R.string.profile_lang_english) else stringResource(R.string.profile_lang_spanish),
                                     fontSize = 12.sp,
                                     color = TextSecondary
                                 )
@@ -374,6 +375,7 @@ fun ProfileScreen(
 
             Spacer(modifier = Modifier.weight(1f))
 
+            val logoutMsg = stringResource(R.string.profile_logout_toast)
             // ==========================================
             // 4. BOTÓN CERRAR SESIÓN
             // ==========================================
@@ -382,7 +384,7 @@ fun ProfileScreen(
                     isLoggingOut = true
                     onLoggedOut()
                     UserSessionRepository.logout(context)
-                    Toast.makeText(context, "Sesión cerrada", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, logoutMsg, Toast.LENGTH_SHORT).show()
                 },
                 modifier = Modifier
                     .fillMaxWidth()
@@ -392,7 +394,7 @@ fun ProfileScreen(
             ) {
                 Icon(imageVector = Icons.AutoMirrored.Filled.Logout, contentDescription = null, modifier = Modifier.size(18.dp))
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("Cerrar Sesión", fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.profile_logout), fontWeight = FontWeight.Bold)
             }
         }
     } else {
