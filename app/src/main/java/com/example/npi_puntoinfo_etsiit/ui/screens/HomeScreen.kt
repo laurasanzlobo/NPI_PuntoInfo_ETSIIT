@@ -1,6 +1,7 @@
 package com.example.npi_puntoinfo_etsiit.ui.screens
 
 import androidx.annotation.DrawableRes
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -113,9 +114,67 @@ fun HomeScreen(
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         // ==========================================
-        // 1. TARJETA SUPERIOR: PRÓXIMA CLASE (Solo visible si ha iniciado sesión y hay clase; si no, se oculta y las noticias se expanden)
+        // 1. TARJETA SUPERIOR: PRÓXIMA CLASE (si ha iniciado sesión) O SELECCIÓN DE IDIOMA POR BANDERA (si es invitado)
         // ==========================================
-        if (profile.isLoggedIn && currentOrNextClass != null) {
+        if (!profile.isLoggedIn) {
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(18.dp),
+                color = SurfaceWhite,
+                shadowElevation = 2.dp,
+                border = BorderStroke(1.dp, SurfaceBorder.copy(alpha = 0.5f))
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = if (profile.language == "en") "Welcome to ETSIIT" else "Bienvenido a la ETSIIT",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 15.sp,
+                            color = TextPrimary
+                        )
+                        Text(
+                            text = if (profile.language == "en") "Tap the flag to change language" else "Toca la bandera para cambiar de idioma",
+                            fontSize = 12.sp,
+                            color = TextSecondary
+                        )
+                    }
+
+                    Surface(
+                        modifier = Modifier
+                            .clip(CircleShape)
+                            .clickable {
+                                val nextLang = if (profile.language == "en") "es" else "en"
+                                UserSessionRepository.updateLanguage(context, nextLang)
+                            },
+                        shape = CircleShape,
+                        color = EtsiitBlue.copy(alpha = 0.10f)
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                        ) {
+                            Text(
+                                text = if (profile.language == "en") "🇬🇧" else "🇪🇸",
+                                fontSize = 22.sp
+                            )
+                            Text(
+                                text = if (profile.language == "en") "EN" else "ES",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 12.sp,
+                                color = EtsiitBlue
+                            )
+                        }
+                    }
+                }
+            }
+        } else if (currentOrNextClass != null) {
             Card(
                 modifier = Modifier
                     .fillMaxWidth()

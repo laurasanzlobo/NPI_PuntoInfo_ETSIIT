@@ -307,6 +307,68 @@ fun ProfileScreen(
                             )
                         )
                     }
+
+                    HorizontalDivider(color = SurfaceBorder.copy(alpha = 0.5f))
+
+                    // Configuración de Idioma (Español / Inglés)
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(44.dp)
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .background(EtsiitBlue.copy(alpha = 0.12f)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Language,
+                                    contentDescription = null,
+                                    tint = EtsiitBlue,
+                                    modifier = Modifier.size(24.dp)
+                                )
+                            }
+                            Column {
+                                Text(
+                                    text = if (profile.language == "en") "App Language" else "Idioma de la Aplicación",
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = TextPrimary
+                                )
+                                Text(
+                                    text = if (profile.language == "en") "English (Inglés)" else "Español (Spanish)",
+                                    fontSize = 12.sp,
+                                    color = TextSecondary
+                                )
+                            }
+                        }
+
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            FilterChip(
+                                selected = profile.language == "es",
+                                onClick = {
+                                    UserSessionRepository.updateLanguage(context, "es")
+                                },
+                                label = { Text("ES", fontSize = 11.sp, fontWeight = FontWeight.Bold) }
+                            )
+                            FilterChip(
+                                selected = profile.language == "en",
+                                onClick = {
+                                    UserSessionRepository.updateLanguage(context, "en")
+                                },
+                                label = { Text("EN", fontSize = 11.sp, fontWeight = FontWeight.Bold) }
+                            )
+                        }
+                    }
                 }
             }
 

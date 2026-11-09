@@ -107,26 +107,33 @@ fun NavigationScreen(
         com.example.npi_puntoinfo_etsiit.data.ScheduleRepository.estimateCurrentOrRecentClassroom(context)
     }
 
-    var selectedEntryNodeId by remember(entryNodeId, activeDestination) {
-        mutableStateOf(entryNodeId)
+    var userConfirmedNodeId by remember(activeDestination) {
+        mutableStateOf<String?>(null)
     }
 
-    var showVerificationDialog by remember(activeDestination) {
-        mutableStateOf(hasActiveRoute && entryNodeId == null)
+    var selectedEntryNodeId by remember(entryNodeId, userConfirmedNodeId) {
+        mutableStateOf(userConfirmedNodeId ?: entryNodeId)
+    }
+
+    var showVerificationDialog by remember(activeDestination, userConfirmedNodeId) {
+        mutableStateOf(hasActiveRoute && userConfirmedNodeId == null)
     }
 
     val nodoInicio = remember(grafo, selectedEntryNodeId) {
         val entryId = selectedEntryNodeId
         if (entryId != null) {
             grafo.obtenerNodoPorId(entryId)
+                ?: grafo.buscarNodoPorDestino(entryId)
+                ?: grafo.obtenerNodoInicioPredeterminado()
         } else {
             grafo.obtenerNodoInicioPredeterminado()
         }
     }
 
-    val nodoDestino = remember(grafo, activeDestination, destinationNodeId) {
-        if (!hasActiveRoute) null else if (destinationNodeId != null) grafo.obtenerNodoPorId(destinationNodeId)
-        else grafo.buscarNodoPorDestino(activeDestination)
+    val nodoDestino = remember(grafo, activeDestination, destinationNodeId, primaryTitle) {
+        if (!hasActiveRoute) null
+        else if (destinationNodeId != null) grafo.obtenerNodoPorId(destinationNodeId) ?: grafo.buscarNodoPorDestino(primaryTitle) ?: grafo.buscarNodoPorDestino(activeDestination)
+        else grafo.buscarNodoPorDestino(primaryTitle) ?: grafo.buscarNodoPorDestino(activeDestination)
     }
     val rutaCalculada = remember(grafo, nodoInicio, nodoDestino) {
         if (nodoDestino != null && nodoInicio != null) {
@@ -619,10 +626,14 @@ fun NavigationScreen(
                 grafo = grafo,
                 estimatedClassroom = estimatedClassroom,
                 onNodeConfirmed = { confirmedNode ->
+                    userConfirmedNodeId = confirmedNode.id
                     selectedEntryNodeId = confirmedNode.id
                     showVerificationDialog = false
                 },
                 onDismiss = {
+                    val fallbackId = selectedEntryNodeId ?: grafo.obtenerNodoInicioPredeterminado().id
+                    userConfirmedNodeId = fallbackId
+                    selectedEntryNodeId = fallbackId
                     showVerificationDialog = false
                 }
             )

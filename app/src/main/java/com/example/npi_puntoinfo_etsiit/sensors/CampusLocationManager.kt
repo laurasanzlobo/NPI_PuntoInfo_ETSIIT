@@ -103,5 +103,22 @@ object CampusLocationManager {
             )
         }
     }
+
+    /**
+     * Comprueba si la ubicación del usuario (instantánea o última conocida) está aproximadamente
+     * dentro del ámbito de la ETSIIT (por defecto dentro de un radio de 400 metros).
+     * Si no se dispone de señal GPS fija o permisos, se asume `true` por defecto para facilitar
+     * las pruebas y el guiado interior.
+     */
+    fun isUserNearEtsiit(context: android.content.Context, maxRadiusMeters: Double = 400.0): Boolean {
+        val instant = DeviceLocationProvider.getInstantLocation(context)
+        val lat = instant?.latitude ?: lastKnownLocation?.latitude
+        val lon = instant?.longitude ?: lastKnownLocation?.longitude
+        if (lat == null || lon == null) {
+            return true
+        }
+        val distance = OutdoorDistances.distanceMeters(lat, lon, ETSIIT_LATITUDE, ETSIIT_LONGITUDE)
+        return distance <= maxRadiusMeters
+    }
 }
 

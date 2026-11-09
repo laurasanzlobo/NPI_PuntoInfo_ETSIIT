@@ -151,6 +151,17 @@ fun AppNavigation() {
             else destinationId?.let { EtsiitAccess.diningJourney(graph, it) }
             val journey = combined ?: OutdoorDestinations.find(destinationId)?.let { NavigationJourney.Outdoor(it) }
                 ?: return
+
+            if (combined != null && destinationId == EtsiitAccess.outdoorId && CampusLocationManager.isUserNearEtsiit(context)) {
+                clearHandoff()
+                activeTrip = null
+                activeDestination = combined.indoor.target.name
+                activeLocation = combined.indoor.target.location
+                activeEntryNodeId = null
+                navigateToTab(Screen.Navigation.route)
+                return
+            }
+
             activeTrip = NavigationTrip.start(journey)
             clearHandoff()
             activeDestination = null
@@ -170,8 +181,17 @@ fun AppNavigation() {
             val loc = uri.getQueryParameter("location")
             val graph = GrafoRepository.getGrafo(context)
             if (dest != null && EtsiitAccess.journey(graph, dest, loc.orEmpty()) != null) {
-                handleNavigation(OutdoorNavigationRoute.forIndoorTarget(dest, loc.orEmpty(),
-                    graph.buscarNodoPorDestino(dest)?.id))
+                if (CampusLocationManager.isUserNearEtsiit(context)) {
+                    clearHandoff()
+                    activeTrip = null
+                    activeDestination = dest
+                    activeLocation = loc
+                    activeEntryNodeId = null
+                    navigateToTab(Screen.Navigation.route)
+                } else {
+                    handleNavigation(OutdoorNavigationRoute.forIndoorTarget(dest, loc.orEmpty(),
+                        graph.buscarNodoPorDestino(dest)?.id))
+                }
                 return
             }
             if (dest?.contains("comedor", ignoreCase = true) == true) {
@@ -467,6 +487,27 @@ fun AppNavigation() {
                                 }
                             }
                         )
+
+                        // Botón de bandera de idioma en la página principal (Home)
+                        val isHome = currentRoute == Screen.Home.route || currentRoute == null
+                        if (isHome) {
+                            val currentLang = currentUserProfile.language
+                            IconButton(
+                                onClick = {
+                                    val newLang = if (currentLang == "en") "es" else "en"
+                                    UserSessionRepository.updateLanguage(context, newLang)
+                                    triggerVibration(context, durationMs = 60)
+                                },
+                                modifier = Modifier.size(36.dp)
+                            ) {
+                                Text(
+                                    text = if (currentLang == "en") "🇬🇧" else "🇪🇸",
+                                    fontSize = 22.sp
+                                )
+                            }
+
+                            Spacer(modifier = Modifier.width(4.dp))
+                        }
 
                         // Icono de perfil de usuario siempre presente a la derecha para que los iconos de gestos no bailen de posición
                         val isProfileScreen = currentRoute == Screen.Profile.route

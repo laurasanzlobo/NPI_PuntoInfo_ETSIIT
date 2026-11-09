@@ -95,6 +95,7 @@ object UserSessionRepository {
      * Inicia sesión con el perfil oficial preconfigurado de la estudiante tras escanear TUI / QR.
      */
     fun loginWithOfficialProfile(context: Context, isAccessibleRouting: Boolean = false): UserProfile {
+        val currentLang = getProfile(context).language
         val newProfile = UserProfile(
             name = "Elena Morales Vega",
             dni = "48291054R",
@@ -108,10 +109,19 @@ object UserSessionRepository {
             cuatrimestre = 1,
             matricula = officialMatricula,
             isAccessibleRouting = isAccessibleRouting,
+            language = currentLang,
             isLoggedIn = true
         )
         saveProfile(context, newProfile)
         return newProfile
+    }
+
+    /**
+     * Actualiza el idioma preferido de la app ("es" / "en").
+     */
+    fun updateLanguage(context: Context, language: String) {
+        val current = getProfile(context)
+        saveProfile(context, current.copy(language = language))
     }
 
     /**
