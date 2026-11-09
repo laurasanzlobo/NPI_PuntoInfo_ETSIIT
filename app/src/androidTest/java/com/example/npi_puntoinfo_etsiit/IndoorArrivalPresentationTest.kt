@@ -104,7 +104,7 @@ class IndoorArrivalPresentationTest {
             if (detector.observe(10.0, 5.0, 24_000)) presentation = presentation.onArrival(true)
         }
         compose.onNodeWithTag("indoor-arrival-dialog").assertDoesNotExist()
-        compose.onNodeWithText("Ya estoy dentro").performClick()
+        compose.onNodeWithTag("compact-indoor-entry").performClick()
         compose.runOnIdle { assertEquals(1, transitions) }
     }
 
@@ -126,16 +126,7 @@ class IndoorArrivalPresentationTest {
         var transitions = 0
         compose.setContent {
             val activityContext = LocalContext.current
-            val context = remember(activityContext) {
-                object : ContextWrapper(activityContext) {
-                    override fun getApplicationContext(): Context = this
-                    override fun checkPermission(permission: String, pid: Int, uid: Int): Int =
-                        if (permission in listOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION))
-                            PackageManager.PERMISSION_DENIED else super.checkPermission(permission, pid, uid)
-                    override fun getSharedPreferences(name: String, mode: Int) =
-                        super.getSharedPreferences("${name}_proximity_test", mode)
-                }
-            }
+            val context = remember(activityContext) { withoutLocationPermission(activityContext) }
             CompositionLocalProvider(LocalContext provides context) {
                 MaterialTheme {
                     OutdoorNavigationScreen(destinationId = trip.destinationId, trip = trip,
@@ -146,10 +137,13 @@ class IndoorArrivalPresentationTest {
         }
         compose.waitForIdle()
         if (compose.onNodeWithText("Ahora no").isDisplayed()) compose.onNodeWithText("Ahora no").performClick()
-        compose.onNodeWithText("Sin permiso de ubicación. Se admite ubicación precisa o aproximada.").assertIsDisplayed()
+        compose.onNodeWithText("Sin permiso de ubicación").assertIsDisplayed()
         compose.onNodeWithTag("indoor-arrival-dialog").assertDoesNotExist()
-        compose.onNodeWithTag("manual-indoor-entry").assertIsDisplayed().performClick()
+        compose.onNodeWithTag("compact-indoor-entry").assertIsDisplayed()
         compose.runOnIdle { assertEquals(0, transitions) }
+        // El botón ya está disponible sin GPS; el aviso grande aparece al confirmar proximidad.
+        compose.runOnIdle { trip = trip.onArrival() }
+        compose.onNodeWithText("Estás llegando a la ETSIIT").assertIsDisplayed()
         compose.onNodeWithText("Aún estoy fuera").performClick()
         compose.onNodeWithTag("compact-indoor-entry").assertIsDisplayed().performClick()
         compose.runOnIdle {
@@ -158,6 +152,40 @@ class IndoorArrivalPresentationTest {
         }
         compose.onNodeWithTag("compact-indoor-entry").assertIsDisplayed()
         compose.onNodeWithTag("indoor-arrival-dialog").assertDoesNotExist()
+    }
+
+    @Test fun realOutdoorScreenAllowsDirectIndoorEntryBeforeAnyArrival() {
+        val indoor = NavigationJourney.Indoor(IndoorTarget("Comedor Aynadamar", "Planta -1", "comedor"), "entrada")
+        var trip by mutableStateOf(NavigationTrip.start(
+            NavigationJourney.Combined(OutdoorDestinations.find("etsiit")!!, indoor)))
+        var transitions = 0
+        compose.setContent {
+            val activityContext = LocalContext.current
+            val context = remember(activityContext) { withoutLocationPermission(activityContext) }
+            CompositionLocalProvider(LocalContext provides context) {
+                MaterialTheme {
+                    OutdoorNavigationScreen(destinationId = trip.destinationId, trip = trip,
+                        onTripChanged = { trip = it }, onSelectOutdoorDestination = {},
+                        onContinueIndoors = { assertEquals(indoor, it); transitions++ })
+                }
+            }
+        }
+        // No se necesita ninguna señal GPS ni una ruta calculada para entrar manualmente.
+        compose.onNodeWithTag("indoor-arrival-dialog").assertDoesNotExist()
+        compose.onNodeWithTag("compact-indoor-entry").assertIsDisplayed().performClick()
+        compose.runOnIdle {
+            assertEquals(1, transitions)
+            assertEquals(TripPhase.INDOOR, trip.phase)
+        }
+    }
+
+    private fun withoutLocationPermission(context: Context): Context = object : ContextWrapper(context) {
+        override fun getApplicationContext(): Context = this
+        override fun checkPermission(permission: String, pid: Int, uid: Int): Int =
+            if (permission in listOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION))
+                PackageManager.PERMISSION_DENIED else super.checkPermission(permission, pid, uid)
+        override fun getSharedPreferences(name: String, mode: Int) =
+            super.getSharedPreferences("${name}_proximity_test", mode)
     }
 
     @Test fun consentIsAbsentByDefaultAndValidAcrossNewScreenStores() {

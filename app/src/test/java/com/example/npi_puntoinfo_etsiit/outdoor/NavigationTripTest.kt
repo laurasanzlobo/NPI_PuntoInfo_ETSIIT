@@ -10,7 +10,7 @@ class NavigationTripTest {
     @Test fun firstArrivalRequestsPromptOnlyOnce() {
         val trip = start()
         assertFalse(trip.arrivalNotified)
-        assertFalse(trip.showCompactEntry)
+        assertTrue(trip.showCompactEntry)
         val arrived = trip.onArrival()
         assertEquals(ArrivalPresentation.PROMPT, arrived.presentation)
         assertEquals(arrived, arrived.onArrival())
@@ -68,7 +68,7 @@ class NavigationTripTest {
         assertNotEquals(finished.id, next.id)
         assertEquals(ArrivalPresentation.WAITING, next.presentation)
         assertFalse(next.arrivalNotified)
-        assertFalse(next.showCompactEntry)
+        assertTrue(next.showCompactEntry)
     }
 
     @Test fun outdoorOnlyTripNeverOffersIndoorAction() {
@@ -79,6 +79,18 @@ class NavigationTripTest {
         assertEquals(ArrivalPresentation.WAITING, trip.presentation)
         assertFalse(trip.showCompactEntry)
         assertEquals(trip, NavigationTrip.restore(trip.savedValues()))
+    }
+
+    @Test fun manualActionIsAvailableBeforeGpsWithoutConsumingTheAutomaticArrival() {
+        val trip = start()
+        assertTrue(trip.showCompactEntry)
+        assertEquals(ArrivalPresentation.WAITING, trip.presentation)
+        assertFalse(trip.arrivalNotified)
+        val restored = NavigationTrip.restore(trip.savedValues())
+        assertTrue(restored.showCompactEntry)
+        val arrived = restored.onArrival()
+        assertEquals(ArrivalPresentation.PROMPT, arrived.presentation)
+        assertEquals(target, arrived.indoor)
     }
 
     @Test fun recentIndoorFixOnlyProposesEntryAndKeepsTargetAcrossDeclineAndReturn() {

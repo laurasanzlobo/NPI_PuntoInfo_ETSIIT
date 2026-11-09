@@ -1,6 +1,8 @@
 package com.example.npi_puntoinfo_etsiit.outdoor
 
+import com.example.npi_puntoinfo_etsiit.GrafoETSIIT
 import com.example.npi_puntoinfo_etsiit.sensors.*
+import java.io.File
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.flow
@@ -147,6 +149,48 @@ class ActiveLocationTest {
         navigator.selectDestination("dining-pts")
         source.fixes.send(coordinates(104_000)); yield()
         assertEquals(2, fixes.size)
+        tracking.cancelAndJoin()
+        assertFalse(source.subscribed)
+    }
+
+    @Test fun diningEntryIsAvailableFarAwayAndArrivalRequestsTheSamePromptAsProfessors() = runBlocking {
+        val graph = GrafoETSIIT().apply {
+            cargarDesdeJsonLocal(File("src/main/assets/grafo_etsiit_completo.json").absolutePath)
+        }
+        val dining = EtsiitAccess.diningJourney(graph, "dining-aynadamar")!!
+        val professor = EtsiitAccess.journey(graph, "Despacho D-24", "Profesor")!!
+        assertEquals(professor.destination, dining.destination)
+        val source = StreamingSource()
+        var routeCalls = 0
+        val navigator = navigator(source) { routeCalls++ }
+        var trip = NavigationTrip.start(dining)
+        val detector = ArrivalDetector()
+        val tracking = launch {
+            navigator.trackActivePosition(2_000, requireRoute = false) { location ->
+                val fix = (location as GpsLocationState.Available).coordinates
+                val distance = OutdoorDistances.distanceMeters(
+                    fix.latitude, fix.longitude, dining.destination.point.latitude, dining.destination.point.longitude
+                )
+                if (detector.observe(distance, fix.accuracyMeters.toDouble(), fix.elapsedRealtimeMillis!!)) {
+                    trip = trip.onArrival()
+                }
+            }
+        }
+        yield()
+        source.fixes.send(coordinates(100_000).copy(longitude = dining.destination.point.longitude - 0.01))
+        yield()
+        assertTrue(trip.showCompactEntry)
+        assertFalse(trip.arrivalNotified)
+        assertEquals(ArrivalPresentation.WAITING, trip.presentation)
+        source.fixes.send(coordinates(102_000))
+        yield()
+        assertEquals(ArrivalPresentation.PROMPT, trip.presentation)
+        assertEquals(NavigationTrip.start(professor).onArrival().presentation, trip.presentation)
+        assertEquals(graph.buscarIdPorNombre("Comedor_PSS"), trip.indoor!!.target.nodeId)
+        trip = trip.markPromptShown().stayOutside()
+        assertTrue(trip.showCompactEntry)
+        assertEquals(trip, trip.onArrival())
+        assertEquals(0, routeCalls)
         tracking.cancelAndJoin()
         assertFalse(source.subscribed)
     }
