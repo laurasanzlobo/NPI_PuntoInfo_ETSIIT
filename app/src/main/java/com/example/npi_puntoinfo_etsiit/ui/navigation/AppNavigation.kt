@@ -329,11 +329,11 @@ fun AppNavigation() {
     // Indica si el usuario está en la vista inmersiva de cámara escaneando el código QR de la TUI
     val isScanningQrMode = currentRoute == Screen.Profile.route && !isUserLoggedIn && !isExitingProfileOnLogout
 
-    // Sensor de Proximidad GLOBAL: activo en todas las pantallas de la app EXCEPTO al escanear QR con la cámara.
+    // Pausar proximidad durante el escaneo QR y el pago para no interrumpir la autenticación.
     // Al pasar la mano por la cámara frontal / parte superior del móvil o acercarlo a la oreja,
     // se activa el asistente de voz y se calcula la ruta guiada en el mapa.
-    DisposableEffect(context, isScanningQrMode) {
-        if (isScanningQrMode) {
+    DisposableEffect(context, isScanningQrMode, isDiningPaymentActive) {
+        if (isScanningQrMode || isDiningPaymentActive) {
             onDispose { }
         } else {
             val proximityManager = ProximityManager(context)
@@ -354,11 +354,12 @@ fun AppNavigation() {
         }
     }
 
-    // Gesto de agitación (Triple Shake): activo GLOBALMENTE EXCEPTO al escanear QR con la cámara.
+    // Pausar también la agitación durante el escaneo QR y la pasarela de pago.
     // Detecta dinámicamente si hay una clase en curso o próxima (con 30 minutos de antelación).
     // Si hay clase, el gesto de «¡Llévame!» (giro de muñeca) guía directamente a su aula.
-    DisposableEffect(context, showCurrentClassDialog, activeClassForDialog, isScanningQrMode, isUserLoggedIn) {
-        if (isScanningQrMode) {
+    DisposableEffect(context, showCurrentClassDialog, activeClassForDialog, isScanningQrMode, isUserLoggedIn,
+        isDiningPaymentActive) {
+        if (isScanningQrMode || isDiningPaymentActive) {
             onDispose { }
         } else {
             val accelerometerManager = AccelerometerManager(context)
