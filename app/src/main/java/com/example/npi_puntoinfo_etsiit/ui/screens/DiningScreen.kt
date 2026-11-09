@@ -7,6 +7,8 @@ import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
 import android.util.Log
+import android.widget.Toast
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
@@ -17,9 +19,12 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.DirectionsWalk
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -91,7 +96,9 @@ enum class PaymentMethod(val title: String, val icon: ImageVector) {
 fun DiningScreen(
     onNavigate: (String) -> Unit = {},
     isCurrentClassDialogVisible: Boolean = false,
-    navKey: Int = 0
+    navKey: Int = 0,
+    cancelPaymentKey: Int = 0,
+    onPaymentModeChanged: (Boolean) -> Unit = {}
 ) {
     val context = LocalContext.current
     val profile = UserSessionRepository.getProfile(context)
@@ -106,9 +113,8 @@ fun DiningScreen(
         }
         mutableStateOf(initial)
     }
-    var showAllHallsDialog by remember { mutableStateOf(false) }
 
-    // Calcula automáticamente el comedor más cercano según las coordenadas GPS actuales
+    // Comedor más cercano (siempre Aynadamar en la simulación)
     val nearestDiningHall = remember(userCoordinates) {
         CampusLocationManager.findNearestDiningHall(userCoordinates?.latitude, userCoordinates?.longitude)
     }
@@ -126,12 +132,9 @@ fun DiningScreen(
     }
 
     fun navigateToDining(hall: UgrDiningHall? = null) {
-        val targetHall = hall ?: currentNearestDiningHall
         triggerVibration(context, durationMs = 150)
-        val outdoorDest = OutdoorDestinations.forDiningHall(targetHall.id)
-        if (outdoorDest != null) {
-            onNavigate(Screen.Outdoor.createRoute(outdoorDest.id))
-        }
+        // Como es simulación hacia Aynadamar (ETSIIT), guiamos a la ETSIIT Principal
+        onNavigate(Screen.Outdoor.createRoute("etsiit"))
     }
 
     val currentNavigateToDining by rememberUpdatedState(::navigateToDining)
@@ -279,25 +282,37 @@ fun DiningScreen(
         val accelerometerManager = AccelerometerManager(context)
         if (!isCurrentClassDialogVisible) {
             accelerometerManager.onTakeMeThereGesture = {
-                if (pendingOrderDate == null && paymentSuccessDialog == null) currentNavigateToDining(null)
+                if (!pagerState.isScrollInProgress && pendingOrderDate == null && paymentSuccessDialog == null) {
+                    currentNavigateToDining(null)
+                }
             }
             accelerometerManager.onForwardTiltGesture = {
-                if (isLoggedIn) {
-                    val day = pagerState.currentPage
-                    val selected = menuList.getOrNull(day)
-                    val dateKey = selected?.date?.toString()
-                    val isOrdered = dateKey?.let { !ordersPlaced[it].isNullOrBlank() } ?: false
+                if (!pagerState.isScrollInProgress) {
+                    if (isLoggedIn) {
+                        val day = pagerState.currentPage
+                        val selected = menuList.getOrNull(day)
+                        val dateKey = selected?.date?.toString()
+                        val isOrdered = dateKey?.let { !ordersPlaced[it].isNullOrBlank() } ?: false
 
-                    if (selected != null &&
-                        selected.date.isAfter(LocalDate.now()) &&
-                        !isOrdered &&
-                        pendingOrderDate == null &&
-                        paymentSuccessDialog == null &&
-                        !pagerState.isScrollInProgress
-                    ) {
-                        triggerVibration(context, durationMs = 80)
-                        orderMenuType = selectedMenuType
-                        pendingOrderDate = selected.date
+                        if (selected != null &&
+                            selected.date.isAfter(LocalDate.now()) &&
+                            !isOrdered &&
+                            pendingOrderDate == null &&
+                            paymentSuccessDialog == null
+                        ) {
+                            triggerVibration(context, durationMs = 80)
+                            orderMenuType = selectedMenuType
+                            pendingOrderDate = selected.date
+                        } else if (selected != null && !selected.date.isAfter(LocalDate.now())) {
+                            triggerVibration(context, durationMs = 40)
+                            Toast.makeText(context, "El encargo para llevar es para días posteriores (desliza a mañana)", Toast.LENGTH_SHORT).show()
+                        } else if (isOrdered) {
+                            triggerVibration(context, durationMs = 40)
+                            Toast.makeText(context, "Ya tienes un menú encargado para este día", Toast.LENGTH_SHORT).show()
+                        }
+                    } else {
+                        triggerVibration(context, durationMs = 40)
+                        Toast.makeText(context, "Inicia sesión para encargar tu menú con gestos", Toast.LENGTH_SHORT).show()
                     }
                 }
             }
@@ -315,13 +330,329 @@ fun DiningScreen(
         else -> "el ${currentMenu.dayName.lowercase(Locale.forLanguageTag("es-ES"))} ${currentMenu.date.dayOfMonth}/${currentMenu.date.monthValue}"
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(BackgroundLight)
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(14.dp)
-    ) {
+    val activePendingMenu = pendingOrderDate?.let { date ->
+        if (date.isAfter(today)) menuList.find { it.date == date } else null
+    }
+
+    val isPaymentActive = activePendingMenu != null
+    LaunchedEffect(isPaymentActive) {
+        onPaymentModeChanged(isPaymentActive)
+    }
+
+    LaunchedEffect(cancelPaymentKey) {
+        if (cancelPaymentKey > 0) {
+            pendingOrderDate = null
+        }
+    }
+
+    if (activePendingMenu != null) {
+        BackHandler(enabled = !isPaymentProcessing) {
+            pendingOrderDate = null
+        }
+
+        // ==========================================
+        // PÁGINA COMPLETA DE PAGO COMEDOR
+        // ==========================================
+        Surface(
+            modifier = Modifier.fillMaxSize(),
+            color = BackgroundLight
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                // TARJETA DE RESUMEN DEL PEDIDO
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(containerColor = SurfaceWhite),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, SurfaceBorder)
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(
+                                        imageVector = Icons.Default.Restaurant,
+                                        contentDescription = null,
+                                        tint = UgrRed,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                    Spacer(Modifier.width(8.dp))
+                                    Text(
+                                        text = "Resumen del pedido",
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 15.sp,
+                                        color = TextPrimary
+                                    )
+                                }
+                                Surface(
+                                    shape = RoundedCornerShape(8.dp),
+                                    color = UgrRed.copy(alpha = 0.1f)
+                                ) {
+                                    Text(
+                                        text = "5.50 €",
+                                        color = UgrRed,
+                                        fontWeight = FontWeight.ExtraBold,
+                                        fontSize = 16.sp,
+                                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                                    )
+                                }
+                            }
+
+                            HorizontalDivider(color = SurfaceBorder.copy(alpha = 0.6f))
+
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text("Día:", color = TextSecondary, fontSize = 13.sp)
+                                Text(activePendingMenu.dayLabel, fontWeight = FontWeight.SemiBold, fontSize = 13.sp, color = TextPrimary)
+                            }
+
+                            Spacer(Modifier.height(4.dp))
+
+                            // Selector de tipo de menú
+                            Text(
+                                text = "Elige tu tipo de menú:",
+                                fontWeight = FontWeight.SemiBold,
+                                fontSize = 13.sp,
+                                color = TextPrimary
+                            )
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(10.dp)
+                            ) {
+                                DiningMenuType.values().forEach { type ->
+                                    val isSelected = orderMenuType == type
+                                    val activeColor = if (type == DiningMenuType.VEGETARIAN) CampusGreen else UgrRed
+                                    Surface(
+                                        onClick = { orderMenuType = type },
+                                        shape = RoundedCornerShape(12.dp),
+                                        color = if (isSelected) activeColor.copy(alpha = 0.12f) else BackgroundLight,
+                                        border = androidx.compose.foundation.BorderStroke(
+                                            if (isSelected) 1.5.dp else 1.dp,
+                                            if (isSelected) activeColor else SurfaceBorder
+                                        ),
+                                        modifier = Modifier.weight(1f)
+                                    ) {
+                                        Row(
+                                            modifier = Modifier.padding(vertical = 12.dp, horizontal = 8.dp),
+                                            horizontalArrangement = Arrangement.Center,
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            if (type == DiningMenuType.VEGETARIAN) {
+                                                Icon(
+                                                    imageVector = Icons.Default.Eco,
+                                                    contentDescription = null,
+                                                    tint = if (isSelected) CampusGreen else TextSecondary,
+                                                    modifier = Modifier.size(16.dp)
+                                                )
+                                                Spacer(Modifier.width(6.dp))
+                                            }
+                                            Text(
+                                                text = "Menú ${type.label}",
+                                                fontSize = 13.sp,
+                                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                                color = if (isSelected) activeColor else TextSecondary
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // TARJETA DE MÉTODO DE PAGO Y FORMULARIO
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(containerColor = SurfaceWhite),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, SurfaceBorder)
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(14.dp)
+                        ) {
+                            Text(
+                                text = "Método de pago",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 15.sp,
+                                color = TextPrimary
+                            )
+
+                            // Tabs Bizum vs Tarjeta
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(10.dp)
+                            ) {
+                                PaymentMethod.values().forEach { method ->
+                                    val isSelected = selectedPaymentMethod == method
+                                    Surface(
+                                        onClick = { selectedPaymentMethod = method },
+                                        shape = RoundedCornerShape(12.dp),
+                                        color = if (isSelected) UgrRed.copy(alpha = 0.12f) else BackgroundLight,
+                                        border = androidx.compose.foundation.BorderStroke(
+                                            if (isSelected) 1.5.dp else 1.dp,
+                                            if (isSelected) UgrRed else SurfaceBorder
+                                        ),
+                                        modifier = Modifier.weight(1f)
+                                    ) {
+                                        Row(
+                                            modifier = Modifier.padding(vertical = 12.dp),
+                                            horizontalArrangement = Arrangement.Center,
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Icon(
+                                                imageVector = method.icon,
+                                                contentDescription = null,
+                                                tint = if (isSelected) UgrRed else TextSecondary,
+                                                modifier = Modifier.size(18.dp)
+                                            )
+                                            Spacer(Modifier.width(8.dp))
+                                            Text(
+                                                text = method.title,
+                                                fontSize = 13.sp,
+                                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                                color = if (isSelected) UgrRed else TextSecondary
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+
+                            // Formulario según método
+                            if (selectedPaymentMethod == PaymentMethod.BIZUM) {
+                                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    OutlinedTextField(
+                                        value = phoneNumberInput,
+                                        onValueChange = { phoneNumberInput = it },
+                                        label = { Text("Teléfono asociado a Bizum") },
+                                        leadingIcon = { Icon(Icons.Default.Phone, contentDescription = null, tint = UgrRed) },
+                                        modifier = Modifier.fillMaxWidth(),
+                                        singleLine = true,
+                                        shape = RoundedCornerShape(12.dp)
+                                    )
+                                    Text(
+                                        text = "Recibirás una notificación en la app de tu banco para autorizar la operación de 5.50 €.",
+                                        fontSize = 12.sp,
+                                        color = TextSecondary,
+                                        lineHeight = 16.sp
+                                    )
+                                }
+                            } else {
+                                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                                    OutlinedTextField(
+                                        value = cardNumberInput,
+                                        onValueChange = { cardNumberInput = it },
+                                        label = { Text("Número de tarjeta") },
+                                        leadingIcon = { Icon(Icons.Default.CreditCard, contentDescription = null, tint = UgrRed) },
+                                        modifier = Modifier.fillMaxWidth(),
+                                        singleLine = true,
+                                        shape = RoundedCornerShape(12.dp)
+                                    )
+                                    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                                        OutlinedTextField(
+                                            value = cardExpiryInput,
+                                            onValueChange = { cardExpiryInput = it },
+                                            label = { Text("Caducidad (MM/AA)") },
+                                            modifier = Modifier.weight(1f),
+                                            singleLine = true,
+                                            shape = RoundedCornerShape(12.dp)
+                                        )
+                                        OutlinedTextField(
+                                            value = cardCvvInput,
+                                            onValueChange = { cardCvvInput = it },
+                                            label = { Text("CVV") },
+                                            modifier = Modifier.weight(1f),
+                                            singleLine = true,
+                                            shape = RoundedCornerShape(12.dp)
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // BOTÓN DE PAGO
+                    Button(
+                        onClick = {
+                            isPaymentProcessing = true
+                            scope.launch {
+                                delay(1200)
+                                isPaymentProcessing = false
+                                val dateKey = activePendingMenu.date.toString()
+                                ordersPlaced[dateKey] = orderMenuType.label
+                                orderPreferences.edit().putString("ordered_date_$dateKey", orderMenuType.label).apply()
+                                triggerVibration(context, durationMs = 150)
+                                paymentSuccessDialog = OrderSuccessInfo(activePendingMenu.dayLabel, orderMenuType.label)
+                                pendingOrderDate = null
+                            }
+                        },
+                        enabled = !isPaymentProcessing,
+                        colors = ButtonDefaults.buttonColors(containerColor = UgrRed),
+                        shape = RoundedCornerShape(14.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(52.dp)
+                    ) {
+                        if (isPaymentProcessing) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(22.dp),
+                                color = Color.White,
+                                strokeWidth = 2.5.dp
+                            )
+                            Spacer(Modifier.width(12.dp))
+                            Text("Procesando pago seguro...", color = Color.White, fontWeight = FontWeight.Bold)
+                        } else {
+                            Icon(
+                                imageVector = Icons.Default.Lock,
+                                contentDescription = null,
+                                tint = Color.White,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(Modifier.width(8.dp))
+                            Text("Pagar 5.50 €", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                        }
+                    }
+
+                    // BOTÓN CANCELAR
+                    OutlinedButton(
+                        onClick = { pendingOrderDate = null },
+                        enabled = !isPaymentProcessing,
+                        shape = RoundedCornerShape(14.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(48.dp),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, SurfaceBorder)
+                    ) {
+                        Text("Cancelar y volver", color = TextSecondary, fontWeight = FontWeight.SemiBold)
+                    }
+
+                    Spacer(Modifier.height(16.dp))
+                }
+            }
+    } else {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(BackgroundLight)
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp)
+        ) {
         // ==========================================
         // 1. SELECTOR DEL DÍA (DOTS + DÍA ACTUAL)
         // ==========================================
@@ -502,9 +833,9 @@ fun DiningScreen(
                             )
                         }
 
-                        // Barra inferior de comedor más cercano (LIMPIA: sin nombre de campus)
+                        // Barra inferior de comedor más cercano (Aynadamar)
                         Surface(
-                            onClick = { showAllHallsDialog = true },
+                            onClick = { navigateToDining() },
                             shape = RoundedCornerShape(14.dp),
                             color = BackgroundLight,
                             border = androidx.compose.foundation.BorderStroke(1.dp, SurfaceBorder.copy(alpha = 0.8f)),
@@ -680,223 +1011,7 @@ fun DiningScreen(
             }
         }
     }
-
-    // ==========================================
-    // 4. MODAL DE PASARELA DE PAGO SIMULADA (BIZUM / TARJETA)
-    // ==========================================
-    pendingOrderDate?.let { date ->
-        val pendingMenu = menuList.find { it.date == date }
-        if (pendingMenu != null && date.isAfter(today)) {
-            AlertDialog(
-                onDismissRequest = {
-                    if (!isPaymentProcessing) pendingOrderDate = null
-                },
-                containerColor = SurfaceWhite,
-                title = {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(imageVector = Icons.Default.Payment, contentDescription = null, tint = UgrRed)
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = "Pasarela de Pago UGR",
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 18.sp,
-                            color = TextPrimary
-                        )
-                    }
-                },
-                text = {
-                    Column(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalArrangement = Arrangement.spacedBy(10.dp)
-                    ) {
-                        Text(
-                            text = "Reserva de Menú para llevar (${pendingMenu.dayLabel}): 5.50 €",
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = TextPrimary
-                        )
-
-                        // Selector de tipo de menú: Tradicional vs Vegetariano
-                        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                            Text(
-                                text = "Menú a encargar:",
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                color = TextSecondary
-                            )
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                DiningMenuType.values().forEach { type ->
-                                    val isSelected = orderMenuType == type
-                                    Surface(
-                                        onClick = { orderMenuType = type },
-                                        shape = RoundedCornerShape(10.dp),
-                                        color = if (isSelected) (if (type == DiningMenuType.VEGETARIAN) CampusGreen.copy(alpha = 0.12f) else UgrRed.copy(alpha = 0.12f)) else BackgroundLight,
-                                        border = androidx.compose.foundation.BorderStroke(
-                                            1.dp,
-                                            if (isSelected) (if (type == DiningMenuType.VEGETARIAN) CampusGreen else UgrRed) else SurfaceBorder
-                                        ),
-                                        modifier = Modifier.weight(1f)
-                                    ) {
-                                        Row(
-                                            modifier = Modifier.padding(vertical = 8.dp),
-                                            horizontalArrangement = Arrangement.Center,
-                                            verticalAlignment = Alignment.CenterVertically
-                                        ) {
-                                            if (type == DiningMenuType.VEGETARIAN) {
-                                                Icon(
-                                                    imageVector = Icons.Default.Eco,
-                                                    contentDescription = null,
-                                                    tint = if (isSelected) CampusGreen else TextSecondary,
-                                                    modifier = Modifier.size(15.dp)
-                                                )
-                                                Spacer(modifier = Modifier.width(4.dp))
-                                            }
-                                            Text(
-                                                text = "Menú ${type.label}",
-                                                fontSize = 12.sp,
-                                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                                                color = if (isSelected) (if (type == DiningMenuType.VEGETARIAN) CampusGreen else UgrRed) else TextSecondary
-                                            )
-                                        }
-                                    }
-                                }
-                            }
-                        }
-
-                        // Selector de método de pago: Bizum o Tarjeta
-                        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                            Text(
-                                text = "Método de pago:",
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                color = TextSecondary
-                            )
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                PaymentMethod.values().forEach { method ->
-                                    val isSelected = selectedPaymentMethod == method
-                                    Surface(
-                                        onClick = { selectedPaymentMethod = method },
-                                        shape = RoundedCornerShape(10.dp),
-                                        color = if (isSelected) UgrRed.copy(alpha = 0.12f) else BackgroundLight,
-                                        border = androidx.compose.foundation.BorderStroke(
-                                            1.dp,
-                                            if (isSelected) UgrRed else SurfaceBorder
-                                        ),
-                                        modifier = Modifier.weight(1f)
-                                    ) {
-                                        Row(
-                                            modifier = Modifier.padding(vertical = 8.dp),
-                                            horizontalArrangement = Arrangement.Center,
-                                            verticalAlignment = Alignment.CenterVertically
-                                        ) {
-                                            Icon(
-                                                imageVector = method.icon,
-                                                contentDescription = null,
-                                                tint = if (isSelected) UgrRed else TextSecondary,
-                                                modifier = Modifier.size(16.dp)
-                                            )
-                                            Spacer(modifier = Modifier.width(6.dp))
-                                            Text(
-                                                text = method.title,
-                                                fontSize = 12.sp,
-                                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                                                color = if (isSelected) UgrRed else TextSecondary
-                                            )
-                                        }
-                                    }
-                                }
-                            }
-                        }
-
-                        // Formulario según método de pago
-                        if (selectedPaymentMethod == PaymentMethod.BIZUM) {
-                            OutlinedTextField(
-                                value = phoneNumberInput,
-                                onValueChange = { phoneNumberInput = it },
-                                label = { Text("Número de teléfono (Bizum)") },
-                                leadingIcon = { Icon(Icons.Default.Phone, contentDescription = null) },
-                                modifier = Modifier.fillMaxWidth(),
-                                singleLine = true
-                            )
-                        } else {
-                            OutlinedTextField(
-                                value = cardNumberInput,
-                                onValueChange = { cardNumberInput = it },
-                                label = { Text("Número de tarjeta") },
-                                leadingIcon = { Icon(Icons.Default.CreditCard, contentDescription = null) },
-                                modifier = Modifier.fillMaxWidth(),
-                                singleLine = true
-                            )
-                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                OutlinedTextField(
-                                    value = cardExpiryInput,
-                                    onValueChange = { cardExpiryInput = it },
-                                    label = { Text("Caducidad") },
-                                    modifier = Modifier.weight(1f),
-                                    singleLine = true
-                                )
-                                OutlinedTextField(
-                                    value = cardCvvInput,
-                                    onValueChange = { cardCvvInput = it },
-                                    label = { Text("CVV") },
-                                    modifier = Modifier.weight(1f),
-                                    singleLine = true
-                                )
-                            }
-                        }
-
-                        if (isPaymentProcessing) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
-                                horizontalArrangement = Arrangement.Center,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                CircularProgressIndicator(modifier = Modifier.size(20.dp), color = UgrRed, strokeWidth = 2.dp)
-                                Spacer(modifier = Modifier.width(10.dp))
-                                Text("Procesando pago seguro...", fontSize = 12.sp, color = TextSecondary)
-                            }
-                        }
-                    }
-                },
-                confirmButton = {
-                    Button(
-                        onClick = {
-                            isPaymentProcessing = true
-                            scope.launch {
-                                delay(1200)
-                                isPaymentProcessing = false
-                                val dateKey = date.toString()
-                                ordersPlaced[dateKey] = orderMenuType.label
-                                orderPreferences.edit().putString("ordered_date_$dateKey", orderMenuType.label).apply()
-                                triggerVibration(context, durationMs = 150)
-                                paymentSuccessDialog = OrderSuccessInfo(pendingMenu.dayLabel, orderMenuType.label)
-                                pendingOrderDate = null
-                            }
-                        },
-                        enabled = !isPaymentProcessing,
-                        colors = ButtonDefaults.buttonColors(containerColor = UgrRed),
-                        shape = RoundedCornerShape(10.dp)
-                    ) {
-                        Text("Pagar 5.50 €", fontWeight = FontWeight.Bold)
-                    }
-                },
-                dismissButton = {
-                    TextButton(
-                        onClick = { pendingOrderDate = null },
-                        enabled = !isPaymentProcessing
-                    ) {
-                        Text("Cancelar", color = TextSecondary)
-                    }
-                }
-            )
-        }
-    }
+}
 
     // Diálogo de Pago y Reserva Confirmada
     paymentSuccessDialog?.let { info ->
@@ -920,7 +1035,7 @@ fun DiningScreen(
             },
             title = {
                 Text(
-                    text = "¡Pago y Reserva Confirmada!",
+                    text = "Pago y reserva confirmada",
                     fontWeight = FontWeight.Bold,
                     fontSize = 17.sp,
                     textAlign = TextAlign.Center
@@ -928,116 +1043,15 @@ fun DiningScreen(
             },
             text = {
                 Text(
-                    text = "Se ha completado el pago de 5.50 € correctamente.\n\nTu Menú ${info.menuTypeName} para llevar (${info.dayLabel}) estará listo para recoger a las 14:15 h en la ventanilla express de Comedores.",
-                    fontSize = 13.sp,
+                    text = "Se ha completado el pago de 5.50 € correctamente.",
+                    fontSize = 14.sp,
                     color = TextSecondary,
-                    textAlign = TextAlign.Center,
-                    lineHeight = 18.sp
+                    textAlign = TextAlign.Center
                 )
             },
             confirmButton = {
                 TextButton(onClick = { paymentSuccessDialog = null }) {
                     Text("Aceptar", color = CampusGreen, fontWeight = FontWeight.Bold)
-                }
-            }
-        )
-    }
-
-    // Diálogo de lista completa de comedores
-    if (showAllHallsDialog) {
-        AlertDialog(
-            onDismissRequest = { showAllHallsDialog = false },
-            title = {
-                Text(
-                    text = "Comedores Universitarios UGR",
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 18.sp,
-                    color = TextPrimary
-                )
-            },
-            text = {
-                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Text(
-                        text = "Selecciona un comedor para iniciar la ruta a pie según tu ubicación:",
-                        fontSize = 13.sp,
-                        color = TextSecondary
-                    )
-                    CampusLocationManager.ugrDiningHalls.forEach { hall ->
-                        val isNearest = hall.id == nearestDiningHall.id
-                        val hallDistance = userCoordinates?.let {
-                            OutdoorDistances.distanceMeters(it.latitude, it.longitude, hall.latitude, hall.longitude)
-                        }
-                        val hallDistStr = hallDistance?.let {
-                            if (it < 1000) "${it.roundToInt()} m"
-                            else String.format(Locale.getDefault(), "%.1f km", it / 1000)
-                        }
-
-                        Surface(
-                            shape = RoundedCornerShape(12.dp),
-                            color = if (isNearest) UgrRed.copy(alpha = 0.08f) else SurfaceWhite,
-                            border = androidx.compose.foundation.BorderStroke(
-                                1.dp,
-                                if (isNearest) UgrRed else SurfaceBorder
-                            ),
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable {
-                                    showAllHallsDialog = false
-                                    navigateToDining(hall)
-                                }
-                        ) {
-                            Row(
-                                modifier = Modifier.padding(12.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.SpaceBetween
-                            ) {
-                                Column(modifier = Modifier.weight(1f)) {
-                                    Row(verticalAlignment = Alignment.CenterVertically) {
-                                        Text(
-                                            text = hall.name,
-                                            fontWeight = FontWeight.Bold,
-                                            fontSize = 14.sp,
-                                            color = TextPrimary
-                                        )
-                                        if (isNearest) {
-                                            Spacer(modifier = Modifier.width(6.dp))
-                                            Surface(
-                                                shape = RoundedCornerShape(6.dp),
-                                                color = CampusGreen.copy(alpha = 0.15f)
-                                            ) {
-                                                Text(
-                                                    text = "Más cercano",
-                                                    fontSize = 10.sp,
-                                                    fontWeight = FontWeight.Bold,
-                                                    color = CampusGreen,
-                                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-                                                )
-                                            }
-                                        }
-                                    }
-                                    if (hallDistStr != null) {
-                                        Text(
-                                            text = "A $hallDistStr de tu posición actual",
-                                            fontSize = 11.sp,
-                                            fontWeight = FontWeight.Medium,
-                                            color = if (isNearest) UgrRed else TextSecondary
-                                        )
-                                    }
-                                }
-                                Icon(
-                                    imageVector = Icons.AutoMirrored.Filled.DirectionsWalk,
-                                    contentDescription = "Ir",
-                                    tint = if (isNearest) UgrRed else TextSecondary,
-                                    modifier = Modifier.size(20.dp)
-                                )
-                            }
-                        }
-                    }
-                }
-            },
-            confirmButton = {
-                TextButton(onClick = { showAllHallsDialog = false }) {
-                    Text("Cerrar", color = TextSecondary)
                 }
             }
         )

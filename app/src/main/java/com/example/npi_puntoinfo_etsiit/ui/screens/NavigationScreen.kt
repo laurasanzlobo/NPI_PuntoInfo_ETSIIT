@@ -21,6 +21,7 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Place
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -143,13 +144,20 @@ fun NavigationScreen(
 
     val currentOnPostureChanged by rememberUpdatedState(onPostureChanged)
     val currentOnSelectDestination by rememberUpdatedState(onSelectDestination)
+    var isManualGuidanceLocked by rememberSaveable { mutableStateOf(false) }
+
+    LaunchedEffect(isVerticalGuidanceActive) {
+        if (!isVerticalGuidanceActive) {
+            isManualGuidanceLocked = false
+        }
+    }
 
     // Acelerómetro: detecta cuando se levanta el móvil verticalmente para activar el guiado paso a paso,
-    // y cuando se baja de nuevo para volver a mostrar el mapa
-    DisposableEffect(context, hasActiveRoute) {
+    // y cuando se baja de nuevo para volver a mostrar el mapa (siempre que no se haya activado manualmente)
+    DisposableEffect(context, hasActiveRoute, isManualGuidanceLocked) {
         val manager = AccelerometerManager(context)
 
-        if (hasActiveRoute) {
+        if (hasActiveRoute && !isManualGuidanceLocked) {
             manager.onPostureModeChanged = { isVertical ->
                 triggerVibration(context, durationMs = 70)
                 currentOnPostureChanged(isVertical)
@@ -160,7 +168,9 @@ fun NavigationScreen(
 
         onDispose {
             manager.stopListening()
-            currentOnPostureChanged(false)
+            if (!isManualGuidanceLocked) {
+                currentOnPostureChanged(false)
+            }
         }
     }
 
@@ -459,7 +469,11 @@ fun NavigationScreen(
                                 type = GestureType.LIFT_PHONE,
                                 size = 28.dp,
                                 iconSize = 16.dp,
-                                onClick = { onPostureChanged(!isVerticalGuidanceActive) }
+                                onClick = {
+                                    val next = !isVerticalGuidanceActive
+                                    isManualGuidanceLocked = next
+                                    onPostureChanged(next)
+                                }
                             )
 
                             // Botón para finalizar / cancelar la ruta activa

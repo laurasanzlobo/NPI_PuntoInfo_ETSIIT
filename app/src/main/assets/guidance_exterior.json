@@ -1,0 +1,233 @@
+{
+  "version": "1.0",
+  "ruta_id": "etsiit_edificio_auxiliar",
+  "titulo": "Ruta Exterior: ETSIIT Principal <-> Edificio Auxiliar",
+  "ida": {
+    "origen": "ETSIIT Edificio Principal",
+    "destino": "Edificio Auxiliar ETSIIT",
+    "nodos": [
+      {
+        "id": "ext_ida_01",
+        "orden": 1,
+        "nombre": "Punto de Información / Hall ETSIIT (Nodo 1)",
+        "lat": 37.196735,
+        "lng": -3.624428,
+        "rumbo": null,
+        "foto": null,
+        "accion": "INICIO",
+        "instruccion": "Inicia la ruta desde el Punto de Información en el vestíbulo de la ETSIIT dirigiéndote hacia la salida principal.",
+        "eje_x_camino": 0.5
+      },
+      {
+        "id": "ext_ida_02",
+        "orden": 2,
+        "nombre": "Salida Puerta Principal ETSIIT (Nodo 2)",
+        "lat": 37.196873,
+        "lng": -3.624742,
+        "rumbo": 337,
+        "foto": "rutas/ida/ida2.jpg",
+        "accion": "RECTO",
+        "instruccion": "Continúa recto por la calle Periodista Daniel Saucedo Aranda.",
+        "eje_x_camino": 0.57
+      },
+      {
+        "id": "ext_ida_03",
+        "orden": 3,
+        "nombre": "Cruce y Giro a la Derecha (Nodo 3)",
+        "lat": 37.197484,
+        "lng": -3.625095,
+        "rumbo": 256,
+        "foto": "rutas/ida/ida3.jpg",
+        "accion": "GIRO_LIGERO_DERECHA",
+        "instruccion": "Cruza el paso de peatones recto e inclínate a la derecha para continuar por la acera.",
+        "eje_x_camino": 0.489
+      },
+      {
+        "id": "ext_ida_04",
+        "orden": 4,
+        "nombre": "C. Periodista Daniel Saucedo Aranda (Nodo 4)",
+        "lat": 37.197551,
+        "lng": -3.625387,
+        "rumbo": 279,
+        "foto": "rutas/ida/ida4.jpg",
+        "accion": "RECTO",
+        "instruccion": "Sigue recto hasta la rotonda.",
+        "eje_x_camino": 0.487
+      },
+      {
+        "id": "ext_ida_05",
+        "orden": 5,
+        "nombre": "Aproximación a la Rotonda Bellas Artes (Nodo 5)",
+        "lat": 37.19758,
+        "lng": -3.625754,
+        "rumbo": 354,
+        "foto": "rutas/ida/ida5.jpg",
+        "accion": "GIRO_LIGERO_IZQUIERDA",
+        "instruccion": "Cruza el paso de peatones para rodear la rotonda.",
+        "eje_x_camino": 0.502
+      },
+      {
+        "id": "ext_ida_06",
+        "orden": 6,
+        "nombre": "Borde Norte de la Rotonda (Nodo 6)",
+        "lat": 37.197946,
+        "lng": -3.626094,
+        "rumbo": 270,
+        "foto": "rutas/ida/ida6.jpg",
+        "accion": "GIRO_LIGERO_IZQUIERDA",
+        "instruccion": "Continúa rodeando la rotonda por la acera.",
+        "eje_x_camino": 0.594
+      },
+      {
+        "id": "ext_ida_07",
+        "orden": 7,
+        "nombre": "C. Periodista Eugenio Sellés (Nodo 7)",
+        "lat": 37.197703,
+        "lng": -3.626513,
+        "rumbo": 262,
+        "foto": "rutas/ida/ida7.jpg",
+        "accion": "RECTO",
+        "instruccion": "Avanza recto por la calle Periodista Eugenio Sellés.",
+        "eje_x_camino": 0.584
+      },
+      {
+        "id": "ext_ida_08",
+        "orden": 8,
+        "nombre": "C. Periodista Juan Osorio Bueno (Nodo 8)",
+        "lat": 37.197482,
+        "lng": -3.629795,
+        "rumbo": 331,
+        "foto": "rutas/ida/ida8.jpg",
+        "accion": "RECTO",
+        "instruccion": "Continúa recto por la calle Periodista Juan Osorio Bueno.",
+        "eje_x_camino": 0.562
+      },
+      {
+        "id": "ext_ida_09",
+        "orden": 9,
+        "nombre": "Puerta de Entrada Edificio Auxiliar ETSIIT (Nodo 9)",
+        "lat": 37.197846,
+        "lng": -3.630084,
+        "rumbo": 51,
+        "foto": "rutas/ida/ida9.jpg",
+        "accion": "LLEGADA",
+        "instruccion": "Has llegado al Edificio Auxiliar de la ETSIIT.",
+        "eje_x_camino": 0.566
+      }
+    ]
+  },
+  "vuelta": {
+    "origen": "Edificio Auxiliar ETSIIT",
+    "destino": "ETSIIT Edificio Principal",
+    "nodos": [
+      {
+        "id": "ext_vuelta_01",
+        "orden": 1,
+        "nombre": "Salida Edificio Auxiliar ETSIIT (Nodo 9)",
+        "lat": 37.197846,
+        "lng": -3.630084,
+        "rumbo": 145,
+        "foto": "rutas/vuelta/vuelta9.jpg",
+        "accion": "RECTO",
+        "instruccion": "Tras salir del edificio auxiliar, avanza por la calle Periodista Juan Osorio Bueno.",
+        "eje_x_camino": 0.409
+      },
+      {
+        "id": "ext_vuelta_02",
+        "orden": 2,
+        "nombre": "C. Periodista Eugenio Sellés frente a ESIC (Nodo 8)",
+        "lat": 37.197482,
+        "lng": -3.629795,
+        "rumbo": 89,
+        "foto": "rutas/vuelta/vuelta8.jpg",
+        "accion": "RECTO",
+        "instruccion": "Continúa recto por la calle Periodista Eugenio Sellés hasta llegar a la rotonda.",
+        "eje_x_camino": 0.38
+      },
+      {
+        "id": "ext_vuelta_03",
+        "orden": 3,
+        "nombre": "Aproximación a la Rotonda - Lado Oeste (Nodo 7)",
+        "lat": 37.197703,
+        "lng": -3.626513,
+        "rumbo": 47,
+        "foto": "rutas/vuelta/vuelta7.jpg",
+        "accion": "CRUCE",
+        "instruccion": "Rodea la rotonda.",
+        "eje_x_camino": 0.412
+      },
+      {
+        "id": "ext_vuelta_04",
+        "orden": 4,
+        "nombre": "Borde Norte de la Rotonda (Nodo 6)",
+        "lat": 37.197946,
+        "lng": -3.626094,
+        "rumbo": 113,
+        "foto": "rutas/vuelta/vuelta6.jpg",
+        "accion": "RECTO",
+        "instruccion": "Sigue rodeando la rotonda.",
+        "eje_x_camino": 0.628
+      },
+      {
+        "id": "ext_vuelta_05",
+        "orden": 5,
+        "nombre": "Entrada a C. Periodista Daniel Saucedo Aranda (Nodo 5)",
+        "lat": 37.19758,
+        "lng": -3.625754,
+        "rumbo": 97,
+        "foto": "rutas/vuelta/vuelta5.jpg",
+        "accion": "RECTO",
+        "instruccion": "Sigue recto en el siguiente cruce hasta llegar al paso de peatones.",
+        "eje_x_camino": 0.504
+      },
+      {
+        "id": "ext_vuelta_06",
+        "orden": 6,
+        "nombre": "Cruce C. Periodista Rafael Gómez Montero (Nodo 4)",
+        "lat": 37.197551,
+        "lng": -3.625387,
+        "rumbo": 158,
+        "foto": "rutas/vuelta/vuelta4.jpg",
+        "accion": "GIRO_LIGERO_IZQUIERDA",
+        "instruccion": "Cruza el paso de peatones.",
+        "eje_x_camino": 0.628
+      },
+      {
+        "id": "ext_vuelta_07",
+        "orden": 7,
+        "nombre": "Acera de Acceso a la ETSIIT (Nodo 3)",
+        "lat": 37.197484,
+        "lng": -3.625095,
+        "rumbo": 161,
+        "foto": "rutas/vuelta/vuelta3.jpg",
+        "accion": "RECTO",
+        "instruccion": "Sigue en línea recta hacia la puerta principal de la ETSIIT.",
+        "eje_x_camino": 0.451
+      },
+      {
+        "id": "ext_vuelta_08",
+        "orden": 8,
+        "nombre": "Entrada Principal ETSIIT - Obras (Nodo 2)",
+        "lat": 37.196873,
+        "lng": -3.624742,
+        "rumbo": null,
+        "foto": null,
+        "accion": "RECTO",
+        "instruccion": "Avanza hacia la puerta principal.",
+        "eje_x_camino": 0.5
+      },
+      {
+        "id": "ext_vuelta_09",
+        "orden": 9,
+        "nombre": "Punto de Información / Hall ETSIIT (Nodo 1)",
+        "lat": 37.196735,
+        "lng": -3.624428,
+        "rumbo": null,
+        "foto": null,
+        "accion": "LLEGADA",
+        "instruccion": "Has llegado a la ETSIIT.",
+        "eje_x_camino": 0.5
+      }
+    ]
+  }
+}

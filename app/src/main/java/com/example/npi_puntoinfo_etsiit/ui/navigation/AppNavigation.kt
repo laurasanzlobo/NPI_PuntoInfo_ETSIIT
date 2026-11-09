@@ -118,10 +118,16 @@ fun AppNavigation() {
     // Contadores para forzar el reinicio a 'Hoy' al entrar o pulsar en Horario y Comedores
     var diningNavCounter by remember { mutableIntStateOf(0) }
     var scheduleNavCounter by remember { mutableIntStateOf(0) }
+    var scheduleZoomTrigger by remember { mutableIntStateOf(0) }
+    var isDiningPaymentActive by rememberSaveable { mutableStateOf(false) }
+    var diningPaymentCancelTrigger by remember { mutableIntStateOf(0) }
 
     fun navigateToTab(route: String) {
         if (!route.startsWith("navigation")) {
             isVerticalGuidanceActive = false
+        }
+        if (route != Screen.Dining.route) {
+            isDiningPaymentActive = false
         }
         if (route == Screen.Dining.route) {
             diningNavCounter++
@@ -253,6 +259,13 @@ fun AppNavigation() {
                     return@rememberLauncherForActivityResult
                 }
                 // --- FIN DE LA BÚSQUEDA DE PROFESORES ---
+
+                val asksAuxiliar = query.contains("auxiliar", ignoreCase = true)
+                if (asksAuxiliar) {
+                    triggerVibration(context, durationMs = 120)
+                    handleNavigation(OutdoorNavigationRoute.create("etsiit-auxiliar"))
+                    return@rememberLauncherForActivityResult
+                }
 
                 val namedDining = OutdoorDestinations.diningNamedIn(query)
                 if (namedDining != null) {
@@ -405,7 +418,9 @@ fun AppNavigation() {
         currentRoute?.startsWith("navigation") == true -> {
             if (isVerticalGuidanceActive && !activeDestination.isNullOrBlank()) "Guiado Paso a Paso" else "Mapa ETSIIT"
         }
-        currentRoute == Screen.Dining.route -> "Comedores"
+        currentRoute == Screen.Dining.route -> {
+            if (isDiningPaymentActive) "Pago Comedor" else "Comedores"
+        }
         currentRoute == Screen.Outdoor.routePattern -> "Mapa exterior"
         currentRoute == Screen.Professors.route || currentRoute?.startsWith(Screen.Professors.route) == true -> "Profesores"
         currentRoute == Screen.Profile.route -> "Mi Perfil"
@@ -415,7 +430,7 @@ fun AppNavigation() {
 
     Scaffold(
         topBar = {
-            if (!isScanningQrMode) {
+            if (!isScanningQrMode && !isVerticalGuidanceActive) {
                 TopAppBar(
                     title = {
                         Text(
@@ -430,6 +445,10 @@ fun AppNavigation() {
                         if (!isHome) {
                             IconButton(onClick = {
                                 lastBackClickTimeMs = System.currentTimeMillis()
+                                if (isDiningPaymentActive) {
+                                    diningPaymentCancelTrigger++
+                                    return@IconButton
+                                }
                                 if (currentRoute == Screen.Outdoor.routePattern) {
                                     activeTrip = null
                                     clearHandoff()
@@ -440,89 +459,84 @@ fun AppNavigation() {
                             }) {
                                 Icon(
                                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                                    contentDescription = "Volver a Inicio",
+                                    contentDescription = if (isDiningPaymentActive) "Volver a Comedores" else "Volver a Inicio",
                                     tint = TextPrimary
                                 )
                             }
                         }
                     },
                     actions = {
-                        // Indicador visual del sensor de proximidad (morado) — En Profesores se integra directamente en la barra de búsqueda
-                        if (currentRoute?.startsWith(Screen.Professors.route) != true) {
-                            GestureBadge(
-                                type = GestureType.PROXIMITY_VOICE,
-                                size = 26.dp,
-                                iconSize = 14.dp,
-                                showTooltipOnClick = false,
-                                onClick = null
-                            )
+                        // En la pasarela de pago se ocultan todos los iconos de gestos y el perfil
+                        if (!isDiningPaymentActive) {
+                            // Distintivo informativo del gesto de zoom para el Horario (solo visual, sin click)
+                            if (currentRoute == Screen.Schedule.route) {
+                                GestureBadge(
+                                    type = GestureType.PINCH_ZOOM,
+                                    size = 26.dp,
+                                    iconSize = 14.dp,
+                                    showTooltipOnClick = false,
+                                    onClick = null
+                                )
 
-                            Spacer(modifier = Modifier.width(6.dp))
-                        }
+                                Spacer(modifier = Modifier.width(6.dp))
+                            }
 
-                        // Indicador visual del gesto de 3 inclinaciones para clase actual (rojo) — Solo si ha iniciado sesión
-                        val isUserLoggedIn = UserSessionRepository.getProfile(context).isLoggedIn
-                        if (isUserLoggedIn) {
-                            GestureBadge(
-                                type = GestureType.TRIPLE_SHAKE,
-                                size = 26.dp,
-                                iconSize = 14.dp,
-                                showTooltipOnClick = false,
-                                onClick = null
-                            )
+                            // Indicador visual del sensor de proximidad (morado) — En Profesores se integra directamente en la barra de búsqueda
+                            if (currentRoute?.startsWith(Screen.Professors.route) != true) {
+                                GestureBadge(
+                                    type = GestureType.PROXIMITY_VOICE,
+                                    size = 26.dp,
+                                    iconSize = 14.dp,
+                                    showTooltipOnClick = false,
+                                    onClick = null
+                                )
 
-                            Spacer(modifier = Modifier.width(6.dp))
-                        }
+                                Spacer(modifier = Modifier.width(6.dp))
+                            }
 
-                        // Botón con la 'i' de información sobre gestos: abre la pestaña dedicada de Guía de Gestos
-                        val isGesturesGuideScreen = currentRoute == Screen.GesturesGuide.route
-                        GestureGuideButton(
-                            size = 32.dp,
-                            iconSize = 18.dp,
-                            onClick = {
-                                if (!isGesturesGuideScreen) {
-                                    navController.navigate(Screen.GesturesGuide.route) {
-                                        launchSingleTop = true
+                            // Indicador visual del gesto de 3 inclinaciones para clase actual (rojo) — Solo si ha iniciado sesión
+                            val isUserLoggedIn = UserSessionRepository.getProfile(context).isLoggedIn
+                            if (isUserLoggedIn) {
+                                GestureBadge(
+                                    type = GestureType.TRIPLE_SHAKE,
+                                    size = 26.dp,
+                                    iconSize = 14.dp,
+                                    showTooltipOnClick = false,
+                                    onClick = null
+                                )
+
+                                Spacer(modifier = Modifier.width(6.dp))
+                            }
+
+                            // Botón con la 'i' de información sobre gestos: abre la pestaña dedicada de Guía de Gestos
+                            val isGesturesGuideScreen = currentRoute == Screen.GesturesGuide.route
+                            GestureGuideButton(
+                                size = 32.dp,
+                                iconSize = 18.dp,
+                                onClick = {
+                                    if (!isGesturesGuideScreen) {
+                                        navController.navigate(Screen.GesturesGuide.route) {
+                                            launchSingleTop = true
+                                        }
                                     }
                                 }
-                            }
-                        )
+                            )
 
-                        // Botón de bandera de idioma en la página principal (Home)
-                        val isHome = currentRoute == Screen.Home.route || currentRoute == null
-                        if (isHome) {
-                            val currentLang = currentUserProfile.language
+                            // Icono de perfil de usuario siempre presente a la derecha para que los iconos de gestos no bailen de posición
+                            val isProfileScreen = currentRoute == Screen.Profile.route
                             IconButton(
                                 onClick = {
-                                    val newLang = if (currentLang == "en") "es" else "en"
-                                    UserSessionRepository.updateLanguage(context, newLang)
-                                    triggerVibration(context, durationMs = 60)
-                                },
-                                modifier = Modifier.size(36.dp)
+                                    if (!isProfileScreen) {
+                                        navController.navigate(Screen.Profile.route)
+                                    }
+                                }
                             ) {
-                                Text(
-                                    text = if (currentLang == "en") "🇬🇧" else "🇪🇸",
-                                    fontSize = 22.sp
+                                Icon(
+                                    imageVector = Icons.Default.AccountCircle,
+                                    contentDescription = "Perfil",
+                                    tint = if (isProfileScreen) UgrRedDark else UgrRed
                                 )
                             }
-
-                            Spacer(modifier = Modifier.width(4.dp))
-                        }
-
-                        // Icono de perfil de usuario siempre presente a la derecha para que los iconos de gestos no bailen de posición
-                        val isProfileScreen = currentRoute == Screen.Profile.route
-                        IconButton(
-                            onClick = {
-                                if (!isProfileScreen) {
-                                    navController.navigate(Screen.Profile.route)
-                                }
-                            }
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.AccountCircle,
-                                contentDescription = "Perfil",
-                                tint = if (isProfileScreen) UgrRedDark else UgrRed
-                            )
                         }
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
@@ -544,13 +558,18 @@ fun AppNavigation() {
             composable(Screen.Home.route) {
                 HomeScreen(
                     onNavigate = { route -> handleNavigation(route) },
-                    onLaunchVoiceSearch = { launchGlobalVoiceSearch() }
+                    onLaunchVoiceSearch = { launchGlobalVoiceSearch() },
+                    onShowCurrentClassDialog = { targetClass ->
+                        activeClassForDialog = targetClass ?: ScheduleRepository.getCurrentOrUpcomingClass(context = context)
+                        showCurrentClassDialog = true
+                    }
                 )
             }
             composable(Screen.Schedule.route) {
                 ScheduleScreen(
                     onNavigate = { route -> handleNavigation(route) },
-                    navKey = scheduleNavCounter
+                    navKey = scheduleNavCounter,
+                    toggleZoomKey = scheduleZoomTrigger
                 )
             }
             composable(
@@ -621,7 +640,9 @@ fun AppNavigation() {
                 DiningScreen(
                     onNavigate = { route -> handleNavigation(route) },
                     isCurrentClassDialogVisible = showCurrentClassDialog,
-                    navKey = diningNavCounter
+                    navKey = diningNavCounter,
+                    cancelPaymentKey = diningPaymentCancelTrigger,
+                    onPaymentModeChanged = { active -> isDiningPaymentActive = active }
                 )
             }
             composable(
@@ -654,6 +675,9 @@ fun AppNavigation() {
                             canReturnOutdoors = true
                             isVerticalGuidanceActive = false
                             navController.navigate(Screen.Navigation.route) { launchSingleTop = true }
+                        },
+                        onVerticalGuidanceActiveChanged = { isVertical ->
+                            isVerticalGuidanceActive = isVertical
                         }
                     )
                 }
@@ -804,11 +828,26 @@ fun AppNavigation() {
                     }
                 },
                 confirmButton = {
-                    TextButton(onClick = {
-                        showCurrentClassDialog = false
-                        activeClassForDialog = null
-                    }) {
-                        Text("Cerrar", color = TextPrimary, fontWeight = FontWeight.Bold)
+                    Button(
+                        onClick = {
+                            showCurrentClassDialog = false
+                            activeClassForDialog = null
+                        },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = UgrRed,
+                            contentColor = Color.White
+                        ),
+                        shape = RoundedCornerShape(10.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(42.dp)
+                    ) {
+                        Text(
+                            text = "Cerrar",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 14.sp,
+                            color = Color.White
+                        )
                     }
                 }
             )
