@@ -50,7 +50,6 @@ import com.example.npi_puntoinfo_etsiit.sensors.GpsLocationReader
 import com.example.npi_puntoinfo_etsiit.sensors.GpsLocationState
 import com.example.npi_puntoinfo_etsiit.sensors.LocationPermission
 import com.example.npi_puntoinfo_etsiit.sensors.OutdoorDistances
-import com.example.npi_puntoinfo_etsiit.sensors.UgrDiningHall
 import com.example.npi_puntoinfo_etsiit.ui.navigation.Screen
 import com.example.npi_puntoinfo_etsiit.outdoor.OutdoorDestinations
 import com.example.npi_puntoinfo_etsiit.ui.theme.*
@@ -118,7 +117,6 @@ fun DiningScreen(
     val nearestDiningHall = remember(userCoordinates) {
         CampusLocationManager.findNearestDiningHall(userCoordinates?.latitude, userCoordinates?.longitude)
     }
-    val currentNearestDiningHall by rememberUpdatedState(nearestDiningHall)
 
     val distanceMeters = remember(userCoordinates, nearestDiningHall) {
         userCoordinates?.let {
@@ -131,10 +129,10 @@ fun DiningScreen(
         else String.format(Locale.getDefault(), "%.1f km", it / 1000)
     }
 
-    fun navigateToDining(hall: UgrDiningHall? = null) {
+    fun navigateToDining() {
         triggerVibration(context, durationMs = 150)
-        // Como es simulación hacia Aynadamar (ETSIIT), guiamos a la ETSIIT Principal
-        onNavigate(Screen.Outdoor.createRoute("etsiit"))
+        // Mantener el destino del comedor para enlazar el acceso ETSIIT con su tramo interior.
+        onNavigate(Screen.Outdoor.createRoute("dining-aynadamar"))
     }
 
     val currentNavigateToDining by rememberUpdatedState(::navigateToDining)
@@ -283,7 +281,7 @@ fun DiningScreen(
         if (!isCurrentClassDialogVisible) {
             accelerometerManager.onTakeMeThereGesture = {
                 if (!pagerState.isScrollInProgress && pendingOrderDate == null && paymentSuccessDialog == null) {
-                    currentNavigateToDining(null)
+                    currentNavigateToDining()
                 }
             }
             accelerometerManager.onForwardTiltGesture = {

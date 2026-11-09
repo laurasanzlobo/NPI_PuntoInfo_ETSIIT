@@ -1,5 +1,6 @@
 package com.example.npi_puntoinfo_etsiit.outdoor
 
+import com.example.npi_puntoinfo_etsiit.sensors.OutdoorDistances
 import java.util.Locale
 import kotlin.math.ceil
 import kotlin.math.roundToInt
@@ -35,7 +36,26 @@ data class WalkingRoute(
     val distanceMeters: Double,
     val durationSeconds: Double?,
     val steps: List<WalkingStep>
-)
+) {
+    /** Índice del nodo más cercano, sin exigir estar dentro del radio de avance de paso. */
+    fun nearestStepIndex(position: GeoPoint?): Int? {
+        if (position == null || !position.isValid) return null
+        var nearestIndex: Int? = null
+        var nearestDistance = Double.POSITIVE_INFINITY
+        steps.forEachIndexed { index, step ->
+            val point = step.point ?: return@forEachIndexed
+            if (!point.isValid) return@forEachIndexed
+            val distance = OutdoorDistances.distanceMeters(
+                position.latitude, position.longitude, point.latitude, point.longitude
+            )
+            if (distance < nearestDistance) {
+                nearestIndex = index
+                nearestDistance = distance
+            }
+        }
+        return nearestIndex
+    }
+}
 
 enum class RouteError(val message: String) {
     MISSING_KEY("Rutas sin configurar. Añade ORS_API_KEY a local.properties y recompila (consulta docs/T4_EXTERIOR.md)."),
