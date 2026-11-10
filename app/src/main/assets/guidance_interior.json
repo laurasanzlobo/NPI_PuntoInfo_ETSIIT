@@ -1,0 +1,17 @@
+{
+  "version": "1.0",
+  "ruta_id": "interior_comedor_aula11",
+  "titulo": "Ruta Interior: Comedor -> Aula 1.1",
+  "origen": "Comedor ETSIIT",
+  "destino": "Aula 1.1 (Planta 1)",
+  "escaleras": {
+    "descripcion": "Ruta estándar por escaleras",
+    "tipo": "ESTANDAR_ESCALERAS",
+    "nodos": []
+  },
+  "ascensor": {
+    "descripcion": "Ruta accesible por ascensor (movilidad reducida / silla de ruedas)",
+    "tipo": "ACCESIBLE_ASCENSOR",
+    "nodos": []
+  }
+}
