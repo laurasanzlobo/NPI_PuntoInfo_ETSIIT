@@ -11,11 +11,18 @@ data class GeoPoint(val latitude: Double, val longitude: Double) {
 data class OutdoorDestination(val id: String, val name: String, val description: String, val point: GeoPoint)
 
 object OutdoorDestinations {
+    // Destinos visibles en el selector del mapa exterior (solo ETSIIT y Edificio Auxiliar)
+    val mapDestinations: List<OutdoorDestination> = listOf(
+        OutdoorDestination("etsiit", "ETSIIT", "Campus Aynadamar",
+            GeoPoint(CampusLocationManager.ETSIIT_LATITUDE, CampusLocationManager.ETSIIT_LONGITUDE)),
+        OutdoorDestination("etsiit-auxiliar", "Edificio Auxiliar ETSIIT", "Campus Aynadamar",
+            GeoPoint(37.197846, -3.630084))
+    )
+
     val all: List<OutdoorDestination> = CampusLocationManager.ugrDiningHalls.map { hall ->
         OutdoorDestination("dining-${hall.id}", hall.name, hall.address,
             GeoPoint(hall.latitude, hall.longitude))
-    } + OutdoorDestination("etsiit", "ETSIIT", "Campus Aynadamar",
-        GeoPoint(CampusLocationManager.ETSIIT_LATITUDE, CampusLocationManager.ETSIIT_LONGITUDE))
+    } + mapDestinations
 
     fun find(id: String?): OutdoorDestination? = all.firstOrNull { it.id == id }
     fun forDiningHall(id: String): OutdoorDestination? = find("dining-$id")

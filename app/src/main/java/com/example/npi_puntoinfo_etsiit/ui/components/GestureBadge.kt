@@ -171,6 +171,35 @@ val TiltTowardsUserIcon: ImageVector by lazy {
 }
 
 /**
+ * Icono personalizado para el Gesto de Zoom (Pellizcar con dos dedos):
+ * Representa cuatro corchetes angulares de expansión y zoom.
+ */
+val PinchZoomIcon: ImageVector by lazy {
+    ImageVector.Builder(
+        name = "PinchZoomIcon",
+        defaultWidth = 24.dp,
+        defaultHeight = 24.dp,
+        viewportWidth = 24f,
+        viewportHeight = 24f
+    ).addPath(
+        pathData = listOf(
+            // Esquina superior izquierda
+            PathNode.MoveTo(4f, 9f), PathNode.LineTo(4f, 4f), PathNode.LineTo(9f, 4f),
+            // Esquina superior derecha
+            PathNode.MoveTo(15f, 4f), PathNode.LineTo(20f, 4f), PathNode.LineTo(20f, 9f),
+            // Esquina inferior derecha
+            PathNode.MoveTo(20f, 15f), PathNode.LineTo(20f, 20f), PathNode.LineTo(15f, 20f),
+            // Esquina inferior izquierda
+            PathNode.MoveTo(9f, 20f), PathNode.LineTo(4f, 20f), PathNode.LineTo(4f, 15f)
+        ),
+        stroke = SolidColor(Color.Black),
+        strokeLineWidth = 2.0f,
+        strokeLineCap = StrokeCap.Round,
+        strokeLineJoin = StrokeJoin.Round
+    ).build()
+}
+
+/**
  * Tipos de gestos físicos soportados en la aplicación Punto Info ETSIIT.
  */
 enum class GestureType(
@@ -201,7 +230,7 @@ enum class GestureType(
         badgeColor = UgrRed
     ),
     ACTION_TRIGGER(
-        title = "Acción rápida",
+        title = "Confirmar / Enviar",
         gestureName = "Inclinar hacia ti",
         description = "Inclina el móvil hacia ti y vuelve a la posición inicial para encargar menú en comedores o enviar un correo al profesor.",
         howTo = "Inclina el móvil hacia ti.",
@@ -226,6 +255,15 @@ enum class GestureType(
         whatFor = "Búsqueda por voz para guiarte a aulas, comedores o profesores.",
         icon = Icons.Default.Mic,
         badgeColor = VoicePurple
+    ),
+    PINCH_ZOOM(
+        title = "Zoom Horario",
+        gestureName = "Pellizco con 2 dedos",
+        description = "Haz el gesto de zoom con dos dedos (abrir o cerrar pellizco) para alternar entre la vista panorámica de 3 días y la vista detallada de 1 día.",
+        howTo = "Abre o junta 2 dedos sobre la pantalla.",
+        whatFor = "Alterna entre ver 3 días a la vez o el día actual ampliado con todos sus detalles.",
+        icon = PinchZoomIcon,
+        badgeColor = Color(0xFF4F46E5)
     )
 }
 
@@ -424,8 +462,23 @@ fun GestureExplanationDialog(
             }
         },
         confirmButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Entendido", color = TextPrimary, fontWeight = FontWeight.Bold)
+            Button(
+                onClick = onDismiss,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = UgrRed,
+                    contentColor = Color.White
+                ),
+                shape = RoundedCornerShape(10.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(42.dp)
+            ) {
+                Text(
+                    text = "Entendido",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 14.sp,
+                    color = Color.White
+                )
             }
         }
     )

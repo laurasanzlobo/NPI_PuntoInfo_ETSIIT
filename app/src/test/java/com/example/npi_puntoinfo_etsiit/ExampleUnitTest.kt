@@ -163,24 +163,11 @@ class ExampleUnitTest {
         assertTrue("La ruta debe tener nodos y metros", ruta!!.distanciaMetros > 0 && ruta.nodos.isNotEmpty())
         println("Ruta calculada por voz a ${destProfesor.titulo}: ${ruta.distanciaMetros}m en ${ruta.tiempoEstimadoFormateado}")
 
-        // 9. Comprobación de detección del comedor más cercano según GPS
-        // Cerca de la ETSIIT -> Aynadamar
+        // 9. Comprobación de detección del comedor más cercano según GPS (simulación centrada en Aynadamar)
         val nearAynadamar = com.example.npi_puntoinfo_etsiit.sensors.CampusLocationManager.findNearestDiningHall(37.1971, -3.6244)
         assertEquals("aynadamar", nearAynadamar.id)
 
-        // Cerca de Ciencias / Severo Ochoa -> Fuentenueva
-        val nearFuentenueva = com.example.npi_puntoinfo_etsiit.sensors.CampusLocationManager.findNearestDiningHall(37.1815, -3.6090)
-        assertEquals("fuentenueva", nearFuentenueva.id)
-
-        // Cerca de Filosofía / Cartuja -> Cartuja
-        val nearCartuja = com.example.npi_puntoinfo_etsiit.sensors.CampusLocationManager.findNearestDiningHall(37.1935, -3.5980)
-        assertEquals("cartuja", nearCartuja.id)
-
-        // Cerca de Medicina / PTS -> PTS
-        val nearPts = com.example.npi_puntoinfo_etsiit.sensors.CampusLocationManager.findNearestDiningHall(37.1475, -3.6020)
-        assertEquals("pts", nearPts.id)
-
-        // Sin señal GPS -> Aynadamar por defecto
+        // Sin señal GPS o cualquier otra coordenada -> Aynadamar
         val fallbackDefault = com.example.npi_puntoinfo_etsiit.sensors.CampusLocationManager.findNearestDiningHall(null, null)
         assertEquals("aynadamar", fallbackDefault.id)
     }

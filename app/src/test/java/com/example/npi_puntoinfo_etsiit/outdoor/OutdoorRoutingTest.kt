@@ -11,12 +11,12 @@ import java.util.Locale
 
 class OutdoorRoutingTest {
     private val origin = OutdoorDestinations.find("etsiit")!!.point
-    private val destination = OutdoorDestinations.forDiningHall("fuentenueva")!!.point
+    private val destination = OutdoorDestinations.forDiningHall("aynadamar")!!.point
 
     // Respuesta sintética de contrato; NO se usa como ruta real en la aplicación.
     private val fixture = """{
       "type":"FeatureCollection", "features":[{
-        "type":"Feature", "geometry":{"type":"LineString","coordinates":[[-3.62446,37.19708],[-3.6057,37.1828]]},
+        "type":"Feature", "geometry":{"type":"LineString","coordinates":[[-3.62446,37.19708],[-3.6245,37.1970]]},
         "properties":{"summary":{"distance":2345.6,"duration":1801},
           "segments":[{"steps":[{"instruction":"Continúa a pie","distance":2345.6}]}]}
       }]
@@ -109,8 +109,8 @@ class OutdoorRoutingTest {
 
     @Test fun malformedOrMissingGeometryNeverProducesRoute() {
         listOf("not-json", "{}", fixture.replace("LineString", "Point"),
-            fixture.replace("[-3.6057,37.1828]", "[-3.6057,91]"),
-            fixture.replace("[[-3.62446,37.19708],[-3.6057,37.1828]]", "[]"),
+            fixture.replace("[-3.6245,37.1970]", "[-3.6057,91]"),
+            fixture.replace("[[-3.62446,37.19708],[-3.6245,37.1970]]", "[]"),
             fixture.replace("2345.6", "-1"), fixture.replace("1801", "-1"),
             fixture.replace("2345.6", "1e999")).forEach { invalid ->
             assertEquals(WalkingRouteResult.Failure(RouteError.INVALID_RESPONSE), decode(invalid))

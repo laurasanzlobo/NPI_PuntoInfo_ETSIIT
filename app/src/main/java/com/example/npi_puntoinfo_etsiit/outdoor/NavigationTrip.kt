@@ -13,9 +13,8 @@ data class NavigationTrip(
     val presentation: ArrivalPresentation = ArrivalPresentation.WAITING,
     val phase: TripPhase = TripPhase.OUTDOOR
 ) {
-    val showCompactEntry: Boolean get() = indoor != null && phase == TripPhase.OUTDOOR &&
-        presentation in setOf(ArrivalPresentation.SHOWN, ArrivalPresentation.DEFERRED,
-            ArrivalPresentation.CONTINUED, ArrivalPresentation.RETURNED)
+    // La entrada manual no depende del GPS; mostrarla no consume el aviso automático de llegada.
+    val showCompactEntry: Boolean get() = indoor != null && phase == TripPhase.OUTDOOR
 
     fun onArrival(): NavigationTrip = if (arrivalNotified || phase != TripPhase.OUTDOOR) this else
         copy(arrivalNotified = true, presentation = presentation.onArrival(indoor != null))

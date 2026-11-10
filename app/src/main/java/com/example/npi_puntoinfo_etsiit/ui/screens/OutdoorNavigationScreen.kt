@@ -2,15 +2,29 @@ package com.example.npi_puntoinfo_etsiit.ui.screens
 
 import android.Manifest
 import android.content.ActivityNotFoundException
+import android.content.Context
 import android.content.Intent
+import android.hardware.Sensor
+import android.hardware.SensorEvent
+import android.hardware.SensorEventListener
+import android.hardware.SensorManager
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.net.Network
+import android.os.Build
+import android.os.VibrationEffect
+import android.os.Vibrator
+import android.os.VibratorManager
 import android.provider.Settings
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -18,20 +32,38 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.automirrored.filled.DirectionsWalk
+import androidx.compose.material.icons.filled.ArrowUpward
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.material.icons.filled.Flag
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.NearMe
+import androidx.compose.material.icons.filled.TurnLeft
+import androidx.compose.material.icons.filled.TurnRight
+import androidx.compose.material.icons.filled.TurnSlightLeft
+import androidx.compose.material.icons.filled.TurnSlightRight
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.core.net.toUri
+import androidx.core.text.HtmlCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -46,9 +78,16 @@ import com.example.npi_puntoinfo_etsiit.ui.components.OutdoorMapStatus
 import com.example.npi_puntoinfo_etsiit.ui.components.WalkingStepRow
 import com.example.npi_puntoinfo_etsiit.ui.components.IndoorArrivalDialog
 import com.example.npi_puntoinfo_etsiit.ui.components.CompactIndoorEntryButton
+import com.example.npi_puntoinfo_etsiit.ui.components.GestureBadge
+import com.example.npi_puntoinfo_etsiit.ui.components.GestureType
+import com.example.npi_puntoinfo_etsiit.ui.components.loadSampledBitmapFromAssets
 import com.example.npi_puntoinfo_etsiit.ui.theme.*
 import kotlinx.coroutines.delay
+import kotlin.math.abs
+import kotlin.math.atan2
+import kotlin.math.cos
 import kotlin.math.roundToInt
+import kotlin.math.sin
 
 @Composable
 fun OutdoorNavigationScreen(
@@ -59,7 +98,8 @@ fun OutdoorNavigationScreen(
     trip: NavigationTrip,
     onTripChanged: (NavigationTrip) -> Unit,
     onSelectOutdoorDestination: (String) -> Unit,
-    onContinueIndoors: (NavigationJourney.Indoor) -> Unit = {}
+    onContinueIndoors: (NavigationJourney.Indoor) -> Unit = {},
+    onVerticalGuidanceActiveChanged: (Boolean) -> Unit = {}
 ) {
     val context = LocalContext.current
     val lifecycle = LocalLifecycleOwner.current.lifecycle
@@ -68,9 +108,19 @@ fun OutdoorNavigationScreen(
     val indoor = trip.indoor
     val currentTrip by rememberUpdatedState(trip)
     val updateTrip by rememberUpdatedState(onTripChanged)
+    var currentSelectedDestinationId by remember(selectedId) { mutableStateOf(selectedId) }
     val navigator = remember(trip.id, context) {
-        OutdoorNavigator(GpsLocationReader(DeviceLocationProvider(context)),
-            OpenRouteService(BuildConfig.ORS_API_KEY), selectedId)
+        val ors = OpenRouteService(BuildConfig.ORS_API_KEY)
+        val hybrid = HybridWalkingRouteSource(
+            context = context,
+            fallback = ors,
+            destinationIdProvider = { currentSelectedDestinationId }
+        )
+        OutdoorNavigator(
+            gps = GpsLocationReader(DeviceLocationProvider(context)),
+            routes = hybrid,
+            initialDestinationId = selectedId
+        )
     }
     val state by navigator.state.collectAsState()
     var destinationMenu by remember { mutableStateOf(false) }
@@ -92,6 +142,8 @@ fun OutdoorNavigationScreen(
     val detector = remember(trip.id, navigator) { ArrivalDetector(alreadyNotified = trip.arrivalNotified) }
 
     fun selectDestination(id: String) {
+        currentSelectedDestinationId = id
+        navigator.selectDestination(id)
         if (id != selectedId) {
             onSelectOutdoorDestination(id)
         }
@@ -147,17 +199,18 @@ fun OutdoorNavigationScreen(
         routeAfterPermission = false
     }
     fun startRoute() {
-        if (!routeConsent || !online) return
+        val isLocal = GuidanceExteriorRepository.isLocalGuidanceRoute(state.destination?.id)
+        if (!isLocal && (!routeConsent || !online)) return
         if (state.location == GpsLocationState.PermissionDenied) {
             routeAfterPermission = true
             permissionLauncher.launch(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION))
         } else navigator.requestRoute(scope)
     }
     LaunchedEffect(navigator, selectedId, online, launchPending) {
-        // La acción «¡Llévame!» prepara la ruta. El primer envío exige consentimiento explícito.
-        if (launchPending && online && state.destination != null && BuildConfig.ORS_API_KEY.isNotBlank()) {
+        val isLocal = GuidanceExteriorRepository.isLocalGuidanceRoute(selectedId)
+        if (launchPending && state.destination != null && (isLocal || (online && BuildConfig.ORS_API_KEY.isNotBlank()))) {
             launchPending = false
-            if (routeConsent) startRoute() else showConsent = true
+            if (isLocal || routeConsent) startRoute() else showConsent = true
         }
     }
     fun openSettings(action: String) {
@@ -176,7 +229,110 @@ fun OutdoorNavigationScreen(
             CampusLocationManager.lastKnownLocation = position
         }
     }
-    val route = (state.route as? WalkingRouteResult.Success)?.route
+    val localFallbackRoute = remember(context, state.destination?.id, position) {
+        if (GuidanceExteriorRepository.isLocalGuidanceRoute(state.destination?.id)) {
+            GuidanceExteriorRepository.getRouteForDestination(
+                context = context,
+                destinationId = state.destination?.id,
+                origin = position?.let { GeoPoint(it.latitude, it.longitude) }
+            )
+        } else null
+    }
+    val route = (state.route as? WalkingRouteResult.Success)?.route ?: localFallbackRoute
+    val guidanceRoute = route ?: remember(context, state.destination?.id, position) {
+        if (GuidanceExteriorRepository.isLocalGuidanceRoute(state.destination?.id)) {
+            GuidanceExteriorRepository.getRouteForDestination(
+                context = context,
+                destinationId = state.destination?.id,
+                origin = position?.let { GeoPoint(it.latitude, it.longitude) }
+            )
+        } else null
+    }
+    var isVerticalGuidanceActive by rememberSaveable { mutableStateOf(false) }
+    var isManualGuidanceLocked by rememberSaveable { mutableStateOf(false) }
+    var currentStepIndex by rememberSaveable(trip.id, guidanceRoute) { mutableIntStateOf(0) }
+    var awaitingGuidanceLocation by rememberSaveable(trip.id, guidanceRoute) { mutableStateOf(true) }
+
+    // El callback del acelerómetro debe usar la ruta y ubicación más recientes sin reiniciar el sensor.
+    val startGuidance by rememberUpdatedState { manual: Boolean ->
+        if (!isVerticalGuidanceActive) {
+            val nearestIndex = guidanceRoute?.nearestStepIndex(
+                position?.let { GeoPoint(it.latitude, it.longitude) }
+            )
+            currentStepIndex = nearestIndex ?: 0
+            awaitingGuidanceLocation = nearestIndex == null
+        }
+        isManualGuidanceLocked = manual
+        isVerticalGuidanceActive = true
+    }
+
+    LaunchedEffect(isVerticalGuidanceActive) {
+        onVerticalGuidanceActiveChanged(isVerticalGuidanceActive)
+    }
+
+    LaunchedEffect(guidanceRoute) {
+        if (guidanceRoute == null) {
+            isManualGuidanceLocked = false
+            isVerticalGuidanceActive = false
+        }
+    }
+
+    BackHandler(enabled = isVerticalGuidanceActive) {
+        isManualGuidanceLocked = false
+        isVerticalGuidanceActive = false
+    }
+
+    // Detección del gesto de levantar el móvil (Acelerómetro) para ver el guiado paso a paso con imágenes
+    // Si el usuario pulsó manualmente el botón "Iniciar guiado paso a paso", el acelerómetro se desactiva
+    // para fijar la pantalla hasta que pulse la 'X' de salir.
+    DisposableEffect(context, guidanceRoute != null, isManualGuidanceLocked) {
+        val manager = AccelerometerManager(context)
+        if (guidanceRoute != null && !isManualGuidanceLocked) {
+            manager.onPostureModeChanged = { isVertical ->
+                triggerVibration(context, durationMs = 70)
+                if (isVertical) startGuidance(false) else isVerticalGuidanceActive = false
+            }
+            manager.startListening()
+        }
+        onDispose {
+            manager.stopListening()
+            if (!isManualGuidanceLocked) {
+                isVerticalGuidanceActive = false
+                onVerticalGuidanceActiveChanged(false)
+            }
+        }
+    }
+
+    // Geofencing GPS: avanzar automáticamente de paso si el usuario camina hacia el siguiente nodo
+    LaunchedEffect(position, guidanceRoute, currentStepIndex) {
+        if (position != null && guidanceRoute != null && guidanceRoute.steps.isNotEmpty()) {
+            // El visor puede abrirse antes de que termine la primera lectura GPS.
+            if (awaitingGuidanceLocation) {
+                val nearestIndex = guidanceRoute.nearestStepIndex(GeoPoint(position.latitude, position.longitude))
+                if (nearestIndex != null) {
+                    currentStepIndex = nearestIndex
+                    awaitingGuidanceLocation = false
+                }
+                return@LaunchedEffect
+            }
+            val nextIndex = currentStepIndex + 1
+            if (nextIndex < guidanceRoute.steps.size) {
+                val nextStep = guidanceRoute.steps[nextIndex]
+                val nextPoint = nextStep.point
+                if (nextPoint != null) {
+                    val d = OutdoorDistances.distanceMeters(
+                        position.latitude, position.longitude,
+                        nextPoint.latitude, nextPoint.longitude
+                    )
+                    // Si el usuario está a 12 metros o menos del siguiente nodo, avanzamos automáticamente de foto
+                    if (d <= 12.0) {
+                        currentStepIndex = nextIndex
+                        triggerVibration(context, durationMs = 120)
+                    }
+                }
+            }
+        }
+    }
     val busy = state.location == GpsLocationState.Loading || state.routing
     val distanceToAccess = if (position != null && state.destination != null) OutdoorDistances.distanceMeters(
         position.latitude, position.longitude, state.destination!!.point.latitude, state.destination!!.point.longitude)
@@ -258,7 +414,26 @@ fun OutdoorNavigationScreen(
                     "está pendiente de validación sobre el terreno. El GPS no confirma que estés dentro.")
                 OutdoorAttribution()
             } },
-            confirmButton = { TextButton(onClick = { showInfo = false }) { Text("Cerrar") } })
+            confirmButton = {
+                Button(
+                    onClick = { showInfo = false },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = UgrRed,
+                        contentColor = Color.White
+                    ),
+                    shape = RoundedCornerShape(10.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(42.dp)
+                ) {
+                    Text(
+                        text = "Cerrar",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 14.sp,
+                        color = Color.White
+                    )
+                }
+            })
     }
     if ((automaticPromptVisible || showManualEntry) && indoor != null) {
         IndoorArrivalDialog(manual = showManualEntry,
@@ -313,7 +488,7 @@ fun OutdoorNavigationScreen(
             }
         }
 
-        // 2. CABECERA FLOTANTE SUPERIOR: Selector de destino + Info + "Ya estoy dentro"
+        // 2. CABECERA FLOTANTE SUPERIOR: Selector de destino y entrada al tramo interior
         Column(
             modifier = Modifier
                 .align(Alignment.TopCenter)
@@ -343,7 +518,7 @@ fun OutdoorNavigationScreen(
                         )
                     }
                     DropdownMenu(expanded = destinationMenu, onDismissRequest = { destinationMenu = false }) {
-                        OutdoorDestinations.all.forEach { destination ->
+                        OutdoorDestinations.mapDestinations.forEach { destination ->
                             DropdownMenuItem(text = { Text(destination.name) }, onClick = {
                                 selectDestination(destination.id)
                             })
@@ -352,14 +527,15 @@ fun OutdoorNavigationScreen(
                 }
             }
 
-            // Subtítulo con el despacho / profesor y botón "Ya estoy dentro"
+            // Reservar espacio al botón aunque el nombre del destino interior sea largo.
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 if (indoor != null) {
                     Surface(
+                        modifier = Modifier.weight(1f),
                         shape = RoundedCornerShape(12.dp),
                         color = SurfaceWhite.copy(alpha = 0.95f),
                         shadowElevation = 2.dp,
@@ -390,8 +566,8 @@ fun OutdoorNavigationScreen(
                     Spacer(Modifier.width(1.dp))
                 }
 
-                // Botón "Ya estoy dentro" en la esquina superior derecha
-                if (indoor != null) {
+                // Disponible también lejos del edificio, sin esperar a la detección de llegada.
+                if (trip.showCompactEntry && indoor != null) {
                     CompactIndoorEntryButton(
                         onClick = {
                             onTripChanged(trip.enterIndoors())
@@ -480,7 +656,7 @@ fun OutdoorNavigationScreen(
                 }
 
                 if (route != null) {
-                    // Estado 1: Ruta calculada
+                    // Resumen de la ruta exterior
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically,
@@ -494,58 +670,41 @@ fun OutdoorNavigationScreen(
                                 fontWeight = FontWeight.Bold,
                                 color = TextPrimary
                             )
-                            Text("Ruta a pie recomendada", style = MaterialTheme.typography.bodySmall, color = TextSecondary)
+                            Text(
+                                text = state.destination?.name ?: "Ruta peatonal exterior",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = TextSecondary,
+                                fontWeight = FontWeight.Medium
+                            )
                         }
 
-                        Button(
-                            enabled = !busy,
+                        GestureBadge(
+                            type = GestureType.LIFT_PHONE,
+                            size = 38.dp,
+                            iconSize = 20.dp,
                             onClick = {
-                                checkNetwork()
-                                if (routeConsent) {
-                                    if (online) startRoute() else launchPending = true
-                                } else showConsent = true
-                            },
-                            colors = ButtonDefaults.buttonColors(containerColor = UgrRed),
-                            contentPadding = PaddingValues(horizontal = 14.dp, vertical = 8.dp),
-                            shape = RoundedCornerShape(10.dp)
-                        ) {
-                            Text(
-                                text = if (state.routing) "Calculando…" else "Actualizar",
-                                style = MaterialTheme.typography.labelMedium,
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
+                                startGuidance(true)
+                            }
+                        )
                     }
 
-                    // Botón centrado para desplegar / ocultar pasos
-                    Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                        TextButton(
-                            onClick = { showSteps = !showSteps },
-                            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp)
-                        ) {
-                            Icon(
-                                imageVector = if (showSteps) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
-                                contentDescription = null,
-                                modifier = Modifier.size(18.dp)
-                            )
-                            Spacer(Modifier.width(4.dp))
-                            Text(
-                                text = if (showSteps) "Ocultar pasos" else "Ver instrucciones (${route.steps.size})",
-                                style = MaterialTheme.typography.labelMedium
-                            )
-                        }
-                    }
-
-                    if (showSteps) {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .heightIn(max = 160.dp)
-                                .verticalScroll(rememberScrollState()),
-                            verticalArrangement = Arrangement.spacedBy(6.dp)
-                        ) {
-                            route.steps.forEachIndexed { index, step -> WalkingStepRow(step, index + 1) }
-                        }
+                    // Botón para iniciar el guiado paso a paso a pantalla completa con acelerómetro
+                    Button(
+                        onClick = {
+                            startGuidance(true)
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(52.dp),
+                        shape = RoundedCornerShape(14.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = UgrRed)
+                    ) {
+                        Text(
+                            text = "Iniciar guiado paso a paso",
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White
+                        )
                     }
                 } else {
                     // Estado 2: Sin ruta calculada todavía
@@ -566,13 +725,18 @@ fun OutdoorNavigationScreen(
                             }
                         }
 
+                        val isLocalDest = GuidanceExteriorRepository.isLocalGuidanceRoute(state.destination?.id)
                         Button(
-                            enabled = !busy && state.destination != null && BuildConfig.ORS_API_KEY.isNotBlank(),
+                            enabled = !busy && state.destination != null && (isLocalDest || BuildConfig.ORS_API_KEY.isNotBlank()),
                             onClick = {
-                                checkNetwork()
-                                if (routeConsent) {
-                                    if (online) startRoute() else launchPending = true
-                                } else showConsent = true
+                                if (isLocalDest) {
+                                    startRoute()
+                                } else {
+                                    checkNetwork()
+                                    if (routeConsent) {
+                                        if (online) startRoute() else launchPending = true
+                                    } else showConsent = true
+                                }
                             },
                             colors = ButtonDefaults.buttonColors(containerColor = UgrRed),
                             contentPadding = PaddingValues(horizontal = 14.dp, vertical = 8.dp),
@@ -596,7 +760,360 @@ fun OutdoorNavigationScreen(
                 }
             }
         }
+
+        // 5. MODO GUIADO VERTICAL A PANTALLA COMPLETA CON ORIENTACIÓN Y EJE X (Activado al levantar el móvil)
+        if (isVerticalGuidanceActive && guidanceRoute != null && guidanceRoute.steps.isNotEmpty()) {
+            val step = guidanceRoute.steps.getOrElse(currentStepIndex) { guidanceRoute.steps.first() }
+            val currentAzimuth = rememberVerticalCompassAzimuth(context)
+
+            // Desviación angular [-180°, 180°) entre hacia dónde apunta el móvil y el rumbo del nodo
+            val deltaTheta: Float = if (step.heading != null && currentAzimuth != null) {
+                ((currentAzimuth - step.heading.toFloat() + 540f) % 360f) - 180f
+            } else {
+                0f
+            }
+
+            // Margen de orientación clara (±28°) para mostrar la flecha e instrucción en el centro
+            val orientationMarginDeg = 28f
+            val isFacingCorrectDirection = step.heading == null || currentAzimuth == null || abs(deltaTheta) <= orientationMarginDeg
+
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black)
+            ) {
+                // 1. IMAGEN PANORÁMICA A PANTALLA COMPLETA RECORTADA SEGÚN ORIENTACIÓN Y EJE_X_CAMINO
+                if (step.photo != null) {
+                    val bitmap = remember(step.photo) {
+                        loadSampledBitmapFromAssets(context, step.photo, 2)
+                    }
+                    if (bitmap != null) {
+                        Canvas(modifier = Modifier.fillMaxSize()) {
+                            val screenW = size.width
+                            val screenH = size.height
+                            if (screenW > 0f && screenH > 0f) {
+                                // Ancho del recorte en píxeles del bitmap para mantener proporción vertical a pantalla completa
+                                val sliceWidth = (bitmap.height.toFloat() * (screenW / screenH))
+                                    .roundToInt()
+                                    .coerceIn(1, bitmap.width)
+
+                                // Píxel objetivo calibrado en el HTML (eje_x_camino)
+                                val targetBmpX = bitmap.width.toFloat() * step.ejeXCamino.toFloat()
+
+                                // Desplazamiento horizontal según desviación de brújula (FOV horizontal ~65°)
+                                val fovHorizontal = 65f
+                                val shiftBmpX = (deltaTheta / fovHorizontal) * sliceWidth.toFloat()
+                                val visualCenterX = targetBmpX + shiftBmpX
+
+                                val maxLeft = (bitmap.width - sliceWidth).coerceAtLeast(0)
+                                val srcLeft = (visualCenterX - sliceWidth / 2f)
+                                    .roundToInt()
+                                    .coerceIn(0, maxLeft)
+
+                                drawImage(
+                                    image = bitmap,
+                                    srcOffset = IntOffset(srcLeft, 0),
+                                    srcSize = IntSize(sliceWidth, bitmap.height),
+                                    dstOffset = IntOffset.Zero,
+                                    dstSize = IntSize(screenW.roundToInt(), screenH.roundToInt())
+                                )
+                            }
+                        }
+                    }
+                } else {
+                    // Fondo para nodos sin fotografía (interior / en obras)
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(Color(0xFF1A1D24))
+                    )
+                }
+
+                // 2. INDICACIÓN Y FLECHA: situada en la parte inferior sobre los controles para no tapar la foto
+                val maneuverIcon = when (step.maneuver) {
+                    Maneuver.SLIGHT_RIGHT -> Icons.Default.TurnSlightRight
+                    Maneuver.SLIGHT_LEFT -> Icons.Default.TurnSlightLeft
+                    Maneuver.LEFT, Maneuver.KEEP_LEFT, Maneuver.SHARP_LEFT -> Icons.Default.TurnLeft
+                    Maneuver.RIGHT, Maneuver.KEEP_RIGHT, Maneuver.SHARP_RIGHT -> Icons.Default.TurnRight
+                    Maneuver.ARRIVAL -> Icons.Default.Flag
+                    else -> Icons.Default.ArrowUpward
+                }
+
+                // Distancia GPS en tiempo real hacia el siguiente nodo (o destino final)
+                val nextStepIdx = currentStepIndex + 1
+                val targetStepPoint = if (nextStepIdx < guidanceRoute.steps.size) {
+                    guidanceRoute.steps[nextStepIdx].point
+                } else {
+                    step.point
+                }
+                val liveGpsDistance = if (position != null && targetStepPoint != null) {
+                    OutdoorDistances.distanceMeters(
+                        position.latitude, position.longitude,
+                        targetStepPoint.latitude, targetStepPoint.longitude
+                    )
+                } else null
+
+                val distanceLabel = when {
+                    currentStepIndex >= guidanceRoute.steps.size - 1 -> {
+                        if (liveGpsDistance != null && liveGpsDistance > 10.0) {
+                            formatOutdoorDistance(liveGpsDistance)
+                        } else {
+                            "¡Destino alcanzado!"
+                        }
+                    }
+                    liveGpsDistance != null -> formatOutdoorDistance(liveGpsDistance)
+                    step.distanceMeters > 0 -> formatOutdoorDistance(step.distanceMeters)
+                    else -> "¡Destino alcanzado!"
+                }
+
+                if (isFacingCorrectDirection) {
+                    Column(
+                        modifier = Modifier
+                            .align(Alignment.BottomCenter)
+                            .padding(start = 20.dp, end = 20.dp, bottom = 82.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        // Flecha direccional sobre el camino
+                        Surface(
+                            shape = CircleShape,
+                            color = UgrRed,
+                            border = BorderStroke(2.5.dp, Color.White),
+                            modifier = Modifier.size(68.dp)
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Icon(
+                                    imageVector = maneuverIcon,
+                                    contentDescription = null,
+                                    tint = Color.White,
+                                    modifier = Modifier.size(38.dp)
+                                )
+                            }
+                        }
+
+                        // Tarjeta con metros e instrucción concreta: fondo oscuro uniforme sin sombras escalonadas
+                        Box(
+                            modifier = Modifier
+                                .background(Color.Black.copy(alpha = 0.55f), shape = RoundedCornerShape(16.dp))
+                                .border(BorderStroke(1.dp, Color.White.copy(alpha = 0.22f)), shape = RoundedCornerShape(16.dp))
+                                .padding(horizontal = 18.dp, vertical = 12.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                Text(
+                                    text = distanceLabel,
+                                    fontSize = 22.sp,
+                                    fontWeight = FontWeight.ExtraBold,
+                                    color = Color.White
+                                )
+                                Text(
+                                    text = step.instruction.trim(),
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    color = Color.White,
+                                    textAlign = TextAlign.Center,
+                                    lineHeight = 19.sp
+                                )
+                            }
+                        }
+                    }
+                } else {
+                    // Indicador cuando el usuario debe girar: indicación limpia sin mostrar grados
+                    val turnLeft = deltaTheta > 0f
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.BottomCenter)
+                            .padding(start = 24.dp, end = 24.dp, bottom = 82.dp)
+                            .background(Color.Black.copy(alpha = 0.55f), shape = RoundedCornerShape(16.dp))
+                            .border(BorderStroke(1.5.dp, UgrRed), shape = RoundedCornerShape(16.dp))
+                            .padding(horizontal = 20.dp, vertical = 14.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            Icon(
+                                imageVector = if (turnLeft) Icons.AutoMirrored.Filled.ArrowBack else Icons.AutoMirrored.Filled.ArrowForward,
+                                contentDescription = null,
+                                tint = UgrRed,
+                                modifier = Modifier.size(42.dp)
+                            )
+                            Text(
+                                text = if (turnLeft) "Gira a la izquierda" else "Gira a la derecha",
+                                fontSize = 18.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White,
+                                textAlign = TextAlign.Center
+                            )
+                        }
+                    }
+                }
+
+                // 3. BOTÓN CERRAR SUPERIOR DERECHO (Flotante)
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(top = 16.dp, end = 16.dp)
+                ) {
+                    Surface(
+                        shape = CircleShape,
+                        color = Color.Black.copy(alpha = 0.55f),
+                        modifier = Modifier.size(40.dp),
+                        onClick = {
+                            isManualGuidanceLocked = false
+                            isVerticalGuidanceActive = false
+                        }
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Icon(
+                                imageVector = Icons.Default.Close,
+                                contentDescription = "Volver al mapa",
+                                tint = Color.White,
+                                modifier = Modifier.size(22.dp)
+                            )
+                        }
+                    }
+                }
+
+                // 4. CONTROLES INFERIORES FLOTANTES (Anterior / Siguiente paso)
+                Row(
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 18.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Button(
+                        onClick = { if (currentStepIndex > 0) currentStepIndex-- },
+                        enabled = currentStepIndex > 0,
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color.Black.copy(alpha = 0.72f),
+                            contentColor = Color.White,
+                            disabledContainerColor = Color.Black.copy(alpha = 0.35f),
+                            disabledContentColor = Color.White.copy(alpha = 0.4f)
+                        ),
+                        modifier = Modifier.weight(1f).height(44.dp),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Text("← Anterior", fontWeight = FontWeight.Bold)
+                    }
+
+                    Button(
+                        onClick = { if (currentStepIndex < guidanceRoute.steps.size - 1) currentStepIndex++ },
+                        enabled = currentStepIndex < guidanceRoute.steps.size - 1,
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = UgrRed,
+                            contentColor = Color.White,
+                            disabledContainerColor = Color.Black.copy(alpha = 0.35f),
+                            disabledContentColor = Color.White.copy(alpha = 0.4f)
+                        ),
+                        modifier = Modifier.weight(1f).height(44.dp),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Text("Siguiente →", fontWeight = FontWeight.Bold)
+                    }
+                }
+            }
+        }
     }
+}
+
+/**
+ * Obtiene el rumbo magnético (0°..360°) hacia el que apunta la cámara trasera
+ * cuando el usuario sostiene el móvil en vertical frente a él.
+ */
+@Composable
+private fun rememberVerticalCompassAzimuth(context: Context): Float? {
+    var azimuth by remember { mutableStateOf<Float?>(null) }
+
+    DisposableEffect(context) {
+        val sensorManager = context.getSystemService(Context.SENSOR_SERVICE) as? SensorManager
+        val rotationSensor = sensorManager?.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR)
+            ?: sensorManager?.getDefaultSensor(Sensor.TYPE_GEOMAGNETIC_ROTATION_VECTOR)
+        val accelSensor = sensorManager?.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
+        val magSensor = sensorManager?.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD)
+
+        val rotationMatrix = FloatArray(9)
+        val remappedMatrix = FloatArray(9)
+        val orientationAngles = FloatArray(3)
+        val gravity = FloatArray(3)
+        val geomagnetic = FloatArray(3)
+        var hasGravity = false
+        var hasMag = false
+        var smoothSin = 0f
+        var smoothCos = 0f
+        var initialized = false
+
+        fun updateFromRotationMatrix() {
+            // Al sujetar el móvil en vertical, remapeamos X -> X y Y -> Z para medir el rumbo horizontal hacia el que mira la cámara
+            if (SensorManager.remapCoordinateSystem(
+                    rotationMatrix,
+                    SensorManager.AXIS_X,
+                    SensorManager.AXIS_Z,
+                    remappedMatrix
+                )
+            ) {
+                SensorManager.getOrientation(remappedMatrix, orientationAngles)
+                val rad = orientationAngles[0]
+                if (!initialized) {
+                    smoothSin = sin(rad)
+                    smoothCos = cos(rad)
+                    initialized = true
+                } else {
+                    val alpha = 0.18f
+                    smoothSin += alpha * (sin(rad) - smoothSin)
+                    smoothCos += alpha * (cos(rad) - smoothCos)
+                }
+                val deg = ((Math.toDegrees(atan2(smoothSin.toDouble(), smoothCos.toDouble())).toFloat() + 360f) % 360f)
+                azimuth = deg
+            }
+        }
+
+        val listener = object : SensorEventListener {
+            override fun onSensorChanged(event: SensorEvent?) {
+                if (event == null) return
+                when (event.sensor.type) {
+                    Sensor.TYPE_ROTATION_VECTOR, Sensor.TYPE_GEOMAGNETIC_ROTATION_VECTOR -> {
+                        SensorManager.getRotationMatrixFromVector(rotationMatrix, event.values)
+                        updateFromRotationMatrix()
+                    }
+                    Sensor.TYPE_ACCELEROMETER -> {
+                        System.arraycopy(event.values, 0, gravity, 0, 3)
+                        hasGravity = true
+                        if (hasMag && SensorManager.getRotationMatrix(rotationMatrix, null, gravity, geomagnetic)) {
+                            updateFromRotationMatrix()
+                        }
+                    }
+                    Sensor.TYPE_MAGNETIC_FIELD -> {
+                        System.arraycopy(event.values, 0, geomagnetic, 0, 3)
+                        hasMag = true
+                        if (hasGravity && SensorManager.getRotationMatrix(rotationMatrix, null, gravity, geomagnetic)) {
+                            updateFromRotationMatrix()
+                        }
+                    }
+                }
+            }
+
+            override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) = Unit
+        }
+
+        if (rotationSensor != null) {
+            sensorManager?.registerListener(listener, rotationSensor, SensorManager.SENSOR_DELAY_UI)
+        } else if (accelSensor != null && magSensor != null) {
+            sensorManager?.registerListener(listener, accelSensor, SensorManager.SENSOR_DELAY_UI)
+            sensorManager?.registerListener(listener, magSensor, SensorManager.SENSOR_DELAY_UI)
+        }
+
+        onDispose {
+            sensorManager?.unregisterListener(listener)
+        }
+    }
+
+    return azimuth
 }
 
 @Composable
@@ -611,5 +1128,26 @@ private fun OutdoorAttribution() {
         TextButton(onClick = { try { uriHandler.openUri(url) } catch (_: ActivityNotFoundException) { } }) {
             Text(label, style = MaterialTheme.typography.bodySmall)
         }
+    }
+}
+
+private fun triggerVibration(context: Context, durationMs: Long = 80) {
+    try {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            val vibratorManager = context.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as? VibratorManager
+            vibratorManager?.defaultVibrator?.vibrate(
+                VibrationEffect.createOneShot(durationMs, VibrationEffect.DEFAULT_AMPLITUDE)
+            )
+        } else {
+            @Suppress("DEPRECATION")
+            val vibrator = context.getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                vibrator?.vibrate(VibrationEffect.createOneShot(durationMs, VibrationEffect.DEFAULT_AMPLITUDE))
+            } else {
+                @Suppress("DEPRECATION")
+                vibrator?.vibrate(durationMs)
+            }
+        }
+    } catch (_: Exception) {
     }
 }
