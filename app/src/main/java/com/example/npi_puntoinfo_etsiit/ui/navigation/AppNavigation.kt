@@ -124,7 +124,7 @@ fun AppNavigation() {
     var isDiningPaymentActive by rememberSaveable { mutableStateOf(false) }
     var diningPaymentCancelTrigger by remember { mutableIntStateOf(0) }
 
-    fun navigateToTab(route: String) {
+    fun navigateToTab(route: String, preserveBackStack: Boolean = false) {
         if (!route.startsWith("navigation")) {
             isVerticalGuidanceActive = false
         }
@@ -137,16 +137,26 @@ fun AppNavigation() {
         if (route == Screen.Schedule.route) {
             scheduleNavCounter++
         }
-        navController.navigate(route) {
-            popUpTo(navController.graph.findStartDestination().id) {
-                saveState = false
+        if (preserveBackStack) {
+            navController.navigate(route) {
+                launchSingleTop = true
             }
-            launchSingleTop = true
-            restoreState = false
+        } else {
+            navController.navigate(route) {
+                popUpTo(navController.graph.findStartDestination().id) {
+                    saveState = false
+                }
+                launchSingleTop = true
+                restoreState = false
+            }
         }
     }
 
     fun handleNavigation(route: String) {
+        val preserveBackStack = currentRoute == Screen.Services.route ||
+                currentRoute == Screen.Professors.route ||
+                currentRoute?.startsWith(Screen.Professors.route) == true
+
         if (route == Screen.Outdoor.route || route.startsWith("${Screen.Outdoor.route}?")) {
             isVerticalGuidanceActive = false
             val uri = android.net.Uri.parse("app://$route")
@@ -178,8 +188,10 @@ fun AppNavigation() {
                 OutdoorNavigationRoute.forIndoorTarget(it.name, it.location, it.nodeId)
             } ?: route
             navController.navigate(resolvedRoute) {
-                popUpTo(navController.graph.findStartDestination().id) {
-                    saveState = false
+                if (!preserveBackStack) {
+                    popUpTo(navController.graph.findStartDestination().id) {
+                        saveState = false
+                    }
                 }
                 launchSingleTop = true
             }
@@ -220,11 +232,11 @@ fun AppNavigation() {
                 activeDestination = dest
                 activeLocation = loc
             }
-            navigateToTab(Screen.Navigation.route)
+            navigateToTab(Screen.Navigation.route, preserveBackStack = preserveBackStack)
         } else if (route == Screen.Profile.route) {
             navController.navigate(Screen.Profile.route)
         } else {
-            navigateToTab(route)
+            navigateToTab(route, preserveBackStack = preserveBackStack)
         }
     }
 
@@ -700,6 +712,12 @@ fun AppNavigation() {
                 )
             }
             
+            composable(Screen.Services.route) {
+                ServicesScreen(
+                    onNavigate = { route -> handleNavigation(route) }
+                )
+            }
+
             composable(Screen.Profile.route) {
                 ProfileScreen(
                     onBack = {
