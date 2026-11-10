@@ -250,7 +250,21 @@ fun OutdoorNavigationScreen(
     }
     var isVerticalGuidanceActive by rememberSaveable { mutableStateOf(false) }
     var isManualGuidanceLocked by rememberSaveable { mutableStateOf(false) }
-    var currentStepIndex by rememberSaveable(guidanceRoute) { mutableIntStateOf(0) }
+    var currentStepIndex by rememberSaveable(trip.id, guidanceRoute) { mutableIntStateOf(0) }
+    var awaitingGuidanceLocation by rememberSaveable(trip.id, guidanceRoute) { mutableStateOf(true) }
+
+    // El callback del acelerómetro debe usar la ruta y ubicación más recientes sin reiniciar el sensor.
+    val startGuidance by rememberUpdatedState { manual: Boolean ->
+        if (!isVerticalGuidanceActive) {
+            val nearestIndex = guidanceRoute?.nearestStepIndex(
+                position?.let { GeoPoint(it.latitude, it.longitude) }
+            )
+            currentStepIndex = nearestIndex ?: 0
+            awaitingGuidanceLocation = nearestIndex == null
+        }
+        isManualGuidanceLocked = manual
+        isVerticalGuidanceActive = true
+    }
 
     LaunchedEffect(isVerticalGuidanceActive) {
         onVerticalGuidanceActiveChanged(isVerticalGuidanceActive)
@@ -276,7 +290,7 @@ fun OutdoorNavigationScreen(
         if (guidanceRoute != null && !isManualGuidanceLocked) {
             manager.onPostureModeChanged = { isVertical ->
                 triggerVibration(context, durationMs = 70)
-                isVerticalGuidanceActive = isVertical
+                if (isVertical) startGuidance(false) else isVerticalGuidanceActive = false
             }
             manager.startListening()
         }
@@ -292,6 +306,15 @@ fun OutdoorNavigationScreen(
     // Geofencing GPS: avanzar automáticamente de paso si el usuario camina hacia el siguiente nodo
     LaunchedEffect(position, guidanceRoute, currentStepIndex) {
         if (position != null && guidanceRoute != null && guidanceRoute.steps.isNotEmpty()) {
+            // El visor puede abrirse antes de que termine la primera lectura GPS.
+            if (awaitingGuidanceLocation) {
+                val nearestIndex = guidanceRoute.nearestStepIndex(GeoPoint(position.latitude, position.longitude))
+                if (nearestIndex != null) {
+                    currentStepIndex = nearestIndex
+                    awaitingGuidanceLocation = false
+                }
+                return@LaunchedEffect
+            }
             val nextIndex = currentStepIndex + 1
             if (nextIndex < guidanceRoute.steps.size) {
                 val nextStep = guidanceRoute.steps[nextIndex]
@@ -465,7 +488,7 @@ fun OutdoorNavigationScreen(
             }
         }
 
-        // 2. CABECERA FLOTANTE SUPERIOR: Selector de destino + Info + "Ya estoy dentro"
+        // 2. CABECERA FLOTANTE SUPERIOR: Selector de destino y entrada al tramo interior
         Column(
             modifier = Modifier
                 .align(Alignment.TopCenter)
@@ -504,14 +527,15 @@ fun OutdoorNavigationScreen(
                 }
             }
 
-            // Subtítulo con el despacho / profesor y botón "Ya estoy dentro"
+            // Reservar espacio al botón aunque el nombre del destino interior sea largo.
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 if (indoor != null) {
                     Surface(
+                        modifier = Modifier.weight(1f),
                         shape = RoundedCornerShape(12.dp),
                         color = SurfaceWhite.copy(alpha = 0.95f),
                         shadowElevation = 2.dp,
@@ -542,8 +566,8 @@ fun OutdoorNavigationScreen(
                     Spacer(Modifier.width(1.dp))
                 }
 
-                // Botón "Ya estoy dentro" en la esquina superior derecha
-                if (indoor != null) {
+                // Disponible también lejos del edificio, sin esperar a la detección de llegada.
+                if (trip.showCompactEntry && indoor != null) {
                     CompactIndoorEntryButton(
                         onClick = {
                             onTripChanged(trip.enterIndoors())
@@ -659,8 +683,7 @@ fun OutdoorNavigationScreen(
                             size = 38.dp,
                             iconSize = 20.dp,
                             onClick = {
-                                isManualGuidanceLocked = true
-                                isVerticalGuidanceActive = true
+                                startGuidance(true)
                             }
                         )
                     }
@@ -668,8 +691,7 @@ fun OutdoorNavigationScreen(
                     // Botón para iniciar el guiado paso a paso a pantalla completa con acelerómetro
                     Button(
                         onClick = {
-                            isManualGuidanceLocked = true
-                            isVerticalGuidanceActive = true
+                            startGuidance(true)
                         },
                         modifier = Modifier
                             .fillMaxWidth()

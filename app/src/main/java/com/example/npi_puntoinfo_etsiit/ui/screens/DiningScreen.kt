@@ -6,53 +6,53 @@ import android.os.Build
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
-import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
-import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.DirectionsWalk
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.npi_puntoinfo_etsiit.data.UserSessionRepository
+import com.example.npi_puntoinfo_etsiit.data.DiningPaymentAuthorizer
+import com.example.npi_puntoinfo_etsiit.data.DiningReservationPolicy
 import com.example.npi_puntoinfo_etsiit.ui.components.GestureBadge
 import com.example.npi_puntoinfo_etsiit.ui.components.GestureType
 import com.example.npi_puntoinfo_etsiit.sensors.AccelerometerManager
 import com.example.npi_puntoinfo_etsiit.sensors.CampusLocationManager
-import com.example.npi_puntoinfo_etsiit.sensors.DeviceCoordinates
 import com.example.npi_puntoinfo_etsiit.sensors.DeviceLocationProvider
 import com.example.npi_puntoinfo_etsiit.sensors.GpsLocationReader
 import com.example.npi_puntoinfo_etsiit.sensors.GpsLocationState
 import com.example.npi_puntoinfo_etsiit.sensors.LocationPermission
 import com.example.npi_puntoinfo_etsiit.sensors.OutdoorDistances
-import com.example.npi_puntoinfo_etsiit.sensors.UgrDiningHall
+import com.example.npi_puntoinfo_etsiit.sensors.DeviceAuthenticator
+import com.example.npi_puntoinfo_etsiit.sensors.DeviceAuthenticationResult
+import com.example.npi_puntoinfo_etsiit.sensors.rememberDeviceAuthenticator
 import com.example.npi_puntoinfo_etsiit.ui.navigation.Screen
-import com.example.npi_puntoinfo_etsiit.outdoor.OutdoorDestinations
 import com.example.npi_puntoinfo_etsiit.ui.theme.*
 import java.time.DayOfWeek
 import java.time.LocalDate
@@ -98,7 +98,9 @@ fun DiningScreen(
     isCurrentClassDialogVisible: Boolean = false,
     navKey: Int = 0,
     cancelPaymentKey: Int = 0,
-    onPaymentModeChanged: (Boolean) -> Unit = {}
+    onPaymentModeChanged: (Boolean) -> Unit = {},
+    paymentAuthenticator: DeviceAuthenticator? = null,
+    currentDate: () -> LocalDate = LocalDate::now
 ) {
     val context = LocalContext.current
     val profile = UserSessionRepository.getProfile(context)
@@ -118,7 +120,6 @@ fun DiningScreen(
     val nearestDiningHall = remember(userCoordinates) {
         CampusLocationManager.findNearestDiningHall(userCoordinates?.latitude, userCoordinates?.longitude)
     }
-    val currentNearestDiningHall by rememberUpdatedState(nearestDiningHall)
 
     val distanceMeters = remember(userCoordinates, nearestDiningHall) {
         userCoordinates?.let {
@@ -131,10 +132,10 @@ fun DiningScreen(
         else String.format(Locale.getDefault(), "%.1f km", it / 1000)
     }
 
-    fun navigateToDining(hall: UgrDiningHall? = null) {
+    fun navigateToDining() {
         triggerVibration(context, durationMs = 150)
-        // Como es simulación hacia Aynadamar (ETSIIT), guiamos a la ETSIIT Principal
-        onNavigate(Screen.Outdoor.createRoute("etsiit"))
+        // Mantener el destino del comedor para enlazar el acceso ETSIIT con su tramo interior.
+        onNavigate(Screen.Outdoor.createRoute("dining-aynadamar"))
     }
 
     val currentNavigateToDining by rememberUpdatedState(::navigateToDining)
@@ -190,18 +191,17 @@ fun DiningScreen(
         }
     }
 
-    var today by remember { mutableStateOf(LocalDate.now()) }
+    val dateProvider by rememberUpdatedState(currentDate)
+    var today by remember { mutableStateOf(dateProvider()) }
     LaunchedEffect(Unit) {
         while (true) {
-            today = LocalDate.now()
+            today = dateProvider()
             delay(30_000L)
         }
     }
 
     val menuList = remember(today) {
-        generateSequence(today) { it.plusDays(1) }
-            .filter { it.dayOfWeek.value in 1..5 }
-            .take(5)
+        DiningReservationPolicy.menuDates(today)
             .map { date ->
                 val weekday = date.dayOfWeek
                     .getDisplayName(TextStyle.FULL, Locale.forLanguageTag("es-ES"))
@@ -231,7 +231,7 @@ fun DiningScreen(
     }
 
     // Tipo de menú seleccionado para visualizar en pantalla (Tradicional vs Vegetariano)
-    var selectedMenuType by remember { mutableStateOf(DiningMenuType.TRADITIONAL) }
+    var selectedMenuType by rememberSaveable { mutableStateOf(DiningMenuType.TRADITIONAL) }
 
     val orderPreferences = remember(context) {
         context.getSharedPreferences("npi_demo_dining_orders", Context.MODE_PRIVATE)
@@ -262,28 +262,51 @@ fun DiningScreen(
         }
     }
 
-    // Estado del diálogo de pasarela de pago simulada
-    var pendingOrderDate by remember { mutableStateOf<LocalDate?>(null) }
-    var orderMenuType by remember(pendingOrderDate) { mutableStateOf(selectedMenuType) }
-    var selectedPaymentMethod by remember { mutableStateOf(PaymentMethod.BIZUM) }
-    var phoneNumberInput by remember { mutableStateOf("612 345 678") }
-    var cardNumberInput by remember { mutableStateOf("4550 1234 5678 9010") }
-    var cardExpiryInput by remember { mutableStateOf("09/28") }
-    var cardCvvInput by remember { mutableStateOf("123") }
+    // Solo se guarda el estado de la maqueta; no se solicitan datos bancarios reales.
+    var pendingOrderDateKey by rememberSaveable { mutableStateOf<String?>(null) }
+    val pendingOrderDate = pendingOrderDateKey?.let(LocalDate::parse)
+    var orderMenuType by rememberSaveable { mutableStateOf(DiningMenuType.TRADITIONAL) }
+    var selectedPaymentMethod by rememberSaveable { mutableStateOf(PaymentMethod.BIZUM) }
     var isPaymentProcessing by remember { mutableStateOf(false) }
+    var paymentError by remember { mutableStateOf<String?>(null) }
     var paymentSuccessDialog by remember { mutableStateOf<OrderSuccessInfo?>(null) }
+    val systemAuthenticator = rememberDeviceAuthenticator()
+    val authorizer = remember(paymentAuthenticator, systemAuthenticator) {
+        DiningPaymentAuthorizer(paymentAuthenticator ?: systemAuthenticator)
+    }
+
+    fun cancelPayment() {
+        authorizer.cancel()
+        isPaymentProcessing = false
+        paymentError = null
+        pendingOrderDateKey = null
+    }
+
+    fun reserveMenu(menu: DayDiningMenu) {
+        if (!DiningReservationPolicy.canReserve(menu.date, dateProvider()) ||
+            ordersPlaced.containsKey(menu.date.toString()) || isPaymentProcessing) return
+        orderMenuType = selectedMenuType
+        paymentError = null
+        pendingOrderDateKey = menu.date.toString()
+    }
+
+    val currentReserveMenu by rememberUpdatedState(::reserveMenu)
+    DisposableEffect(authorizer) {
+        onDispose { authorizer.cancel() }
+    }
 
     LaunchedEffect(today) {
-        if (pendingOrderDate?.isAfter(today) != true) pendingOrderDate = null
+        if (pendingOrderDate != null && !DiningReservationPolicy.canReserve(pendingOrderDate, today)) cancelPayment()
     }
 
     // Gestos del acelerómetro
-    DisposableEffect(context, isCurrentClassDialogVisible, pagerState, today, isLoggedIn) {
+    DisposableEffect(context, isCurrentClassDialogVisible, pagerState, today, isLoggedIn,
+        pendingOrderDateKey, paymentSuccessDialog) {
         val accelerometerManager = AccelerometerManager(context)
-        if (!isCurrentClassDialogVisible) {
+        if (!isCurrentClassDialogVisible && pendingOrderDateKey == null && paymentSuccessDialog == null) {
             accelerometerManager.onTakeMeThereGesture = {
                 if (!pagerState.isScrollInProgress && pendingOrderDate == null && paymentSuccessDialog == null) {
-                    currentNavigateToDining(null)
+                    currentNavigateToDining()
                 }
             }
             accelerometerManager.onForwardTiltGesture = {
@@ -295,20 +318,18 @@ fun DiningScreen(
                         val isOrdered = dateKey?.let { !ordersPlaced[it].isNullOrBlank() } ?: false
 
                         if (selected != null &&
-                            selected.date.isAfter(LocalDate.now()) &&
+                            DiningReservationPolicy.canReserve(selected.date, dateProvider()) &&
                             !isOrdered &&
                             pendingOrderDate == null &&
                             paymentSuccessDialog == null
                         ) {
                             triggerVibration(context, durationMs = 80)
-                            orderMenuType = selectedMenuType
-                            pendingOrderDate = selected.date
-                        } else if (selected != null && !selected.date.isAfter(LocalDate.now())) {
-                            triggerVibration(context, durationMs = 40)
-                            Toast.makeText(context, "El encargo para llevar es para días posteriores (desliza a mañana)", Toast.LENGTH_SHORT).show()
+                            currentReserveMenu(selected)
                         } else if (isOrdered) {
                             triggerVibration(context, durationMs = 40)
                             Toast.makeText(context, "Ya tienes un menú encargado para este día", Toast.LENGTH_SHORT).show()
+                        } else if (selected != null) {
+                            Toast.makeText(context, "Puedes reservar cualquiera de los cuatro próximos días laborables, pero no hoy.", Toast.LENGTH_SHORT).show()
                         }
                     } else {
                         triggerVibration(context, durationMs = 40)
@@ -322,16 +343,9 @@ fun DiningScreen(
     }
 
     val currentMenu = menuList[pagerState.currentPage]
-    val currentDayOrderedType = ordersPlaced[currentMenu.date.toString()]
-    val isDayOrdered = !currentDayOrderedType.isNullOrBlank()
-    val targetDayText = when (currentMenu.date) {
-        today -> "hoy"
-        today.plusDays(1) -> "mañana"
-        else -> "el ${currentMenu.dayName.lowercase(Locale.forLanguageTag("es-ES"))} ${currentMenu.date.dayOfMonth}/${currentMenu.date.monthValue}"
-    }
 
     val activePendingMenu = pendingOrderDate?.let { date ->
-        if (date.isAfter(today)) menuList.find { it.date == date } else null
+        if (DiningReservationPolicy.canReserve(date, today)) menuList.find { it.date == date } else null
     }
 
     val isPaymentActive = activePendingMenu != null
@@ -341,20 +355,18 @@ fun DiningScreen(
 
     LaunchedEffect(cancelPaymentKey) {
         if (cancelPaymentKey > 0) {
-            pendingOrderDate = null
+            cancelPayment()
         }
     }
 
     if (activePendingMenu != null) {
-        BackHandler(enabled = !isPaymentProcessing) {
-            pendingOrderDate = null
-        }
+        BackHandler { cancelPayment() }
 
         // ==========================================
         // PÁGINA COMPLETA DE PAGO COMEDOR
         // ==========================================
         Surface(
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier.fillMaxSize().testTag("dining-payment-screen"),
             color = BackgroundLight
         ) {
             Column(
@@ -364,6 +376,12 @@ fun DiningScreen(
                     .padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
+                    Text(
+                        "Pasarela de pago",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = UgrRed
+                    )
                 // TARJETA DE RESUMEN DEL PEDIDO
                     Card(
                         modifier = Modifier.fillMaxWidth(),
@@ -402,7 +420,7 @@ fun DiningScreen(
                                     color = UgrRed.copy(alpha = 0.1f)
                                 ) {
                                     Text(
-                                        text = "5.50 €",
+                                        text = DiningReservationPolicy.PRICE_LABEL,
                                         color = UgrRed,
                                         fontWeight = FontWeight.ExtraBold,
                                         fontSize = 16.sp,
@@ -438,7 +456,7 @@ fun DiningScreen(
                                     val isSelected = orderMenuType == type
                                     val activeColor = if (type == DiningMenuType.VEGETARIAN) CampusGreen else UgrRed
                                     Surface(
-                                        onClick = { orderMenuType = type },
+                                        onClick = { if (!isPaymentProcessing) orderMenuType = type },
                                         shape = RoundedCornerShape(12.dp),
                                         color = if (isSelected) activeColor.copy(alpha = 0.12f) else BackgroundLight,
                                         border = androidx.compose.foundation.BorderStroke(
@@ -474,7 +492,7 @@ fun DiningScreen(
                         }
                     }
 
-                    // TARJETA DE MÉTODO DE PAGO Y FORMULARIO
+                    // Métodos visuales de prueba: sin formulario de datos bancarios.
                     Card(
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(16.dp),
@@ -502,7 +520,7 @@ fun DiningScreen(
                                 PaymentMethod.values().forEach { method ->
                                     val isSelected = selectedPaymentMethod == method
                                     Surface(
-                                        onClick = { selectedPaymentMethod = method },
+                                        onClick = { if (!isPaymentProcessing) selectedPaymentMethod = method },
                                         shape = RoundedCornerShape(12.dp),
                                         color = if (isSelected) UgrRed.copy(alpha = 0.12f) else BackgroundLight,
                                         border = androidx.compose.foundation.BorderStroke(
@@ -534,72 +552,62 @@ fun DiningScreen(
                                 }
                             }
 
-                            // Formulario según método
-                            if (selectedPaymentMethod == PaymentMethod.BIZUM) {
-                                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                    OutlinedTextField(
-                                        value = phoneNumberInput,
-                                        onValueChange = { phoneNumberInput = it },
-                                        label = { Text("Teléfono asociado a Bizum") },
-                                        leadingIcon = { Icon(Icons.Default.Phone, contentDescription = null, tint = UgrRed) },
-                                        modifier = Modifier.fillMaxWidth(),
-                                        singleLine = true,
-                                        shape = RoundedCornerShape(12.dp)
-                                    )
-                                    Text(
-                                        text = "Recibirás una notificación en la app de tu banco para autorizar la operación de 5.50 €.",
-                                        fontSize = 12.sp,
-                                        color = TextSecondary,
-                                        lineHeight = 16.sp
-                                    )
-                                }
-                            } else {
-                                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                                    OutlinedTextField(
-                                        value = cardNumberInput,
-                                        onValueChange = { cardNumberInput = it },
-                                        label = { Text("Número de tarjeta") },
-                                        leadingIcon = { Icon(Icons.Default.CreditCard, contentDescription = null, tint = UgrRed) },
-                                        modifier = Modifier.fillMaxWidth(),
-                                        singleLine = true,
-                                        shape = RoundedCornerShape(12.dp)
-                                    )
-                                    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                                        OutlinedTextField(
-                                            value = cardExpiryInput,
-                                            onValueChange = { cardExpiryInput = it },
-                                            label = { Text("Caducidad (MM/AA)") },
-                                            modifier = Modifier.weight(1f),
-                                            singleLine = true,
-                                            shape = RoundedCornerShape(12.dp)
-                                        )
-                                        OutlinedTextField(
-                                            value = cardCvvInput,
-                                            onValueChange = { cardCvvInput = it },
-                                            label = { Text("CVV") },
-                                            modifier = Modifier.weight(1f),
-                                            singleLine = true,
-                                            shape = RoundedCornerShape(12.dp)
-                                        )
-                                    }
-                                }
-                            }
                         }
                     }
 
-                    // BOTÓN DE PAGO
+                    Text(
+                        "¿Quieres proceder al pago?",
+                        fontWeight = FontWeight.Bold,
+                        style = MaterialTheme.typography.titleLarge,
+                        color = TextPrimary
+                    )
+                    Text(
+                        "Confirma con la huella, el reconocimiento facial o el PIN, patrón o contraseña " +
+                            "que tengas configurado en el móvil. Importe: ${DiningReservationPolicy.PRICE_LABEL}.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = TextSecondary
+                    )
+                    paymentError?.let { message ->
+                        Text(message, color = MaterialTheme.colorScheme.error,
+                            modifier = Modifier.testTag("dining-payment-error"))
+                    }
+
+                    // El único resultado que permite reservar es una autenticación completada.
                     Button(
                         onClick = {
+                            if (!DiningReservationPolicy.canReserve(activePendingMenu.date, dateProvider())) {
+                                today = dateProvider()
+                                cancelPayment()
+                                return@Button
+                            }
                             isPaymentProcessing = true
-                            scope.launch {
-                                delay(1200)
+                            paymentError = null
+                            val confirmedMenu = activePendingMenu
+                            val confirmedType = orderMenuType
+                            authorizer.confirm { result ->
                                 isPaymentProcessing = false
-                                val dateKey = activePendingMenu.date.toString()
-                                ordersPlaced[dateKey] = orderMenuType.label
-                                orderPreferences.edit().putString("ordered_date_$dateKey", orderMenuType.label).apply()
-                                triggerVibration(context, durationMs = 150)
-                                paymentSuccessDialog = OrderSuccessInfo(activePendingMenu.dayLabel, orderMenuType.label)
-                                pendingOrderDate = null
+                                when (result) {
+                                    DeviceAuthenticationResult.Authenticated -> {
+                                        val confirmationDate = dateProvider()
+                                        if (!DiningReservationPolicy.canReserve(confirmedMenu.date, confirmationDate)) {
+                                            today = confirmationDate
+                                            cancelPayment()
+                                            Toast.makeText(context, "El plazo para reservar este menú ha terminado.", Toast.LENGTH_LONG).show()
+                                            return@confirm
+                                        }
+                                        // Solo estado local de frontend: no se llama a ninguna API de pago/reserva.
+                                        val dateKey = confirmedMenu.date.toString()
+                                        ordersPlaced[dateKey] = confirmedType.label
+                                        orderPreferences.edit().putString("ordered_date_$dateKey", confirmedType.label).apply()
+                                        selectedMenuType = confirmedType
+                                        triggerVibration(context, durationMs = 150)
+                                        paymentSuccessDialog = OrderSuccessInfo(confirmedMenu.dayLabel, confirmedType.label)
+                                        pendingOrderDateKey = null
+                                    }
+                                    DeviceAuthenticationResult.Cancelled ->
+                                        paymentError = "Autenticación cancelada. No se ha reservado el menú."
+                                    is DeviceAuthenticationResult.Error -> paymentError = result.message
+                                }
                             }
                         },
                         enabled = !isPaymentProcessing,
@@ -608,6 +616,7 @@ fun DiningScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(52.dp)
+                            .testTag("dining-confirm-payment")
                     ) {
                         if (isPaymentProcessing) {
                             CircularProgressIndicator(
@@ -616,7 +625,7 @@ fun DiningScreen(
                                 strokeWidth = 2.5.dp
                             )
                             Spacer(Modifier.width(12.dp))
-                            Text("Procesando pago seguro...", color = Color.White, fontWeight = FontWeight.Bold)
+                            Text("Esperando autenticación…", color = Color.White, fontWeight = FontWeight.Bold)
                         } else {
                             Icon(
                                 imageVector = Icons.Default.Lock,
@@ -625,14 +634,13 @@ fun DiningScreen(
                                 modifier = Modifier.size(18.dp)
                             )
                             Spacer(Modifier.width(8.dp))
-                            Text("Pagar 5.50 €", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                            Text("Proceder al pago", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color.White)
                         }
                     }
 
                     // BOTÓN CANCELAR
                     OutlinedButton(
-                        onClick = { pendingOrderDate = null },
-                        enabled = !isPaymentProcessing,
+                        onClick = { cancelPayment() },
                         shape = RoundedCornerShape(14.dp),
                         modifier = Modifier
                             .fillMaxWidth()
@@ -677,7 +685,9 @@ fun DiningScreen(
                     )
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(
-                        text = currentMenu.dayLabel,
+                        text = if (currentMenu.date == today || currentMenu.date == today.plusDays(1))
+                            "${currentMenu.dayName} · ${currentMenu.dayLabel}" else currentMenu.dayLabel,
+                        modifier = Modifier.testTag("dining-current-day"),
                         color = UgrRed,
                         fontWeight = FontWeight.Bold,
                         fontSize = 13.sp
@@ -713,24 +723,37 @@ fun DiningScreen(
         HorizontalPager(
             state = pagerState,
             pageSpacing = 16.dp,
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth().weight(1f).testTag("dining-menu-pager")
         ) { page ->
             val menu = menuList[page]
             val dayOrderedType = ordersPlaced[menu.date.toString()]
             val isThisDayOrdered = !dayOrderedType.isNullOrBlank()
+            val isDisplayedMenuReserved = dayOrderedType == selectedMenuType.label
+            val hasService = DiningReservationPolicy.hasService(menu.date)
+            val canReserve = DiningReservationPolicy.canReserve(menu.date, today)
 
             Column(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(365.dp)
-                        .padding(horizontal = 2.dp),
+                        .padding(horizontal = 2.dp)
+                        .testTag("dining-menu-${menu.date}")
+                        .semantics { stateDescription = when {
+                            isDisplayedMenuReserved -> "Reservado"
+                            !hasService -> "Sin servicio"
+                            else -> "Sin reservar"
+                        } },
                     shape = RoundedCornerShape(22.dp),
-                    colors = CardDefaults.cardColors(containerColor = SurfaceWhite),
-                    border = androidx.compose.foundation.BorderStroke(1.dp, SurfaceBorder),
+                    colors = CardDefaults.cardColors(
+                        containerColor = if (isDisplayedMenuReserved) Color(0xFFDCFCE7) else SurfaceWhite
+                    ),
+                    border = androidx.compose.foundation.BorderStroke(
+                        1.dp, if (isDisplayedMenuReserved) CampusGreen else SurfaceBorder
+                    ),
                     elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
                 ) {
                     Column(
@@ -739,7 +762,7 @@ fun DiningScreen(
                             .padding(16.dp),
                         verticalArrangement = Arrangement.SpaceBetween
                     ) {
-                        // Cabecera: Selector de tipo de menú (Tradicional / Vegetariano) y Tarifa oficial (4.00 €)
+                        // Cabecera: Selector de tipo de menú y tarifa de comedor.
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.SpaceBetween,
@@ -796,7 +819,7 @@ fun DiningScreen(
                                 color = UgrRed.copy(alpha = 0.10f)
                             ) {
                                 Text(
-                                    text = "4.00 €",
+                                    text = DiningReservationPolicy.PRICE_LABEL,
                                     fontWeight = FontWeight.ExtraBold,
                                     fontSize = 15.sp,
                                     color = UgrRed,
@@ -807,30 +830,43 @@ fun DiningScreen(
 
                         // Platos agrupados con separación equilibrada y legible
                         val courses = if (selectedMenuType == DiningMenuType.TRADITIONAL) menu.traditional else menu.vegetarian
-                        Column(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            DishVisualRow(
-                                dishNumber = "1",
-                                category = "Primer Plato",
-                                dishName = courses.firstCourse,
-                                badgeColor = EtsiitBlue
-                            )
-                            HorizontalDivider(color = SurfaceBorder.copy(alpha = 0.5f))
-                            DishVisualRow(
-                                dishNumber = "2",
-                                category = "Segundo Plato",
-                                dishName = courses.secondCourse,
-                                badgeColor = WarningAmber
-                            )
-                            HorizontalDivider(color = SurfaceBorder.copy(alpha = 0.5f))
-                            DishVisualRow(
-                                dishNumber = "3",
-                                category = "Postre",
-                                dishName = courses.dessert,
-                                badgeColor = CampusGreen
-                            )
+                        if (hasService) {
+                            Column(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                DishVisualRow(
+                                    dishNumber = "1",
+                                    category = "Primer Plato",
+                                    dishName = courses.firstCourse,
+                                    badgeColor = EtsiitBlue
+                                )
+                                HorizontalDivider(color = SurfaceBorder.copy(alpha = 0.5f))
+                                DishVisualRow(
+                                    dishNumber = "2",
+                                    category = "Segundo Plato",
+                                    dishName = courses.secondCourse,
+                                    badgeColor = WarningAmber
+                                )
+                                HorizontalDivider(color = SurfaceBorder.copy(alpha = 0.5f))
+                                DishVisualRow(
+                                    dishNumber = "3",
+                                    category = "Postre",
+                                    dishName = courses.dessert,
+                                    badgeColor = CampusGreen
+                                )
+                            }
+                        } else {
+                            Column(
+                                Modifier.fillMaxWidth(),
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.spacedBy(10.dp)
+                            ) {
+                                Icon(Icons.Default.EventBusy, null, tint = TextSecondary, modifier = Modifier.size(36.dp))
+                                Text("No hay servicio de comedor este día", fontWeight = FontWeight.Bold,
+                                    textAlign = TextAlign.Center, color = TextPrimary)
+                                Text("El comedor abre de lunes a viernes.", color = TextSecondary)
+                            }
                         }
 
                         // Barra inferior de comedor más cercano (Aynadamar)
@@ -893,118 +929,63 @@ fun DiningScreen(
                     }
                 }
 
-                // Tarjeta de encargo / reserva de comida para ESTE DÍA (Solo visible si ha iniciado sesión)
-                if (isLoggedIn) {
-                    if (menu.isToday && !isThisDayOrdered) {
-                        Card(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(108.dp),
-                            shape = RoundedCornerShape(18.dp),
-                            colors = CardDefaults.cardColors(containerColor = Color(0xFFF1F5F9))
-                        ) {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .padding(horizontal = 16.dp, vertical = 14.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Info,
-                                    contentDescription = null,
-                                    tint = TextSecondary,
-                                    modifier = Modifier.size(22.dp)
-                                )
-                                Spacer(modifier = Modifier.width(10.dp))
+                // Los cuatro próximos días laborables admiten reservas; hoy conserva las anteriores.
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(18.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = if (isThisDayOrdered) Color(0xFFDCFCE7) else SurfaceWhite
+                    ),
+                    border = androidx.compose.foundation.BorderStroke(
+                        1.dp, if (isThisDayOrdered) CampusGreen else SurfaceBorder
+                    )
+                ) {
+                    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Row(verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                            Icon(
+                                if (isThisDayOrdered) Icons.Default.CheckCircle else Icons.Default.Restaurant,
+                                null, tint = if (isThisDayOrdered) CampusGreen else UgrRed
+                            )
+                            Column(Modifier.weight(1f)) {
                                 Text(
-                                    text = "El encargo para llevar debe realizarse con antelación. Desliza hacia la izquierda para encargar los días posteriores.",
-                                    fontSize = 12.sp,
-                                    color = TextSecondary,
-                                    lineHeight = 16.sp
+                                    if (isThisDayOrdered) "Menú $dayOrderedType reservado" else "Reserva tu menú para llevar",
+                                    fontWeight = FontWeight.Bold,
+                                    color = if (isThisDayOrdered) Color(0xFF065F46) else TextPrimary
+                                )
+                                Text(
+                                    when {
+                                        isThisDayOrdered -> "Reserva confirmada · ${DiningReservationPolicy.PRICE_LABEL}"
+                                        !hasService -> "Sin servicio de comedor"
+                                        canReserve -> "Para el ${menu.dayLabel} · ${DiningReservationPolicy.PRICE_LABEL}"
+                                        else -> DiningReservationPolicy.PRICE_LABEL
+                                    },
+                                    style = MaterialTheme.typography.bodySmall, color = TextSecondary
                                 )
                             }
                         }
-                    } else {
-                        Card(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(108.dp)
-                                .clickable(enabled = !isThisDayOrdered && menu.date.isAfter(today)) {
-                                    pendingOrderDate = menu.date
-                                },
-                            shape = RoundedCornerShape(18.dp),
-                            colors = CardDefaults.cardColors(
-                                containerColor = if (isThisDayOrdered) Color(0xFFDCFCE7) else SurfaceWhite
-                            ),
-                            border = androidx.compose.foundation.BorderStroke(
-                                1.2.dp,
-                                if (isThisDayOrdered) CampusGreen else WarningAmber.copy(alpha = 0.5f)
-                            ),
-                            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                        Button(
+                            onClick = { reserveMenu(menu) },
+                            enabled = canReserve && !isThisDayOrdered,
+                            modifier = Modifier.fillMaxWidth().testTag("dining-reserve-${menu.date}"),
+                            shape = RoundedCornerShape(12.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = UgrRed,
+                                disabledContainerColor = if (isThisDayOrdered) CampusGreen else SurfaceBorder,
+                                disabledContentColor = if (isThisDayOrdered) Color.White else TextSecondary
+                            )
                         ) {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .padding(horizontal = 16.dp, vertical = 12.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.SpaceBetween
-                            ) {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                                    modifier = Modifier.weight(1f)
-                                ) {
-                                    Box(
-                                        modifier = Modifier
-                                            .size(44.dp)
-                                            .clip(RoundedCornerShape(12.dp))
-                                            .background(if (isThisDayOrdered) CampusGreen.copy(alpha = 0.15f) else WarningAmber.copy(alpha = 0.15f)),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        Icon(
-                                            imageVector = if (isThisDayOrdered) Icons.Default.CheckCircle else Icons.Default.Fastfood,
-                                            contentDescription = null,
-                                            tint = if (isThisDayOrdered) CampusGreen else WarningAmber,
-                                            modifier = Modifier.size(24.dp)
-                                        )
-                                    }
-
-                                    Column(
-                                        modifier = Modifier.weight(1f),
-                                        verticalArrangement = Arrangement.spacedBy(3.dp)
-                                    ) {
-                                        Text(
-                                            text = if (isThisDayOrdered) "¡Menú $dayOrderedType reservado!" else "Encargar menú para llevar",
-                                            fontWeight = FontWeight.Bold,
-                                            fontSize = 15.sp,
-                                            color = if (isThisDayOrdered) Color(0xFF065F46) else TextPrimary
-                                        )
-                                        Text(
-                                            text = "Para el ${menu.dayLabel}",
-                                            fontSize = 12.sp,
-                                            color = if (isThisDayOrdered) Color(0xFF047857) else TextSecondary,
-                                            fontWeight = FontWeight.Medium
-                                        )
-                                        Text(
-                                            text = if (isThisDayOrdered)
-                                                "Recoger a partir de las 13:00 h"
-                                            else
-                                                "5.50 €",
-                                            fontSize = if (isThisDayOrdered) 12.sp else 14.sp,
-                                            fontWeight = if (isThisDayOrdered) FontWeight.Normal else FontWeight.ExtraBold,
-                                            color = if (isThisDayOrdered) TextSecondary else UgrRed
-                                        )
-                                    }
-                                }
-
-                                if (!isThisDayOrdered && menu.date.isAfter(today)) {
-                                    GestureBadge(
-                                        type = GestureType.ACTION_TRIGGER,
-                                        size = 28.dp,
-                                        iconSize = 16.dp
-                                    )
-                                }
-                            }
+                            Text(when {
+                                isThisDayOrdered -> "Reservado"
+                                !hasService -> "Sin servicio"
+                                else -> "Reservar"
+                            }, fontWeight = FontWeight.Bold)
+                        }
+                        if (!isThisDayOrdered && hasService && !canReserve) {
+                            Text(
+                                "No se admiten reservas para hoy. Desliza para reservar uno de los cuatro próximos días laborables.",
+                                style = MaterialTheme.typography.bodySmall, color = TextSecondary
+                            )
                         }
                     }
                 }
@@ -1035,7 +1016,7 @@ fun DiningScreen(
             },
             title = {
                 Text(
-                    text = "Pago y reserva confirmada",
+                    text = "Reservado",
                     fontWeight = FontWeight.Bold,
                     fontSize = 17.sp,
                     textAlign = TextAlign.Center
@@ -1043,7 +1024,8 @@ fun DiningScreen(
             },
             text = {
                 Text(
-                    text = "Se ha completado el pago de 5.50 € correctamente.",
+                    text = "Menú ${info.menuTypeName} · ${info.dayLabel}\n\n" +
+                        "Reserva confirmada · ${DiningReservationPolicy.PRICE_LABEL}",
                     fontSize = 14.sp,
                     color = TextSecondary,
                     textAlign = TextAlign.Center

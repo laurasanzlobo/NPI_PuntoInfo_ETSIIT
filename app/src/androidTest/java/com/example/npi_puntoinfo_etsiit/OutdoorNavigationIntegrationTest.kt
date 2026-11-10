@@ -19,7 +19,6 @@ import org.junit.runner.RunWith
 @RunWith(AndroidJUnit4::class)
 class OutdoorNavigationIntegrationTest {
     @get:Rule val compose = createAndroidComposeRule<MainActivity>()
-    private var gpsOfferedEntry = false
 
     @Test fun diningTakeMeThereOpensOutdoorAndIndoorTabRemainsSeparate() {
         compose.onNodeWithText("Comedores").performClick()
@@ -29,10 +28,12 @@ class OutdoorNavigationIntegrationTest {
         dismissOptionalConsent()
         compose.onNodeWithText("Mapa exterior").assertIsDisplayed()
         compose.onNodeWithText("Comedor Aynadamar · Planta -1").assertIsDisplayed()
+        compose.onNodeWithTag("compact-indoor-entry").assertIsDisplayed()
         compose.onNodeWithText("ETSIIT", substring = false).performClick()
-        compose.onNodeWithText("Comedor PTS").performClick()
-        compose.onNodeWithText("Comedor PTS").assertIsDisplayed()
-        compose.onNodeWithContentDescription("Atrás").performClick()
+        compose.onNodeWithText("Edificio Auxiliar ETSIIT").performClick()
+        compose.onNodeWithText("Edificio Auxiliar ETSIIT").assertIsDisplayed()
+        compose.onNodeWithTag("compact-indoor-entry").assertDoesNotExist()
+        compose.onNodeWithContentDescription("Volver a Inicio").performClick()
         compose.onNodeWithTag("outdoor-screen").assertDoesNotExist()
         compose.onNodeWithText("Desliza horizontalmente para consultar otros días").assertIsDisplayed()
         compose.onNodeWithText("Guiado").performClick()
@@ -64,14 +65,12 @@ class OutdoorNavigationIntegrationTest {
         waitForOutdoor()
         dismissOptionalConsent()
         compose.onNodeWithText("Información de navegación").assertDoesNotExist()
-        if (!gpsOfferedEntry) compose.onNodeWithText("Ya estoy dentro").assertDoesNotExist()
-        openManualEntry()
-        compose.onNodeWithText("Aún estoy fuera").performClick()
+        compose.onNodeWithTag("compact-indoor-entry").assertIsDisplayed()
         compose.onNodeWithTag("outdoor-screen").assertIsDisplayed()
         compose.activityRule.scenario.recreate()
         waitForOutdoor()
         compose.onNodeWithText("${target.name} · ${target.location}").assertIsDisplayed()
-        compose.onNodeWithText("Ya estoy dentro").performClick()
+        compose.onNodeWithTag("compact-indoor-entry").performClick()
         compose.onNodeWithTag("outdoor-screen").assertDoesNotExist()
         compose.onNode(hasText(target.name) or hasText("Despacho ${target.name.removePrefix("D_").removePrefix("D-")}", substring = true)).assertIsDisplayed()
         compose.onNodeWithText(target.location).assertIsDisplayed()
@@ -79,13 +78,12 @@ class OutdoorNavigationIntegrationTest {
         compose.onNodeWithTag("outdoor-screen").assertIsDisplayed()
         repeat(3) {
             compose.onNodeWithTag("indoor-arrival-dialog").assertDoesNotExist()
-            compose.onNodeWithText("Ya estoy dentro").performClick()
+            compose.onNodeWithTag("compact-indoor-entry").performClick()
             compose.onNode(hasText(target.name) or hasText("Despacho ${target.name.removePrefix("D_").removePrefix("D-")}", substring = true)).assertIsDisplayed()
             compose.onNodeWithText("Volver al exterior").performClick()
         }
         compose.activityRule.scenario.recreate()
         compose.onNodeWithTag("compact-indoor-entry").assertIsDisplayed()
-        compose.onNodeWithContentDescription("Información y privacidad").assertIsDisplayed()
     }
 
     @Test fun selectingOtherCampusCancelsProfessorHandoff() {
@@ -97,15 +95,17 @@ class OutdoorNavigationIntegrationTest {
         waitForOutdoor()
         dismissOptionalConsent()
         compose.onNodeWithText("ETSIIT", substring = false).performClick()
-        compose.onNodeWithText("Comedor PTS").performClick()
-        compose.onNodeWithText("Ya estoy dentro").assertDoesNotExist()
+        compose.onNodeWithText("Edificio Auxiliar ETSIIT").performClick()
+        compose.onNodeWithTag("compact-indoor-entry").assertDoesNotExist()
         compose.onNodeWithText("Continuar dentro").assertDoesNotExist()
     }
 
     @Test fun scheduleClassroomOpensGpsAndPreservesTargetThroughRecreationAndIndoorHandoff() {
         val today = LocalDate.now()
-        val offset = (0..6).first { ScheduleRepository.getClassesForDay(today.plusDays(it.toLong()).dayOfWeek).isNotEmpty() }
-        val item = ScheduleRepository.getClassesForDay(today.plusDays(offset.toLong()).dayOfWeek).first()
+        val offset = (0..6).first { ScheduleRepository.getClassesForDay(
+            context = compose.activity, dayOfWeek = today.plusDays(it.toLong()).dayOfWeek).isNotEmpty() }
+        val item = ScheduleRepository.getClassesForDay(
+            context = compose.activity, dayOfWeek = today.plusDays(offset.toLong()).dayOfWeek).first()
         val name = item.room.substringBefore("·").trim()
         val location = item.room.substringAfter("·").trim()
         compose.onNodeWithText("Horario").performClick()
@@ -120,12 +120,11 @@ class OutdoorNavigationIntegrationTest {
         compose.onNodeWithText("$name · $location").assertIsDisplayed()
         compose.onNodeWithText("Información de navegación").assertDoesNotExist()
         compose.onNodeWithTag("indoor-arrival-dialog").assertDoesNotExist()
-        if (!gpsOfferedEntry) compose.onNodeWithTag("compact-indoor-entry").assertDoesNotExist()
+        compose.onNodeWithTag("compact-indoor-entry").assertIsDisplayed()
         compose.activityRule.scenario.recreate()
         waitForOutdoor()
         compose.onNodeWithText("$name · $location").assertIsDisplayed()
-        openManualEntry()
-        compose.onNodeWithText("Continuar dentro").performClick()
+        compose.onNodeWithTag("compact-indoor-entry").performClick()
         compose.onNodeWithTag("outdoor-screen").assertDoesNotExist()
         compose.onNodeWithText(name).assertIsDisplayed()
         compose.onNodeWithText(location).assertIsDisplayed()
@@ -140,21 +139,20 @@ class OutdoorNavigationIntegrationTest {
         waitForOutdoor()
         dismissOptionalConsent()
         compose.onNodeWithText("Comedor Aynadamar · Planta -1").assertIsDisplayed()
-        openManualEntry()
-        compose.onNodeWithText("Continuar dentro").performClick()
+        compose.onNodeWithTag("compact-indoor-entry").assertIsDisplayed().performClick()
         compose.onNodeWithText("Comedor Aynadamar").assertIsDisplayed()
         compose.onNodeWithText("Volver al exterior").performClick()
         repeat(3) {
             compose.onNodeWithTag("indoor-arrival-dialog").assertDoesNotExist()
-            compose.onNodeWithText("Ya estoy dentro").performClick()
+            compose.onNodeWithTag("compact-indoor-entry").performClick()
             compose.onNodeWithText("Comedor Aynadamar").assertIsDisplayed()
             compose.onNodeWithText("Volver al exterior").performClick()
         }
-        compose.onNodeWithContentDescription("Atrás").performClick()
+        compose.onNodeWithContentDescription("Volver a Inicio").performClick()
         openDiningNavigation()
         waitForOutdoor()
         dismissOptionalConsent()
-        if (!gpsOfferedEntry) compose.onNodeWithTag("compact-indoor-entry").assertDoesNotExist()
+        compose.onNodeWithTag("compact-indoor-entry").assertIsDisplayed()
         compose.onNodeWithTag("indoor-arrival-dialog").assertDoesNotExist()
         compose.onNodeWithText("Comedor Aynadamar · Planta -1").assertIsDisplayed()
     }
@@ -164,15 +162,14 @@ class OutdoorNavigationIntegrationTest {
         openDiningNavigation()
         waitForOutdoor()
         dismissOptionalConsent()
-        openManualEntry()
-        compose.onNodeWithText("Continuar dentro").performClick()
+        compose.onNodeWithTag("compact-indoor-entry").assertIsDisplayed().performClick()
         compose.onNodeWithContentDescription("Cancelar ruta").performClick()
         compose.onNodeWithText("Volver al exterior").assertDoesNotExist()
         compose.onNodeWithText("Comedores").performClick()
         openDiningNavigation()
         waitForOutdoor()
         dismissOptionalConsent()
-        if (!gpsOfferedEntry) compose.onNodeWithTag("compact-indoor-entry").assertDoesNotExist()
+        compose.onNodeWithTag("compact-indoor-entry").assertIsDisplayed()
         compose.onNodeWithTag("indoor-arrival-dialog").assertDoesNotExist()
     }
 
@@ -198,29 +195,13 @@ class OutdoorNavigationIntegrationTest {
         }
     }
 
-    private fun openManualEntry() {
-        if (compose.onNodeWithTag("manual-indoor-entry").isDisplayed()) {
-            compose.onNodeWithTag("manual-indoor-entry").performClick()
-        } else {
-            compose.onNodeWithContentDescription("Información y privacidad").performClick()
-            compose.onNodeWithText("Continuar dentro manualmente").performClick()
-        }
-    }
-
     private fun dismissOptionalConsent() {
         compose.waitForIdle()
         val dismiss = compose.onNodeWithText("Ahora no")
         if (dismiss.isDisplayed()) dismiss.performClick()
-        // La ubicación real o simulada del dispositivo puede proponer la entrada sin una ruta ORS.
-        compose.waitUntil(25_000) {
-            runCatching {
-                compose.onAllNodes(hasText("Ubicación", substring = true) or
-                    hasText("Sin permiso de ubicación", substring = true) or
-                    hasText("La ubicación del teléfono", substring = true)).fetchSemanticsNodes().isNotEmpty()
-            }.getOrDefault(false)
+        // La acción manual ya no necesita esperar a la primera fijación GPS.
+        if (compose.onNodeWithText("Aún estoy fuera").isDisplayed()) {
+            compose.onNodeWithText("Aún estoy fuera").performClick()
         }
-        compose.waitForIdle()
-        gpsOfferedEntry = compose.onNodeWithText("Estás llegando a la ETSIIT").isDisplayed()
-        if (gpsOfferedEntry) compose.onNodeWithText("Aún estoy fuera").performClick()
     }
 }
