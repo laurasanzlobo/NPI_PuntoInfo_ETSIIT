@@ -12,10 +12,17 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.LocalCafe
+import androidx.compose.material.icons.filled.LocalLibrary
+import androidx.compose.material.icons.filled.MeetingRoom
 import androidx.compose.material.icons.filled.Navigation
+import androidx.compose.material.icons.filled.Print
+import androidx.compose.material.icons.filled.Public
 import androidx.compose.material.icons.filled.Restaurant
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.School
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -325,17 +332,16 @@ fun HomeScreen(
         }
 
         // ==========================================
-        // 3. PARTE INFERIOR: BOTONES DE NAVEGACIÓN PROFESIONALES (Tamaño fijo garantizado)
+        // 3. PARTE INFERIOR: NAVEGACIÓN SEGÚN ESTADO DE SESIÓN
         // ==========================================
-        Column(
-            modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            // Botón 1: Mi Horario (Solo visible cuando el estudiante ha iniciado sesión)
-            if (profile.isLoggedIn) {
+        if (profile.isLoggedIn) {
+            // CON SESIÓN INICIADA: Mi Horario, Servicios y Comedores
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
                 HomeFlatButton(
                     title = "Mi Horario",
-                    subtitle = "Consulta de clases y aulas",
                     icon = Icons.Default.DateRange,
                     accentColor = Color(0xFF1D4ED8),
                     bgColor = Color(0xFFF0F7FF),
@@ -344,32 +350,159 @@ fun HomeScreen(
                     iconGradient = listOf(Color(0xFF3B82F6), Color(0xFF1D4ED8)),
                     onClick = { onNavigate(Screen.Schedule.route) }
                 )
+
+                HomeFlatButton(
+                    title = "Servicios",
+                    icon = Icons.Default.Info,
+                    accentColor = Color(0xFF0F766E),
+                    bgColor = Color(0xFFF0FDFA),
+                    borderColor = Color(0xFF99F6E4),
+                    textColor = Color(0xFF115E59),
+                    iconGradient = listOf(Color(0xFF14B8A6), Color(0xFF0F766E)),
+                    onClick = { onNavigate(Screen.Services.route) }
+                )
+
+                HomeFlatButton(
+                    title = "Comedores",
+                    icon = Icons.Default.Restaurant,
+                    accentColor = Color(0xFFD97706),
+                    bgColor = Color(0xFFFFFBEB),
+                    borderColor = Color(0xFFFDE68A),
+                    textColor = Color(0xFF92400E),
+                    iconGradient = listOf(Color(0xFFF59E0B), Color(0xFFD97706)),
+                    onClick = { onNavigate(Screen.Dining.route) }
+                )
             }
+        } else {
+            // SIN SESIÓN INICIADA: Servicios y Comedores
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                HomeFlatButton(
+                    title = "Servicios",
+                    icon = Icons.Default.Info,
+                    accentColor = Color(0xFF0F766E),
+                    bgColor = Color(0xFFF0FDFA),
+                    borderColor = Color(0xFF99F6E4),
+                    textColor = Color(0xFF115E59),
+                    iconGradient = listOf(Color(0xFF14B8A6), Color(0xFF0F766E)),
+                    onClick = { onNavigate(Screen.Services.route) }
+                )
 
-            // Botón 2: Comedores (Ámbar gastronómico elegante)
-            HomeFlatButton(
-                title = "Comedores",
-                subtitle = if (profile.isLoggedIn) "Menú diario y encargos" else "Consulta del menú diario",
-                icon = Icons.Default.Restaurant,
-                accentColor = Color(0xFFD97706),
-                bgColor = Color(0xFFFFFBEB),
-                borderColor = Color(0xFFFDE68A),
-                textColor = Color(0xFF92400E),
-                iconGradient = listOf(Color(0xFFF59E0B), Color(0xFFD97706)),
-                onClick = { onNavigate(Screen.Dining.route) }
+                HomeFlatButton(
+                    title = "Comedores",
+                    icon = Icons.Default.Restaurant,
+                    accentColor = Color(0xFFD97706),
+                    bgColor = Color(0xFFFFFBEB),
+                    borderColor = Color(0xFFFDE68A),
+                    textColor = Color(0xFF92400E),
+                    iconGradient = listOf(Color(0xFFF59E0B), Color(0xFFD97706)),
+                    onClick = { onNavigate(Screen.Dining.route) }
+                )
+            }
+        }
+    }
+}
+
+/**
+ * Tarjeta de servicio compacta para visitantes sin sesión
+ */
+@Composable
+private fun ServiceQuickCard(
+    title: String,
+    subtitle: String,
+    icon: ImageVector,
+    accentColor: Color,
+    bgColor: Color,
+    borderColor: Color,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
+) {
+    Card(
+        modifier = modifier
+            .height(68.dp)
+            .clickable(onClick = onClick),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = bgColor),
+        border = androidx.compose.foundation.BorderStroke(1.dp, borderColor),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(40.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(accentColor.copy(alpha = 0.15f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = title,
+                    tint = accentColor,
+                    modifier = Modifier.size(22.dp)
+                )
+            }
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = title,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 13.sp,
+                    color = TextPrimary,
+                    maxLines = 1
+                )
+                Text(
+                    text = subtitle,
+                    fontSize = 11.sp,
+                    color = TextSecondary,
+                    maxLines = 1
+                )
+            }
+        }
+    }
+}
+
+/**
+ * Píldora/Etiqueta de servicio informativo (solo etiqueta según feedback)
+ */
+@Composable
+private fun ServiceTagBadge(
+    label: String,
+    icon: ImageVector,
+    modifier: Modifier = Modifier
+) {
+    Surface(
+        modifier = modifier.height(30.dp),
+        shape = RoundedCornerShape(99.dp),
+        color = BackgroundLight,
+        border = androidx.compose.foundation.BorderStroke(1.dp, SurfaceBorder.copy(alpha = 0.6f))
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 10.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = TextSecondary,
+                modifier = Modifier.size(13.dp)
             )
-
-            // Botón 3: Profesores (Verde azulado académico elegante)
-            HomeFlatButton(
-                title = "Profesores",
-                subtitle = "Tutorías y despachos",
-                icon = Icons.Default.School,
-                accentColor = Color(0xFF0F766E),
-                bgColor = Color(0xFFF0FDFA),
-                borderColor = Color(0xFF99F6E4),
-                textColor = Color(0xFF115E59),
-                iconGradient = listOf(Color(0xFF14B8A6), Color(0xFF0F766E)),
-                onClick = { onNavigate(Screen.Professors.route) }
+            Spacer(modifier = Modifier.width(5.dp))
+            Text(
+                text = label,
+                fontSize = 10.sp,
+                color = TextSecondary,
+                fontWeight = FontWeight.Medium,
+                maxLines = 1
             )
         }
     }
@@ -382,7 +515,7 @@ fun HomeScreen(
 @Composable
 private fun HomeFlatButton(
     title: String,
-    subtitle: String,
+    subtitle: String? = null,
     icon: ImageVector,
     accentColor: Color,
     bgColor: Color,
@@ -394,7 +527,7 @@ private fun HomeFlatButton(
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .height(80.dp)
+            .height(if (subtitle != null) 80.dp else 66.dp)
             .clickable(onClick = onClick),
         shape = RoundedCornerShape(20.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
@@ -415,8 +548,8 @@ private fun HomeFlatButton(
                 // Insignia con degradado elegante para el icono
                 Box(
                     modifier = Modifier
-                        .size(52.dp)
-                        .clip(RoundedCornerShape(15.dp))
+                        .size(if (subtitle != null) 52.dp else 44.dp)
+                        .clip(RoundedCornerShape(14.dp))
                         .background(Brush.linearGradient(iconGradient)),
                     contentAlignment = Alignment.Center
                 ) {
@@ -424,23 +557,26 @@ private fun HomeFlatButton(
                         imageVector = icon,
                         contentDescription = title,
                         tint = Color.White,
-                        modifier = Modifier.size(28.dp)
+                        modifier = Modifier.size(if (subtitle != null) 28.dp else 24.dp)
                     )
                 }
 
-                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Column(verticalArrangement = Arrangement.Center) {
                     Text(
                         text = title,
                         color = textColor,
-                        fontSize = 19.sp,
+                        fontSize = 18.sp,
                         fontWeight = FontWeight.ExtraBold
                     )
-                    Text(
-                        text = subtitle,
-                        color = textColor.copy(alpha = 0.70f),
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.Medium
-                    )
+                    if (!subtitle.isNullOrBlank()) {
+                        Spacer(modifier = Modifier.height(2.dp))
+                        Text(
+                            text = subtitle,
+                            color = textColor.copy(alpha = 0.70f),
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
                 }
             }
 

@@ -383,7 +383,7 @@ class GrafoETSIIT {
         }
         if (limpia.contains("biblioteca") || limpia.contains("estudiar") || limpia.contains("libros")) {
             val nodo = buscarNodoPorDestino("biblioteca")
-            if (nodo != null) return ResultadoVoz.Exito(DestinoVoz(nodo, "Biblioteca", "Planta Baja", texto))
+            if (nodo != null) return ResultadoVoz.Exito(DestinoVoz(nodo, "Biblioteca", "Planta 1", texto))
         }
         if (limpia.contains("salon") || limpia.contains("actos") || limpia.contains("conferencia") || limpia.contains("eventos")) {
             val nodo = buscarNodoPorDestino("salon")

@@ -240,9 +240,15 @@ fun GestureBadge(
     size: Dp = 30.dp,
     iconSize: Dp = 17.dp,
     showTooltipOnClick: Boolean = true,
+    containerColor: Color? = null,
+    contentColor: Color? = null,
     onClick: (() -> Unit)? = null
 ) {
     var showDialog by remember { mutableStateOf(false) }
+
+    val bg = containerColor ?: type.badgeColor.copy(alpha = 0.12f)
+    val tint = contentColor ?: type.badgeColor
+    val borderModifier = if (containerColor != null) Modifier else Modifier.border(1.dp, type.badgeColor.copy(alpha = 0.35f), CircleShape)
 
     val isInteractive = onClick != null || showTooltipOnClick
     val clickModifier = if (isInteractive) {
@@ -261,15 +267,15 @@ fun GestureBadge(
         modifier = modifier
             .size(size)
             .clip(CircleShape)
-            .background(type.badgeColor.copy(alpha = 0.12f))
-            .border(1.dp, type.badgeColor.copy(alpha = 0.35f), CircleShape)
+            .background(bg)
+            .then(borderModifier)
             .then(clickModifier),
         contentAlignment = Alignment.Center
     ) {
         Icon(
             imageVector = type.icon,
             contentDescription = "${type.title}: ${type.gestureName}",
-            tint = type.badgeColor,
+            tint = tint,
             modifier = Modifier.size(iconSize)
         )
     }

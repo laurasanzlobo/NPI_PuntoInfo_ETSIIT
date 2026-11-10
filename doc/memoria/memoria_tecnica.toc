@@ -1,0 +1,32 @@
+\babel@toc {spanish}{}\relax 
+\contentsline {section}{\numberline {1}Introducción y Objetivos del Sistema}{1}{section.1}%
+\contentsline {subsection}{\numberline {1.1}Contextualización y Problemática}{1}{subsection.1.1}%
+\contentsline {subsection}{\numberline {1.2}Objetivos Técnicos}{1}{subsection.1.2}%
+\contentsline {section}{\numberline {2}Bibliotecas Externas y Dependencias Incorporadas}{1}{section.2}%
+\contentsline {section}{\numberline {3}Diagramas del Sistema}{1}{section.3}%
+\contentsline {subsection}{\numberline {3.1}Diagrama de Arquitectura Modular por Capas}{1}{subsection.3.1}%
+\contentsline {subsection}{\numberline {3.2}Diagrama de Estados: Detección Gestual con Retorno a Línea de Visión}{2}{subsection.3.2}%
+\contentsline {section}{\numberline {4}Descripción Detallada del Software}{2}{section.4}%
+\contentsline {subsection}{\numberline {4.1}Paquete de Sensores y Gestos (\texttt {com.example.npi\_puntoinfo\_etsiit.sensors})}{2}{subsection.4.1}%
+\contentsline {subsubsection}{\numberline {4.1.1}Clase \texttt {AccelerometerManager}}{2}{subsubsection.4.1.1}%
+\contentsline {paragraph}{Variables miembro y constantes de calibración:}{3}{Item.7}%
+\contentsline {paragraph}{Métodos principales:}{4}{Item.7}%
+\contentsline {subsubsection}{\numberline {4.1.2}Clase \texttt {ProximityManager}}{4}{subsubsection.4.1.2}%
+\contentsline {subsubsection}{\numberline {4.1.3}Clase \texttt {GpsLocationReader} y \texttt {DeviceLocationProvider}}{4}{subsubsection.4.1.3}%
+\contentsline {subsection}{\numberline {4.2}Motor Topológico Interior y Algoritmo Dijkstra (\texttt {GrafoETSIIT.kt})}{5}{subsection.4.2}%
+\contentsline {subsubsection}{\numberline {4.2.1}Modelos de Datos Topológicos}{5}{subsubsection.4.2.1}%
+\contentsline {subsubsection}{\numberline {4.2.2}Clase \texttt {GrafoETSIIT}}{5}{subsubsection.4.2.2}%
+\contentsline {paragraph}{Variables miembro:}{5}{subsubsection.4.2.2}%
+\contentsline {paragraph}{Métodos principales:}{5}{subsubsection.4.2.2}%
+\contentsline {subsection}{\numberline {4.3}Navegación Exterior y Geovalla (\texttt {outdoor})}{6}{subsection.4.3}%
+\contentsline {subsubsection}{\numberline {4.3.1}Clase \texttt {OutdoorNavigator}}{6}{subsubsection.4.3.1}%
+\contentsline {subsubsection}{\numberline {4.3.2}Clase \texttt {ArrivalDetector}}{6}{subsubsection.4.3.2}%
+\contentsline {subsection}{\numberline {4.4}Autenticación, Sesión y Visión Artificial (\texttt {data} y \texttt {ocr})}{6}{subsection.4.4}%
+\contentsline {subsubsection}{\numberline {4.4.1}Objeto \texttt {UserSessionRepository}}{6}{subsubsection.4.4.1}%
+\contentsline {subsubsection}{\numberline {4.4.2}Clase \texttt {TuiOcrScanner}}{6}{subsubsection.4.4.2}%
+\contentsline {subsubsection}{\numberline {4.4.3}Clase \texttt {NfcCardReader}}{7}{subsubsection.4.4.3}%
+\contentsline {subsection}{\numberline {4.5}Capa de Presentación e Interfaz (\texttt {ui.screens})}{7}{subsection.4.5}%
+\contentsline {subsubsection}{\numberline {4.5.1}Componente Composable \texttt {ProfessorsScreen}}{7}{subsubsection.4.5.1}%
+\contentsline {subsubsection}{\numberline {4.5.2}Componente Composable \texttt {NavigationScreen}}{7}{subsubsection.4.5.2}%
+\contentsline {section}{\numberline {5}Justificación de los Nuevos Paradigmas de Interacción}{7}{section.5}%
+\contentsline {section}{\numberline {6}Conclusiones}{8}{section.6}%
