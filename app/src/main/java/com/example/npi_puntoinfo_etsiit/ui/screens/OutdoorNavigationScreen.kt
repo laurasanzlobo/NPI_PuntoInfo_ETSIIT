@@ -950,8 +950,13 @@ fun OutdoorNavigationScreen(
                                 tint = UgrRed,
                                 modifier = Modifier.size(42.dp)
                             )
+                            val isEnglish = java.util.Locale.getDefault().language.equals("en", ignoreCase = true)
                             Text(
-                                text = if (turnLeft) "Gira a la izquierda" else "Gira a la derecha",
+                                text = if (turnLeft) {
+                                    if (isEnglish) "Turn left" else "Gira a la izquierda"
+                                } else {
+                                    if (isEnglish) "Turn right" else "Gira a la derecha"
+                                },
                                 fontSize = 18.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = Color.White,

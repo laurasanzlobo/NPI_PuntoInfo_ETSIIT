@@ -20,7 +20,8 @@
         "foto": "rutas/comedor_Aula11/interior_1.jpg",
         "foto_original": "Comedor.jpg",
         "accion": "GIRO_IZQUIERDA",
-        "instruccion": "Avanza hacia Comedor (PSS).",
+        "instruccion": "Gira a la izquierda en el pasillo",
+        "instruccion_en": "Turn left in the hallway",
         "eje_x_camino": 0.484
       },
       {
@@ -35,7 +36,8 @@
         "foto": "rutas/comedor_Aula11/interior_2_escaleras.jpg",
         "foto_original": "EscalerasMain-1.jpg",
         "accion": "SUBIR_ESCALERAS",
-        "instruccion": "Avanza hacia EscalerasMain-1 (PSS).",
+        "instruccion": "Sube las escaleras",
+        "instruccion_en": "Go up the stairs",
         "eje_x_camino": 0.503
       },
       {
@@ -50,7 +52,8 @@
         "foto": "rutas/comedor_Aula11/interior_9.jpg",
         "foto_original": "EscalerasMainPB.jpg",
         "accion": "RECTO",
-        "instruccion": "Avanza hacia EscalerasMainPB (PB).",
+        "instruccion": "Sal hacia el exterior",
+        "instruccion_en": "Go outside",
         "eje_x_camino": 0.521
       },
       {
@@ -65,7 +68,8 @@
         "foto": "rutas/comedor_Aula11/interior_10.jpg",
         "foto_original": "PasilloExterior.jpg",
         "accion": "RECTO",
-        "instruccion": "Avanza hacia PasilloExterior (PB).",
+        "instruccion": "Avanza recto hasta el final del pasillo",
+        "instruccion_en": "Go straight to the end of the hallway",
         "eje_x_camino": 0.423
       },
       {
@@ -80,7 +84,8 @@
         "foto": "rutas/comedor_Aula11/interior_3_escaleras.jpg",
         "foto_original": "PasilloEscalerasOut.jpg",
         "accion": "GIRO_DERECHA",
-        "instruccion": "Avanza hacia PasilloEscalerasOut (PB).",
+        "instruccion": "Avanza y gira a la derecha hacia las escaleras",
+        "instruccion_en": "Go ahead and turn right towards the stairs",
         "eje_x_camino": 0.53
       },
       {
@@ -95,7 +100,8 @@
         "foto": "rutas/comedor_Aula11/interior_4_escaleras.jpg",
         "foto_original": "EscalerasOutPB.jpg",
         "accion": "SUBIR_ESCALERAS",
-        "instruccion": "Avanza hacia EscalerasOutPB (PB).",
+        "instruccion": "Sube un piso por las escaleras",
+        "instruccion_en": "Go up one floor via the stairs",
         "eje_x_camino": 0.548
       },
       {
@@ -110,7 +116,8 @@
         "foto": "rutas/comedor_Aula11/interior_5_escaleras.jpg",
         "foto_original": "EscalerasOutP1.jpg",
         "accion": "GIRO_DERECHA",
-        "instruccion": "Avanza hacia EscalerasOutP1 (P1).",
+        "instruccion": "Entra por la puerta al piso 1 del aulario",
+        "instruccion_en": "Enter through the door to Floor 1 of the classroom building",
         "eje_x_camino": 0.617
       },
       {
@@ -125,7 +132,8 @@
         "foto": "rutas/comedor_Aula11/interior_11.jpg",
         "foto_original": "EntradaEscalerasP1.jpg",
         "accion": "GIRO_DERECHA",
-        "instruccion": "Avanza hacia EntradaEscalerasP1 (P1).",
+        "instruccion": "Avanza y tendrás el aula a tu derecha",
+        "instruccion_en": "Go ahead and the classroom will be on your right",
         "eje_x_camino": 0.559
       },
       {
@@ -140,7 +148,8 @@
         "foto": "rutas/comedor_Aula11/interior_12.jpg",
         "foto_original": "Aula1.1.jpg",
         "accion": "FIN",
-        "instruccion": "Avanza hacia Aula1.1 (P1).",
+        "instruccion": "Has llegado a tu destino",
+        "instruccion_en": "You have arrived at your destination",
         "eje_x_camino": 0.5
       }
     ]
@@ -161,7 +170,8 @@
         "foto": "rutas/comedor_Aula11/interior_1.jpg",
         "foto_original": "Comedor.jpg",
         "accion": "GIRO_IZQUIERDA",
-        "instruccion": "Avanza hacia Comedor (PSS).",
+        "instruccion": "Gira a la izquierda en el pasillo",
+        "instruccion_en": "Turn left in the hallway",
         "eje_x_camino": 0.484
       },
       {
@@ -176,7 +186,8 @@
         "foto": "rutas/comedor_Aula11/interior_2_ascensor.jpg",
         "foto_original": "AscensorMainP-1.jpg",
         "accion": "SUBIR_ASCENSOR",
-        "instruccion": "Avanza hacia AscensorMainP-1 (PSS).",
+        "instruccion": "Sube al ascensor y pulsa 0",
+        "instruccion_en": "Take the elevator and press 0",
         "eje_x_camino": 0.467
       },
       {
@@ -191,7 +202,8 @@
         "foto": "rutas/comedor_Aula11/interior_3_ascensor.jpg",
         "foto_original": "AscensorMainPB.jpg",
         "accion": "GIRO_DERECHA",
-        "instruccion": "Avanza hacia AscensorMainPB (PB).",
+        "instruccion": "Gira a la derecha en el vestíbulo",
+        "instruccion_en": "Turn right in the lobby",
         "eje_x_camino": 0.767
       },
       {
@@ -206,7 +218,8 @@
         "foto": "rutas/comedor_Aula11/interior_4_ascensor.jpg",
         "foto_original": "Recepcion-Pasillo.jpg",
         "accion": "RECTO",
-        "instruccion": "Avanza hacia Recepcion-Pasillo (PB).",
+        "instruccion": "Avanza hacia la puerta que da al exterior",
+        "instruccion_en": "Walk towards the door leading outside",
         "eje_x_camino": 0.499
       },
       {
@@ -221,7 +234,8 @@
         "foto": "rutas/comedor_Aula11/interior_9.jpg",
         "foto_original": "EscalerasMainPB.jpg",
         "accion": "RECTO",
-        "instruccion": "Avanza hacia EscalerasMainPB (PB).",
+        "instruccion": "Sal hacia el exterior",
+        "instruccion_en": "Go outside",
         "eje_x_camino": 0.521
       },
       {
@@ -236,7 +250,8 @@
         "foto": "rutas/comedor_Aula11/interior_10.jpg",
         "foto_original": "PasilloExterior.jpg",
         "accion": "RECTO",
-        "instruccion": "Avanza hacia PasilloExterior (PB).",
+        "instruccion": "Avanza recto hasta el final del pasillo",
+        "instruccion_en": "Go straight to the end of the hallway",
         "eje_x_camino": 0.423
       },
       {
@@ -251,7 +266,8 @@
         "foto": "rutas/comedor_Aula11/interior_5_ascensor.jpg",
         "foto_original": "EntradaAulario.jpg",
         "accion": "GIRO_DERECHA",
-        "instruccion": "Avanza hacia EntradaAulario (PB).",
+        "instruccion": "Entra al aulario",
+        "instruccion_en": "Enter the classroom building",
         "eje_x_camino": 0.524
       },
       {
@@ -266,7 +282,8 @@
         "foto": "rutas/comedor_Aula11/interior_6_ascensor.jpg",
         "foto_original": "Pasillo_06.jpg",
         "accion": "RECTO",
-        "instruccion": "Avanza hacia Pasillo_06 (PB).",
+        "instruccion": "Avanza hacia el ascensor",
+        "instruccion_en": "Walk towards the elevator",
         "eje_x_camino": 0.604
       },
       {
@@ -281,7 +298,8 @@
         "foto": "rutas/comedor_Aula11/interior_7_ascensor.jpg",
         "foto_original": "AscensorP0.jpg",
         "accion": "SUBIR_ASCENSOR",
-        "instruccion": "Avanza hacia AscensorP0 (PB).",
+        "instruccion": "Sube al ascensor y pulsa 1",
+        "instruccion_en": "Take the elevator and press 1",
         "eje_x_camino": 0.745
       },
       {
@@ -296,7 +314,8 @@
         "foto": "rutas/comedor_Aula11/interior_8_ascensor.jpg",
         "foto_original": "PasilloP1.jpg",
         "accion": "RECTO",
-        "instruccion": "Avanza hacia PasilloP1 (P1).",
+        "instruccion": "Avanza por el pasillo",
+        "instruccion_en": "Walk along the hallway",
         "eje_x_camino": 0.413
       },
       {
@@ -311,7 +330,8 @@
         "foto": "rutas/comedor_Aula11/interior_11.jpg",
         "foto_original": "EntradaEscalerasP1.jpg",
         "accion": "GIRO_DERECHA",
-        "instruccion": "Avanza hacia EntradaEscalerasP1 (P1).",
+        "instruccion": "Avanza y tendrás el aula a tu derecha",
+        "instruccion_en": "Go ahead and the classroom will be on your right",
         "eje_x_camino": 0.559
       },
       {
@@ -326,7 +346,8 @@
         "foto": "rutas/comedor_Aula11/interior_12.jpg",
         "foto_original": "Aula1.1.jpg",
         "accion": "FIN",
-        "instruccion": "Avanza hacia Aula1.1 (P1).",
+        "instruccion": "Has llegado a tu destino",
+        "instruccion_en": "You have arrived at your destination",
         "eje_x_camino": 0.5
       }
     ]

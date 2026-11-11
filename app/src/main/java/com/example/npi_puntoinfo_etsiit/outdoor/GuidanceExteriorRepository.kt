@@ -31,6 +31,7 @@ data class GuidanceNodo(
     val foto: String?,
     val accion: String,
     val instruccion: String,
+    @SerializedName("instruccion_en") val instruccionEn: String? = null,
     @SerializedName("eje_x_camino") val ejeXCamino: Double = 0.5
 )
 
@@ -97,9 +98,15 @@ object GuidanceExteriorRepository {
         // Estimación de tiempo a velocidad peatonal estándar (~1.2 m/s o 4.3 km/h)
         val estimatedSeconds = if (totalDistance > 0) totalDistance / 1.2 else 0.0
 
+        val isEnglish = java.util.Locale.getDefault().language.equals("en", ignoreCase = true)
         val steps = nodos.mapIndexed { index, nodo ->
+            val stepInstruction = if (isEnglish && !nodo.instruccionEn.isNullOrBlank()) {
+                nodo.instruccionEn
+            } else {
+                nodo.instruccion
+            }
             WalkingStep(
-                instruction = nodo.instruccion,
+                instruction = stepInstruction,
                 distanceMeters = stepDistances[index],
                 maneuver = mapAccionToManeuver(nodo.accion),
                 photo = nodo.foto,

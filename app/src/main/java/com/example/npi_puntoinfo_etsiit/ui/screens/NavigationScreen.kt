@@ -319,14 +319,15 @@ fun NavigationScreen(
             }
         }
 
-        // 2. CABECERA FLOTANTE SUPERIOR (Estilo GPS / OutdoorNavigationScreen)
-        Column(
-            modifier = Modifier
-                .align(Alignment.TopCenter)
-                .fillMaxWidth()
-                .padding(horizontal = 14.dp, vertical = 8.dp),
-            verticalArrangement = Arrangement.spacedBy(6.dp)
-        ) {
+        // 2. CABECERA FLOTANTE SUPERIOR (Oculta durante el guiado vertical a pantalla completa)
+        if (!isVerticalGuidanceActive) {
+            Column(
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .fillMaxWidth()
+                    .padding(horizontal = 14.dp, vertical = 8.dp),
+                verticalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
             // Píldora ovalada con el destino / título
             Surface(
                 modifier = Modifier.fillMaxWidth(),
@@ -463,6 +464,7 @@ fun NavigationScreen(
                 }
             }
         }
+    }
 
         // 3. TARJETA INFERIOR FLOTANTE (Solo cuando no está activo el modo vertical completo)
         if (!isVerticalGuidanceActive) {

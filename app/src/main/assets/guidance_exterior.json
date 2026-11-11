@@ -16,6 +16,7 @@
         "foto": null,
         "accion": "INICIO",
         "instruccion": "Inicia la ruta desde el Punto de Información en el vestíbulo de la ETSIIT dirigiéndote hacia la salida principal.",
+        "instruccion_en": "Start the route from the Information Point in the ETSIIT lobby heading towards the main exit.",
         "eje_x_camino": 0.5
       },
       {
@@ -28,6 +29,7 @@
         "foto": "rutas/ida/ida2.jpg",
         "accion": "RECTO",
         "instruccion": "Continúa recto por la calle Periodista Daniel Saucedo Aranda.",
+        "instruccion_en": "Continue straight along Periodista Daniel Saucedo Aranda Street.",
         "eje_x_camino": 0.57
       },
       {
@@ -40,6 +42,7 @@
         "foto": "rutas/ida/ida3.jpg",
         "accion": "GIRO_LIGERO_DERECHA",
         "instruccion": "Cruza el paso de peatones recto e inclínate a la derecha para continuar por la acera.",
+        "instruccion_en": "Cross the pedestrian crossing straight ahead and bear right to continue along the sidewalk.",
         "eje_x_camino": 0.489
       },
       {
@@ -52,6 +55,7 @@
         "foto": "rutas/ida/ida4.jpg",
         "accion": "RECTO",
         "instruccion": "Sigue recto hasta la rotonda.",
+        "instruccion_en": "Go straight until you reach the roundabout.",
         "eje_x_camino": 0.487
       },
       {
@@ -64,6 +68,7 @@
         "foto": "rutas/ida/ida5.jpg",
         "accion": "GIRO_LIGERO_IZQUIERDA",
         "instruccion": "Cruza el paso de peatones para rodear la rotonda.",
+        "instruccion_en": "Cross the pedestrian crossing to go around the roundabout.",
         "eje_x_camino": 0.502
       },
       {
@@ -76,6 +81,7 @@
         "foto": "rutas/ida/ida6.jpg",
         "accion": "GIRO_LIGERO_IZQUIERDA",
         "instruccion": "Continúa rodeando la rotonda por la acera.",
+        "instruccion_en": "Continue following the sidewalk around the roundabout.",
         "eje_x_camino": 0.594
       },
       {
@@ -88,6 +94,7 @@
         "foto": "rutas/ida/ida7.jpg",
         "accion": "RECTO",
         "instruccion": "Avanza recto por la calle Periodista Eugenio Sellés.",
+        "instruccion_en": "Go straight along Periodista Eugenio Sellés Street.",
         "eje_x_camino": 0.584
       },
       {
@@ -100,6 +107,7 @@
         "foto": "rutas/ida/ida8.jpg",
         "accion": "RECTO",
         "instruccion": "Continúa recto por la calle Periodista Juan Osorio Bueno.",
+        "instruccion_en": "Continue straight along Periodista Juan Osorio Bueno Street.",
         "eje_x_camino": 0.562
       },
       {
@@ -112,6 +120,7 @@
         "foto": "rutas/ida/ida9.jpg",
         "accion": "LLEGADA",
         "instruccion": "Has llegado al Edificio Auxiliar de la ETSIIT.",
+        "instruccion_en": "You have arrived at the ETSIIT Auxiliary Building.",
         "eje_x_camino": 0.566
       }
     ]
@@ -130,6 +139,7 @@
         "foto": "rutas/vuelta/vuelta9.jpg",
         "accion": "RECTO",
         "instruccion": "Tras salir del edificio auxiliar, avanza por la calle Periodista Juan Osorio Bueno.",
+        "instruccion_en": "After exiting the auxiliary building, go along Periodista Juan Osorio Bueno Street.",
         "eje_x_camino": 0.409
       },
       {
@@ -142,6 +152,7 @@
         "foto": "rutas/vuelta/vuelta8.jpg",
         "accion": "RECTO",
         "instruccion": "Continúa recto por la calle Periodista Eugenio Sellés hasta llegar a la rotonda.",
+        "instruccion_en": "Continue straight along Periodista Eugenio Sellés Street until you reach the roundabout.",
         "eje_x_camino": 0.38
       },
       {
@@ -154,6 +165,7 @@
         "foto": "rutas/vuelta/vuelta7.jpg",
         "accion": "CRUCE",
         "instruccion": "Rodea la rotonda.",
+        "instruccion_en": "Go around the roundabout.",
         "eje_x_camino": 0.412
       },
       {
@@ -166,6 +178,7 @@
         "foto": "rutas/vuelta/vuelta6.jpg",
         "accion": "RECTO",
         "instruccion": "Sigue rodeando la rotonda.",
+        "instruccion_en": "Keep going around the roundabout.",
         "eje_x_camino": 0.628
       },
       {
@@ -178,6 +191,7 @@
         "foto": "rutas/vuelta/vuelta5.jpg",
         "accion": "RECTO",
         "instruccion": "Sigue recto en el siguiente cruce hasta llegar al paso de peatones.",
+        "instruccion_en": "Go straight through the next intersection until you reach the pedestrian crossing.",
         "eje_x_camino": 0.504
       },
       {
@@ -190,6 +204,7 @@
         "foto": "rutas/vuelta/vuelta4.jpg",
         "accion": "GIRO_LIGERO_IZQUIERDA",
         "instruccion": "Cruza el paso de peatones.",
+        "instruccion_en": "Cross the pedestrian crossing.",
         "eje_x_camino": 0.628
       },
       {
@@ -202,6 +217,7 @@
         "foto": "rutas/vuelta/vuelta3.jpg",
         "accion": "RECTO",
         "instruccion": "Sigue en línea recta hacia la puerta principal de la ETSIIT.",
+        "instruccion_en": "Continue straight towards the main entrance of ETSIIT.",
         "eje_x_camino": 0.451
       },
       {
@@ -214,6 +230,7 @@
         "foto": null,
         "accion": "RECTO",
         "instruccion": "Avanza hacia la puerta principal.",
+        "instruccion_en": "Walk towards the main entrance.",
         "eje_x_camino": 0.5
       },
       {
@@ -226,6 +243,7 @@
         "foto": null,
         "accion": "LLEGADA",
         "instruccion": "Has llegado a la ETSIIT.",
+        "instruccion_en": "You have arrived at ETSIIT.",
         "eje_x_camino": 0.5
       }
     ]
