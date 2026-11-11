@@ -152,34 +152,6 @@ fun HomeScreen(
                             color = TextSecondary
                         )
                     }
-
-                    Surface(
-                        modifier = Modifier
-                            .clip(CircleShape)
-                            .clickable {
-                                val nextLang = if (profile.language == "en") "es" else "en"
-                                UserSessionRepository.updateLanguage(context, nextLang)
-                            },
-                        shape = CircleShape,
-                        color = EtsiitBlue.copy(alpha = 0.10f)
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(6.dp),
-                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
-                        ) {
-                            Text(
-                                text = if (profile.language == "en") "🇬🇧" else "🇪🇸",
-                                fontSize = 22.sp
-                            )
-                            Text(
-                                text = if (profile.language == "en") "EN" else "ES",
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 12.sp,
-                                color = EtsiitBlue
-                            )
-                        }
-                    }
                 }
             }
         } else if (currentOrNextClass != null) {
@@ -419,7 +391,7 @@ fun HomeScreen(
                 )
 
                 HomeFlatButton(
-                    title = "Servicios",
+                    title = stringResource(R.string.nav_services_title),
                     icon = Icons.Default.Info,
                     accentColor = Color(0xFF0F766E),
                     bgColor = Color(0xFFF0FDFA),
@@ -430,7 +402,7 @@ fun HomeScreen(
                 )
 
                 HomeFlatButton(
-                    title = "Comedores",
+                    title = stringResource(R.string.nav_dining_title),
                     icon = Icons.Default.Restaurant,
                     accentColor = Color(0xFFD97706),
                     bgColor = Color(0xFFFFFBEB),
@@ -447,7 +419,7 @@ fun HomeScreen(
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 HomeFlatButton(
-                    title = "Servicios",
+                    title = stringResource(R.string.nav_services_title),
                     icon = Icons.Default.Info,
                     accentColor = Color(0xFF0F766E),
                     bgColor = Color(0xFFF0FDFA),
@@ -458,7 +430,7 @@ fun HomeScreen(
                 )
 
                 HomeFlatButton(
-                    title = "Comedores",
+                    title = stringResource(R.string.nav_dining_title),
                     icon = Icons.Default.Restaurant,
                     accentColor = Color(0xFFD97706),
                     bgColor = Color(0xFFFFFBEB),

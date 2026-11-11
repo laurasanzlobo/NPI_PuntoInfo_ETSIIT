@@ -28,7 +28,7 @@ data class UserProfile(
     // Si el valor es "", significa que solo asiste a Teoría
     val matricula: Map<String, String> = emptyMap(),
     val isAccessibleRouting: Boolean = false, // Modo accesibilidad: ascensor en vez de escaleras
-    val language: String = "es", // Idioma de la app: "es" (Español) o "en" (Inglés)
+    val language: String = if (java.util.Locale.getDefault().language.equals("en", ignoreCase = true)) "en" else "es", // Idioma automático del sistema
     val isLoggedIn: Boolean = false
 )
 

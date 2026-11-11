@@ -93,7 +93,7 @@ fun ProfileScreen(
             context = context,
             isAccessibleRouting = profile.isAccessibleRouting
         )
-        Toast.makeText(context, "¡TUI verificada! Sesión iniciada como ${loggedInProfile.name}", Toast.LENGTH_SHORT).show()
+        Toast.makeText(context, context.getString(R.string.profile_tui_verified_toast, loggedInProfile.name), Toast.LENGTH_SHORT).show()
     }
 
     if (profile.isLoggedIn || isLoggingOut) {
@@ -123,7 +123,7 @@ fun ProfileScreen(
                     // Foto real de la estudiante con borde rojo UGR
                     Image(
                         painter = painterResource(id = R.drawable.foto_estudiante),
-                        contentDescription = "Foto de perfil",
+                        contentDescription = stringResource(R.string.profile_photo_desc),
                         contentScale = ContentScale.Crop,
                         modifier = Modifier
                             .size(76.dp)
@@ -156,7 +156,7 @@ fun ProfileScreen(
                             color = UgrRedLight
                         ) {
                             Text(
-                                text = "ESTUDIANTE",
+                                text = stringResource(R.string.profile_student_label),
                                 color = UgrRed,
                                 fontSize = 10.sp,
                                 fontWeight = FontWeight.ExtraBold,
@@ -188,14 +188,14 @@ fun ProfileScreen(
                 ) {
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         Text(
-                            text = "EXPEDIENTE ACADÉMICO",
+                            text = stringResource(R.string.profile_academic_record),
                             color = Color.White.copy(alpha = 0.80f),
                             fontSize = 11.sp,
                             fontWeight = FontWeight.ExtraBold,
                             letterSpacing = 1.sp
                         )
                         Text(
-                            text = "Grado en Ingeniería Informática",
+                            text = stringResource(R.string.profile_degree_name),
                             color = Color.White,
                             fontSize = 18.sp,
                             fontWeight = FontWeight.Bold
@@ -209,7 +209,7 @@ fun ProfileScreen(
                                 color = Color.White.copy(alpha = 0.22f)
                             ) {
                                 Text(
-                                    text = "4º Año",
+                                    text = stringResource(R.string.profile_year_4),
                                     color = Color.White,
                                     fontSize = 13.sp,
                                     fontWeight = FontWeight.Bold,
@@ -221,7 +221,7 @@ fun ProfileScreen(
                                 color = Color.White.copy(alpha = 0.22f)
                             ) {
                                 Text(
-                                    text = "Grupo A",
+                                    text = stringResource(R.string.profile_group_a),
                                     color = Color.White,
                                     fontSize = 13.sp,
                                     fontWeight = FontWeight.Bold,
@@ -307,68 +307,6 @@ fun ProfileScreen(
                                 checkedTrackColor = CampusTeal
                             )
                         )
-                    }
-
-                    HorizontalDivider(color = SurfaceBorder.copy(alpha = 0.5f))
-
-                    // Configuración de Idioma (Español / Inglés)
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(12.dp),
-                            modifier = Modifier.weight(1f)
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .size(44.dp)
-                                    .clip(RoundedCornerShape(12.dp))
-                                    .background(EtsiitBlue.copy(alpha = 0.12f)),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Language,
-                                    contentDescription = null,
-                                    tint = EtsiitBlue,
-                                    modifier = Modifier.size(24.dp)
-                                )
-                            }
-                            Column {
-                                Text(
-                                    text = if (profile.language == "en") stringResource(R.string.profile_app_language_en) else stringResource(R.string.profile_app_language),
-                                    fontSize = 14.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = TextPrimary
-                                )
-                                Text(
-                                    text = if (profile.language == "en") stringResource(R.string.profile_lang_english) else stringResource(R.string.profile_lang_spanish),
-                                    fontSize = 12.sp,
-                                    color = TextSecondary
-                                )
-                            }
-                        }
-
-                        Row(
-                            horizontalArrangement = Arrangement.spacedBy(4.dp)
-                        ) {
-                            FilterChip(
-                                selected = profile.language == "es",
-                                onClick = {
-                                    UserSessionRepository.updateLanguage(context, "es")
-                                },
-                                label = { Text("ES", fontSize = 11.sp, fontWeight = FontWeight.Bold) }
-                            )
-                            FilterChip(
-                                selected = profile.language == "en",
-                                onClick = {
-                                    UserSessionRepository.updateLanguage(context, "en")
-                                },
-                                label = { Text("EN", fontSize = 11.sp, fontWeight = FontWeight.Bold) }
-                            )
-                        }
                     }
                 }
             }
@@ -615,13 +553,13 @@ private fun LiveTuiQrCameraScanner(
                 )
                 Column {
                     Text(
-                        text = "Escanea el código QR de tu TUI",
+                        text = stringResource(R.string.profile_scan_tui_qr),
                         color = Color.White,
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Bold
                     )
                     Text(
-                        text = "Enfoca el código QR situado en el reverso de la tarjeta",
+                        text = stringResource(R.string.profile_scan_tui_qr_desc),
                         color = Color.White.copy(alpha = 0.85f),
                         fontSize = 11.sp
                     )
@@ -661,7 +599,7 @@ private fun LiveTuiQrCameraScanner(
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = "Simular (este botón se borrará en un futuro)",
+                    text = stringResource(R.string.profile_simulate_btn),
                     fontSize = 12.sp,
                     fontWeight = FontWeight.SemiBold
                 )

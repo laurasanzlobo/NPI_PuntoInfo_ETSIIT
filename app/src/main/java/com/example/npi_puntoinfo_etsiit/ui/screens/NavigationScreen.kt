@@ -150,10 +150,15 @@ fun NavigationScreen(
     var isManualGuidanceLocked by rememberSaveable { mutableStateOf(false) }
 
     // Ciclo de vida y estado del recorrido interior basado en Pedómetro
-    var indoorTripState by remember(rutaCalculada, profile.language) {
+    var indoorTripState by remember(rutaCalculada, profile.language, profile.isAccessibleRouting) {
         mutableStateOf(
             if (rutaCalculada != null) {
-                com.example.npi_puntoinfo_etsiit.indoor.IndoorTripState.buildFromRoute("trip_${rutaCalculada.destino.id}", rutaCalculada, context)
+                com.example.npi_puntoinfo_etsiit.indoor.IndoorTripState.buildFromRoute(
+                    "trip_${rutaCalculada.destino.id}",
+                    rutaCalculada,
+                    context,
+                    profile.isAccessibleRouting
+                )
             } else null
         )
     }
@@ -252,24 +257,22 @@ fun NavigationScreen(
         if (hasActiveRoute && rutaCalculada != null && isVerticalGuidanceActive) {
             val currentTrip = indoorTripState
             if (currentTrip != null) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(top = 90.dp, bottom = 16.dp, start = 16.dp, end = 16.dp)
-                ) {
-                    com.example.npi_puntoinfo_etsiit.ui.components.IndoorStepGuidanceCard(
-                        tripState = currentTrip,
-                        onStepSimulated = {
-                            indoorTripState = indoorTripState?.onStepDetected()
-                        },
-                        onNextManual = {
-                            indoorTripState = indoorTripState?.nextStepManual()
-                        },
-                        onPreviousManual = {
-                            indoorTripState = indoorTripState?.previousStepManual()
-                        }
-                    )
-                }
+                com.example.npi_puntoinfo_etsiit.ui.components.IndoorFullScreenStepGuidanceView(
+                    tripState = currentTrip,
+                    onStepSimulated = {
+                        indoorTripState = indoorTripState?.onStepDetected()
+                    },
+                    onNextManual = {
+                        indoorTripState = indoorTripState?.nextStepManual()
+                    },
+                    onPreviousManual = {
+                        indoorTripState = indoorTripState?.previousStepManual()
+                    },
+                    onClose = {
+                        isManualGuidanceLocked = false
+                        onPostureChanged(false)
+                    }
+                )
             }
         } else {
             val bottomPadding = if (hasActiveRoute && rutaCalculada != null) {

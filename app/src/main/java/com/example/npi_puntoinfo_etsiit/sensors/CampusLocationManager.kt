@@ -11,7 +11,11 @@ data class UgrDiningHall(
     val latitude: Double,
     val longitude: Double,
     val walkingTimeMinutes: Int
-)
+) {
+    fun getName(isEnglish: Boolean = java.util.Locale.getDefault().language.equals("en", ignoreCase = true)): String {
+        return if (isEnglish) "Aynadamar Dining Hall" else name
+    }
+}
 
 /**
  * Gestor de ubicación y localización de campus y comedores de la UGR.

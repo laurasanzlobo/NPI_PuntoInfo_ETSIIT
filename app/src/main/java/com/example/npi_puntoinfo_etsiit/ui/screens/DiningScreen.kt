@@ -31,6 +31,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
+import com.example.npi_puntoinfo_etsiit.R
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
@@ -62,9 +64,12 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
-enum class DiningMenuType(val label: String) {
-    TRADITIONAL("Tradicional"),
-    VEGETARIAN("Vegetariano")
+enum class DiningMenuType(val labelEs: String, val labelEn: String) {
+    TRADITIONAL("Tradicional", "Traditional"),
+    VEGETARIAN("Vegetariano", "Vegetarian");
+
+    fun getLabel(isEnglish: Boolean): String = if (isEnglish) labelEn else labelEs
+    val label: String get() = labelEs
 }
 
 data class MenuCourses(
@@ -87,9 +92,12 @@ data class OrderSuccessInfo(
     val menuTypeName: String
 )
 
-enum class PaymentMethod(val title: String, val icon: ImageVector) {
-    BIZUM("Bizum", Icons.Default.PhoneAndroid),
-    CARD("Tarjeta Bancaria", Icons.Default.CreditCard)
+enum class PaymentMethod(val titleEs: String, val titleEn: String, val icon: ImageVector) {
+    BIZUM("Bizum", "Bizum", Icons.Default.PhoneAndroid),
+    CARD("Tarjeta Bancaria", "Credit Card", Icons.Default.CreditCard);
+
+    fun getTitle(isEnglish: Boolean): String = if (isEnglish) titleEn else titleEs
+    val title: String get() = titleEs
 }
 
 @Composable
@@ -200,20 +208,22 @@ fun DiningScreen(
         }
     }
 
-    val menuList = remember(today) {
+    val isEnglish = profile.language == "en"
+    val menuList = remember(today, isEnglish) {
         DiningReservationPolicy.menuDates(today)
             .map { date ->
+                val locale = if (isEnglish) Locale.ENGLISH else Locale.forLanguageTag("es-ES")
                 val weekday = date.dayOfWeek
-                    .getDisplayName(TextStyle.FULL, Locale.forLanguageTag("es-ES"))
+                    .getDisplayName(TextStyle.FULL, locale)
                     .replaceFirstChar { it.uppercaseChar() }
                 val title = when (date) {
-                    today -> "Hoy"
-                    today.plusDays(1) -> "Mañana"
+                    today -> if (isEnglish) "Today" else "Hoy"
+                    today.plusDays(1) -> if (isEnglish) "Tomorrow" else "Mañana"
                     else -> weekday
                 }
                 val dateLabel = "${date.dayOfMonth}/${date.monthValue}"
                 val label = "$weekday · $dateLabel"
-                val (trad, veg) = sampleDishesFor(weekday = date.dayOfWeek)
+                val (trad, veg) = sampleDishesFor(weekday = date.dayOfWeek, isEnglish = isEnglish)
                 DayDiningMenu(
                     date = date,
                     dayName = title,
@@ -409,7 +419,7 @@ fun DiningScreen(
                                     )
                                     Spacer(Modifier.width(8.dp))
                                     Text(
-                                        text = "Resumen del pedido",
+                                        text = stringResource(R.string.dining_order_summary),
                                         fontWeight = FontWeight.Bold,
                                         fontSize = 15.sp,
                                         color = TextPrimary
@@ -435,7 +445,7 @@ fun DiningScreen(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
-                                Text("Día:", color = TextSecondary, fontSize = 13.sp)
+                                Text(stringResource(R.string.dining_day), color = TextSecondary, fontSize = 13.sp)
                                 Text(activePendingMenu.dayLabel, fontWeight = FontWeight.SemiBold, fontSize = 13.sp, color = TextPrimary)
                             }
 
@@ -443,7 +453,7 @@ fun DiningScreen(
 
                             // Selector de tipo de menú
                             Text(
-                                text = "Elige tu tipo de menú:",
+                                text = stringResource(R.string.dining_choose_menu_type),
                                 fontWeight = FontWeight.SemiBold,
                                 fontSize = 13.sp,
                                 color = TextPrimary
@@ -480,7 +490,7 @@ fun DiningScreen(
                                                 Spacer(Modifier.width(6.dp))
                                             }
                                             Text(
-                                                text = "Menú ${type.label}",
+                                                text = stringResource(R.string.dining_menu_label, type.getLabel(isEnglish)),
                                                 fontSize = 13.sp,
                                                 fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
                                                 color = if (isSelected) activeColor else TextSecondary
@@ -506,7 +516,7 @@ fun DiningScreen(
                             verticalArrangement = Arrangement.spacedBy(14.dp)
                         ) {
                             Text(
-                                text = "Método de pago",
+                                text = stringResource(R.string.dining_payment_method),
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 15.sp,
                                 color = TextPrimary
@@ -542,7 +552,7 @@ fun DiningScreen(
                                             )
                                             Spacer(Modifier.width(8.dp))
                                             Text(
-                                                text = method.title,
+                                                text = method.getTitle(isEnglish),
                                                 fontSize = 13.sp,
                                                 fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
                                                 color = if (isSelected) UgrRed else TextSecondary
@@ -556,14 +566,13 @@ fun DiningScreen(
                     }
 
                     Text(
-                        "¿Quieres proceder al pago?",
+                        stringResource(R.string.dining_payment_proceed_question),
                         fontWeight = FontWeight.Bold,
                         style = MaterialTheme.typography.titleLarge,
                         color = TextPrimary
                     )
                     Text(
-                        "Confirma con la huella, el reconocimiento facial o el PIN, patrón o contraseña " +
-                            "que tengas configurado en el móvil. Importe: ${DiningReservationPolicy.PRICE_LABEL}.",
+                        stringResource(R.string.dining_payment_proceed_desc, DiningReservationPolicy.PRICE_LABEL),
                         style = MaterialTheme.typography.bodyMedium,
                         color = TextSecondary
                     )
@@ -592,20 +601,21 @@ fun DiningScreen(
                                         if (!DiningReservationPolicy.canReserve(confirmedMenu.date, confirmationDate)) {
                                             today = confirmationDate
                                             cancelPayment()
-                                            Toast.makeText(context, "El plazo para reservar este menú ha terminado.", Toast.LENGTH_LONG).show()
+                                            val expiredMsg = if (isEnglish) "The deadline to reserve this menu has ended." else "El plazo para reservar este menú ha terminado."
+                                            Toast.makeText(context, expiredMsg, Toast.LENGTH_LONG).show()
                                             return@confirm
                                         }
                                         // Solo estado local de frontend: no se llama a ninguna API de pago/reserva.
                                         val dateKey = confirmedMenu.date.toString()
-                                        ordersPlaced[dateKey] = confirmedType.label
-                                        orderPreferences.edit().putString("ordered_date_$dateKey", confirmedType.label).apply()
+                                        ordersPlaced[dateKey] = confirmedType.getLabel(isEnglish)
+                                        orderPreferences.edit().putString("ordered_date_$dateKey", confirmedType.getLabel(isEnglish)).apply()
                                         selectedMenuType = confirmedType
                                         triggerVibration(context, durationMs = 150)
-                                        paymentSuccessDialog = OrderSuccessInfo(confirmedMenu.dayLabel, confirmedType.label)
+                                        paymentSuccessDialog = OrderSuccessInfo(confirmedMenu.dayLabel, confirmedType.getLabel(isEnglish))
                                         pendingOrderDateKey = null
                                     }
                                     DeviceAuthenticationResult.Cancelled ->
-                                        paymentError = "Autenticación cancelada. No se ha reservado el menú."
+                                        paymentError = if (isEnglish) "Authentication cancelled. Menu has not been reserved." else "Autenticación cancelada. No se ha reservado el menú."
                                     is DeviceAuthenticationResult.Error -> paymentError = result.message
                                 }
                             }
@@ -625,7 +635,7 @@ fun DiningScreen(
                                 strokeWidth = 2.5.dp
                             )
                             Spacer(Modifier.width(12.dp))
-                            Text("Esperando autenticación…", color = Color.White, fontWeight = FontWeight.Bold)
+                            Text(stringResource(R.string.dining_waiting_auth), color = Color.White, fontWeight = FontWeight.Bold)
                         } else {
                             Icon(
                                 imageVector = Icons.Default.Lock,
@@ -634,7 +644,7 @@ fun DiningScreen(
                                 modifier = Modifier.size(18.dp)
                             )
                             Spacer(Modifier.width(8.dp))
-                            Text("Proceder al pago", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                            Text(stringResource(R.string.dining_proceed_payment_btn), fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color.White)
                         }
                     }
 
@@ -647,7 +657,7 @@ fun DiningScreen(
                             .height(48.dp),
                         border = androidx.compose.foundation.BorderStroke(1.dp, SurfaceBorder)
                     ) {
-                        Text("Cancelar y volver", color = TextSecondary, fontWeight = FontWeight.SemiBold)
+                        Text(stringResource(R.string.cancel), color = TextSecondary, fontWeight = FontWeight.SemiBold)
                     }
 
                     Spacer(Modifier.height(16.dp))
@@ -801,7 +811,7 @@ fun DiningScreen(
                                                 Spacer(modifier = Modifier.width(4.dp))
                                             }
                                             Text(
-                                                text = type.label,
+                                                text = type.getLabel(isEnglish),
                                                 fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
                                                 fontSize = 12.sp,
                                                 color = if (isSelected) (if (type == DiningMenuType.VEGETARIAN) CampusGreen else UgrRed) else TextSecondary
@@ -837,21 +847,21 @@ fun DiningScreen(
                             ) {
                                 DishVisualRow(
                                     dishNumber = "1",
-                                    category = "Primer Plato",
+                                    category = if (isEnglish) "First Course" else "Primer Plato",
                                     dishName = courses.firstCourse,
                                     badgeColor = EtsiitBlue
                                 )
                                 HorizontalDivider(color = SurfaceBorder.copy(alpha = 0.5f))
                                 DishVisualRow(
                                     dishNumber = "2",
-                                    category = "Segundo Plato",
+                                    category = if (isEnglish) "Second Course" else "Segundo Plato",
                                     dishName = courses.secondCourse,
                                     badgeColor = WarningAmber
                                 )
                                 HorizontalDivider(color = SurfaceBorder.copy(alpha = 0.5f))
                                 DishVisualRow(
                                     dishNumber = "3",
-                                    category = "Postre",
+                                    category = if (isEnglish) "Dessert" else "Postre",
                                     dishName = courses.dessert,
                                     badgeColor = CampusGreen
                                 )
@@ -863,9 +873,9 @@ fun DiningScreen(
                                 verticalArrangement = Arrangement.spacedBy(10.dp)
                             ) {
                                 Icon(Icons.Default.EventBusy, null, tint = TextSecondary, modifier = Modifier.size(36.dp))
-                                Text("No hay servicio de comedor este día", fontWeight = FontWeight.Bold,
+                                Text(if (isEnglish) "No dining service for this day" else "No hay servicio de comedor este día", fontWeight = FontWeight.Bold,
                                     textAlign = TextAlign.Center, color = TextPrimary)
-                                Text("El comedor abre de lunes a viernes.", color = TextSecondary)
+                                Text(if (isEnglish) "The dining hall is open Monday through Friday." else "El comedor abre de lunes a viernes.", color = TextSecondary)
                             }
                         }
 
@@ -905,12 +915,16 @@ fun DiningScreen(
                                     Spacer(modifier = Modifier.width(10.dp))
                                     Column {
                                         Text(
-                                            text = if (distanceFormatted != null) "Comedor más cercano (a $distanceFormatted):" else "Comedor más cercano:",
+                                            text = if (distanceFormatted != null) {
+                                                if (isEnglish) "Nearest dining hall (at $distanceFormatted):" else "Comedor más cercano (a $distanceFormatted):"
+                                            } else {
+                                                if (isEnglish) "Nearest dining hall:" else "Comedor más cercano:"
+                                            },
                                             fontSize = 11.sp,
                                             color = TextSecondary
                                         )
                                         Text(
-                                            text = nearestDiningHall.name, // SOLO el nombre (sin campus)
+                                            text = nearestDiningHall.getName(isEnglish), // SOLO el nombre (sin campus)
                                             fontSize = 14.sp,
                                             fontWeight = FontWeight.Bold,
                                             color = TextPrimary
@@ -949,15 +963,19 @@ fun DiningScreen(
                             )
                             Column(Modifier.weight(1f)) {
                                 Text(
-                                    if (isThisDayOrdered) "Menú $dayOrderedType reservado" else "Reserva tu menú para llevar",
+                                    if (isThisDayOrdered) {
+                                        if (isEnglish) "Menu $dayOrderedType reserved" else "Menú $dayOrderedType reservado"
+                                    } else {
+                                        if (isEnglish) "Order your takeaway menu" else "Reserva tu menú para llevar"
+                                    },
                                     fontWeight = FontWeight.Bold,
                                     color = if (isThisDayOrdered) Color(0xFF065F46) else TextPrimary
                                 )
                                 Text(
                                     when {
-                                        isThisDayOrdered -> "Reserva confirmada · ${DiningReservationPolicy.PRICE_LABEL}"
-                                        !hasService -> "Sin servicio de comedor"
-                                        canReserve -> "Para el ${menu.dayLabel} · ${DiningReservationPolicy.PRICE_LABEL}"
+                                        isThisDayOrdered -> if (isEnglish) "Reservation confirmed · ${DiningReservationPolicy.PRICE_LABEL}" else "Reserva confirmada · ${DiningReservationPolicy.PRICE_LABEL}"
+                                        !hasService -> if (isEnglish) "No dining service" else "Sin servicio de comedor"
+                                        canReserve -> if (isEnglish) "For ${menu.dayLabel} · ${DiningReservationPolicy.PRICE_LABEL}" else "Para el ${menu.dayLabel} · ${DiningReservationPolicy.PRICE_LABEL}"
                                         else -> DiningReservationPolicy.PRICE_LABEL
                                     },
                                     style = MaterialTheme.typography.bodySmall, color = TextSecondary
@@ -976,14 +994,14 @@ fun DiningScreen(
                             )
                         ) {
                             Text(when {
-                                isThisDayOrdered -> "Reservado"
-                                !hasService -> "Sin servicio"
-                                else -> "Reservar"
+                                isThisDayOrdered -> if (isEnglish) "Reserved" else "Reservado"
+                                !hasService -> if (isEnglish) "No service" else "Sin servicio"
+                                else -> if (isEnglish) "Reserve" else "Reservar"
                             }, fontWeight = FontWeight.Bold)
                         }
                         if (!isThisDayOrdered && hasService && !canReserve) {
                             Text(
-                                "No se admiten reservas para hoy. Desliza para reservar uno de los cuatro próximos días laborables.",
+                                if (isEnglish) "Reservations are not allowed for today. Swipe to reserve one of the next four working days." else "No se admiten reservas para hoy. Desliza para reservar uno de los cuatro próximos días laborables.",
                                 style = MaterialTheme.typography.bodySmall, color = TextSecondary
                             )
                         }
@@ -1016,7 +1034,7 @@ fun DiningScreen(
             },
             title = {
                 Text(
-                    text = "Reservado",
+                    text = if (isEnglish) "Reserved" else "Reservado",
                     fontWeight = FontWeight.Bold,
                     fontSize = 17.sp,
                     textAlign = TextAlign.Center
@@ -1024,8 +1042,10 @@ fun DiningScreen(
             },
             text = {
                 Text(
-                    text = "Menú ${info.menuTypeName} · ${info.dayLabel}\n\n" +
-                        "Reserva confirmada · ${DiningReservationPolicy.PRICE_LABEL}",
+                    text = if (isEnglish)
+                        "${info.menuTypeName} Menu · ${info.dayLabel}\n\nReservation confirmed · ${DiningReservationPolicy.PRICE_LABEL}"
+                    else
+                        "Menú ${info.menuTypeName} · ${info.dayLabel}\n\nReserva confirmada · ${DiningReservationPolicy.PRICE_LABEL}",
                     fontSize = 14.sp,
                     color = TextSecondary,
                     textAlign = TextAlign.Center
@@ -1033,7 +1053,7 @@ fun DiningScreen(
             },
             confirmButton = {
                 TextButton(onClick = { paymentSuccessDialog = null }) {
-                    Text("Aceptar", color = CampusGreen, fontWeight = FontWeight.Bold)
+                    Text(if (isEnglish) "OK" else "Aceptar", color = CampusGreen, fontWeight = FontWeight.Bold)
                 }
             }
         )
@@ -1091,70 +1111,78 @@ private fun DishVisualRow(
 }
 
 /** Platos oficiales por día de la semana para Menú Tradicional y Menú Vegetariano (platos únicos y fijos) */
-private fun sampleDishesFor(weekday: DayOfWeek): Pair<MenuCourses, MenuCourses> = when (weekday) {
+private fun sampleDishesFor(weekday: DayOfWeek, isEnglish: Boolean = false): Pair<MenuCourses, MenuCourses> = when (weekday) {
     DayOfWeek.MONDAY -> Pair(
         MenuCourses(
-            firstCourse = "Lentejas castellanas con verduras",
-            secondCourse = "Filete de merluza a la plancha",
-            dessert = "Fruta de temporada"
+            firstCourse = if (isEnglish) "Castilian lentils with vegetables" else "Lentejas castellanas con verduras",
+            secondCourse = if (isEnglish) "Grilled hake fillet" else "Filete de merluza a la plancha",
+            dessert = if (isEnglish) "Seasonal fruit" else "Fruta de temporada"
         ),
         MenuCourses(
-            firstCourse = "Lentejas castellanas con verduras",
-            secondCourse = "Hamburguesa vegetal de espinacas",
-            dessert = "Fruta de temporada"
+            firstCourse = if (isEnglish) "Castilian lentils with vegetables" else "Lentejas castellanas con verduras",
+            secondCourse = if (isEnglish) "Spinach veggie burger" else "Hamburguesa vegetal de espinacas",
+            dessert = if (isEnglish) "Seasonal fruit" else "Fruta de temporada"
         )
     )
     DayOfWeek.TUESDAY -> Pair(
         MenuCourses(
-            firstCourse = "Paella mixta tradicional",
-            secondCourse = "Lomo de cerdo al ajillo",
-            dessert = "Natillas caseras"
+            firstCourse = if (isEnglish) "Traditional mixed paella" else "Paella mixta tradicional",
+            secondCourse = if (isEnglish) "Garlic pork loin" else "Lomo de cerdo al ajillo",
+            dessert = if (isEnglish) "Homemade custard" else "Natillas caseras"
         ),
         MenuCourses(
-            firstCourse = "Crema de calabacín con picatostes",
-            secondCourse = "Tortilla francesa con champiñones",
-            dessert = "Yogur natural"
+            firstCourse = if (isEnglish) "Zucchini cream with croutons" else "Crema de calabacín con picatostes",
+            secondCourse = if (isEnglish) "French omelette with mushrooms" else "Tortilla francesa con champiñones",
+            dessert = if (isEnglish) "Natural yogurt" else "Yogur natural"
         )
     )
     DayOfWeek.WEDNESDAY -> Pair(
         MenuCourses(
-            firstCourse = "Macarrones a la boloñesa",
-            secondCourse = "Salmón al horno con patatas",
-            dessert = "Flan de huevo"
+            firstCourse = if (isEnglish) "Bolognese macaroni" else "Macarrones a la boloñesa",
+            secondCourse = if (isEnglish) "Baked salmon with potatoes" else "Salmón al horno con patatas",
+            dessert = if (isEnglish) "Egg flan" else "Flan de huevo"
         ),
         MenuCourses(
-            firstCourse = "Salmorejo cordobés con picatoste y huevo",
-            secondCourse = "Berenjenas rellenas de soja texturizada",
-            dessert = "Flan de huevo"
+            firstCourse = if (isEnglish) "Cordoban salmorejo with crouton and egg" else "Salmorejo cordobés con picatoste y huevo",
+            secondCourse = if (isEnglish) "Stuffed eggplants with textured soy" else "Berenjenas rellenas de soja texturizada",
+            dessert = if (isEnglish) "Egg flan" else "Flan de huevo"
         )
     )
     DayOfWeek.THURSDAY -> Pair(
         MenuCourses(
-            firstCourse = "Potaje de garbanzos con espinacas",
-            secondCourse = "Escalope de pollo empanado",
-            dessert = "Gelatina de frutas"
+            firstCourse = if (isEnglish) "Chickpea stew with spinach" else "Potaje de garbanzos con espinacas",
+            secondCourse = if (isEnglish) "Breaded chicken escalope" else "Escalope de pollo empanado",
+            dessert = if (isEnglish) "Fruit jelly" else "Gelatina de frutas"
         ),
         MenuCourses(
-            firstCourse = "Potaje de garbanzos con espinacas",
-            secondCourse = "Revuelto de setas y trigueros",
-            dessert = "Gelatina de frutas"
+            firstCourse = if (isEnglish) "Chickpea stew with spinach" else "Potaje de garbanzos con espinacas",
+            secondCourse = if (isEnglish) "Scrambled mushrooms and wild asparagus" else "Revuelto de setas y trigueros",
+            dessert = if (isEnglish) "Fruit jelly" else "Gelatina de frutas"
         )
     )
     DayOfWeek.FRIDAY -> Pair(
         MenuCourses(
-            firstCourse = "Arroz tres delicias con tortilla",
-            secondCourse = "Merluza a la romana con ensalada",
-            dessert = "Mousse de yogur"
+            firstCourse = if (isEnglish) "Three-delicacy rice with omelette" else "Arroz tres delicias con tortilla",
+            secondCourse = if (isEnglish) "Roman-style hake with salad" else "Merluza a la romana con ensalada",
+            dessert = if (isEnglish) "Yogurt mousse" else "Mousse de yogur"
         ),
         MenuCourses(
-            firstCourse = "Sopa minestrone de verduras",
-            secondCourse = "Milanesa de tofu crujiente",
-            dessert = "Mousse de yogur"
+            firstCourse = if (isEnglish) "Vegetable minestrone soup" else "Sopa minestrone de verduras",
+            secondCourse = if (isEnglish) "Crispy tofu Milanesa" else "Milanesa de tofu crujiente",
+            dessert = if (isEnglish) "Yogurt mousse" else "Mousse de yogur"
         )
     )
     else -> Pair(
-        MenuCourses("Arroz con verduras", "Pechuga de pollo a la plancha", "Fruta de temporada"),
-        MenuCourses("Arroz con verduras", "Hamburguesa vegetal", "Fruta de temporada")
+        MenuCourses(
+            if (isEnglish) "Rice with vegetables" else "Arroz con verduras",
+            if (isEnglish) "Grilled chicken breast" else "Pechuga de pollo a la plancha",
+            if (isEnglish) "Seasonal fruit" else "Fruta de temporada"
+        ),
+        MenuCourses(
+            if (isEnglish) "Rice with vegetables" else "Arroz con verduras",
+            if (isEnglish) "Veggie burger" else "Hamburguesa vegetal",
+            if (isEnglish) "Seasonal fruit" else "Fruta de temporada"
+        )
     )
 }
 
