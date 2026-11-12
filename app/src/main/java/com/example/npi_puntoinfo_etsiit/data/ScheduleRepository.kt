@@ -137,7 +137,7 @@ object ScheduleRepository {
             time = "10:30 - 12:30",
             subject = "Procesadores de Lenguajes",
             acronym = "PL",
-            room = "Aula 0.5 · Planta Baja",
+            room = "Aula 1.1 · Planta 1",
             professor = "Ramón López-Cózar Delgado",
             isPractice = false
         ),
