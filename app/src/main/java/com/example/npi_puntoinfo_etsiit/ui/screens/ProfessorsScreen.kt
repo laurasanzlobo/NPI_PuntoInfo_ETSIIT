@@ -149,7 +149,7 @@ fun getProfessorActivityStatus(
                     type = ProfessorActivityType.IN_CLASS,
                     badgeText = "En clase: $roomFormatted",
                     badgeColor = CampusTeal,
-                    dialogMessage = "En este momento ${prof.name} está impartiendo clase de ${c.subject} en el aula $roomFormatted hasta las ${match.groupValues[3]}. Te recomendamos esperar o escribirle un correo."
+                    dialogMessage = "En este momento ${prof.name} está impartiendo clase de ${c.subject} en el aula $roomFormatted hasta las ${match.groupValues[3]}."
                 )
             }
         }
@@ -182,7 +182,7 @@ fun getProfessorActivityStatus(
                 type = ProfessorActivityType.IN_OFFICE_HOURS,
                 badgeText = "En tutoría",
                 badgeColor = Color(0xFF16A34A), // Verde vivo
-                dialogMessage = "¡Buenas noticias! ${prof.name} se encuentra ahora mismo en $officeSpoken atendiendo tutorías hasta las ${m.groupValues[4]}. ¿Quieres que te acompañe hasta allí?"
+                dialogMessage = "${prof.name} se encuentra ahora mismo en $officeSpoken atendiendo tutorías hasta las ${m.groupValues[4]}."
             )
         }
     }
@@ -191,7 +191,7 @@ fun getProfessorActivityStatus(
     val msg = if (prof.isExternal) {
         "${prof.name} se encuentra en ${prof.campus}. Sus tutorías habituales son: ${prof.officeHours}."
     } else {
-        "${prof.name} no tiene tutorías ni clases ahora mismo. Sus tutorías en $officeSpoken son: ${prof.officeHours}. Puedes redactar un correo para solicitar cita."
+        "${prof.name} no tiene tutorías ni clases ahora mismo. Sus tutorías en $officeSpoken son: ${prof.officeHours}."
     }
 
     return ProfessorActivityStatus(
@@ -879,14 +879,14 @@ fun ProfessorsScreen(onNavigate: (String) -> Unit, searchedName: String? = null)
                     .padding(horizontal = 20.dp, vertical = 8.dp),
                 verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
-                // Cabecera: Foto grande + Nombre corto + Semáforo + Botón Cerrar
+                // Cabecera: Foto grande + Nombre completo + Asignatura + Departamento + Semáforo + Botón Cerrar
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
+                    verticalAlignment = Alignment.Top,
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Row(
-                        verticalAlignment = Alignment.CenterVertically,
+                        verticalAlignment = Alignment.Top,
                         modifier = Modifier.weight(1f)
                     ) {
                         Box(
@@ -913,12 +913,15 @@ fun ProfessorsScreen(onNavigate: (String) -> Unit, searchedName: String? = null)
 
                         Spacer(modifier = Modifier.width(14.dp))
 
-                        Column {
+                        Column(
+                            verticalArrangement = Arrangement.spacedBy(3.dp)
+                        ) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Text(
-                                    text = formatShortProfessorName(prof.name),
+                                    text = prof.name,
                                     fontWeight = FontWeight.Bold,
-                                    fontSize = 18.sp,
+                                    fontSize = 17.sp,
+                                    lineHeight = 21.sp,
                                     color = TextPrimary
                                 )
                                 if (isLoggedIn && prof.isMyTeacher) {
@@ -932,7 +935,27 @@ fun ProfessorsScreen(onNavigate: (String) -> Unit, searchedName: String? = null)
                                 }
                             }
 
-                            Spacer(modifier = Modifier.height(6.dp))
+                            if (prof.subject.isNotBlank()) {
+                                Text(
+                                    text = prof.subject,
+                                    fontSize = 13.sp,
+                                    lineHeight = 16.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = CampusTeal
+                                )
+                            }
+
+                            if (prof.department.isNotBlank()) {
+                                Text(
+                                    text = prof.department,
+                                    fontSize = 11.5.sp,
+                                    lineHeight = 15.sp,
+                                    color = TextSecondary
+                                )
+                            }
+
+                            Spacer(modifier = Modifier.height(2.dp))
+
                             // Píldora de estado en tiempo real (Tutoría / Clase / Fuera de horario)
                             Surface(
                                 shape = RoundedCornerShape(6.dp),
@@ -975,7 +998,7 @@ fun ProfessorsScreen(onNavigate: (String) -> Unit, searchedName: String? = null)
                     }
                 }
 
-                // Información clave concisa: Tutorías (la ubicación del despacho se indica directamente en el botón de navegación)
+                // Información clave concisa: Tutorías + Botón discreto [🔊 Oír]
                 val cleanOffice = prof.office
                     .split("·")[0]
                     .replace("Despacho", "", ignoreCase = true)
@@ -995,74 +1018,47 @@ fun ProfessorsScreen(onNavigate: (String) -> Unit, searchedName: String? = null)
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Row(
-                        modifier = Modifier.padding(14.dp),
-                        verticalAlignment = Alignment.Top,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Schedule,
-                            contentDescription = null,
-                            tint = TextSecondary,
-                            modifier = Modifier.size(18.dp).padding(top = 1.dp)
-                        )
-                        Column {
-                            Text(
-                                text = "Tutorías:",
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = TextSecondary
-                            )
-                            Text(
-                                text = formattedOfficeHours,
-                                fontSize = 12.sp,
-                                lineHeight = 16.sp,
-                                color = TextPrimary
-                            )
-                        }
-                    }
-                }
-
-                // Asistente de Voz compacto con botón [🔊 Oír]
-                Surface(
-                    shape = RoundedCornerShape(12.dp),
-                    color = CampusTeal.copy(alpha = 0.08f),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 12.dp, vertical = 8.dp),
-                        verticalAlignment = Alignment.CenterVertically,
+                            .padding(14.dp),
+                        verticalAlignment = Alignment.Top,
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                            verticalAlignment = Alignment.Top,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
                             modifier = Modifier.weight(1f)
                         ) {
                             Icon(
-                                imageVector = Icons.Default.RecordVoiceOver,
+                                imageVector = Icons.Default.Schedule,
                                 contentDescription = null,
-                                tint = CampusTeal,
-                                modifier = Modifier.size(18.dp)
+                                tint = TextSecondary,
+                                modifier = Modifier
+                                    .size(18.dp)
+                                    .padding(top = 1.dp)
                             )
-                            Text(
-                                text = when (status.type) {
-                                    ProfessorActivityType.IN_OFFICE_HOURS -> "¿Te guío al despacho?"
-                                    ProfessorActivityType.IN_CLASS -> "En clase ahora mismo"
-                                    ProfessorActivityType.OFFLINE -> "Fuera de tutorías"
-                                },
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                color = CampusTeal
-                            )
+                            Column {
+                                Text(
+                                    text = "Tutorías:",
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = TextSecondary
+                                )
+                                Text(
+                                    text = formattedOfficeHours,
+                                    fontSize = 12.sp,
+                                    lineHeight = 16.sp,
+                                    color = TextPrimary
+                                )
+                            }
                         }
 
+                        // Botón discreto [🔊 Oír] integrado sin estorbar
                         FilledTonalButton(
                             onClick = { speak(status.dialogMessage) },
                             shape = RoundedCornerShape(8.dp),
                             contentPadding = PaddingValues(horizontal = 10.dp, vertical = 2.dp),
-                            modifier = Modifier.height(28.dp),
+                            modifier = Modifier.height(30.dp),
                             colors = ButtonDefaults.filledTonalButtonColors(
                                 containerColor = if (isSpeaking) UgrRed.copy(alpha = 0.15f) else CampusTeal.copy(alpha = 0.15f),
                                 contentColor = if (isSpeaking) UgrRed else CampusTeal
@@ -1074,7 +1070,11 @@ fun ProfessorsScreen(onNavigate: (String) -> Unit, searchedName: String? = null)
                                 modifier = Modifier.size(13.dp)
                             )
                             Spacer(modifier = Modifier.width(4.dp))
-                            Text(if (isSpeaking) "Parar" else "Oír", fontSize = 10.5.sp, fontWeight = FontWeight.Bold)
+                            Text(
+                                text = if (isSpeaking) "Parar" else "Oír",
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold
+                            )
                         }
                     }
                 }
