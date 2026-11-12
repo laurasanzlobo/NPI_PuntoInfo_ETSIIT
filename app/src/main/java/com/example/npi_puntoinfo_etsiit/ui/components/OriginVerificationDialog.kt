@@ -78,41 +78,140 @@ fun formatearNombreNodoAmigable(
     isEnglish: Boolean = java.util.Locale.getDefault().language.equals("en", ignoreCase = true)
 ): String {
     val n = nodo.nombre
+    val nLower = n.lowercase()
+
     return when {
+        // Aulas y laboratorios
         n.equals("A_Menos1", ignoreCase = true) -> if (isEnglish) "Classroom -1" else "Aula -1"
         n.equals("A_Menos2", ignoreCase = true) -> if (isEnglish) "Classroom -2" else "Aula -2"
-        n.startsWith("A_") -> {
-            val num = n.removePrefix("A_")
+        n.startsWith("A_", ignoreCase = true) -> {
+            val num = n.removePrefix("A_").removePrefix("a_")
             val p = if (num.length >= 2) num.substring(0, 1) else "0"
             val rest = if (num.length >= 2) num.substring(1) else num
             if (isEnglish) "Classroom $p.$rest" else "Aula $p.$rest"
         }
-        n.startsWith("L_") -> {
-            val num = n.removePrefix("L_")
+        n.startsWith("L_", ignoreCase = true) -> {
+            val num = n.removePrefix("L_").removePrefix("l_")
             val p = if (num.length >= 2) num.substring(0, 1) else "0"
             val rest = if (num.length >= 2) num.substring(1) else num
             if (isEnglish) "Laboratory $p.$rest" else "Laboratorio $p.$rest"
         }
-        n.startsWith("D_") -> {
-            val rest = n.removePrefix("D_").replace("_", " ")
-            if (isEnglish) "Office $rest" else "Despacho $rest"
+        n.startsWith("D_", ignoreCase = true) -> {
+            val num = n.removePrefix("D_").removePrefix("d_")
+            if (isEnglish) "Office $num" else "Despacho $num"
         }
+
+        // Aseos y baños (limpiando "desp", "PB", etc.)
+        nLower.contains("bath") || nLower.contains("bano") || nLower.contains("baño") -> {
+            when {
+                nLower.contains("minus") ->
+                    if (isEnglish) "Accessible Restroom (PRM)" else "Aseos adaptados (PMR)"
+                nLower.contains("chicas") ->
+                    if (nLower.contains("bib")) {
+                        if (isEnglish) "Women's Restroom (Library)" else "Aseos femeninos (Biblioteca)"
+                    } else {
+                        if (isEnglish) "Women's Restroom" else "Aseos femeninos"
+                    }
+                nLower.contains("chicos") ->
+                    if (nLower.contains("bib")) {
+                        if (isEnglish) "Men's Restroom (Library)" else "Aseos masculinos (Biblioteca)"
+                    } else {
+                        if (isEnglish) "Men's Restroom" else "Aseos masculinos"
+                    }
+                else ->
+                    if (isEnglish) "Restrooms" else "Aseos / Baños"
+            }
+        }
+
+        // Ascensores (sin "PB", "P1", etc.)
+        nLower.contains("ascensor") -> {
+            when {
+                nLower.contains("despacho") ->
+                    if (isEnglish) "Offices Elevator" else "Ascensor de despachos"
+                nLower.contains("aula") || nLower.contains("lab") ->
+                    if (isEnglish) "Classrooms Elevator" else "Ascensor de aulas y laboratorios"
+                else ->
+                    if (isEnglish) "Elevator" else "Ascensor"
+            }
+        }
+
+        // Escaleras (sin códigos raros)
+        nLower.startsWith("esc") -> {
+            when {
+                nLower.contains("exterior") ->
+                    if (isEnglish) "Exterior Stairs" else "Escaleras exteriores"
+                nLower.contains("interior") ->
+                    if (isEnglish) "Interior Stairs" else "Escaleras interiores"
+                nLower.contains("bib") ->
+                    if (isEnglish) "Library Stairs" else "Escaleras de biblioteca"
+                nLower.contains("mesas") ->
+                    if (isEnglish) "Stairs to Outside Tables" else "Escaleras hacia mesas"
+                nLower.contains("pss") ->
+                    if (isEnglish) "Stairs to Floor -1" else "Escaleras a planta -1"
+                else ->
+                    if (isEnglish) "Stairs" else "Escaleras"
+            }
+        }
+
+        // Entradas y accesos
         n.equals("Entrada_Exterior", ignoreCase = true) ->
-            if (isEnglish) "Main Outside Entrance" else "Entrada Principal Exterior"
-        n.equals("Vestibulo", ignoreCase = true) ->
-            if (isEnglish) "Entrance Lobby" else "Vestíbulo de Entrada"
-        n.equals("Comedor_PSS", ignoreCase = true) || n.contains("Comedor", ignoreCase = true) ->
-            if (isEnglish) "Aynadamar Dining Hall" else "Comedor Aynadamar"
-        n.equals("Cafeteria_PSS", ignoreCase = true) || n.contains("Cafeteria", ignoreCase = true) ->
-            if (isEnglish) "Cafeteria" else "Cafetería"
-        n.contains("Biblioteca", ignoreCase = true) ->
-            if (isEnglish) "Library" else "Biblioteca"
-        n.contains("Salon", ignoreCase = true) || n.contains("Actos", ignoreCase = true) ->
-            if (isEnglish) "Auditorium" else "Salón de Actos"
-        n.contains("Secretaria", ignoreCase = true) ->
+            if (isEnglish) "Main Outside Entrance" else "Entrada principal exterior"
+        n.equals("Vestibulo", ignoreCase = true) || n.equals("Vestibulo_PSS", ignoreCase = true) ->
+            if (isEnglish) "Lobby" else "Vestíbulo"
+        n.equals("Entrada_Aulas_1", ignoreCase = true) ->
+            if (isEnglish) "Classrooms Entrance (Gate 1)" else "Entrada a las aulas (Acceso 1)"
+        n.equals("Entrada_Aulas_2", ignoreCase = true) ->
+            if (isEnglish) "Classrooms Entrance (Gate 2)" else "Entrada a las aulas (Acceso 2)"
+        nLower.contains("e_desp_principal") ->
+            if (isEnglish) "Offices Main Entrance" else "Entrada principal de despachos"
+        nLower.contains("e_desp_secundaria") ->
+            if (isEnglish) "Offices Side Entrance" else "Entrada secundaria de despachos"
+        nLower.contains("acceso_diresec") ->
+            if (isEnglish) "Dean's & Secretary Access" else "Acceso a Dirección y Secretaría"
+        nLower.contains("entrada_biblioteca") || n.equals("Biblioteca_2_entrada", ignoreCase = true) ->
+            if (isEnglish) "Library Entrance" else "Entrada a la biblioteca"
+        nLower.contains("entrada_lab") || nLower.contains("entrada_p3_labs") ->
+            if (isEnglish) "Laboratories Entrance" else "Entrada a laboratorios"
+        nLower.contains("entrada_pss") ->
+            if (isEnglish) "Floor -1 Entrance" else "Entrada planta -1"
+        nLower.contains("entrada_exterior_p1") ->
+            if (isEnglish) "Floor 1 Outside Entrance" else "Entrada exterior planta 1"
+
+        // Servicios y dependencias
+        nLower.contains("conserjeria") -> {
+            if (nLower.contains("aulas")) {
+                if (isEnglish) "Classrooms Janitor's Office" else "Conserjería de aulas"
+            } else {
+                if (isEnglish) "Janitor's Office / Reception" else "Conserjería"
+            }
+        }
+        n.startsWith("Secretaria_", ignoreCase = true) || n.equals("Secretaria", ignoreCase = true) ->
             if (isEnglish) "Secretary's Office" else "Secretaría"
-        n.contains("Conserjeria", ignoreCase = true) ->
-            if (isEnglish) "Reception / Janitor's Office" else "Conserjería"
+        n.startsWith("Secretario_", ignoreCase = true) || n.equals("Secretario", ignoreCase = true) ->
+            if (isEnglish) "Dean's Secretary" else "Secretaría de dirección"
+        n.startsWith("Director_", ignoreCase = true) || n.equals("Director", ignoreCase = true) ->
+            if (isEnglish) "ETSIIT Dean's Office" else "Dirección de la ETSIIT"
+        nLower.contains("comedor") ->
+            if (isEnglish) "Aynadamar Dining Hall" else "Comedor Aynadamar"
+        nLower.contains("cafeteria") || nLower.contains("cafetería") ->
+            if (isEnglish) "Cafeteria" else "Cafetería"
+        nLower.contains("salon") || nLower.contains("actos") ->
+            if (isEnglish) "Auditorium" else "Salón de Actos"
+        n.equals("Biblioteca", ignoreCase = true) ->
+            if (isEnglish) "Library" else "Biblioteca"
+        nLower.contains("bibliotecario") ->
+            if (isEnglish) "Library Help Desk" else "Mostrador de biblioteca"
+        nLower.contains("ordenadores") ->
+            if (isEnglish) "Computer Lab" else "Sala de ordenadores"
+        nLower.contains("salas_estudio") || nLower.contains("sala_estudio") ->
+            if (isEnglish) "Study Rooms" else "Salas de estudio"
+        nLower.contains("equipo_tecnico") ->
+            if (isEnglish) "Technical Support" else "Equipo técnico"
+        nLower.contains("delegacion_estudiantes") ->
+            if (isEnglish) "Student Council" else "Delegación de estudiantes"
+        n.equals("Mesas_Exteriores", ignoreCase = true) ->
+            if (isEnglish) "Outside Tables" else "Mesas exteriores"
+
         else -> n.replace("_", " ")
     }
 }
@@ -356,10 +455,13 @@ fun OriginVerificationDialog(
                                             planta = step.estimate.floorCode,
                                             edificio = detectedBuilding.graphCode
                                         )
+                                        val candidateNodes = if (floorNodes.isNotEmpty()) floorNodes else listOf(grafo.obtenerNodoInicioPredeterminado())
+                                        val isEnglish = java.util.Locale.getDefault().language.equals("en", ignoreCase = true)
+                                        val sortedNodes = candidateNodes.sortedBy { formatearNombreNodoAmigable(it, isEnglish) }
                                         currentStep = VerificationStep.FloorNodeSelectionStep(
                                             floorCode = step.estimate.floorCode,
                                             floorName = step.estimate.floorName,
-                                            nodes = if (floorNodes.isNotEmpty()) floorNodes else listOf(grafo.obtenerNodoInicioPredeterminado())
+                                            nodes = sortedNodes
                                         )
                                     },
                                     modifier = Modifier.weight(1f),
