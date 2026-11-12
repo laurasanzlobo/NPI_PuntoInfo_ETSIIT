@@ -533,20 +533,13 @@ fun NavigationScreen(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = "${rutaCalculada.distanciaMetros} m",
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold,
-                                color = TextPrimary
-                            )
-                            Text(
-                                text = formattedTitle,
-                                style = MaterialTheme.typography.bodySmall,
-                                color = TextSecondary,
-                                fontWeight = FontWeight.Medium
-                            )
-                        }
+                        Text(
+                            text = "${rutaCalculada.distanciaMetros} m",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = TextPrimary,
+                            modifier = Modifier.weight(1f)
+                        )
 
                         GestureBadge(
                             type = GestureType.LIFT_PHONE,
