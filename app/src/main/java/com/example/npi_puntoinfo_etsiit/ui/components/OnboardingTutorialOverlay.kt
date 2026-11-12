@@ -1421,16 +1421,29 @@ private fun GestureLiveTelemetryBox(
                     }
 
                     GestureType.ACTION_TRIGGER -> {
-                        Surface(
-                            shape = RoundedCornerShape(50),
-                            color = if (isCompleted) CampusGreen.copy(alpha = 0.18f) else Color(0xFFE2E8F0)
+                        val pitchDeg = Math.toDegrees(
+                            kotlin.math.atan2(liveTiltY.toDouble(), liveTiltZ.toDouble())
+                        ).toFloat()
+                        val tiltProgress = ((pitchDeg - 52f) / 37f).coerceIn(0f, 1f)
+                        Column(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalAlignment = Alignment.CenterHorizontally
                         ) {
                             Text(
-                                text = if (isCompleted) "✓ Inclinación hacia ti detectada" else "📲 Inclina hacia ti y vuelve a tu posición",
+                                text = "Inclinación hacia ti: ${(if (isCompleted) 100 else (tiltProgress * 100).toInt())}%",
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = if (isCompleted) CampusGreen else TextSecondary,
-                                modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp)
+                                color = if (isCompleted) CampusGreen else TextPrimary
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            LinearProgressIndicator(
+                                progress = { if (isCompleted) 1f else tiltProgress },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(10.dp)
+                                    .clip(RoundedCornerShape(50)),
+                                color = if (isCompleted) CampusGreen else gesture.badgeColor,
+                                trackColor = Color(0xFFE2E8F0)
                             )
                         }
                     }
