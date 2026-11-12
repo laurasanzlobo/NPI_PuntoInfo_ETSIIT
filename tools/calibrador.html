@@ -394,6 +394,7 @@
     <div class="tramo-tabs">
       <button class="tab-btn active" id="tab-ida" onclick="switchTramo('ida')">Ida (ETSIIT &rarr; Auxiliar)</button>
       <button class="tab-btn" id="tab-vuelta" onclick="switchTramo('vuelta')">Vuelta (Auxiliar &rarr; ETSIIT)</button>
+      <button class="tab-btn" id="tab-interior" onclick="switchTramo('interior')">Interior (Comedor &rarr; Aula 1.1)</button>
     </div>
   </header>
 
@@ -483,6 +484,8 @@
       currentIndex = 0;
       document.getElementById('tab-ida').classList.toggle('active', tramo === 'ida');
       document.getElementById('tab-vuelta').classList.toggle('active', tramo === 'vuelta');
+      const tabInt = document.getElementById('tab-interior');
+      if (tabInt) tabInt.classList.toggle('active', tramo === 'interior');
       renderSidebar();
       renderCurrentNode();
     }

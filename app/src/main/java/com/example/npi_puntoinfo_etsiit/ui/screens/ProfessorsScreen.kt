@@ -776,8 +776,8 @@ fun ProfessorsScreen(onNavigate: (String) -> Unit, searchedName: String? = null)
             ) {
                 Surface(
                     shape = RoundedCornerShape(24.dp),
-                    color = SurfaceWhite,
-                    tonalElevation = 8.dp,
+                    color = Color.White,
+                    tonalElevation = 0.dp,
                     shadowElevation = 16.dp,
                     modifier = Modifier
                         .fillMaxWidth()
@@ -859,8 +859,9 @@ fun ProfessorsScreen(onNavigate: (String) -> Unit, searchedName: String? = null)
                 tts?.stop()
                 isSpeaking = false
             },
-            containerColor = SurfaceWhite,
-            tonalElevation = 6.dp,
+            containerColor = Color.White,
+            tonalElevation = 0.dp,
+            scrimColor = Color.Black.copy(alpha = 0.45f),
             shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
             dragHandle = {
                 Box(
@@ -875,6 +876,7 @@ fun ProfessorsScreen(onNavigate: (String) -> Unit, searchedName: String? = null)
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .background(Color.White)
                     .padding(horizontal = 24.dp)
                     .padding(top = 4.dp, bottom = 28.dp),
                 verticalArrangement = Arrangement.spacedBy(18.dp)
@@ -891,15 +893,18 @@ fun ProfessorsScreen(onNavigate: (String) -> Unit, searchedName: String? = null)
                         modifier = Modifier.weight(1f)
                     ) {
                         Box(
-                            contentAlignment = Alignment.BottomEnd,
                             modifier = Modifier.clickable { showEnlargedPhoto = true }
                         ) {
                             ProfessorAvatar(prof = prof, size = 68.dp)
+
+                            // Lupita abajo a la derecha
                             Surface(
                                 shape = CircleShape,
                                 color = SurfaceWhite,
                                 shadowElevation = 3.dp,
-                                modifier = Modifier.size(22.dp)
+                                modifier = Modifier
+                                    .align(Alignment.BottomEnd)
+                                    .size(22.dp)
                             ) {
                                 Box(contentAlignment = Alignment.Center) {
                                     Icon(
@@ -910,30 +915,40 @@ fun ProfessorsScreen(onNavigate: (String) -> Unit, searchedName: String? = null)
                                     )
                                 }
                             }
+
+                            // Estrellita amarilla arriba a la derecha si es tu profesor
+                            if (isLoggedIn && prof.isMyTeacher) {
+                                Surface(
+                                    shape = CircleShape,
+                                    color = SurfaceWhite,
+                                    shadowElevation = 3.dp,
+                                    modifier = Modifier
+                                        .align(Alignment.TopEnd)
+                                        .size(22.dp)
+                                ) {
+                                    Box(contentAlignment = Alignment.Center) {
+                                        Icon(
+                                            imageVector = Icons.Default.Star,
+                                            contentDescription = "Tu profesor",
+                                            tint = Color(0xFFF59E0B),
+                                            modifier = Modifier.size(14.dp)
+                                        )
+                                    }
+                                }
+                            }
                         }
 
                         Column(
                             verticalArrangement = Arrangement.spacedBy(6.dp),
                             modifier = Modifier.weight(1f)
                         ) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Text(
-                                    text = prof.name,
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 19.sp,
-                                    lineHeight = 23.sp,
-                                    color = TextPrimary
-                                )
-                                if (isLoggedIn && prof.isMyTeacher) {
-                                    Spacer(modifier = Modifier.width(6.dp))
-                                    Icon(
-                                        imageVector = Icons.Default.Star,
-                                        contentDescription = "Tu profesor",
-                                        tint = Color(0xFFF59E0B),
-                                        modifier = Modifier.size(16.dp)
-                                    )
-                                }
-                            }
+                            Text(
+                                text = prof.name,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 19.sp,
+                                lineHeight = 23.sp,
+                                color = TextPrimary
+                            )
 
                             // Píldora de estado en tiempo real (Tutoría / Clase / Fuera de horario) justo bajo el nombre
                             Surface(

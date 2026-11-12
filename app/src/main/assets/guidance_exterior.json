@@ -12,12 +12,12 @@
         "nombre": "Punto de Información / Hall ETSIIT (Nodo 1)",
         "lat": 37.196735,
         "lng": -3.624428,
-        "rumbo": null,
-        "foto": null,
+        "rumbo": 325,
+        "foto": "rutas/ida/ida1.jpg",
         "accion": "INICIO",
         "instruccion": "Inicia la ruta desde el Punto de Información en el vestíbulo de la ETSIIT dirigiéndote hacia la salida principal.",
         "instruccion_en": "Start the route from the Information Point in the ETSIIT lobby heading towards the main exit.",
-        "eje_x_camino": 0.5
+        "eje_x_camino": 0.6
       },
       {
         "id": "ext_ida_02",
@@ -226,12 +226,12 @@
         "nombre": "Entrada Principal ETSIIT - Obras (Nodo 2)",
         "lat": 37.196873,
         "lng": -3.624742,
-        "rumbo": null,
-        "foto": null,
+        "rumbo": 155,
+        "foto": "rutas/vuelta/vuelta2.jpg",
         "accion": "RECTO",
         "instruccion": "Avanza hacia la puerta principal.",
         "instruccion_en": "Walk towards the main entrance.",
-        "eje_x_camino": 0.5
+        "eje_x_camino": 0.729
       },
       {
         "id": "ext_vuelta_09",
@@ -239,12 +239,12 @@
         "nombre": "Punto de Información / Hall ETSIIT (Nodo 1)",
         "lat": 37.196735,
         "lng": -3.624428,
-        "rumbo": null,
-        "foto": null,
+        "rumbo": 60,
+        "foto": "rutas/vuelta/vuelta1.jpg",
         "accion": "LLEGADA",
         "instruccion": "Has llegado a la ETSIIT.",
         "instruccion_en": "You have arrived at ETSIIT.",
-        "eje_x_camino": 0.5
+        "eje_x_camino": 0.562
       }
     ]
   }

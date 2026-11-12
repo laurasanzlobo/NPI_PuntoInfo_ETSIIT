@@ -97,7 +97,12 @@ def reconstruir_grafo_completo():
     print("grafo_etsiit_completo.json actualizado con éxito.")
 
 if __name__ == "__main__":
+    import webbrowser
     with socketserver.TCPServer(("", PORT), Handler) as httpd:
         print(f"Servidor del Editor en ejecución en http://localhost:{PORT}")
+        try:
+            webbrowser.open(f"http://localhost:{PORT}")
+        except Exception:
+            pass
         httpd.serve_forever()
 

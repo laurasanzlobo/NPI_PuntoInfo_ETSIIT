@@ -157,6 +157,20 @@ fun AppNavigation() {
         }
     }
 
+    val clearActiveRoute: () -> Unit = {
+        val hadTrip = activeTrip != null
+        activeTrip = activeTrip?.finish()
+        clearHandoff()
+        activeDestination = null
+        activeLocation = null
+        isVerticalGuidanceActive = false
+        if (hadTrip) {
+            navController.popBackStack(Screen.Outdoor.routePattern, inclusive = true)
+            activeTrip = null
+            navigateToTab(Screen.Navigation.route)
+        }
+    }
+
     fun handleNavigation(route: String) {
         val preserveBackStack = currentRoute == Screen.Services.route ||
                 currentRoute == Screen.Professors.route ||
@@ -374,18 +388,21 @@ fun AppNavigation() {
     // Indica si el usuario está en la vista inmersiva de cámara escaneando el código QR de la TUI
     val isScanningQrMode = currentRoute == Screen.Profile.route && !isUserLoggedIn && !isExitingProfileOnLogout
 
-    // Pausar proximidad durante el escaneo QR, pago y durante el tutorial interactivo para no solapar los sensores.
+    // Desactivar todos los gestos globales durante el escaneo QR, el pago, el tutorial y el GUIADO PASO A PASO (interior o exterior)
+    val isStepByStepGuidanceActive = isVerticalGuidanceActive || currentRoute == Screen.Outdoor.routePattern
+
+    // Pausar proximidad durante el escaneo QR, pago, tutorial interactivo y durante el GUIADO PASO A PASO.
     // Al pasar la mano por la cámara frontal / parte superior del móvil o acercarlo a la oreja,
-    // se activa el asistente de voz y se calcula la ruta guiada en el mapa.
-    DisposableEffect(context, isScanningQrMode, isDiningPaymentActive, isTutorialActive) {
-        if (isScanningQrMode || isDiningPaymentActive || isTutorialActive) {
+    // se activa el asistente de voz y se calcula la ruta guiada en el mapa (solo fuera de guiado activo).
+    DisposableEffect(context, isScanningQrMode, isDiningPaymentActive, isTutorialActive, isStepByStepGuidanceActive) {
+        if (isScanningQrMode || isDiningPaymentActive || isTutorialActive || isStepByStepGuidanceActive) {
             onDispose { }
         } else {
             val proximityManager = ProximityManager(context)
 
             proximityManager.onNear = {
                 val now = System.currentTimeMillis()
-                if (!isListeningSpeechGlobal && !isScanningQrMode && (now - lastBackClickTimeMs > 800L)) {
+                if (!isListeningSpeechGlobal && !isScanningQrMode && !isStepByStepGuidanceActive && (now - lastBackClickTimeMs > 800L)) {
                     triggerVibration(context, durationMs = 80)
                     currentLaunchGlobalVoiceSearch()
                 }
@@ -399,18 +416,18 @@ fun AppNavigation() {
         }
     }
 
-    // Pausar también la agitación durante el escaneo QR, la pasarela de pago y el tutorial interactivo.
+    // Pausar también la agitación durante el escaneo QR, la pasarela de pago, el tutorial interactivo y durante el GUIADO PASO A PASO.
     // Detecta dinámicamente si hay una clase en curso o próxima (con 30 minutos de antelación).
     // Si hay clase, el gesto de «¡Llévame!» (giro de muñeca) guía directamente a su aula.
     DisposableEffect(context, showCurrentClassDialog, activeClassForDialog, isScanningQrMode, isUserLoggedIn,
-        isDiningPaymentActive, isTutorialActive) {
-        if (isScanningQrMode || isDiningPaymentActive || isTutorialActive) {
+        isDiningPaymentActive, isTutorialActive, isStepByStepGuidanceActive) {
+        if (isScanningQrMode || isDiningPaymentActive || isTutorialActive || isStepByStepGuidanceActive) {
             onDispose { }
         } else {
             val accelerometerManager = AccelerometerManager(context)
 
             accelerometerManager.onShakeDetected = {
-                if (isUserLoggedIn && !isScanningQrMode) {
+                if (isUserLoggedIn && !isScanningQrMode && !isStepByStepGuidanceActive) {
                     triggerVibration(context, durationMs = 150)
                     activeClassForDialog = ScheduleRepository.getCurrentOrUpcomingClass(context = context)
                     showCurrentClassDialog = true
@@ -479,6 +496,10 @@ fun AppNavigation() {
                                 if (currentRoute == Screen.Outdoor.routePattern) {
                                     activeTrip = null
                                     clearHandoff()
+                                }
+                                if (currentRoute?.startsWith("navigation") == true && activeDestination != null) {
+                                    clearActiveRoute()
+                                    return@IconButton
                                 }
                                 if (!navController.popBackStack()) {
                                     navigateToTab(Screen.Home.route)
@@ -630,7 +651,13 @@ fun AppNavigation() {
                     }
                 )
             ) { backStackEntry ->
-                BackHandler(enabled = canReturnOutdoors) { returnToOutdoor() }
+                BackHandler(enabled = canReturnOutdoors || activeDestination != null) {
+                    if (canReturnOutdoors) {
+                        returnToOutdoor()
+                    } else {
+                        clearActiveRoute()
+                    }
+                }
                 val destinationArg = backStackEntry.arguments?.getString("destination")
                 val locationArg = backStackEntry.arguments?.getString("location")
 
@@ -659,19 +686,7 @@ fun AppNavigation() {
                             activeLocation = loc
                         }
                     },
-                    onClearRoute = {
-                        val hadTrip = activeTrip != null
-                        activeTrip = activeTrip?.finish()
-                        clearHandoff()
-                        activeDestination = null
-                        activeLocation = null
-                        isVerticalGuidanceActive = false
-                        if (hadTrip) {
-                            navController.popBackStack(Screen.Outdoor.routePattern, inclusive = true)
-                            activeTrip = null
-                            navigateToTab(Screen.Navigation.route)
-                        }
-                    },
+                    onClearRoute = clearActiveRoute,
                     entryNodeId = activeEntryNodeId,
                     destinationNodeId = activeTargetNodeId,
                     onReturnOutdoors = if (canReturnOutdoors) ({

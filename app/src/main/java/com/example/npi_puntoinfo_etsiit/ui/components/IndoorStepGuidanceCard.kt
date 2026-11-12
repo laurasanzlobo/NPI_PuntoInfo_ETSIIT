@@ -136,8 +136,20 @@ fun IndoorStepGuidanceCard(
                             )
                         }
                         Column {
+                            val isFinalStep = tripState.currentStepIndex >= tripState.steps.size - 1 ||
+                                step.accion?.contains("FIN", ignoreCase = true) == true ||
+                                step.accion?.contains("LLEGADA", ignoreCase = true) == true
+
+                            val remainingSteps = (step.targetSteps - tripState.currentStepProgress).coerceAtLeast(0)
+                            val titleLabel = if (isFinalStep) {
+                                "¡Has llegado a tu destino!"
+                            } else if (remainingSteps <= 0) {
+                                "¡Paso alcanzado!"
+                            } else {
+                                "$remainingSteps ${if (remainingSteps == 1) "paso" else "pasos"}"
+                            }
                             Text(
-                                text = "Paso ${step.stepIndex + 1} de ${tripState.steps.size}",
+                                text = titleLabel,
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 13.sp,
                                 color = EtsiitBlue
@@ -150,28 +162,35 @@ fun IndoorStepGuidanceCard(
                         }
                     }
 
-                    // Contador de Pasos del Tramo Actual
-                    Surface(
-                        shape = RoundedCornerShape(8.dp),
-                        color = CampusTeal.copy(alpha = 0.12f)
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(4.dp),
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                    // Contador de Pasos restantes del Tramo Actual
+                    val isFinalStepCard = tripState.currentStepIndex >= tripState.steps.size - 1 ||
+                        step.accion?.contains("FIN", ignoreCase = true) == true ||
+                        step.accion?.contains("LLEGADA", ignoreCase = true) == true
+
+                    if (!isFinalStepCard) {
+                        Surface(
+                            shape = RoundedCornerShape(8.dp),
+                            color = CampusTeal.copy(alpha = 0.12f)
                         ) {
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Filled.DirectionsWalk,
-                                contentDescription = null,
-                                tint = CampusTeal,
-                                modifier = Modifier.size(14.dp)
-                            )
-                            Text(
-                                text = "${tripState.currentStepProgress} / ${step.targetSteps} pasos",
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = CampusTeal
-                            )
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.AutoMirrored.Filled.DirectionsWalk,
+                                    contentDescription = null,
+                                    tint = CampusTeal,
+                                    modifier = Modifier.size(14.dp)
+                                )
+                                val remainingSteps = (step.targetSteps - tripState.currentStepProgress).coerceAtLeast(0)
+                                Text(
+                                    text = "$remainingSteps ${if (remainingSteps == 1) "paso" else "pasos"}",
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = CampusTeal
+                                )
+                            }
                         }
                     }
                 }
@@ -207,34 +226,45 @@ fun IndoorStepGuidanceCard(
                 }
 
                 // Controles de Anulación Manual de Respaldo (Fallback Controls)
-                val isEnglish = java.util.Locale.getDefault().language.equals("en", ignoreCase = true)
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    OutlinedButton(
+                    IconButton(
                         onClick = onPreviousManual,
                         enabled = tripState.currentStepIndex > 0,
-                        modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(10.dp),
-                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 6.dp)
+                        modifier = Modifier
+                            .size(38.dp)
+                            .background(
+                                color = if (tripState.currentStepIndex > 0) Color.Black.copy(alpha = 0.08f) else Color.Black.copy(alpha = 0.04f),
+                                shape = RoundedCornerShape(8.dp)
+                            )
                     ) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null, modifier = Modifier.size(14.dp))
-                        Spacer(Modifier.width(4.dp))
-                        Text(if (isEnglish) "Previous" else "Anterior", fontSize = 11.sp)
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Anterior",
+                            tint = if (tripState.currentStepIndex > 0) TextSecondary else TextSecondary.copy(alpha = 0.35f),
+                            modifier = Modifier.size(18.dp)
+                        )
                     }
 
-                    Button(
+                    IconButton(
                         onClick = onNextManual,
-                        modifier = Modifier.weight(1.2f),
-                        shape = RoundedCornerShape(10.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = EtsiitBlue),
-                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 6.dp)
+                        enabled = tripState.currentStepIndex < tripState.steps.size - 1,
+                        modifier = Modifier
+                            .size(38.dp)
+                            .background(
+                                color = if (tripState.currentStepIndex < tripState.steps.size - 1) Color.Black.copy(alpha = 0.08f) else Color.Black.copy(alpha = 0.04f),
+                                shape = RoundedCornerShape(8.dp)
+                            )
                     ) {
-                        Text(if (isEnglish) "Next" else "Siguiente", fontSize = 11.sp, color = Color.White)
-                        Spacer(Modifier.width(4.dp))
-                        Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null, modifier = Modifier.size(14.dp), tint = Color.White)
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                            contentDescription = "Siguiente",
+                            tint = if (tripState.currentStepIndex < tripState.steps.size - 1) TextSecondary else TextSecondary.copy(alpha = 0.35f),
+                            modifier = Modifier.size(18.dp)
+                        )
                     }
                 }
             }
@@ -436,23 +466,24 @@ fun IndoorFullScreenStepGuidanceView(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(6.dp)
-                        ) {
-                            Text(
-                                text = "Paso ${step.stepIndex + 1} de ${tripState.steps.size}",
-                                fontSize = 13.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = EtsiitBlue
-                            )
-                            Text(
-                                text = "·  ${tripState.currentStepProgress} / ${step.targetSteps} pasos",
-                                fontSize = 13.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color.White
-                            )
+                        val isFinalStep = tripState.currentStepIndex >= tripState.steps.size - 1 ||
+                            step.accion?.contains("FIN", ignoreCase = true) == true ||
+                            step.accion?.contains("LLEGADA", ignoreCase = true) == true
+
+                        val remainingSteps = (step.targetSteps - tripState.currentStepProgress).coerceAtLeast(0)
+                        val stepsLabel = if (isFinalStep) {
+                            "¡Has llegado a tu destino!"
+                        } else if (remainingSteps <= 0) {
+                            "¡Paso alcanzado!"
+                        } else {
+                            "$remainingSteps ${if (remainingSteps == 1) "paso" else "pasos"}"
                         }
+                        Text(
+                            text = stepsLabel,
+                            fontSize = 22.sp,
+                            fontWeight = FontWeight.ExtraBold,
+                            color = Color.White
+                        )
                         Text(
                             text = step.instructionText,
                             fontSize = 16.sp,
@@ -524,33 +555,36 @@ fun IndoorFullScreenStepGuidanceView(
             }
         }
 
-        // 4. CONTROLES INFERIORES FLOTANTES (Anterior / Siguiente / Finalizar paso)
+        // 4. CONTROLES INFERIORES FLOTANTES (Anterior / Siguiente cuadrado discreto en extremos)
         val isLastStep = tripState.currentStepIndex >= tripState.steps.size - 1
-        val isEnglish = java.util.Locale.getDefault().language.equals("en", ignoreCase = true)
 
         Row(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 18.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                .padding(horizontal = 20.dp, vertical = 20.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Button(
+            IconButton(
                 onClick = onPreviousManual,
                 enabled = tripState.currentStepIndex > 0,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color.Black.copy(alpha = 0.75f),
-                    contentColor = Color.White,
-                    disabledContainerColor = Color.Black.copy(alpha = 0.35f),
-                    disabledContentColor = Color.White.copy(alpha = 0.4f)
-                ),
-                modifier = Modifier.weight(1f).height(46.dp),
-                shape = RoundedCornerShape(12.dp)
+                modifier = Modifier
+                    .size(42.dp)
+                    .background(
+                        color = Color.Black.copy(alpha = 0.35f),
+                        shape = RoundedCornerShape(10.dp)
+                    )
             ) {
-                Text(if (isEnglish) "← Previous" else "← Anterior", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = "Anterior",
+                    tint = if (tripState.currentStepIndex > 0) Color.White.copy(alpha = 0.85f) else Color.White.copy(alpha = 0.25f),
+                    modifier = Modifier.size(20.dp)
+                )
             }
 
-            Button(
+            IconButton(
                 onClick = {
                     if (isLastStep) {
                         onClose()
@@ -558,21 +592,18 @@ fun IndoorFullScreenStepGuidanceView(
                         onNextManual()
                     }
                 },
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = UgrRed,
-                    contentColor = Color.White
-                ),
-                modifier = Modifier.weight(1f).height(46.dp),
-                shape = RoundedCornerShape(12.dp)
+                modifier = Modifier
+                    .size(42.dp)
+                    .background(
+                        color = Color.Black.copy(alpha = 0.35f),
+                        shape = RoundedCornerShape(10.dp)
+                    )
             ) {
-                Text(
-                    text = if (isLastStep) {
-                        if (isEnglish) "Finish ✓" else "Finalizar ✓"
-                    } else {
-                        if (isEnglish) "Next →" else "Siguiente →"
-                    },
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 13.sp
+                Icon(
+                    imageVector = if (isLastStep) Icons.Default.Check else Icons.AutoMirrored.Filled.ArrowForward,
+                    contentDescription = if (isLastStep) "Finalizar" else "Siguiente",
+                    tint = Color.White.copy(alpha = 0.85f),
+                    modifier = Modifier.size(20.dp)
                 )
             }
         }
@@ -682,6 +713,8 @@ private fun resolveManeuverIcon(step: IndoorStep): ImageVector {
 
     return when {
         // 1. Acciones explícitas de giro o llegada
+        accionUpper.contains("LIGERO_IZQ") || accionUpper.contains("SLIGHT_LEFT") -> Icons.Default.TurnSlightLeft
+        accionUpper.contains("LIGERO_DER") || accionUpper.contains("SLIGHT_RIGHT") -> Icons.Default.TurnSlightRight
         accionUpper.contains("IZQ") || accionUpper.contains("LEFT") -> Icons.Default.TurnLeft
         accionUpper.contains("DER") || accionUpper.contains("RIGHT") -> Icons.Default.TurnRight
         accionUpper.contains("FIN") || accionUpper.contains("LLEGADA") || accionUpper.contains("ARRIV") -> Icons.Default.Flag
@@ -703,6 +736,8 @@ private fun resolveManeuverIcon(step: IndoorStep): ImageVector {
         accionUpper.contains("ESCALERA") || accionUpper.contains("STAIR") -> Icons.Default.Stairs
 
         // 5. Maniobras direccionales secundarias
+        maneuver == Maneuver.SLIGHT_LEFT -> Icons.Default.TurnSlightLeft
+        maneuver == Maneuver.SLIGHT_RIGHT -> Icons.Default.TurnSlightRight
         maneuver == Maneuver.LEFT -> Icons.Default.TurnLeft
         maneuver == Maneuver.RIGHT -> Icons.Default.TurnRight
         maneuver == Maneuver.ARRIVAL -> Icons.Default.Flag

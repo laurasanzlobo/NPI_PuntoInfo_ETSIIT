@@ -22,7 +22,7 @@
         "accion": "GIRO_IZQUIERDA",
         "instruccion": "Gira a la izquierda en el pasillo",
         "instruccion_en": "Turn left in the hallway",
-        "eje_x_camino": 0.484
+        "eje_x_camino": 0.388
       },
       {
         "id": "int_esc_02",
@@ -70,7 +70,7 @@
         "accion": "RECTO",
         "instruccion": "Avanza recto hasta el final del pasillo",
         "instruccion_en": "Go straight to the end of the hallway",
-        "eje_x_camino": 0.423
+        "eje_x_camino": 0.788
       },
       {
         "id": "int_esc_03",
@@ -83,7 +83,7 @@
         "rumbo": 250,
         "foto": "rutas/comedor_Aula11/interior_3_escaleras.jpg",
         "foto_original": "PasilloEscalerasOut.jpg",
-        "accion": "GIRO_DERECHA",
+        "accion": "GIRO_LIGERO_DERECHA",
         "instruccion": "Avanza y gira a la derecha hacia las escaleras",
         "instruccion_en": "Go ahead and turn right towards the stairs",
         "eje_x_camino": 0.53
@@ -102,7 +102,7 @@
         "accion": "SUBIR_ESCALERAS",
         "instruccion": "Sube un piso por las escaleras",
         "instruccion_en": "Go up one floor via the stairs",
-        "eje_x_camino": 0.548
+        "eje_x_camino": 0.432
       },
       {
         "id": "int_esc_05",
@@ -148,8 +148,8 @@
         "foto": "rutas/comedor_Aula11/interior_12.jpg",
         "foto_original": "Aula1.1.jpg",
         "accion": "FIN",
-        "instruccion": "Has llegado a tu destino",
-        "instruccion_en": "You have arrived at your destination",
+        "instruccion": "Has llegado al Aula 1.1",
+        "instruccion_en": "You have arrived at Classroom 1.1",
         "eje_x_camino": 0.5
       }
     ]
@@ -172,7 +172,7 @@
         "accion": "GIRO_IZQUIERDA",
         "instruccion": "Gira a la izquierda en el pasillo",
         "instruccion_en": "Turn left in the hallway",
-        "eje_x_camino": 0.484
+        "eje_x_camino": 0.388
       },
       {
         "id": "int_asc_02",
@@ -220,7 +220,7 @@
         "accion": "RECTO",
         "instruccion": "Avanza hacia la puerta que da al exterior",
         "instruccion_en": "Walk towards the door leading outside",
-        "eje_x_camino": 0.499
+        "eje_x_camino": 0.579
       },
       {
         "id": "int_comun_09",
@@ -252,7 +252,7 @@
         "accion": "RECTO",
         "instruccion": "Avanza recto hasta el final del pasillo",
         "instruccion_en": "Go straight to the end of the hallway",
-        "eje_x_camino": 0.423
+        "eje_x_camino": 0.788
       },
       {
         "id": "int_asc_05",
@@ -284,7 +284,7 @@
         "accion": "RECTO",
         "instruccion": "Avanza hacia el ascensor",
         "instruccion_en": "Walk towards the elevator",
-        "eje_x_camino": 0.604
+        "eje_x_camino": 0.623
       },
       {
         "id": "int_asc_07",
@@ -300,7 +300,7 @@
         "accion": "SUBIR_ASCENSOR",
         "instruccion": "Sube al ascensor y pulsa 1",
         "instruccion_en": "Take the elevator and press 1",
-        "eje_x_camino": 0.745
+        "eje_x_camino": 0.806
       },
       {
         "id": "int_asc_08",
@@ -316,7 +316,7 @@
         "accion": "RECTO",
         "instruccion": "Avanza por el pasillo",
         "instruccion_en": "Walk along the hallway",
-        "eje_x_camino": 0.413
+        "eje_x_camino": 0.442
       },
       {
         "id": "int_comun_11",
@@ -346,8 +346,8 @@
         "foto": "rutas/comedor_Aula11/interior_12.jpg",
         "foto_original": "Aula1.1.jpg",
         "accion": "FIN",
-        "instruccion": "Has llegado a tu destino",
-        "instruccion_en": "You have arrived at your destination",
+        "instruccion": "Has llegado al Aula 1.1",
+        "instruccion_en": "You have arrived at Classroom 1.1",
         "eje_x_camino": 0.5
       }
     ]

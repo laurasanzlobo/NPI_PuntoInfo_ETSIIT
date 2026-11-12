@@ -861,17 +861,15 @@ fun OutdoorNavigationScreen(
                     )
                 } else null
 
+                val isFinalStep = currentStepIndex >= guidanceRoute.steps.size - 1 ||
+                    step.maneuver == Maneuver.ARRIVAL ||
+                    step.instruction.contains("Has llegado", ignoreCase = true)
+
                 val distanceLabel = when {
-                    currentStepIndex >= guidanceRoute.steps.size - 1 -> {
-                        if (liveGpsDistance != null && liveGpsDistance > 10.0) {
-                            formatOutdoorDistance(liveGpsDistance)
-                        } else {
-                            "¡Destino alcanzado!"
-                        }
-                    }
+                    isFinalStep -> "¡Has llegado a tu destino!"
                     liveGpsDistance != null -> formatOutdoorDistance(liveGpsDistance)
                     step.distanceMeters > 0 -> formatOutdoorDistance(step.distanceMeters)
-                    else -> "¡Destino alcanzado!"
+                    else -> "¡Has llegado a tu destino!"
                 }
 
                 if (isFacingCorrectDirection) {
@@ -992,42 +990,49 @@ fun OutdoorNavigationScreen(
                     }
                 }
 
-                // 4. CONTROLES INFERIORES FLOTANTES (Anterior / Siguiente paso)
+                // 4. CONTROLES INFERIORES FLOTANTES (Anterior / Siguiente cuadrados discretos en extremos)
                 Row(
                     modifier = Modifier
                         .align(Alignment.BottomCenter)
                         .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 18.dp),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        .padding(horizontal = 20.dp, vertical = 20.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Button(
+                    IconButton(
                         onClick = { if (currentStepIndex > 0) currentStepIndex-- },
                         enabled = currentStepIndex > 0,
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Color.Black.copy(alpha = 0.72f),
-                            contentColor = Color.White,
-                            disabledContainerColor = Color.Black.copy(alpha = 0.35f),
-                            disabledContentColor = Color.White.copy(alpha = 0.4f)
-                        ),
-                        modifier = Modifier.weight(1f).height(44.dp),
-                        shape = RoundedCornerShape(12.dp)
+                        modifier = Modifier
+                            .size(42.dp)
+                            .background(
+                                color = Color.Black.copy(alpha = 0.35f),
+                                shape = RoundedCornerShape(10.dp)
+                            )
                     ) {
-                        Text("← Anterior", fontWeight = FontWeight.Bold)
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Anterior",
+                            tint = if (currentStepIndex > 0) Color.White.copy(alpha = 0.85f) else Color.White.copy(alpha = 0.25f),
+                            modifier = Modifier.size(20.dp)
+                        )
                     }
 
-                    Button(
+                    IconButton(
                         onClick = { if (currentStepIndex < guidanceRoute.steps.size - 1) currentStepIndex++ },
                         enabled = currentStepIndex < guidanceRoute.steps.size - 1,
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = UgrRed,
-                            contentColor = Color.White,
-                            disabledContainerColor = Color.Black.copy(alpha = 0.35f),
-                            disabledContentColor = Color.White.copy(alpha = 0.4f)
-                        ),
-                        modifier = Modifier.weight(1f).height(44.dp),
-                        shape = RoundedCornerShape(12.dp)
+                        modifier = Modifier
+                            .size(42.dp)
+                            .background(
+                                color = Color.Black.copy(alpha = 0.35f),
+                                shape = RoundedCornerShape(10.dp)
+                            )
                     ) {
-                        Text("Siguiente →", fontWeight = FontWeight.Bold)
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                            contentDescription = "Siguiente",
+                            tint = if (currentStepIndex < guidanceRoute.steps.size - 1) Color.White.copy(alpha = 0.85f) else Color.White.copy(alpha = 0.25f),
+                            modifier = Modifier.size(20.dp)
+                        )
                     }
                 }
             }

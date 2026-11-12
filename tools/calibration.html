@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Calibración Eje X - Foto Nueva (Nodo 2 Vuelta)</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card: #1e293b;
+      --card-border: #334155;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --primary: #a6192e;
+      --secondary: #0ea5e9;
+      --accent: #f59e0b;
+      --marker: #ef4444;
+      --success: #10b981;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      background: var(--card);
+      border-bottom: 1px solid var(--card-border);
+      padding: 14px 24px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .title-group {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .badge {
+      background: var(--primary);
+      color: white;
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 999px;
+      letter-spacing: 0.5px;
+    }
+
+    h1 {
+      font-size: 1.2rem;
+      font-weight: 700;
+    }
+
+    .photo-selector {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .btn-photo {
+      background: var(--bg);
+      border: 1px solid var(--card-border);
+      color: var(--text-muted);
+      padding: 8px 14px;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-photo:hover {
+      background: #334155;
+      color: var(--text);
+    }
+
+    .btn-photo.active {
+      background: var(--secondary);
+      border-color: var(--secondary);
+      color: white;
+      box-shadow: 0 0 12px rgba(14, 165, 233, 0.4);
+    }
+
+    main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      padding: 16px 24px;
+      gap: 16px;
+    }
+
+    /* Control Panel */
+    .controls-panel {
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 16px 20px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .info-group {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      flex-wrap: wrap;
+    }
+
+    .info-item {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .info-label {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .info-val {
+      font-size: 1.35rem;
+      font-weight: 700;
+      color: var(--secondary);
+      font-family: ui-monospace, monospace;
+    }
+
+    .actions-group {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .btn {
+      padding: 10px 18px;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s;
+    }
+
+    .btn-copy {
+      background: #3b82f6;
+      color: white;
+    }
+
+    .btn-copy:hover {
+      background: #2563eb;
+    }
+
+    .btn-save {
+      background: var(--success);
+      color: white;
+    }
+
+    .btn-save:hover {
+      background: #059669;
+    }
+
+    /* Canvas Stage */
+    .stage-wrapper {
+      background: #020617;
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      overflow: auto;
+      position: relative;
+      min-height: 400px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: crosshair;
+      user-select: none;
+    }
+
+    .image-container {
+      position: relative;
+      display: inline-block;
+      line-height: 0;
+    }
+
+    .image-container img {
+      max-height: 70vh;
+      width: auto;
+      display: block;
+      user-select: none;
+      -webkit-user-drag: none;
+    }
+
+    /* Markers */
+    .guide-line {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 2px;
+      background: var(--marker);
+      box-shadow: 0 0 10px var(--marker), 0 0 4px white;
+      pointer-events: none;
+      transform: translateX(-50%);
+      z-index: 10;
+    }
+
+    .guide-line::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 14px;
+      height: 14px;
+      background: var(--marker);
+      border: 2px solid white;
+      border-radius: 50%;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.6);
+    }
+
+    .guide-line::after {
+      content: "";
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 14px;
+      height: 14px;
+      background: var(--marker);
+      border: 2px solid white;
+      border-radius: 50%;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.6);
+    }
+
+    .viewport-box {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      border-left: 2px dashed rgba(14, 165, 233, 0.7);
+      border-right: 2px dashed rgba(14, 165, 233, 0.7);
+      background: rgba(14, 165, 233, 0.08);
+      pointer-events: none;
+      transform: translateX(-50%);
+      z-index: 5;
+    }
+
+    .hover-line {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 1px;
+      background: rgba(255, 255, 255, 0.4);
+      pointer-events: none;
+      transform: translateX(-50%);
+      z-index: 8;
+      display: none;
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: var(--success);
+      color: white;
+      padding: 12px 20px;
+      border-radius: 8px;
+      font-weight: 700;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+      transform: translateY(100px);
+      opacity: 0;
+      transition: all 0.25s ease;
+      z-index: 100;
+    }
+
+    .toast.show {
+      transform: translateY(0);
+      opacity: 1;
+    }
+
+    .instructions {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="title-group">
+      <span class="badge">NPI ETSIIT</span>
+      <h1 id="page-title">Calibrador Rápido de Eje X</h1>
+    </div>
+
+    <div class="photo-selector">
+      <button class="btn-photo active" onclick="selectPhoto(0)">Nodo 2 Vuelta (Entrada - FOTO NUEVA)</button>
+      <button class="btn-photo" onclick="selectPhoto(1)">Nodo 1 Vuelta (Hall Info)</button>
+      <button class="btn-photo" onclick="selectPhoto(2)">Nodo 1 Ida (Hall Salida)</button>
+      <button class="btn-photo" onclick="selectPhoto(3)">Nodo 4 Interior (Escaleras)</button>
+    </div>
+  </header>
+
+  <main>
+    <div class="controls-panel">
+      <div class="info-group">
+        <div class="info-item">
+          <span class="info-label">Nodo</span>
+          <span class="info-val" id="val-node-id" style="font-size: 1.1rem; color: #fff;">ext_vuelta_08</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">Eje X Normalizado (0.0 - 1.0)</span>
+          <span class="info-val" id="val-eje-x">0.500</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">Porcentaje</span>
+          <span class="info-val" id="val-pct">50.0%</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">Píxel X</span>
+          <span class="info-val" id="val-px" style="font-size: 1.1rem; color: var(--text-muted);">- / -</span>
+        </div>
+      </div>
+
+      <div class="actions-group">
+        <button class="btn btn-copy" onclick="copySnippet()">📋 Copiar JSON</button>
+        <button class="btn btn-save" id="btn-save-api" onclick="saveToApi()">💾 Guardar en Archivo</button>
+      </div>
+    </div>
+
+    <div class="stage-wrapper" id="stage-wrapper">
+      <div class="image-container" id="img-container">
+        <img id="target-img" src="" alt="Panorámica a calibrar" />
+        <div class="hover-line" id="hover-line"></div>
+        <div class="viewport-box" id="viewport-box"></div>
+        <div class="guide-line" id="guide-line"></div>
+      </div>
+    </div>
+
+    <div class="instructions">
+      💡 <strong>Instrucciones:</strong> Haz clic sobre la foto exactamente en el punto hacia donde debe mirar el usuario (el camino o la puerta de entrada). La línea roja indicará el centro del encuadre y el recuadro azul mostrará la ventana visible en la pantalla del móvil. Al hacer clic se calcula el valor exacto para <code>eje_x_camino</code>.
+    </div>
+  </main>
+
+  <div class="toast" id="toast">Copiado al portapapeles</div>
+
+  <script>
+    const photos = [
+      {
+        id: "ext_vuelta_08",
+        name: "Nodo 2 Vuelta (Entrada Principal ETSIIT - Foto nueva)",
+        tramo: "vuelta",
+        paths: [
+          "../app/src/main/assets/rutas/vuelta/vuelta2.jpg",
+          "app/src/main/assets/rutas/vuelta/vuelta2.jpg",
+          "/rutas/vuelta/vuelta2.jpg"
+        ],
+        ejeX: 0.500
+      },
+      {
+        id: "ext_vuelta_09",
+        name: "Nodo 1 Vuelta (Hall ETSIIT - Hacia Info)",
+        tramo: "vuelta",
+        paths: [
+          "../app/src/main/assets/rutas/vuelta/vuelta1.jpg",
+          "app/src/main/assets/rutas/vuelta/vuelta1.jpg",
+          "/rutas/vuelta/vuelta1.jpg"
+        ],
+        ejeX: 0.562
+      },
+      {
+        id: "ext_ida_01",
+        name: "Nodo 1 Ida (Hall ETSIIT - Hacia Salida)",
+        tramo: "ida",
+        paths: [
+          "../app/src/main/assets/rutas/ida/ida1.jpg",
+          "app/src/main/assets/rutas/ida/ida1.jpg",
+          "/rutas/ida/ida1.jpg"
+        ],
+        ejeX: 0.600
+      },
+      {
+        id: "int_esc_04",
+        name: "Nodo 4 Interior (Paso hacia escaleras)",
+        tramo: "interior",
+        paths: [
+          "../app/src/main/assets/rutas/comedor_Aula11/interior_10.jpg",
+          "app/src/main/assets/rutas/comedor_Aula11/interior_10.jpg",
+          "/rutas/comedor_Aula11/interior_10.jpg"
+        ],
+        ejeX: 0.500
+      }
+    ];
+
+    let currentPhotoIndex = 0;
+    const imgEl = document.getElementById("target-img");
+    const container = document.getElementById("img-container");
+    const guideLine = document.getElementById("guide-line");
+    const hoverLine = document.getElementById("hover-line");
+    const viewportBox = document.getElementById("viewport-box");
+    const valNodeId = document.getElementById("val-node-id");
+    const valEjeX = document.getElementById("val-eje-x");
+    const valPct = document.getElementById("val-pct");
+    const valPx = document.getElementById("val-px");
+
+    function selectPhoto(index) {
+      currentPhotoIndex = index;
+      document.querySelectorAll(".btn-photo").forEach((btn, i) => {
+        btn.classList.toggle("active", i === index);
+      });
+
+      const p = photos[index];
+      valNodeId.textContent = p.id;
+      
+      // Intentar cargar la ruta correspondiente
+      let pathIdx = 0;
+      function tryLoad() {
+        if (pathIdx >= p.paths.length) return;
+        imgEl.onerror = () => {
+          pathIdx++;
+          tryLoad();
+        };
+        imgEl.src = p.paths[pathIdx];
+      }
+      tryLoad();
+    }
+
+    imgEl.onload = () => {
+      updateMarkers(photos[currentPhotoIndex].ejeX);
+    };
+
+    function updateMarkers(ejeX) {
+      photos[currentPhotoIndex].ejeX = ejeX;
+      const rect = imgEl.getBoundingClientRect();
+      const w = imgEl.clientWidth;
+      const h = imgEl.clientHeight;
+      const naturalW = imgEl.naturalWidth;
+
+      const posX = w * ejeX;
+      guideLine.style.left = `${posX}px`;
+
+      // Simular viewport 9:16 móvil
+      const vpW = Math.min(w * 0.45, (h * (9 / 16)) * 1.5);
+      viewportBox.style.width = `${vpW}px`;
+      viewportBox.style.left = `${posX}px`;
+
+      // Actualizar valores numéricos
+      valEjeX.textContent = ejeX.toFixed(3);
+      valPct.textContent = `${(ejeX * 100).toFixed(1)}%`;
+      if (naturalW > 0) {
+        valPx.textContent = `${Math.round(naturalW * ejeX)} / ${naturalW} px`;
+      }
+    }
+
+    container.addEventListener("mousemove", (e) => {
+      const rect = imgEl.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      if (x >= 0 && x <= rect.width) {
+        hoverLine.style.display = "block";
+        hoverLine.style.left = `${x}px`;
+      }
+    });
+
+    container.addEventListener("mouseleave", () => {
+      hoverLine.style.display = "none";
+    });
+
+    container.addEventListener("click", (e) => {
+      const rect = imgEl.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      if (x < 0 || x > rect.width) return;
+      const ejeX = Math.max(0, Math.min(1, x / rect.width));
+      updateMarkers(ejeX);
+    });
+
+    function showToast(msg) {
+      const toast = document.getElementById("toast");
+      toast.textContent = msg;
+      toast.classList.add("show");
+      setTimeout(() => toast.classList.remove("show"), 2500);
+    }
+
+    function copySnippet() {
+      const p = photos[currentPhotoIndex];
+      const text = `"eje_x_camino": ${p.ejeX.toFixed(3)}`;
+      navigator.clipboard.writeText(text).then(() => {
+        showToast(`Copiado: ${text}`);
+      }).catch(() => {
+        showToast(`Valor: ${p.ejeX.toFixed(3)}`);
+      });
+    }
+
+    async function saveToApi() {
+      const p = photos[currentPhotoIndex];
+      try {
+        const resp = await fetch("/api/save", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            tramo: p.tramo,
+            nodoId: p.id,
+            eje_x_camino: Number(p.ejeX.toFixed(3))
+          })
+        });
+        if (resp.ok) {
+          showToast(`¡Guardado ${p.id} = ${p.ejeX.toFixed(3)} en JSON!`);
+        } else {
+          copySnippet();
+          showToast(`Copiado: "eje_x_camino": ${p.ejeX.toFixed(3)}`);
+        }
+      } catch (err) {
+        copySnippet();
+        showToast(`Copiado: "eje_x_camino": ${p.ejeX.toFixed(3)}`);
+      }
+    }
+
+    // Iniciar
+    selectPhoto(0);
+  </script>
+</body>
+</html>

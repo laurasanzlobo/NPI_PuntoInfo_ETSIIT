@@ -16,8 +16,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Accessible
 import androidx.compose.material.icons.automirrored.filled.DirectionsWalk
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Place
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -139,9 +139,24 @@ fun NavigationScreen(
         else if (destinationNodeId != null) grafo.obtenerNodoPorId(destinationNodeId) ?: grafo.buscarNodoPorDestino(primaryTitle) ?: grafo.buscarNodoPorDestino(activeDestination)
         else grafo.buscarNodoPorDestino(primaryTitle) ?: grafo.buscarNodoPorDestino(activeDestination)
     }
-    val rutaCalculada = remember(grafo, nodoInicio, nodoDestino) {
-        if (nodoDestino != null && nodoInicio != null) {
-            grafo.calcularRutaCompleta(nodoInicio.id, nodoDestino.id)
+    var isAccessibleRouteSelected by rememberSaveable(profile.isAccessibleRouting) {
+        mutableStateOf(profile.isAccessibleRouting)
+    }
+
+    val isComedorToAula11 = remember(nodoInicio, nodoDestino, activeDestination) {
+        val origName = nodoInicio?.nombre ?: ""
+        val destName = nodoDestino?.nombre ?: activeDestination ?: ""
+        (origName.contains("comedor", ignoreCase = true) || nodoInicio?.id?.contains("comedor", ignoreCase = true) == true) &&
+                (destName.contains("1.1", ignoreCase = true) || destName.contains("A_11", ignoreCase = true) || nodoDestino?.id?.contains("A_11", ignoreCase = true) == true)
+    }
+
+    val rutaCalculada = remember(grafo, nodoInicio, nodoDestino, isAccessibleRouteSelected, isComedorToAula11) {
+        if (hasActiveRoute) {
+            if (isComedorToAula11 && isAccessibleRouteSelected) {
+                grafo.obtenerRutaForzadaAscensor()
+            } else if (nodoDestino != null && nodoInicio != null) {
+                grafo.calcularRutaCompleta(nodoInicio.id, nodoDestino.id)
+            } else null
         } else null
     }
 
@@ -150,14 +165,14 @@ fun NavigationScreen(
     var isManualGuidanceLocked by rememberSaveable { mutableStateOf(false) }
 
     // Ciclo de vida y estado del recorrido interior basado en Pedómetro
-    var indoorTripState by remember(rutaCalculada, profile.language, profile.isAccessibleRouting) {
+    var indoorTripState by remember(rutaCalculada, profile.language, isAccessibleRouteSelected) {
         mutableStateOf(
             if (rutaCalculada != null) {
                 com.example.npi_puntoinfo_etsiit.indoor.IndoorTripState.buildFromRoute(
                     "trip_${rutaCalculada.destino.id}",
                     rutaCalculada,
                     context,
-                    profile.isAccessibleRouting
+                    isAccessibleRouteSelected
                 )
             } else null
         )
@@ -340,57 +355,37 @@ fun NavigationScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(horizontal = 14.dp, vertical = 8.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.weight(1f)
+                        Box(
+                            modifier = Modifier
+                                .size(32.dp)
+                                .clip(CircleShape)
+                                .background(UgrRed.copy(alpha = 0.12f)),
+                            contentAlignment = Alignment.Center
                         ) {
-                            Box(
-                                modifier = Modifier
-                                    .size(32.dp)
-                                    .clip(CircleShape)
-                                    .background(UgrRed.copy(alpha = 0.12f)),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Place,
-                                    contentDescription = null,
-                                    tint = UgrRed,
-                                    modifier = Modifier.size(18.dp)
-                                )
-                            }
-                            Spacer(modifier = Modifier.width(10.dp))
-                            Column {
-                                Text(
-                                    text = if (hasActiveRoute) formattedTitle else stringResource(R.string.indoor_map_title),
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 15.sp,
-                                    color = TextPrimary,
-                                    maxLines = 1
-                                )
-                                if (!hasActiveRoute) {
-                                    Text(
-                                        text = stringResource(R.string.indoor_map_subtitle),
-                                        fontSize = 12.sp,
-                                        color = TextSecondary,
-                                        maxLines = 1
-                                    )
-                                }
-                            }
+                            Icon(
+                                imageVector = Icons.Default.Place,
+                                contentDescription = null,
+                                tint = UgrRed,
+                                modifier = Modifier.size(18.dp)
+                            )
                         }
-
-                        if (hasActiveRoute) {
-                            IconButton(
-                                onClick = onClearRoute,
-                                modifier = Modifier.size(28.dp)
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Close,
-                                    contentDescription = stringResource(R.string.cancel_route),
-                                    tint = TextSecondary,
-                                    modifier = Modifier.size(18.dp)
+                        Spacer(modifier = Modifier.width(10.dp))
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = if (hasActiveRoute) formattedTitle else stringResource(R.string.indoor_map_title),
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 15.sp,
+                                color = TextPrimary,
+                                maxLines = 1
+                            )
+                            if (!hasActiveRoute) {
+                                Text(
+                                    text = stringResource(R.string.indoor_map_subtitle),
+                                    fontSize = 12.sp,
+                                    color = TextSecondary,
+                                    maxLines = 1
                                 )
                             }
                         }
@@ -533,13 +528,45 @@ fun NavigationScreen(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Text(
-                            text = "${rutaCalculada.distanciaMetros} m",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = TextPrimary,
-                            modifier = Modifier.weight(1f)
-                        )
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            Text(
+                                text = "${rutaCalculada.distanciaMetros} m",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = TextPrimary
+                            )
+
+                            // Selector para alternar entre Escaleras y Ascensor
+                            Surface(
+                                shape = RoundedCornerShape(8.dp),
+                                color = if (isAccessibleRouteSelected) CampusTeal.copy(alpha = 0.15f) else Color.Black.copy(alpha = 0.06f),
+                                modifier = Modifier.clickable {
+                                    isAccessibleRouteSelected = !isAccessibleRouteSelected
+                                }
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = if (isAccessibleRouteSelected) Icons.AutoMirrored.Filled.Accessible else Icons.AutoMirrored.Filled.DirectionsWalk,
+                                        contentDescription = if (isAccessibleRouteSelected) "Ruta por ascensor" else "Ruta por escaleras",
+                                        tint = if (isAccessibleRouteSelected) CampusTeal else TextSecondary,
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                    Text(
+                                        text = if (isAccessibleRouteSelected) "Ascensor" else "Escaleras",
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = if (isAccessibleRouteSelected) CampusTeal else TextSecondary
+                                    )
+                                }
+                            }
+                        }
 
                         GestureBadge(
                             type = GestureType.LIFT_PHONE,

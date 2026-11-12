@@ -163,9 +163,10 @@ data class IndoorTripState(
 
                 val stepsList = mutableListOf<IndoorStep>()
 
-                for (i in 0 until jsonNodos.length() - 1) {
+                for (i in 0 until jsonNodos.length()) {
                     val curr = jsonNodos.getJSONObject(i)
-                    val next = jsonNodos.getJSONObject(i + 1)
+                    val isFinalStep = (i == jsonNodos.length() - 1)
+                    val next = if (!isFinalStep) jsonNodos.getJSONObject(i + 1) else curr
 
                     val fromNode = Nodo(
                         id = curr.optString("id", "node_$i"),
@@ -177,42 +178,56 @@ data class IndoorTripState(
                         y = curr.optInt("y", 100)
                     )
 
-                    val toNode = Nodo(
-                        id = next.optString("id", "node_${i+1}"),
-                        nombre = next.optString("nombre", "Punto ${i+1}"),
-                        planta = next.optString("planta", "PB"),
-                        edificio = "ETSIIT",
-                        tipo = next.optString("tipo_tramo", "PASILLO"),
-                        x = next.optInt("x", 100),
-                        y = next.optInt("y", 100)
-                    )
+                    val toNode = if (!isFinalStep) {
+                        Nodo(
+                            id = next.optString("id", "node_${i+1}"),
+                            nombre = next.optString("nombre", "Punto ${i+1}"),
+                            planta = next.optString("planta", "PB"),
+                            edificio = "ETSIIT",
+                            tipo = next.optString("tipo_tramo", "PASILLO"),
+                            x = next.optInt("x", 100),
+                            y = next.optInt("y", 100)
+                        )
+                    } else fromNode
 
                     val dx = toNode.x - fromNode.x
                     val dy = toNode.y - fromNode.y
                     val approxDistPixels = kotlin.math.sqrt((dx * dx + dy * dy).toDouble())
-                    val approxDistMeters = (approxDistPixels * 0.15).roundToInt().coerceAtLeast(3)
-                    val targetSteps = (approxDistMeters * 1.3).roundToInt().coerceAtLeast(3)
+                    val approxDistMeters = if (isFinalStep) 0 else (approxDistPixels * 0.15).roundToInt().coerceAtLeast(3)
+                    val targetSteps = if (isFinalStep) 0 else (approxDistMeters * 1.3).roundToInt().coerceAtLeast(3)
 
-                    // La acción y la foto del tramo corresponden al nodo de destino
-                    val nextAccion = next.optString("accion", curr.optString("accion", "RECTO")).trim()
-                    val nextAccionUpper = nextAccion.uppercase()
-                    val isFinalStep = (i == jsonNodos.length() - 2) || nextAccionUpper.contains("FIN") || nextAccionUpper.contains("LLEGADA")
+                    // La acción y la foto corresponden al nodo en el que se encuentra el usuario (curr)
+                    val currAccion = curr.optString("accion", "RECTO").trim()
+                    val currAccionUpper = currAccion.uppercase()
+                    val isArrivalAccion = isFinalStep || currAccionUpper.contains("FIN") || currAccionUpper.contains("LLEGADA")
 
-                    val accion = if (isFinalStep) "FIN" else nextAccion
-                    val maneuver = if (isFinalStep) Maneuver.ARRIVAL else when {
-                        nextAccionUpper.contains("IZQ") || nextAccionUpper.contains("LEFT") -> Maneuver.LEFT
-                        nextAccionUpper.contains("DER") || nextAccionUpper.contains("RIGHT") -> Maneuver.RIGHT
+                    val accion = if (isArrivalAccion) "FIN" else currAccion
+                    val maneuver = if (isArrivalAccion) Maneuver.ARRIVAL else when {
+                        currAccionUpper.contains("LIGERO_DER") || currAccionUpper.contains("SLIGHT_RIGHT") -> Maneuver.SLIGHT_RIGHT
+                        currAccionUpper.contains("LIGERO_IZQ") || currAccionUpper.contains("SLIGHT_LEFT") -> Maneuver.SLIGHT_LEFT
+                        currAccionUpper.contains("IZQ") || currAccionUpper.contains("LEFT") -> Maneuver.LEFT
+                        currAccionUpper.contains("DER") || currAccionUpper.contains("RIGHT") -> Maneuver.RIGHT
                         else -> Maneuver.STRAIGHT
                     }
 
-                    val rawInstructionEs = if (next.has("instruccion") && !next.isNull("instruccion")) next.getString("instruccion") else curr.optString("instruccion", "")
-                    val rawInstructionEn = if (next.has("instruccion_en") && !next.isNull("instruccion_en")) next.getString("instruccion_en") else (if (curr.has("instruccion_en") && !curr.isNull("instruccion_en")) curr.getString("instruccion_en") else "")
+                    val rawInstructionEs = curr.optString("instruccion", "")
+                    val rawInstructionEn = curr.optString("instruccion_en", "")
                     val isEnglish = java.util.Locale.getDefault().language.equals("en", ignoreCase = true)
                     val cleanFrom = fromNode.nombre.replace('_', ' ')
                     val cleanTo = toNode.nombre.replace('_', ' ')
+                    val formattedToName = when {
+                        toNode.nombre.contains("Aula1.1", ignoreCase = true) || toNode.id.contains("Aula1.1", ignoreCase = true) -> "Aula 1.1"
+                        cleanTo.startsWith("A ", ignoreCase = true) -> "Aula " + cleanTo.substring(2)
+                        cleanTo.startsWith("L ", ignoreCase = true) -> "Laboratorio " + cleanTo.substring(2)
+                        else -> cleanTo
+                    }
 
-                    val instruction = if (isFinalStep) {
-                        if (isEnglish) "Arriving at destination: $cleanTo (${toNode.planta})" else "¡Llegada a Destino! Has alcanzado $cleanTo (${toNode.planta})"
+                    val instruction = if (isArrivalAccion) {
+                        if (rawInstructionEs.isNotBlank()) {
+                            if (isEnglish && rawInstructionEn.isNotBlank()) rawInstructionEn else rawInstructionEs
+                        } else {
+                            if (isEnglish) "You have arrived at $formattedToName" else "Has llegado al $formattedToName"
+                        }
                     } else if (isEnglish && rawInstructionEn.isNotBlank()) {
                         rawInstructionEn
                     } else if (!isEnglish && rawInstructionEs.isNotBlank()) {
@@ -229,10 +244,10 @@ data class IndoorTripState(
                         rawInstructionEs.ifBlank { buildInstructionText(fromNode, toNode, maneuver, context) }
                     }
 
-                    val photo = if (next.has("foto") && !next.isNull("foto")) next.getString("foto") else (if (curr.has("foto") && !curr.isNull("foto")) curr.getString("foto") else null)
-                    val headingVal = if (next.has("rumbo") && !next.isNull("rumbo")) next.getDouble("rumbo").toFloat() else (if (curr.has("rumbo") && !curr.isNull("rumbo")) curr.getDouble("rumbo").toFloat() else null)
-                    val ejeXVal = if (next.has("eje_x_camino") && !next.isNull("eje_x_camino")) next.getDouble("eje_x_camino").toFloat() else (if (curr.has("eje_x_camino") && !curr.isNull("eje_x_camino")) curr.getDouble("eje_x_camino").toFloat() else 0.5f)
-                    val tipoTramoVal = if (next.has("tipo_tramo") && !next.isNull("tipo_tramo")) next.getString("tipo_tramo") else (if (curr.has("tipo_tramo") && !curr.isNull("tipo_tramo")) curr.getString("tipo_tramo") else null)
+                    val photo = if (curr.has("foto") && !curr.isNull("foto")) curr.getString("foto") else null
+                    val headingVal = if (curr.has("rumbo") && !curr.isNull("rumbo")) curr.getDouble("rumbo").toFloat() else null
+                    val ejeXVal = if (curr.has("eje_x_camino") && !curr.isNull("eje_x_camino")) curr.getDouble("eje_x_camino").toFloat() else 0.5f
+                    val tipoTramoVal = if (curr.has("tipo_tramo") && !curr.isNull("tipo_tramo")) curr.getString("tipo_tramo") else null
 
                     stepsList.add(
                         IndoorStep(
