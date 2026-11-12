@@ -84,8 +84,17 @@ enum class SpotlightTargetId {
     HOME_NEXT_CLASS,
     HOME_NEWS,
     HOME_SCHEDULE_BUTTON,
-    HOME_SERVICES_BUTTON,
-    HOME_DINING_BUTTON
+    HOME_DINING_BUTTON,
+    HOME_SERVICES_BUTTON
+}
+
+/**
+ * Estado de realización de cada prueba en el laboratorio interactivo de gestos.
+ */
+enum class GestureTrainingStatus {
+    PENDING,
+    COMPLETED,
+    SKIPPED
 }
 
 /**
@@ -167,6 +176,16 @@ fun OnboardingTutorialOverlay(
     var currentPhase by remember { mutableStateOf(TutorialPhase.WELCOME_INTRO) }
     var spotlightStepIndex by remember { mutableIntStateOf(0) }
     var gestureStepIndex by remember { mutableIntStateOf(0) }
+    val gestureStatuses = remember {
+        mutableStateListOf(
+            GestureTrainingStatus.PENDING,
+            GestureTrainingStatus.PENDING,
+            GestureTrainingStatus.PENDING,
+            GestureTrainingStatus.PENDING,
+            GestureTrainingStatus.PENDING,
+            GestureTrainingStatus.PENDING
+        )
+    }
 
     val spotlightSteps = remember {
         listOf(
@@ -314,6 +333,12 @@ fun OnboardingTutorialOverlay(
                         gesture = currentGesture,
                         stepIndex = gestureStepIndex,
                         totalSteps = gestureSteps.size,
+                        gestureStatuses = gestureStatuses,
+                        onGestureCompleted = { idx ->
+                            if (idx in gestureStatuses.indices) {
+                                gestureStatuses[idx] = GestureTrainingStatus.COMPLETED
+                            }
+                        },
                         onPrevious = {
                             if (gestureStepIndex > 0) {
                                 gestureStepIndex--
@@ -323,6 +348,16 @@ fun OnboardingTutorialOverlay(
                             }
                         },
                         onNext = {
+                            if (gestureStepIndex < gestureSteps.lastIndex) {
+                                gestureStepIndex++
+                            } else {
+                                currentPhase = TutorialPhase.COMPLETED_SUMMARY
+                            }
+                        },
+                        onSkipGesture = {
+                            if (gestureStepIndex in gestureStatuses.indices) {
+                                gestureStatuses[gestureStepIndex] = GestureTrainingStatus.SKIPPED
+                            }
                             if (gestureStepIndex < gestureSteps.lastIndex) {
                                 gestureStepIndex++
                             } else {
@@ -877,8 +912,11 @@ private fun GestureTrainingLabView(
     gesture: GestureType,
     stepIndex: Int,
     totalSteps: Int,
+    gestureStatuses: List<GestureTrainingStatus>,
+    onGestureCompleted: (Int) -> Unit,
     onPrevious: () -> Unit,
     onNext: () -> Unit,
+    onSkipGesture: () -> Unit,
     onCloseTutorial: () -> Unit
 ) {
     // Estados en vivo de este gesto concreto (se reinician al cambiar de gesto)
@@ -897,6 +935,7 @@ private fun GestureTrainingLabView(
             if (!isGestureCompleted) {
                 isGestureCompleted = true
                 feedbackSubtitle = message
+                onGestureCompleted(stepIndex)
                 triggerSuccessVibration(context)
             }
         }
@@ -910,15 +949,15 @@ private fun GestureTrainingLabView(
         when (gesture) {
             GestureType.PROXIMITY_VOICE -> {
                 val pm = ProximityManager(context).apply {
-                    onStateChanged = { isNear, distance ->
+                    onStateChanged = { isNear, _ ->
                         isProximityNear = isNear
                         if (isNear) {
-                            markGestureSuccess("¡Mano detectada en el sensor superior (${distance.toInt()} cm)! Asistente de voz activado.")
+                            markGestureSuccess("Asistente de voz activado.")
                         }
                     }
                     onNear = {
                         isProximityNear = true
-                        markGestureSuccess("¡Sensor de proximidad activado correctamente!")
+                        markGestureSuccess("Asistente de voz activado.")
                     }
                 }
                 if (pm.isAvailable) {
@@ -938,9 +977,9 @@ private fun GestureTrainingLabView(
                         liveTiltX = x
                         liveTiltY = y
                         liveTiltZ = z
-                        // Para LIFT_PHONE también comprobamos si el usuario ya puso el móvil bien vertical (Y > 7.8)
-                        if (gesture == GestureType.LIFT_PHONE && y > 7.8f && abs(z) < 5.5f) {
-                            markGestureSuccess("¡Móvil colocado en posición vertical frente a ti! Modo Paseo 360° activado.")
+                        // Para LIFT_PHONE comprobamos si el usuario coloca el móvil en vertical real (Y > 9.0)
+                        if (gesture == GestureType.LIFT_PHONE && y > 9.0f && abs(z) < 3.8f) {
+                            markGestureSuccess("Guiado paso a paso activado.")
                         }
                     }
                     onShakeProgress = { count, total ->
@@ -948,34 +987,34 @@ private fun GestureTrainingLabView(
                             shakeCount = count
                             shakeTotal = total
                             if (count in 1 until total && !isGestureCompleted) {
-                                feedbackSubtitle = "¡Muy bien! Llevas $count de $total inclinaciones..."
+                                feedbackSubtitle = "Llevas $count de $total inclinaciones..."
                             }
                         }
                     }
                     onShakeDetected = {
                         if (gesture == GestureType.TRIPLE_SHAKE) {
                             shakeCount = shakeTotal
-                            markGestureSuccess("¡Triple inclinación completada (3/3)! Se abriría tu próxima clase.")
+                            markGestureSuccess("Próxima clase consultada.")
                         }
                     }
                     onTakeMeThereGesture = {
                         if (gesture == GestureType.TAKE_ME_THERE) {
-                            markGestureSuccess("¡Giro a la izquierda detectado! Ruta rápida «¡Llévame!» iniciada.")
+                            markGestureSuccess("Ruta rápida «¡Llévame!» iniciada.")
                         }
                     }
                     onForwardTiltGesture = {
                         if (gesture == GestureType.ACTION_TRIGGER) {
-                            markGestureSuccess("¡Inclinación hacia ti detectada! Acción contextual confirmada.")
+                            markGestureSuccess("Acción contextual confirmada.")
                         }
                     }
                     onDeviceLifted = {
                         if (gesture == GestureType.LIFT_PHONE) {
-                            markGestureSuccess("¡Levantamiento del móvil detectado! Cámara / Vista 360° lista.")
+                            markGestureSuccess("Guiado paso a paso activado.")
                         }
                     }
                     onPostureModeChanged = { isVertical ->
                         if (gesture == GestureType.LIFT_PHONE && isVertical) {
-                            markGestureSuccess("¡Postura vertical detectada! Modo Paseo 360° activado.")
+                            markGestureSuccess("Guiado paso a paso activado.")
                         }
                     }
                 }
@@ -1062,9 +1101,10 @@ private fun GestureTrainingLabView(
                 ) {
                     repeat(totalSteps) { idx ->
                         val color = when {
-                            idx < stepIndex -> CampusGreen
                             idx == stepIndex && isGestureCompleted -> CampusGreen
                             idx == stepIndex -> gesture.badgeColor
+                            gestureStatuses.getOrNull(idx) == GestureTrainingStatus.COMPLETED -> CampusGreen
+                            gestureStatuses.getOrNull(idx) == GestureTrainingStatus.SKIPPED -> Color(0xFF94A3B8)
                             else -> Color(0xFFE2E8F0)
                         }
                         Box(
@@ -1140,11 +1180,11 @@ private fun GestureTrainingLabView(
                 // Frase única y directa que unifica cómo hacerlo y su función
                 val unifiedInstruction = when (gesture) {
                     GestureType.PROXIMITY_VOICE -> "Pasa la mano a poca distancia por la parte superior del móvil para activar el asistente de voz."
-                    GestureType.TRIPLE_SHAKE -> "Inclina el móvil adelante y atrás tres veces seguidas para consultar tu próxima clase."
+                    GestureType.TRIPLE_SHAKE -> "Agita el móvil hacia adelante tres veces seguidas y vuelve hacia ti para consultar tu próxima clase."
                     GestureType.TAKE_ME_THERE -> "Inclina el móvil hacia la izquierda y vuelve a la posición inicial para iniciar la ruta."
                     GestureType.ACTION_TRIGGER -> "Inclina el móvil hacia ti con un cabeceo rápido y vuelve para confirmar la acción."
-                    GestureType.LIFT_PHONE -> "Coloca el móvil en posición vertical frente a ti para activar la vista 360°."
-                    GestureType.PINCH_ZOOM -> "Pellizca con dos dedos sobre la pantalla para ajustar el zoom en mapas y horarios."
+                    GestureType.LIFT_PHONE -> "Coloca el móvil en posición vertical frente a ti para activar el guiado paso a paso."
+                    GestureType.PINCH_ZOOM -> "Pellizca con dos dedos sobre la pantalla para alternar en el horario entre la vista de un día y la vista semanal."
                 }
 
                 Text(
@@ -1173,7 +1213,7 @@ private fun GestureTrainingLabView(
                     onPinchScaleChange = { newScale ->
                         pinchScale = newScale
                         if (abs(newScale - 1f) >= 0.15f) {
-                            markGestureSuccess("¡Zoom multitáctil detectado (${(newScale * 100).toInt()}%)!")
+                            markGestureSuccess("Vista del horario cambiada con éxito.")
                         }
                     }
                 )
@@ -1201,9 +1241,7 @@ private fun GestureTrainingLabView(
 
                     if (!isGestureCompleted) {
                         OutlinedButton(
-                            onClick = {
-                                markGestureSuccess("¡Gesto validado correctamente! Ya puedes avanzar.")
-                            },
+                            onClick = onSkipGesture,
                             shape = RoundedCornerShape(12.dp),
                             modifier = Modifier
                                 .weight(1f)
@@ -1211,8 +1249,8 @@ private fun GestureTrainingLabView(
                             border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFCBD5E1))
                         ) {
                             Text(
-                                text = "Simular / Saltar paso",
-                                fontSize = 12.5.sp,
+                                text = "Saltar gesto",
+                                fontSize = 13.sp,
                                 fontWeight = FontWeight.SemiBold,
                                 color = TextSecondary
                             )
@@ -1278,7 +1316,7 @@ private fun GestureLiveTelemetryBox(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = if (isCompleted) "¡Lo has hecho bien! ✓" else "¡Ahora pruébalo tú!",
+                text = if (isCompleted) "¡Gesto completado! ✓" else "¡Ahora pruébalo tú!",
                 fontWeight = FontWeight.ExtraBold,
                 fontSize = 15.sp,
                 color = if (isCompleted) CampusGreen else TextPrimary
@@ -1299,13 +1337,13 @@ private fun GestureLiveTelemetryBox(
                 GestureType.PROXIMITY_VOICE -> {
                     Surface(
                         shape = RoundedCornerShape(50),
-                        color = if (isProximityNear || isCompleted) CampusGreen.copy(alpha = 0.18f) else Color(0xFFE2E8F0)
+                        color = if (isCompleted || isProximityNear) CampusGreen.copy(alpha = 0.18f) else Color(0xFFE2E8F0)
                     ) {
                         Text(
-                            text = if (isProximityNear || isCompleted) "✓ Mano detectada en el sensor" else "✋ Esperando tu mano en el sensor...",
+                            text = if (isCompleted) "✓ Mano detectada en el sensor" else if (isProximityNear) "✋ Mano detectada en el sensor" else "✋ Sensor superior esperando tu mano...",
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Bold,
-                            color = if (isProximityNear || isCompleted) CampusGreen else TextSecondary,
+                            color = if (isCompleted || isProximityNear) CampusGreen else TextSecondary,
                             modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp)
                         )
                     }
@@ -1317,7 +1355,7 @@ private fun GestureLiveTelemetryBox(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         for (i in 1..shakeTotal) {
-                            val reached = isCompleted || shakeCount >= i
+                            val reached = if (i == 3) isCompleted else (isCompleted || shakeCount >= i)
                             Box(
                                 modifier = Modifier
                                     .size(42.dp)
@@ -1391,7 +1429,7 @@ private fun GestureLiveTelemetryBox(
                         color = if (isCompleted) CampusGreen.copy(alpha = 0.18f) else Color(0xFFE2E8F0)
                     ) {
                         Text(
-                            text = if (isCompleted) "✓ Inclinación hacia ti detectada" else "📲 Inclina la parte superior hacia ti y vuelve",
+                            text = if (isCompleted) "✓ Inclinación hacia ti detectada" else "📲 Inclina hacia ti y vuelve a tu posición",
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Bold,
                             color = if (isCompleted) CampusGreen else TextSecondary,
@@ -1401,7 +1439,7 @@ private fun GestureLiveTelemetryBox(
                 }
 
                 GestureType.LIFT_PHONE -> {
-                    val verticality = (liveTiltY / 9.0f).coerceIn(0f, 1f)
+                    val verticality = ((liveTiltY - 6.2f) / 3.2f).coerceIn(0f, 1f)
                     Column(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalAlignment = Alignment.CenterHorizontally
@@ -1449,8 +1487,8 @@ private fun GestureLiveTelemetryBox(
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = "Pellizca aquí con 2 dedos · Zoom: ${(pinchScale * 100).toInt()}%",
-                            fontSize = 12.sp,
+                            text = if (isCompleted) "✓ Gesto de pellizco detectado" else "Pellizca con dos dedos aquí dentro",
+                            fontSize = 12.5.sp,
                             fontWeight = FontWeight.Bold,
                             color = if (isCompleted) CampusGreen else gesture.badgeColor
                         )

@@ -238,8 +238,8 @@ class AccelerometerManager(context: Context) : SensorEventListener {
                 val zVelocity = abs(dz / dt) // m/s^3 velocidad dinámica de cambio
 
                 when (accelActionState) {
-                    0 -> { // IDLE: esperar movimiento dinámico rápido
-                        if (zVelocity >= 5.0f && abs(x) < 4.5f) {
+                    0 -> { // IDLE: esperar movimiento dinámico
+                        if (zVelocity >= 3.0f && abs(x) < 4.5f) {
                             accelActionDirection = if (dz > 0) 1 else -1
                             accelActionStartZ = lastSampleZ
                             accelActionStartTime = now
@@ -249,11 +249,11 @@ class AccelerometerManager(context: Context) : SensorEventListener {
                     }
                     1 -> { // EN INCLINACIÓN
                         val elapsed = now - accelActionStartTime
-                        if (elapsed > 850L) {
-                            accelActionState = 3 // TIMED_OUT: se mantuvo inclinado demasiado tiempo
+                        if (elapsed > 1200L) {
+                            accelActionState = 3 // TIMED_OUT
                         } else {
                             val deltaZ = (z - accelActionStartZ) * accelActionDirection
-                            if (deltaZ >= 2.5f) {
+                            if (deltaZ >= 1.8f) {
                                 accelActionState = 2
                                 accelActionReturnStartTime = now
                             }
@@ -261,11 +261,11 @@ class AccelerometerManager(context: Context) : SensorEventListener {
                     }
                     2 -> { // RETORNANDO A POSICIÓN BASE
                         val totalElapsed = now - accelActionStartTime
-                        if (totalElapsed > 850L) {
+                        if (totalElapsed > 1500L) {
                             accelActionState = 3 // TIMED_OUT
                         } else {
                             val returnedDelta = abs(z - accelActionStartZ)
-                            if (returnedDelta <= 1.3f && zVelocity < 2.5f) {
+                            if (returnedDelta <= 1.5f && zVelocity < 3.0f) {
                                 accelActionState = 0
                                 lastActionTriggeredTime = now
                                 lastPitchGestureTime = now
@@ -558,12 +558,12 @@ internal class SingleTiltActionDetector {
     private var accumulatedReturnAngle = 0f
     private var lastTriggeredNs = 0L
 
-    // Margen de tiempo estricto: si se mantiene inclinado más de 850 ms sin volver, se cancela
-    private val minAngularSpeed = 1.45f            // rad/s (~83º/s, cabeceo decidido)
-    private val minTiltAngle = 0.40f                // radianes (~23 grados de cabeceo amplio)
-    private val maxTiltHoldNs = 550_000_000L       // 550 ms máx para completar la ida hacia ti
-    private val maxTotalWindowNs = 850_000_000L    // 850 ms máx para todo el ciclo (ida + vuelta)
-    private val cooldownNs = 1_800_000_000L        // Cooldown estricto tras disparo
+    // Parámetros calibrados para cabeceo natural hacia ti y retorno
+    private val minAngularSpeed = 0.70f            // rad/s (~40º/s, cabeceo fluido)
+    private val minTiltAngle = 0.18f                // radianes (~10.3º de cabeceo)
+    private val maxTiltHoldNs = 900_000_000L       // 900 ms máx para completar la ida hacia ti
+    private val maxTotalWindowNs = 1_500_000_000L  // 1.5 s máx para todo el ciclo (ida + vuelta)
+    private val cooldownNs = 1_200_000_000L        // Cooldown tras disparo
 
     fun reset() {
         state = State.IDLE
@@ -591,12 +591,12 @@ internal class SingleTiltActionDetector {
             return false
         }
 
-        // El cabeceo hacia el usuario (gx > 0) debe ser claramente dominante sobre giros laterales o desviaciones
-        val isPitchDominant = gx >= 1.35f * abs(gy) && gx >= 1.35f * abs(gz)
+        // El cabeceo hacia el usuario (gx > 0) debe ser dominante sobre giros laterales o desviaciones
+        val isPitchDominant = gx >= 0.70f * abs(gy) && gx >= 0.70f * abs(gz)
 
         when (state) {
             State.IDLE -> {
-                // Solo se inicia con un cabeceo enérgico hacia ti (gx > 0)
+                // Solo se inicia con un cabeceo cómodo hacia ti (gx > 0)
                 if (gx >= minAngularSpeed && isPitchDominant) {
                     state = State.IN_TILT
                     tiltStartNs = timestampNs
@@ -608,20 +608,19 @@ internal class SingleTiltActionDetector {
             State.IN_TILT -> {
                 val tiltElapsed = timestampNs - tiltStartNs
                 if (tiltElapsed > maxTiltHoldNs) {
-                    // Superado el margen de tiempo: se mantuvo inclinado hacia ti. CANCELAR
                     state = State.TIMED_OUT
                     return false
                 }
 
-                if (gx > 0.15f) {
+                if (gx > 0.10f) {
                     accumulatedTiltAngle += gx * dt
-                } else if (-gx >= 0.35f || (accumulatedTiltAngle >= minTiltAngle && -gx >= 0.10f)) {
+                } else if (-gx >= 0.20f || (accumulatedTiltAngle >= minTiltAngle && -gx >= 0.06f)) {
                     // Ha terminado la inclinación hacia ti y empieza el retroceso hacia la posición de lectura
                     if (accumulatedTiltAngle >= minTiltAngle) {
                         state = State.RETURNING
                         returnStartNs = timestampNs
                         accumulatedReturnAngle = if (-gx > 0f) (-gx) * dt else 0f
-                    } else if (-gx >= 0.40f) {
+                    } else if (-gx >= 0.35f) {
                         reset()
                     }
                 }
@@ -631,18 +630,17 @@ internal class SingleTiltActionDetector {
                 val totalElapsed = timestampNs - tiltStartNs
 
                 if (totalElapsed > maxTotalWindowNs) {
-                    // Superado el margen total de 850 ms sin completar el retorno: CANCELAR
                     state = State.TIMED_OUT
                     return false
                 }
 
-                if (-gx > 0.10f) {
+                if (-gx > 0.06f) {
                     accumulatedReturnAngle += (-gx) * dt
                 }
 
-                // Ha recuperado al menos el 65% de la inclinación y se ha detenido en reposo en la posición base
-                val hasReturnedEnough = accumulatedReturnAngle >= accumulatedTiltAngle * 0.65f
-                val settledAtRest = abs(gx) < 0.45f && abs(gy) < 0.45f
+                // Ha recuperado al menos el 55% de la inclinación y se ha detenido en reposo en la posición base
+                val hasReturnedEnough = accumulatedReturnAngle >= (accumulatedTiltAngle * 0.55f).coerceAtLeast(minTiltAngle * 0.70f)
+                val settledAtRest = abs(gx) < 0.60f && abs(gy) < 0.60f
 
                 if (hasReturnedEnough && settledAtRest) {
                     lastTriggeredNs = timestampNs
