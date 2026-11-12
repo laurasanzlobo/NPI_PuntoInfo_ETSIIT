@@ -1185,8 +1185,6 @@ fun ProfessorsScreen(onNavigate: (String) -> Unit, searchedName: String? = null)
                 }
             }
         }
-            }
-        }
     }
 
     Column(
