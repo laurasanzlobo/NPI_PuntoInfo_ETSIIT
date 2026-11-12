@@ -473,7 +473,7 @@ private fun WelcomeTutorialModal(
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Text(
-                    text = "Te enseñamos en 1 minuto cómo moverte por la aplicación y cómo controlar el móvil con gestos físicos y voz sin tocar la pantalla.",
+                    text = "Te enseñamos en 1 minuto cómo moverte por la aplicación y cómo controlar el móvil con gestos físicos y voz.",
                     fontSize = 13.5.sp,
                     color = TextSecondary,
                     textAlign = TextAlign.Center,
@@ -1535,16 +1535,6 @@ private fun TutorialCompletedModal(
                 )
 
                 Spacer(modifier = Modifier.height(10.dp))
-
-                Text(
-                    text = "Este tutorial no volverá a mostrarse automáticamente.",
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = TextPrimary,
-                    textAlign = TextAlign.Center
-                )
-
-                Spacer(modifier = Modifier.height(6.dp))
 
                 Text(
                     text = "Si se quiere repetir más adelante, pulsa el botón «i» de la barra superior o accede desde Mi Perfil.",
