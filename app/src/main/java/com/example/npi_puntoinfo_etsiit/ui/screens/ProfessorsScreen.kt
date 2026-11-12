@@ -277,17 +277,16 @@ fun ProfessorAvatar(
                 .map { it.first().uppercase() }
                 .joinToString("")
         }
-        val tintColor = if (prof.isMyTeacher) UgrRed else CampusTeal
         Box(
             modifier = modifier
                 .size(size)
                 .clip(CircleShape)
-                .background(tintColor.copy(alpha = 0.15f)),
+                .background(CampusTeal.copy(alpha = 0.12f)),
             contentAlignment = Alignment.Center
         ) {
             Text(
                 text = initials,
-                color = tintColor,
+                color = CampusTeal,
                 fontWeight = FontWeight.Bold,
                 fontSize = (size.value * 0.38f).sp
             )
@@ -866,8 +865,8 @@ fun ProfessorsScreen(onNavigate: (String) -> Unit, searchedName: String? = null)
             dragHandle = {
                 Box(
                     modifier = Modifier
-                        .padding(top = 10.dp, bottom = 6.dp)
-                        .size(width = 38.dp, height = 4.dp)
+                        .padding(top = 12.dp, bottom = 8.dp)
+                        .size(width = 42.dp, height = 4.dp)
                         .clip(RoundedCornerShape(2.dp))
                         .background(TextSecondary.copy(alpha = 0.25f))
                 )
@@ -876,52 +875,53 @@ fun ProfessorsScreen(onNavigate: (String) -> Unit, searchedName: String? = null)
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 20.dp, vertical = 8.dp),
-                verticalArrangement = Arrangement.spacedBy(14.dp)
+                    .padding(horizontal = 24.dp)
+                    .padding(top = 4.dp, bottom = 28.dp),
+                verticalArrangement = Arrangement.spacedBy(18.dp)
             ) {
-                // Cabecera: Foto grande + Nombre completo + Asignatura + Departamento + Semáforo + Botón Cerrar
+                // 1. Cabecera amplia: Foto/Avatar + Nombre completo + Semáforo + Botón Cerrar
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.Top,
+                    verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Row(
-                        verticalAlignment = Alignment.Top,
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(16.dp),
                         modifier = Modifier.weight(1f)
                     ) {
                         Box(
                             contentAlignment = Alignment.BottomEnd,
                             modifier = Modifier.clickable { showEnlargedPhoto = true }
                         ) {
-                            ProfessorAvatar(prof = prof, size = 64.dp)
+                            ProfessorAvatar(prof = prof, size = 68.dp)
                             Surface(
                                 shape = CircleShape,
-                                color = UgrRed,
-                                shadowElevation = 2.dp,
-                                modifier = Modifier.size(20.dp)
+                                color = SurfaceWhite,
+                                shadowElevation = 3.dp,
+                                modifier = Modifier.size(22.dp)
                             ) {
                                 Box(contentAlignment = Alignment.Center) {
                                     Icon(
                                         imageVector = Icons.Default.Search,
                                         contentDescription = "Ampliar foto",
-                                        tint = Color.White,
-                                        modifier = Modifier.size(11.dp)
+                                        tint = CampusTeal,
+                                        modifier = Modifier.size(13.dp)
                                     )
                                 }
                             }
                         }
 
-                        Spacer(modifier = Modifier.width(14.dp))
-
                         Column(
-                            verticalArrangement = Arrangement.spacedBy(3.dp)
+                            verticalArrangement = Arrangement.spacedBy(6.dp),
+                            modifier = Modifier.weight(1f)
                         ) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Text(
                                     text = prof.name,
                                     fontWeight = FontWeight.Bold,
-                                    fontSize = 17.sp,
-                                    lineHeight = 21.sp,
+                                    fontSize = 19.sp,
+                                    lineHeight = 23.sp,
                                     color = TextPrimary
                                 )
                                 if (isLoggedIn && prof.isMyTeacher) {
@@ -929,50 +929,29 @@ fun ProfessorsScreen(onNavigate: (String) -> Unit, searchedName: String? = null)
                                     Icon(
                                         imageVector = Icons.Default.Star,
                                         contentDescription = "Tu profesor",
-                                        tint = UgrRed,
+                                        tint = Color(0xFFF59E0B),
                                         modifier = Modifier.size(16.dp)
                                     )
                                 }
                             }
 
-                            if (prof.subject.isNotBlank()) {
-                                Text(
-                                    text = prof.subject,
-                                    fontSize = 13.sp,
-                                    lineHeight = 16.sp,
-                                    fontWeight = FontWeight.SemiBold,
-                                    color = CampusTeal
-                                )
-                            }
-
-                            if (prof.department.isNotBlank()) {
-                                Text(
-                                    text = prof.department,
-                                    fontSize = 11.5.sp,
-                                    lineHeight = 15.sp,
-                                    color = TextSecondary
-                                )
-                            }
-
-                            Spacer(modifier = Modifier.height(2.dp))
-
-                            // Píldora de estado en tiempo real (Tutoría / Clase / Fuera de horario)
+                            // Píldora de estado en tiempo real (Tutoría / Clase / Fuera de horario) justo bajo el nombre
                             Surface(
-                                shape = RoundedCornerShape(6.dp),
+                                shape = RoundedCornerShape(8.dp),
                                 color = status.badgeColor.copy(alpha = 0.12f)
                             ) {
                                 Row(
                                     verticalAlignment = Alignment.CenterVertically,
-                                    modifier = Modifier.padding(horizontal = 7.dp, vertical = 3.dp)
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                                 ) {
                                     StatusDot(
                                         color = status.badgeColor,
                                         isPulsing = status.type == ProfessorActivityType.IN_OFFICE_HOURS
                                     )
-                                    Spacer(modifier = Modifier.width(5.dp))
+                                    Spacer(modifier = Modifier.width(6.dp))
                                     Text(
                                         text = status.badgeText,
-                                        fontSize = 10.sp,
+                                        fontSize = 11.5.sp,
                                         fontWeight = FontWeight.Bold,
                                         color = status.badgeColor
                                     )
@@ -988,7 +967,7 @@ fun ProfessorsScreen(onNavigate: (String) -> Unit, searchedName: String? = null)
                             tts?.stop()
                             isSpeaking = false
                         },
-                        modifier = Modifier.size(32.dp)
+                        modifier = Modifier.size(36.dp)
                     ) {
                         Icon(
                             imageVector = Icons.Default.Close,
@@ -998,7 +977,111 @@ fun ProfessorsScreen(onNavigate: (String) -> Unit, searchedName: String? = null)
                     }
                 }
 
-                // Información clave concisa: Tutorías + Botón discreto [🔊 Oír]
+                HorizontalDivider(color = SurfaceBorder.copy(alpha = 0.35f))
+
+                // 2. Información del profesor más grande y visual (sobre fondo blanco, sin recuadros)
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(14.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    if (prof.subject.isNotBlank() || prof.department.isNotBlank()) {
+                        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            if (prof.subject.isNotBlank()) {
+                                Text(
+                                    text = prof.subject,
+                                    fontSize = 16.sp,
+                                    lineHeight = 21.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = CampusTeal
+                                )
+                            }
+                            if (prof.department.isNotBlank()) {
+                                Text(
+                                    text = prof.department,
+                                    fontSize = 13.5.sp,
+                                    lineHeight = 18.sp,
+                                    color = TextSecondary
+                                )
+                            }
+                        }
+                    }
+
+                    // Tutorías (sin recuadro gris, visual con icono de horario y botón Oír)
+                    val formattedOfficeHours = remember(prof.officeHours) {
+                        prof.officeHours.replace(Regex("(\\d{2}:\\d{2})\\s+y\\s+([A-ZÁÉÍÓÚ])"), "$1\n$2")
+                    }
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.Top,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.Top,
+                            horizontalArrangement = Arrangement.spacedBy(10.dp),
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .padding(top = 2.dp)
+                                    .size(32.dp)
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(CampusTeal.copy(alpha = 0.10f)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Schedule,
+                                    contentDescription = null,
+                                    tint = CampusTeal,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
+                            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                                Text(
+                                    text = "Horario de tutorías",
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = TextSecondary
+                                )
+                                Text(
+                                    text = formattedOfficeHours,
+                                    fontSize = 13.5.sp,
+                                    lineHeight = 18.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    color = TextPrimary
+                                )
+                            }
+                        }
+
+                        // Botón discreto [🔊 Oír]
+                        FilledTonalButton(
+                            onClick = { speak(status.dialogMessage) },
+                            shape = RoundedCornerShape(10.dp),
+                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
+                            modifier = Modifier.height(34.dp),
+                            colors = ButtonDefaults.filledTonalButtonColors(
+                                containerColor = if (isSpeaking) UgrRed.copy(alpha = 0.15f) else CampusTeal.copy(alpha = 0.15f),
+                                contentColor = if (isSpeaking) UgrRed else CampusTeal
+                            )
+                        ) {
+                            Icon(
+                                imageVector = if (isSpeaking) Icons.Default.VolumeOff else Icons.Default.VolumeUp,
+                                contentDescription = null,
+                                modifier = Modifier.size(15.dp)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = if (isSpeaking) "Parar" else "Oír",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(4.dp))
+
+                // 3. Botones reina de navegación (Despacho y Correo)
                 val cleanOffice = prof.office
                     .split("·")[0]
                     .replace("Despacho", "", ignoreCase = true)
@@ -1008,80 +1091,7 @@ fun ProfessorsScreen(onNavigate: (String) -> Unit, searchedName: String? = null)
                     .let {
                         if (it.firstOrNull()?.isDigit() == true) "D$it" else it
                     }
-                val formattedOfficeHours = remember(prof.officeHours) {
-                    prof.officeHours.replace(Regex("(\\d{2}:\\d{2})\\s+y\\s+([A-ZÁÉÍÓÚ])"), "$1\n$2")
-                }
 
-                Surface(
-                    shape = RoundedCornerShape(14.dp),
-                    color = BackgroundLight,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(14.dp),
-                        verticalAlignment = Alignment.Top,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.Top,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            modifier = Modifier.weight(1f)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Schedule,
-                                contentDescription = null,
-                                tint = TextSecondary,
-                                modifier = Modifier
-                                    .size(18.dp)
-                                    .padding(top = 1.dp)
-                            )
-                            Column {
-                                Text(
-                                    text = "Tutorías:",
-                                    fontSize = 11.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = TextSecondary
-                                )
-                                Text(
-                                    text = formattedOfficeHours,
-                                    fontSize = 12.sp,
-                                    lineHeight = 16.sp,
-                                    color = TextPrimary
-                                )
-                            }
-                        }
-
-                        // Botón discreto [🔊 Oír] integrado sin estorbar
-                        FilledTonalButton(
-                            onClick = { speak(status.dialogMessage) },
-                            shape = RoundedCornerShape(8.dp),
-                            contentPadding = PaddingValues(horizontal = 10.dp, vertical = 2.dp),
-                            modifier = Modifier.height(30.dp),
-                            colors = ButtonDefaults.filledTonalButtonColors(
-                                containerColor = if (isSpeaking) UgrRed.copy(alpha = 0.15f) else CampusTeal.copy(alpha = 0.15f),
-                                contentColor = if (isSpeaking) UgrRed else CampusTeal
-                            )
-                        ) {
-                            Icon(
-                                imageVector = if (isSpeaking) Icons.Default.VolumeOff else Icons.Default.VolumeUp,
-                                contentDescription = null,
-                                modifier = Modifier.size(13.dp)
-                            )
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text(
-                                text = if (isSpeaking) "Parar" else "Oír",
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
-                    }
-                }
-
-                // ========================================================
-                // LAS DOS OPCIONES REINA DE NAVEGACIÓN: DESPACHO Y CORREO
-                // ========================================================
                 val onGoToOffice = {
                     if (!prof.isExternal) {
                         val roomName = prof.office.split("·")[0].trim().replace("D_", "D").replace("D-", "D")
@@ -1106,18 +1116,15 @@ fun ProfessorsScreen(onNavigate: (String) -> Unit, searchedName: String? = null)
                 }
 
                 Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(bottom = 12.dp),
-                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    // Botón 1: Despacho (con código DXXX y badge del gesto ¡Llévame!)
                     val officeBtnText = if (cleanOffice.isNotBlank() && !cleanOffice.equals("Consultar", ignoreCase = true)) cleanOffice else "Despacho"
                     Button(
                         onClick = onGoToOffice,
                         modifier = Modifier
                             .weight(1f)
-                            .height(48.dp),
+                            .height(50.dp),
                         shape = RoundedCornerShape(14.dp),
                         contentPadding = PaddingValues(horizontal = 8.dp),
                         colors = ButtonDefaults.buttonColors(containerColor = CampusTeal)
@@ -1129,12 +1136,12 @@ fun ProfessorsScreen(onNavigate: (String) -> Unit, searchedName: String? = null)
                             Icon(
                                 imageVector = Icons.Default.MeetingRoom,
                                 contentDescription = null,
-                                modifier = Modifier.size(17.dp)
+                                modifier = Modifier.size(18.dp)
                             )
                             Text(
                                 text = officeBtnText,
                                 fontWeight = FontWeight.Bold,
-                                fontSize = 13.sp,
+                                fontSize = 14.sp,
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis
                             )
@@ -1148,12 +1155,11 @@ fun ProfessorsScreen(onNavigate: (String) -> Unit, searchedName: String? = null)
                         }
                     }
 
-                    // Botón 2: Correo (con badge de cabeceo hacia ti)
                     OutlinedButton(
                         onClick = onSendEmail,
                         modifier = Modifier
                             .weight(1f)
-                            .height(48.dp),
+                            .height(50.dp),
                         shape = RoundedCornerShape(14.dp),
                         contentPadding = PaddingValues(horizontal = 8.dp),
                         border = androidx.compose.foundation.BorderStroke(1.5.dp, UgrRed),
@@ -1166,9 +1172,9 @@ fun ProfessorsScreen(onNavigate: (String) -> Unit, searchedName: String? = null)
                             Icon(
                                 imageVector = Icons.Default.Email,
                                 contentDescription = null,
-                                modifier = Modifier.size(17.dp)
+                                modifier = Modifier.size(18.dp)
                             )
-                            Text("Correo", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                            Text("Correo", fontWeight = FontWeight.Bold, fontSize = 14.sp)
                             GestureBadge(
                                 type = GestureType.ACTION_TRIGGER,
                                 size = 22.dp,
@@ -1177,6 +1183,8 @@ fun ProfessorsScreen(onNavigate: (String) -> Unit, searchedName: String? = null)
                         }
                     }
                 }
+            }
+        }
             }
         }
     }
