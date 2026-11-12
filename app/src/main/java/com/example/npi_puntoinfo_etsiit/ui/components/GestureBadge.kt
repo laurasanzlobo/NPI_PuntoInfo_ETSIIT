@@ -553,14 +553,14 @@ fun GesturesGuideScreen(
                 Row(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(horizontal = 12.dp, vertical = 8.dp),
+                        .padding(horizontal = 12.dp, vertical = 5.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     // Icono circular grande a la izquierda
                     Box(
                         modifier = Modifier
-                            .size(44.dp)
+                            .size(42.dp)
                             .clip(CircleShape)
                             .background(gesture.badgeColor.copy(alpha = 0.14f))
                             .border(1.dp, gesture.badgeColor.copy(alpha = 0.40f), CircleShape),
@@ -570,7 +570,7 @@ fun GesturesGuideScreen(
                             imageVector = gesture.icon,
                             contentDescription = gesture.title,
                             tint = gesture.badgeColor,
-                            modifier = Modifier.size(24.dp)
+                            modifier = Modifier.size(22.dp)
                         )
                     }
 
@@ -590,25 +590,27 @@ fun GesturesGuideScreen(
                                 fontSize = 14.sp,
                                 color = TextPrimary,
                                 maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
+                                overflow = TextOverflow.Ellipsis,
+                                modifier = Modifier.weight(1f, fill = false)
                             )
                             Spacer(modifier = Modifier.width(6.dp))
                             Surface(
-                                shape = RoundedCornerShape(10.dp),
+                                shape = RoundedCornerShape(8.dp),
                                 color = gesture.badgeColor.copy(alpha = 0.12f)
                             ) {
                                 Text(
                                     text = gesture.gestureName,
                                     fontWeight = FontWeight.Bold,
                                     fontSize = 11.sp,
+                                    lineHeight = 13.sp,
                                     color = gesture.badgeColor,
                                     maxLines = 1,
-                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.5.dp)
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 1.dp)
                                 )
                             }
                         }
 
-                        Spacer(modifier = Modifier.height(8.dp))
+                        Spacer(modifier = Modifier.height(3.dp))
 
                         // Frase directa de cómo realizar el gesto (sin "Cómo:")
                         Text(
@@ -616,20 +618,20 @@ fun GesturesGuideScreen(
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Medium,
                             color = TextPrimary,
-                            lineHeight = 15.sp,
+                            lineHeight = 14.sp,
                             maxLines = 2,
                             overflow = TextOverflow.Ellipsis
                         )
 
-                        Spacer(modifier = Modifier.height(4.dp))
+                        Spacer(modifier = Modifier.height(2.dp))
 
                         // Para qué sirve (con "Uso:")
                         Text(
                             text = stringResource(R.string.gesture_usage_label, gesture.whatFor),
                             fontSize = 11.5.sp,
                             color = TextSecondary,
-                            lineHeight = 14.sp,
-                            maxLines = 2,
+                            lineHeight = 13.5.sp,
+                            maxLines = 3,
                             overflow = TextOverflow.Ellipsis
                         )
                     }
