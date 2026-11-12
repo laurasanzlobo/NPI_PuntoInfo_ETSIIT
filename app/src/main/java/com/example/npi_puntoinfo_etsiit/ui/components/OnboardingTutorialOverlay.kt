@@ -1027,7 +1027,7 @@ private fun GestureTrainingLabView(
             }
 
             GestureType.PINCH_ZOOM -> {
-                feedbackSubtitle = "Coloca 2 dedos en el recuadro inferior y sepáralos o júntalos."
+                feedbackSubtitle = "Pellizca con dos dedos en cualquier parte de la pantalla para probarlo."
             }
         }
 
@@ -1039,9 +1039,22 @@ private fun GestureTrainingLabView(
 
     val cardBorderColor = if (isGestureCompleted) CampusGreen else gesture.badgeColor.copy(alpha = 0.45f)
 
+    val pinchModifier = if (gesture == GestureType.PINCH_ZOOM && !isGestureCompleted) {
+        Modifier.pointerInput(gesture) {
+            detectTransformGestures { _, _, zoom, _ ->
+                val updated = (pinchScale * zoom).coerceIn(0.55f, 2.2f)
+                pinchScale = updated
+                if (abs(updated - 1f) >= 0.15f) {
+                    markGestureSuccess("Vista del horario cambiada con éxito.")
+                }
+            }
+        }
+    } else Modifier
+
     Box(
         modifier = Modifier
             .fillMaxSize()
+            .then(pinchModifier)
             .background(Color(0xE60F172A))
             .padding(horizontal = 18.dp, vertical = 22.dp),
         contentAlignment = Alignment.Center
@@ -1208,14 +1221,7 @@ private fun GestureTrainingLabView(
                     liveTiltX = liveTiltX,
                     liveTiltY = liveTiltY,
                     liveTiltZ = liveTiltZ,
-                    isProximityNear = isProximityNear,
-                    pinchScale = pinchScale,
-                    onPinchScaleChange = { newScale ->
-                        pinchScale = newScale
-                        if (abs(newScale - 1f) >= 0.15f) {
-                            markGestureSuccess("Vista del horario cambiada con éxito.")
-                        }
-                    }
+                    isProximityNear = isProximityNear
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
@@ -1296,9 +1302,7 @@ private fun GestureLiveTelemetryBox(
     liveTiltX: Float,
     liveTiltY: Float,
     liveTiltZ: Float,
-    isProximityNear: Boolean,
-    pinchScale: Float,
-    onPinchScaleChange: (Float) -> Unit
+    isProximityNear: Boolean
 ) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
@@ -1464,33 +1468,16 @@ private fun GestureLiveTelemetryBox(
                 }
 
                 GestureType.PINCH_ZOOM -> {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(82.dp)
-                            .clip(RoundedCornerShape(14.dp))
-                            .background(
-                                if (isCompleted) CampusGreen.copy(alpha = 0.12f)
-                                else gesture.badgeColor.copy(alpha = 0.08f)
-                            )
-                            .border(
-                                width = 1.5.dp,
-                                color = if (isCompleted) CampusGreen else gesture.badgeColor.copy(alpha = 0.4f),
-                                shape = RoundedCornerShape(14.dp)
-                            )
-                            .pointerInput(Unit) {
-                                detectTransformGestures { _, _, zoom, _ ->
-                                    val updated = (pinchScale * zoom).coerceIn(0.55f, 2.2f)
-                                    onPinchScaleChange(updated)
-                                }
-                            },
-                        contentAlignment = Alignment.Center
+                    Surface(
+                        shape = RoundedCornerShape(50),
+                        color = if (isCompleted) CampusGreen.copy(alpha = 0.18f) else Color(0xFFE2E8F0)
                     ) {
                         Text(
-                            text = if (isCompleted) "✓ Gesto de pellizco detectado" else "Pellizca con dos dedos aquí dentro",
-                            fontSize = 12.5.sp,
+                            text = if (isCompleted) "✓ Gesto de pellizco detectado" else "👆 Pellizca con dos dedos en cualquier parte de la pantalla",
+                            fontSize = 12.sp,
                             fontWeight = FontWeight.Bold,
-                            color = if (isCompleted) CampusGreen else gesture.badgeColor
+                            color = if (isCompleted) CampusGreen else TextSecondary,
+                            modifier = Modifier.padding(horizontal = 14.dp, vertical = 7.dp)
                         )
                     }
                 }
