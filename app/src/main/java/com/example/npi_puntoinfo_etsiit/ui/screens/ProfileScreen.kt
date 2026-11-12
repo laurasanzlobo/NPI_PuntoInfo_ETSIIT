@@ -79,7 +79,8 @@ import kotlinx.coroutines.delay
 @Composable
 fun ProfileScreen(
     onBack: () -> Unit = {},
-    onLoggedOut: () -> Unit = onBack
+    onLoggedOut: () -> Unit = onBack,
+    onRepeatTutorial: (() -> Unit)? = null
 ) {
     val context = LocalContext.current
     val profile = UserSessionRepository.getProfile(context)
@@ -315,22 +316,42 @@ fun ProfileScreen(
             // ==========================================
             // 4. BOTÓN CERRAR SESIÓN
             // ==========================================
-            OutlinedButton(
-                onClick = {
-                    isLoggingOut = true
-                    onLoggedOut()
-                    UserSessionRepository.logout(context)
-                    Toast.makeText(context, "Sesión cerrada", Toast.LENGTH_SHORT).show()
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(50.dp),
-                shape = RoundedCornerShape(14.dp),
-                colors = ButtonDefaults.outlinedButtonColors(contentColor = UgrRed)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                Icon(imageVector = Icons.AutoMirrored.Filled.Logout, contentDescription = null, modifier = Modifier.size(18.dp))
-                Spacer(modifier = Modifier.width(8.dp))
-                Text("Cerrar Sesión", fontWeight = FontWeight.Bold)
+                if (onRepeatTutorial != null) {
+                    OutlinedButton(
+                        onClick = onRepeatTutorial,
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(50.dp),
+                        shape = RoundedCornerShape(14.dp),
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = EtsiitBlue)
+                    ) {
+                        Icon(imageVector = Icons.Default.School, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text("Tutorial", fontWeight = FontWeight.Bold)
+                    }
+                }
+
+                OutlinedButton(
+                    onClick = {
+                        isLoggingOut = true
+                        onLoggedOut()
+                        UserSessionRepository.logout(context)
+                        Toast.makeText(context, "Sesión cerrada", Toast.LENGTH_SHORT).show()
+                    },
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(50.dp),
+                    shape = RoundedCornerShape(14.dp),
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = UgrRed)
+                ) {
+                    Icon(imageVector = Icons.AutoMirrored.Filled.Logout, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text("Cerrar Sesión", fontWeight = FontWeight.Bold)
+                }
             }
         }
     } else {

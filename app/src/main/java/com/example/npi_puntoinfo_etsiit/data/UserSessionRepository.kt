@@ -18,11 +18,18 @@ object UserSessionRepository {
     private const val PREFS_NAME = "npi_user_session"
     private const val KEY_PROFILE = "user_profile_json"
     private const val KEY_SESSION_V2 = "session_v2_initialized"
+    private const val KEY_ONBOARDING_COMPLETED = "onboarding_tutorial_completed_v1"
     private val gson = Gson()
 
     // Estado reactivo de Compose para que toda la UI (AppNavigation, TopAppBar, sensores, etc.)
     // se recomponga al instante al iniciar o cerrar sesión.
     private var currentProfileState by mutableStateOf<UserProfile?>(null)
+
+    // Estado reactivo para controlar si el tutorial interactivo inicial está activo en pantalla
+    var isTutorialActiveState by mutableStateOf(false)
+        private set
+
+    private var tutorialInitialized = false
 
     val officialMatricula = mapOf(
         "PTC" to "A1",
@@ -187,6 +194,48 @@ object UserSessionRepository {
         val nuevaMatricula = current.matricula.toMutableMap()
         nuevaMatricula.remove(acronym)
         saveProfile(context, current.copy(matricula = nuevaMatricula))
+    }
+
+    /**
+     * Comprueba si debe mostrarse automáticamente el tutorial inicial interactivo.
+     * CONDICIÓN ESTRICTA: Solo se ejecuta automáticamente UNA ÚNICA VEZ por instalación
+     * de la aplicación (independientemente de si el usuario inicia o cierra sesión con su TUI).
+     */
+    fun checkAndInitTutorialOnce(context: Context): Boolean {
+        if (!tutorialInitialized) {
+            tutorialInitialized = true
+            val alreadyCompleted = getPrefs(context).getBoolean(KEY_ONBOARDING_COMPLETED, false)
+            if (!alreadyCompleted) {
+                isTutorialActiveState = true
+            }
+        }
+        return isTutorialActiveState
+    }
+
+    /**
+     * Devuelve true si el tutorial inicial ya fue completado (o saltado) al menos una vez.
+     */
+    fun hasCompletedInitialTutorial(context: Context): Boolean {
+        return getPrefs(context).getBoolean(KEY_ONBOARDING_COMPLETED, false)
+    }
+
+    /**
+     * Marca el tutorial inicial como completado de forma permanente en SharedPreferences
+     * para que nunca vuelva a abrirse solo al arrancar la app ni al cerrar sesión.
+     */
+    fun markTutorialCompleted(context: Context) {
+        isTutorialActiveState = false
+        getPrefs(context).edit()
+            .putBoolean(KEY_ONBOARDING_COMPLETED, true)
+            .apply()
+    }
+
+    /**
+     * Permite al usuario volver a lanzar manualmente el tutorial interactivo en cualquier
+     * momento desde la Guía de Gestos (botón 'i') o desde su Perfil.
+     */
+    fun startTutorialManually() {
+        isTutorialActiveState = true
     }
 }
 

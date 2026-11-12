@@ -519,15 +519,82 @@ fun GestureGuideButton(
  * para que quepan siempre en una sola vista sin necesidad de deslizar hacia abajo.
  */
 @Composable
-fun GesturesGuideScreen() {
+fun GesturesGuideScreen(
+    onStartInteractiveTutorial: (() -> Unit)? = null
+) {
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(BackgroundLight)
-            .padding(horizontal = 14.dp, vertical = 12.dp),
-        verticalArrangement = Arrangement.spacedBy(10.dp)
+            .padding(horizontal = 14.dp, vertical = 10.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        // Tarjetas de los 5 gestos repartidas equitativamente sin scroll
+        if (onStartInteractiveTutorial != null) {
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable(onClick = onStartInteractiveTutorial),
+                shape = RoundedCornerShape(14.dp),
+                colors = CardDefaults.cardColors(containerColor = UgrRed),
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 14.dp, vertical = 10.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(34.dp)
+                                .clip(CircleShape)
+                                .background(Color.White.copy(alpha = 0.2f)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Vibration,
+                                contentDescription = null,
+                                tint = Color.White,
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
+                        Column {
+                            Text(
+                                text = "Repetir Tutorial Interactivo",
+                                fontWeight = FontWeight.ExtraBold,
+                                fontSize = 13.5.sp,
+                                color = Color.White
+                            )
+                            Text(
+                                text = "Recorrido guiado por la app y práctica de gestos en vivo",
+                                fontSize = 11.sp,
+                                color = Color.White.copy(alpha = 0.9f)
+                            )
+                        }
+                    }
+                    Surface(
+                        shape = RoundedCornerShape(50),
+                        color = Color.White
+                    ) {
+                        Text(
+                            text = "Iniciar",
+                            fontWeight = FontWeight.ExtraBold,
+                            fontSize = 11.5.sp,
+                            color = UgrRed,
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                        )
+                    }
+                }
+            }
+        }
+
+        // Tarjetas de los gestos repartidas equitativamente sin scroll
         GestureType.entries.forEach { gesture ->
             Card(
                 modifier = Modifier

@@ -32,6 +32,8 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.boundsInRoot
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -42,6 +44,8 @@ import com.example.npi_puntoinfo_etsiit.R
 import com.example.npi_puntoinfo_etsiit.data.ClassItem
 import com.example.npi_puntoinfo_etsiit.data.ScheduleRepository
 import com.example.npi_puntoinfo_etsiit.data.UserSessionRepository
+import com.example.npi_puntoinfo_etsiit.ui.components.SpotlightTargetId
+import com.example.npi_puntoinfo_etsiit.ui.components.TutorialSpotlightRegistry
 import com.example.npi_puntoinfo_etsiit.ui.navigation.Screen
 import com.example.npi_puntoinfo_etsiit.ui.theme.*
 import kotlinx.coroutines.delay
@@ -250,6 +254,12 @@ fun HomeScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .weight(1f)
+                .onGloballyPositioned { coords ->
+                    TutorialSpotlightRegistry.updateTarget(
+                        SpotlightTargetId.HOME_CLASS_AND_NEWS,
+                        coords.boundsInRoot()
+                    )
+                }
         ) {
             HorizontalPager(
                 state = pagerState,
@@ -367,6 +377,12 @@ fun HomeScreen(
                     borderColor = Color(0xFF99F6E4),
                     textColor = Color(0xFF115E59),
                     iconGradient = listOf(Color(0xFF14B8A6), Color(0xFF0F766E)),
+                    modifier = Modifier.onGloballyPositioned { coords ->
+                        TutorialSpotlightRegistry.updateTarget(
+                            SpotlightTargetId.HOME_SERVICES_BUTTON,
+                            coords.boundsInRoot()
+                        )
+                    },
                     onClick = { onNavigate(Screen.Services.route) }
                 )
 
@@ -378,6 +394,12 @@ fun HomeScreen(
                     borderColor = Color(0xFFFDE68A),
                     textColor = Color(0xFF92400E),
                     iconGradient = listOf(Color(0xFFF59E0B), Color(0xFFD97706)),
+                    modifier = Modifier.onGloballyPositioned { coords ->
+                        TutorialSpotlightRegistry.updateTarget(
+                            SpotlightTargetId.HOME_DINING_BUTTON,
+                            coords.boundsInRoot()
+                        )
+                    },
                     onClick = { onNavigate(Screen.Dining.route) }
                 )
             }
@@ -395,6 +417,12 @@ fun HomeScreen(
                     borderColor = Color(0xFF99F6E4),
                     textColor = Color(0xFF115E59),
                     iconGradient = listOf(Color(0xFF14B8A6), Color(0xFF0F766E)),
+                    modifier = Modifier.onGloballyPositioned { coords ->
+                        TutorialSpotlightRegistry.updateTarget(
+                            SpotlightTargetId.HOME_SERVICES_BUTTON,
+                            coords.boundsInRoot()
+                        )
+                    },
                     onClick = { onNavigate(Screen.Services.route) }
                 )
 
@@ -406,6 +434,12 @@ fun HomeScreen(
                     borderColor = Color(0xFFFDE68A),
                     textColor = Color(0xFF92400E),
                     iconGradient = listOf(Color(0xFFF59E0B), Color(0xFFD97706)),
+                    modifier = Modifier.onGloballyPositioned { coords ->
+                        TutorialSpotlightRegistry.updateTarget(
+                            SpotlightTargetId.HOME_DINING_BUTTON,
+                            coords.boundsInRoot()
+                        )
+                    },
                     onClick = { onNavigate(Screen.Dining.route) }
                 )
             }
@@ -530,10 +564,11 @@ private fun HomeFlatButton(
     borderColor: Color,
     textColor: Color,
     iconGradient: List<Color>,
+    modifier: Modifier = Modifier,
     onClick: () -> Unit
 ) {
     Card(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .height(if (subtitle != null) 80.dp else 66.dp)
             .clickable(onClick = onClick),

@@ -34,10 +34,15 @@ import com.example.npi_puntoinfo_etsiit.ui.components.GestureBadge
 import com.example.npi_puntoinfo_etsiit.ui.components.GestureGuideButton
 import com.example.npi_puntoinfo_etsiit.ui.components.GesturesGuideScreen
 import com.example.npi_puntoinfo_etsiit.ui.components.GestureType
+import com.example.npi_puntoinfo_etsiit.ui.components.OnboardingTutorialOverlay
+import com.example.npi_puntoinfo_etsiit.ui.components.SpotlightTargetId
+import com.example.npi_puntoinfo_etsiit.ui.components.TutorialSpotlightRegistry
 import java.time.LocalTime
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.boundsInRoot
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -332,6 +337,12 @@ fun AppNavigation() {
     val isUserLoggedIn = currentUserProfile.isLoggedIn
     var isExitingProfileOnLogout by remember { mutableStateOf(false) }
 
+    // Condición estricta de ejecución única del tutorial inicial (solo salta solo 1 vez por instalación)
+    LaunchedEffect(Unit) {
+        UserSessionRepository.checkAndInitTutorialOnce(context)
+    }
+    val isTutorialActive = UserSessionRepository.isTutorialActiveState
+
     LaunchedEffect(currentRoute) {
         if (currentRoute != Screen.Profile.route) {
             isExitingProfileOnLogout = false
@@ -341,11 +352,11 @@ fun AppNavigation() {
     // Indica si el usuario está en la vista inmersiva de cámara escaneando el código QR de la TUI
     val isScanningQrMode = currentRoute == Screen.Profile.route && !isUserLoggedIn && !isExitingProfileOnLogout
 
-    // Pausar proximidad durante el escaneo QR y el pago para no interrumpir la autenticación.
+    // Pausar proximidad durante el escaneo QR, pago y durante el tutorial interactivo para no solapar los sensores.
     // Al pasar la mano por la cámara frontal / parte superior del móvil o acercarlo a la oreja,
     // se activa el asistente de voz y se calcula la ruta guiada en el mapa.
-    DisposableEffect(context, isScanningQrMode, isDiningPaymentActive) {
-        if (isScanningQrMode || isDiningPaymentActive) {
+    DisposableEffect(context, isScanningQrMode, isDiningPaymentActive, isTutorialActive) {
+        if (isScanningQrMode || isDiningPaymentActive || isTutorialActive) {
             onDispose { }
         } else {
             val proximityManager = ProximityManager(context)
@@ -366,12 +377,12 @@ fun AppNavigation() {
         }
     }
 
-    // Pausar también la agitación durante el escaneo QR y la pasarela de pago.
+    // Pausar también la agitación durante el escaneo QR, la pasarela de pago y el tutorial interactivo.
     // Detecta dinámicamente si hay una clase en curso o próxima (con 30 minutos de antelación).
     // Si hay clase, el gesto de «¡Llévame!» (giro de muñeca) guía directamente a su aula.
     DisposableEffect(context, showCurrentClassDialog, activeClassForDialog, isScanningQrMode, isUserLoggedIn,
-        isDiningPaymentActive) {
-        if (isScanningQrMode || isDiningPaymentActive) {
+        isDiningPaymentActive, isTutorialActive) {
+        if (isScanningQrMode || isDiningPaymentActive || isTutorialActive) {
             onDispose { }
         } else {
             val accelerometerManager = AccelerometerManager(context)
@@ -422,6 +433,7 @@ fun AppNavigation() {
         else -> ""
     }
 
+    Box(modifier = Modifier.fillMaxSize()) {
     Scaffold(
         topBar = {
             if (!isScanningQrMode && !isVerticalGuidanceActive) {
@@ -462,63 +474,79 @@ fun AppNavigation() {
                     actions = {
                         // En la pasarela de pago se ocultan todos los iconos de gestos y el perfil
                         if (!isDiningPaymentActive) {
-                            // Distintivo informativo del gesto de zoom para el Horario (solo visual, sin click)
-                            if (currentRoute == Screen.Schedule.route) {
-                                GestureBadge(
-                                    type = GestureType.PINCH_ZOOM,
-                                    size = 26.dp,
-                                    iconSize = 14.dp,
-                                    showTooltipOnClick = false,
-                                    onClick = null
-                                )
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.onGloballyPositioned { coords ->
+                                    TutorialSpotlightRegistry.updateTarget(
+                                        SpotlightTargetId.GESTURE_BADGES,
+                                        coords.boundsInRoot()
+                                    )
+                                }
+                            ) {
+                                // Distintivo informativo del gesto de zoom para el Horario (solo visual, sin click)
+                                if (currentRoute == Screen.Schedule.route) {
+                                    GestureBadge(
+                                        type = GestureType.PINCH_ZOOM,
+                                        size = 26.dp,
+                                        iconSize = 14.dp,
+                                        showTooltipOnClick = false,
+                                        onClick = null
+                                    )
 
-                                Spacer(modifier = Modifier.width(6.dp))
-                            }
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                }
 
-                            // Indicador visual del sensor de proximidad (morado) — En Profesores se integra directamente en la barra de búsqueda
-                            if (currentRoute?.startsWith(Screen.Professors.route) != true) {
-                                GestureBadge(
-                                    type = GestureType.PROXIMITY_VOICE,
-                                    size = 26.dp,
-                                    iconSize = 14.dp,
-                                    showTooltipOnClick = false,
-                                    onClick = null
-                                )
+                                // Indicador visual del sensor de proximidad (morado) — En Profesores se integra directamente en la barra de búsqueda
+                                if (currentRoute?.startsWith(Screen.Professors.route) != true) {
+                                    GestureBadge(
+                                        type = GestureType.PROXIMITY_VOICE,
+                                        size = 26.dp,
+                                        iconSize = 14.dp,
+                                        showTooltipOnClick = false,
+                                        onClick = null
+                                    )
 
-                                Spacer(modifier = Modifier.width(6.dp))
-                            }
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                }
 
-                            // Indicador visual del gesto de 3 inclinaciones para clase actual (rojo) — Solo si ha iniciado sesión
-                            val isUserLoggedIn = UserSessionRepository.getProfile(context).isLoggedIn
-                            if (isUserLoggedIn) {
-                                GestureBadge(
-                                    type = GestureType.TRIPLE_SHAKE,
-                                    size = 26.dp,
-                                    iconSize = 14.dp,
-                                    showTooltipOnClick = false,
-                                    onClick = null
-                                )
+                                // Indicador visual del gesto de 3 inclinaciones para clase actual (rojo) — Solo si ha iniciado sesión
+                                val isUserLoggedIn = UserSessionRepository.getProfile(context).isLoggedIn
+                                if (isUserLoggedIn) {
+                                    GestureBadge(
+                                        type = GestureType.TRIPLE_SHAKE,
+                                        size = 26.dp,
+                                        iconSize = 14.dp,
+                                        showTooltipOnClick = false,
+                                        onClick = null
+                                    )
 
-                                Spacer(modifier = Modifier.width(6.dp))
-                            }
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                }
 
-                            // Botón con la 'i' de información sobre gestos: abre la pestaña dedicada de Guía de Gestos
-                            val isGesturesGuideScreen = currentRoute == Screen.GesturesGuide.route
-                            GestureGuideButton(
-                                size = 32.dp,
-                                iconSize = 18.dp,
-                                onClick = {
-                                    if (!isGesturesGuideScreen) {
-                                        navController.navigate(Screen.GesturesGuide.route) {
-                                            launchSingleTop = true
+                                // Botón con la 'i' de información sobre gestos: abre la pestaña dedicada de Guía de Gestos
+                                val isGesturesGuideScreen = currentRoute == Screen.GesturesGuide.route
+                                GestureGuideButton(
+                                    size = 32.dp,
+                                    iconSize = 18.dp,
+                                    onClick = {
+                                        if (!isGesturesGuideScreen) {
+                                            navController.navigate(Screen.GesturesGuide.route) {
+                                                launchSingleTop = true
+                                            }
                                         }
                                     }
-                                }
-                            )
+                                )
+                            }
 
                             // Icono de perfil de usuario siempre presente a la derecha para que los iconos de gestos no bailen de posición
                             val isProfileScreen = currentRoute == Screen.Profile.route
                             IconButton(
+                                modifier = Modifier.onGloballyPositioned { coords ->
+                                    TutorialSpotlightRegistry.updateTarget(
+                                        SpotlightTargetId.PROFILE_ICON,
+                                        coords.boundsInRoot()
+                                    )
+                                },
                                 onClick = {
                                     if (!isProfileScreen) {
                                         navController.navigate(Screen.Profile.route)
@@ -707,12 +735,21 @@ fun AppNavigation() {
                     onLoggedOut = {
                         isExitingProfileOnLogout = true
                         navigateToTab(Screen.Home.route)
+                    },
+                    onRepeatTutorial = {
+                        navigateToTab(Screen.Home.route)
+                        UserSessionRepository.startTutorialManually()
                     }
                 )
             }
 
             composable(Screen.GesturesGuide.route) {
-                GesturesGuideScreen()
+                GesturesGuideScreen(
+                    onStartInteractiveTutorial = {
+                        navigateToTab(Screen.Home.route)
+                        UserSessionRepository.startTutorialManually()
+                    }
+                )
             }
         }
 
@@ -852,6 +889,17 @@ fun AppNavigation() {
                 }
             )
         }
+    }
+
+    // Overlay global del Tutorial Inicial Interactivo (se muestra automáticamente solo la 1ª vez
+    // o cuando el usuario pulsa "Repetir Tutorial Interactivo" desde la Guía 'i' o desde su Perfil)
+    if (isTutorialActive) {
+        OnboardingTutorialOverlay(
+            onFinishTutorial = {
+                UserSessionRepository.markTutorialCompleted(context)
+            }
+        )
+    }
     }
 }
 
