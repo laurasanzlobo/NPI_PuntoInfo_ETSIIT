@@ -7,6 +7,7 @@ import android.hardware.SensorEventListener
 import android.hardware.SensorManager
 import android.util.Log
 import kotlin.math.abs
+import kotlin.math.atan2
 import kotlin.math.max
 import kotlin.math.min
 
@@ -135,7 +136,7 @@ class AccelerometerManager(context: Context) : SensorEventListener {
     fun stopListening() {
         sensorManager?.unregisterListener(this)
         tripleForwardTiltDetector.reset()
-        singleTiltActionDetector.reset()
+        singleTiltActionDetector.fullReset()
         takeMeThereState = FlickState.NEUTRAL
         accelActionState = 0
         accelForwardTiltCount = 0
@@ -173,13 +174,12 @@ class AccelerometerManager(context: Context) : SensorEventListener {
                 }
             }
 
-            // 1B. Gesto de Acción Rápida (Correo / Reserva Comedor): Inclinar hacia ti y volver
-            if (onForwardTiltGesture != null && tripleForwardTiltDetector.currentCount == 0 && takeMeThereState == FlickState.NEUTRAL) {
-                if (singleTiltActionDetector.onRotation(gx, gy, gz, event.timestamp)) {
-                    Log.i(gestureTag, "Gesto Acción Rápida completado (inclinación hacia ti y retorno)")
-                    lastActionTriggeredTime = System.currentTimeMillis()
-                    lastPitchGestureTime = System.currentTimeMillis()
-                    onForwardTiltGesture?.invoke()
+            // 1B. Integración de giroscopio para el ángulo de inclinación hacia ti (Acción Rápida)
+            if (onForwardTiltGesture != null) {
+                if (tripleForwardTiltDetector.currentCount > 0) {
+                    singleTiltActionDetector.reset()
+                } else {
+                    singleTiltActionDetector.onRotation(gx, gy, gz, event.timestamp)
                 }
             }
             return
@@ -227,62 +227,19 @@ class AccelerometerManager(context: Context) : SensorEventListener {
         }
 
         // =========================================================================
-        // 3. GESTO DE ACCIÓN (Correo / Reserva Comedor) — Respaldo dinámico solo si NO hay giroscopio
+        // 3. GESTO DE ACCIÓN (Correo / Reserva Comedor):
+        //    Inclinar el móvil hacia ti hasta alcanzar/sobrepasar la vertical (>= 89º,
+        //    parte superior acercándose a ti) y volver a la postura de lectura normal.
         // =========================================================================
-        if (gyroscope == null && onForwardTiltGesture != null) {
-            val dt = if (lastAccelActionTime > 0L) (now - lastAccelActionTime) / 1000f else 0.02f
-            lastAccelActionTime = now
-
-            if (dt in 0.005f..0.25f) {
-                val dz = z - lastSampleZ
-                val zVelocity = abs(dz / dt) // m/s^3 velocidad dinámica de cambio
-
-                when (accelActionState) {
-                    0 -> { // IDLE: esperar movimiento dinámico
-                        if (zVelocity >= 3.0f && abs(x) < 4.5f) {
-                            accelActionDirection = if (dz > 0) 1 else -1
-                            accelActionStartZ = lastSampleZ
-                            accelActionStartTime = now
-                            accelActionState = 1
-                            onNodStarted?.invoke()
-                        }
-                    }
-                    1 -> { // EN INCLINACIÓN
-                        val elapsed = now - accelActionStartTime
-                        if (elapsed > 1200L) {
-                            accelActionState = 3 // TIMED_OUT
-                        } else {
-                            val deltaZ = (z - accelActionStartZ) * accelActionDirection
-                            if (deltaZ >= 1.8f) {
-                                accelActionState = 2
-                                accelActionReturnStartTime = now
-                            }
-                        }
-                    }
-                    2 -> { // RETORNANDO A POSICIÓN BASE
-                        val totalElapsed = now - accelActionStartTime
-                        if (totalElapsed > 1500L) {
-                            accelActionState = 3 // TIMED_OUT
-                        } else {
-                            val returnedDelta = abs(z - accelActionStartZ)
-                            if (returnedDelta <= 1.5f && zVelocity < 3.0f) {
-                                accelActionState = 0
-                                lastActionTriggeredTime = now
-                                lastPitchGestureTime = now
-                                Log.i(gestureTag, "Acción rápida por acelerómetro completada")
-                                onForwardTiltGesture?.invoke()
-                            }
-                        }
-                    }
-                    3 -> { // TIMED_OUT: esperar a que el usuario regrese a reposo sin disparar
-                        val returnedDelta = abs(z - accelActionStartZ)
-                        if (returnedDelta <= 1.3f && zVelocity < 2.0f) {
-                            accelActionState = 0
-                        }
-                    }
-                }
+        if (onForwardTiltGesture != null) {
+            if (tripleForwardTiltDetector.currentCount > 0 || takeMeThereState != FlickState.NEUTRAL) {
+                singleTiltActionDetector.reset()
+            } else if (singleTiltActionDetector.onAccelerometer(x, y, z, now)) {
+                Log.i(gestureTag, "Gesto Acción Rápida completado (vertical/sobrepasando vertical y retorno)")
+                lastActionTriggeredTime = now
+                lastPitchGestureTime = now
+                onForwardTiltGesture?.invoke()
             }
-            lastSampleZ = z
         }
 
         // =========================================================================
@@ -530,132 +487,192 @@ internal class TripleForwardTiltDetector {
 
 /**
  * Detector del gesto de Acción Rápida (Enviar correo / Confirmar reserva de comedor):
- * Exige una inclinación deliberada y amplia de cabeceo hacia el usuario (gx > 0) y su retorno
- * a la posición de lectura base (gx < 0).
+ * «Inclinar el móvil hacia ti (alcanzando o sobrepasando la vertical) y volver a la posición de lectura».
  *
- * Utiliza el giroscopio para medir la velocidad angular del cabeceo (eje X, pitch)
- * e integrarla en un ángulo de rotación real:
- * 1. Detección de cabeceo deliberado (|gx| >= 0.40 rad/s) alcanzando >= 0.42 rad (~24º).
- *    (Evita toques pequeños, movimientos involuntarios o golpes de apenas 10º).
- * 2. Tolerancia a la cinemática natural de la mano completa (desviación lateral de muñeca).
- * 3. Movimiento de retorno en sentido contrario hacia la posición de partida.
- * 4. Reposo en la posición inicial.
+ * Física de orientación real (Fusión Acelerómetro + Giroscopio):
+ * - En posición de lectura normal en la mano, la parte inferior del móvil está más cerca de ti
+ *   que la parte superior (pantalla mirando hacia arriba/hacia ti: z > 0, ángulo ~35º–75º).
+ * - El gesto exige inclinar la parte superior hacia ti hasta que el móvil se ponga VERTICAL (90º, z = 0)
+ *   o SOBREPASE la vertical (> 90º, z < 0, donde la parte superior queda más cerca de ti que la inferior),
+ *   y regresar a continuación a la postura normal de lectura (<= 75º, z >= 2.0 m/s²).
+ * - Al basarse en el ángulo físico respecto a la gravedad fusionado con el giroscopio:
+ *   1. NO se activa nunca si solo levantas un poco la parte superior sin llegar a la vertical.
+ *   2. Funciona con toda la mano de forma 100% natural aunque la mano mueva el móvil en el espacio
+ *      o tenga temblores/movimientos involuntarios laterales.
  */
 internal class SingleTiltActionDetector {
     private enum class State {
-        IDLE,
-        IN_TILT,
-        RETURNING,
+        WAITING_READING_POSTURE,
+        READY,
+        TILTED_PAST_VERTICAL,
         TIMED_OUT
     }
 
-    private var state = State.IDLE
-    private var previousTimestampNs = 0L
-    private var tiltStartNs = 0L
-    private var returnStartNs = 0L
-    private var accumulatedTiltAngle = 0f
-    private var accumulatedReturnAngle = 0f
-    private var lastTriggeredNs = 0L
+    private var state = State.WAITING_READING_POSTURE
+    private var accelInitialized = false
+    private var pitchInitialized = false
+    private var hasGyroscope = false
 
-    // Parámetros calibrados para inclinación deliberada con la mano completa y retorno natural
-    private val minAngularSpeed = 0.40f            // rad/s (~23º/s, inicio suave de cabeceo intencionado)
-    private val minTiltAngle = 0.42f                // radianes (~24º de cabeceo; exige un movimiento claro y no un toque leve)
-    private val maxTiltHoldNs = 1_400_000_000L     // 1.4 s máx para completar la ida hacia ti (permite movimientos amplios y pausas naturales)
-    private val maxTotalWindowNs = 2_200_000_000L  // 2.2 s máx para todo el ciclo (ida + vuelta amplia)
-    private val cooldownNs = 1_000_000_000L        // Cooldown de 1 s tras disparo
+    private var smoothX = 0f
+    private var smoothY = 0f
+    private var smoothZ = 0f
+
+    private var fusedPitchDeg = 50f
+    private var readingBaselineDeg = 50f
+    private var peakPitchDeg = 0f
+
+    private var previousGyroTimestampNs = 0L
+    private var tiltReachedTimeMs = 0L
+    private var lastTriggeredMs = 0L
+
+    // Umbrales físicos de orientación:
+    // - Postura normal de lectura (parte inferior más cerca de ti que la superior): <= 75º y z >= 2.0 m/s²
+    // - Vertical o sobrepasando la vertical (parte superior acercándose a ti): >= 89º (z <= 0.35 m/s² o negativo)
+    private val maxReadingPitchDeg = 75f
+    private val minReadingZ = 2.0f
+    private val targetVerticalPitchDeg = 89f
+    private val minExcursionDeg = 14f
+    private val minReturnDropDeg = 14f
+    private val maxHoldVerticalMs = 1800L
+    private val cooldownMs = 1000L
 
     fun reset() {
-        state = State.IDLE
-        previousTimestampNs = 0L
-        tiltStartNs = 0L
-        returnStartNs = 0L
-        accumulatedTiltAngle = 0f
-        accumulatedReturnAngle = 0f
+        state = if (pitchInitialized && fusedPitchDeg <= maxReadingPitchDeg && smoothZ >= minReadingZ) {
+            State.READY
+        } else {
+            State.WAITING_READING_POSTURE
+        }
+        peakPitchDeg = 0f
+        tiltReachedTimeMs = 0L
     }
 
-    fun onRotation(gx: Float, gy: Float, gz: Float, timestampNs: Long): Boolean {
-        if (previousTimestampNs == 0L) {
-            previousTimestampNs = timestampNs
+    fun fullReset() {
+        state = State.WAITING_READING_POSTURE
+        accelInitialized = false
+        pitchInitialized = false
+        hasGyroscope = false
+        previousGyroTimestampNs = 0L
+        tiltReachedTimeMs = 0L
+        peakPitchDeg = 0f
+    }
+
+    fun onRotation(gx: Float, gy: Float, gz: Float, timestampNs: Long) {
+        hasGyroscope = true
+        if (previousGyroTimestampNs == 0L) {
+            previousGyroTimestampNs = timestampNs
+            return
+        }
+        val dt = (timestampNs - previousGyroTimestampNs) / 1_000_000_000f
+        previousGyroTimestampNs = timestampNs
+
+        if (dt <= 0f || dt > 0.25f) return
+
+        if (pitchInitialized) {
+            // Integrar velocidad angular de cabeceo (eje X) sin importar movimientos laterales de la mano
+            val deltaDeg = Math.toDegrees((gx * dt).toDouble()).toFloat()
+            fusedPitchDeg = (fusedPitchDeg + deltaDeg).coerceIn(-30f, 160f)
+            if (state == State.TILTED_PAST_VERTICAL && fusedPitchDeg > peakPitchDeg) {
+                peakPitchDeg = fusedPitchDeg
+            }
+        }
+    }
+
+    fun onAccelerometer(x: Float, y: Float, z: Float, nowMs: Long): Boolean {
+        if (!accelInitialized) {
+            smoothX = x
+            smoothY = y
+            smoothZ = z
+            accelInitialized = true
+        } else {
+            val alpha = 0.45f
+            smoothX += alpha * (x - smoothX)
+            smoothY += alpha * (y - smoothY)
+            smoothZ += alpha * (z - smoothZ)
+        }
+
+        // Ángulo físico respecto a la horizontal:
+        // 0º = plano en mesa, 45º-65º = lectura normal, 90º = vertical, >90º = parte superior más cerca de ti que la inferior
+        val accelPitchDeg = Math.toDegrees(atan2(smoothY.toDouble(), smoothZ.toDouble())).toFloat()
+
+        if (!pitchInitialized) {
+            fusedPitchDeg = accelPitchDeg
+            readingBaselineDeg = accelPitchDeg.coerceIn(25f, maxReadingPitchDeg)
+            pitchInitialized = true
+        } else if (hasGyroscope) {
+            val magSq = x * x + y * y + z * z
+            val gravityWeight = if (magSq in 70f..125f) 0.25f else 0.08f
+            fusedPitchDeg = (1f - gravityWeight) * fusedPitchDeg + gravityWeight * accelPitchDeg
+        } else {
+            fusedPitchDeg = accelPitchDeg
+        }
+
+        if (nowMs - lastTriggeredMs < cooldownMs) {
             return false
         }
-        val dt = (timestampNs - previousTimestampNs) / 1_000_000_000f
-        previousTimestampNs = timestampNs
-
-        if (dt <= 0f || dt > 0.25f) {
-            reset()
-            return false
-        }
-
-        if (timestampNs - lastTriggeredNs < cooldownNs) {
-            return false
-        }
-
-        // El cabeceo hacia el usuario (gx > 0) debe ser el eje primario,
-        // permitiendo la articulación tridimensional natural de la muñeca al sostener con toda la mano.
-        val isPitchDominant = gx >= 0.35f * abs(gy) && gx >= 0.35f * abs(gz)
 
         when (state) {
-            State.IDLE -> {
-                // Se inicia con un cabeceo deliberado hacia ti (gx > 0)
-                if (gx >= minAngularSpeed && isPitchDominant) {
-                    state = State.IN_TILT
-                    tiltStartNs = timestampNs
-                    accumulatedTiltAngle = gx * dt
-                    accumulatedReturnAngle = 0f
+            State.WAITING_READING_POSTURE -> {
+                val isReadingPosture = (accelPitchDeg in 12f..maxReadingPitchDeg || fusedPitchDeg in 12f..maxReadingPitchDeg) &&
+                    smoothZ >= minReadingZ && abs(smoothX) < 6.5f
+                if (isReadingPosture) {
+                    state = State.READY
+                    readingBaselineDeg = min(fusedPitchDeg, accelPitchDeg).coerceIn(25f, maxReadingPitchDeg)
                 }
             }
 
-            State.IN_TILT -> {
-                val tiltElapsed = timestampNs - tiltStartNs
-                if (tiltElapsed > maxTiltHoldNs) {
+            State.READY -> {
+                // Actualizar suavemente la postura de lectura base mientras el móvil está inclinado normalmente
+                if (accelPitchDeg in 15f..maxReadingPitchDeg && smoothZ >= minReadingZ) {
+                    readingBaselineDeg = (0.90f * readingBaselineDeg + 0.10f * accelPitchDeg).coerceIn(25f, maxReadingPitchDeg)
+                }
+
+                // Fase 1: Alcanzar la vertical (90º, z <= 0) o sobrepasarla (parte superior más cerca de ti que la inferior)
+                val currentMaxPitch = max(fusedPitchDeg, accelPitchDeg)
+                val reachedVerticalOrPast = (accelPitchDeg >= targetVerticalPitchDeg && smoothZ <= 0.30f) ||
+                    (fusedPitchDeg >= targetVerticalPitchDeg && z <= 0.55f && smoothZ <= 1.15f)
+                val hasEnoughExcursion = (currentMaxPitch - readingBaselineDeg) >= minExcursionDeg
+                val isUpright = smoothY >= 5.8f && abs(smoothX) < 6.8f
+
+                if (reachedVerticalOrPast && hasEnoughExcursion && isUpright) {
+                    state = State.TILTED_PAST_VERTICAL
+                    tiltReachedTimeMs = nowMs
+                    peakPitchDeg = currentMaxPitch
+                }
+            }
+
+            State.TILTED_PAST_VERTICAL -> {
+                val currentMaxPitch = max(fusedPitchDeg, accelPitchDeg)
+                if (currentMaxPitch > peakPitchDeg) {
+                    peakPitchDeg = currentMaxPitch
+                }
+
+                val elapsedMs = nowMs - tiltReachedTimeMs
+                if (elapsedMs > maxHoldVerticalMs) {
+                    // Si se deja en vertical más de 1.8 s sin volver, se cancela para no disparar al bajarlo después
                     state = State.TIMED_OUT
                     return false
                 }
 
-                if (gx > 0.08f) {
-                    accumulatedTiltAngle += gx * dt
-                } else if (-gx >= 0.12f || (accumulatedTiltAngle >= minTiltAngle && -gx >= 0.04f)) {
-                    // Ha terminado la inclinación hacia ti y empieza el retroceso hacia la posición de lectura
-                    if (accumulatedTiltAngle >= minTiltAngle) {
-                        state = State.RETURNING
-                        returnStartNs = timestampNs
-                        accumulatedReturnAngle = if (-gx > 0f) (-gx) * dt else 0f
-                    } else if (-gx >= 0.30f) {
-                        // Retroceso sin haber alcanzado el ángulo mínimo de 24º: descartar toque accidental
-                        reset()
-                    }
-                }
-            }
+                // Fase 2: Retorno a la posición de lectura normal (parte inferior de nuevo más cerca de ti)
+                val currentMinPitch = min(fusedPitchDeg, accelPitchDeg)
+                val returnedToReading = currentMinPitch <= maxReadingPitchDeg &&
+                    smoothZ >= minReadingZ &&
+                    z >= 1.8f &&
+                    (peakPitchDeg - currentMinPitch) >= minReturnDropDeg
 
-            State.RETURNING -> {
-                val totalElapsed = timestampNs - tiltStartNs
-
-                if (totalElapsed > maxTotalWindowNs) {
-                    state = State.TIMED_OUT
-                    return false
-                }
-
-                if (-gx > 0.04f) {
-                    accumulatedReturnAngle += (-gx) * dt
-                }
-
-                // Ha recuperado al menos el 35% de la inclinación (y mín. ~11º) y ha desacelerado al reposo
-                val hasReturnedEnough = accumulatedReturnAngle >= (accumulatedTiltAngle * 0.35f).coerceAtLeast(minTiltAngle * 0.45f)
-                val settledAtRest = abs(gx) < 0.70f && abs(gy) < 0.70f
-
-                if (hasReturnedEnough && settledAtRest) {
-                    lastTriggeredNs = timestampNs
-                    reset()
+                if (returnedToReading) {
+                    lastTriggeredMs = nowMs
+                    state = State.READY
+                    readingBaselineDeg = currentMinPitch.coerceIn(25f, maxReadingPitchDeg)
                     return true
                 }
             }
 
             State.TIMED_OUT -> {
-                // Si el gesto caducó por mantenerse inclinado, se resetea rápidamente en reposo o tras 300 ms
-                val timeSinceTimeout = timestampNs - tiltStartNs
-                val isCalm = abs(gx) < 0.45f && abs(gy) < 0.45f && abs(gz) < 0.45f
-                if (isCalm || timeSinceTimeout > maxTotalWindowNs + 300_000_000L) {
-                    reset()
+                // Esperar a que regrese a la postura normal de lectura para volver a estar listo
+                if (accelPitchDeg <= maxReadingPitchDeg && smoothZ >= minReadingZ) {
+                    state = State.READY
+                    readingBaselineDeg = accelPitchDeg.coerceIn(25f, maxReadingPitchDeg)
                 }
             }
         }
