@@ -27,16 +27,18 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.ArrowForward
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Explore
-import androidx.compose.material.icons.filled.MenuBook
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Public
 import androidx.compose.material.icons.filled.Restaurant
 import androidx.compose.material.icons.filled.School
 import androidx.compose.material.icons.filled.SkipNext
@@ -79,7 +81,9 @@ import kotlin.math.abs
 enum class SpotlightTargetId {
     PROFILE_ICON,
     GESTURE_BADGES,
-    HOME_CLASS_AND_NEWS,
+    HOME_NEXT_CLASS,
+    HOME_NEWS,
+    HOME_SCHEDULE_BUTTON,
     HOME_SERVICES_BUTTON,
     HOME_DINING_BUTTON
 }
@@ -106,7 +110,7 @@ private data class SpotlightStep(
     val badgeText: String,
     val title: String,
     val description: String,
-    val tipText: String,
+    val tipText: String? = null,
     val icon: ImageVector,
     val accentColor: Color
 )
@@ -168,46 +172,64 @@ fun OnboardingTutorialOverlay(
         listOf(
             SpotlightStep(
                 targetId = SpotlightTargetId.PROFILE_ICON,
-                badgeText = "1 DE 5 · IDENTIFICACIÓN RÁPIDA",
-                title = "Tu Perfil y Tarjeta TUI",
-                description = "Pulsa este icono para identificarte acercando tu TUI por NFC o escaneando tu QR. Al hacerlo, la app cargará automáticamente tus asignaturas, grupo y horario personalizado.",
-                tipText = "También podrás activar desde ahí las rutas accesibles (ascensores y rampas).",
+                badgeText = "1 DE 7",
+                title = "Identificación",
+                description = "Pulsa este icono para identificarte escaneando el QR de tu TUI.\n\nAl identificarte se cargarán automáticamente tus asignaturas, grupo y horario personalizado.",
+                tipText = null,
                 icon = Icons.Default.Person,
                 accentColor = UgrRed
             ),
             SpotlightStep(
                 targetId = SpotlightTargetId.GESTURE_BADGES,
-                badgeText = "2 DE 5 · ATAJOS INTELIGENTES",
-                title = "Gestos Activos y Botón «i»",
-                description = "Aquí arriba verás siempre los iconos de los gestos físicos que puedes usar en la pantalla actual. Si pulsas el botón «i», abrirás la chuleta de gestos o podrás repetir este tutorial cuando quieras.",
-                tipText = "No necesitas memorizarlos todos hoy: la barra superior te los recuerda en cada pantalla.",
+                badgeText = "2 DE 7",
+                title = "Gestos",
+                description = "Aquí arriba verás siempre los iconos de los gestos físicos que puedes usar en cada pantalla y el botón «i» con la guía completa.",
+                tipText = "Siempre que veas por la pantalla uno de estos logos, significa que ese gesto está activo y puedes usarlo.",
                 icon = Icons.Default.Vibration,
                 accentColor = EtsiitBlue
             ),
             SpotlightStep(
-                targetId = SpotlightTargetId.HOME_CLASS_AND_NEWS,
-                badgeText = "3 DE 5 · PANEL PRINCIPAL",
-                title = "Próxima Clase y Avisos ETSIIT",
-                description = "De un vistazo verás qué clase tienes ahora o a continuación, en qué aula se imparte y un botón directo «¡Llévame!» para guiarte paso a paso. Debajo tienes las noticias y avisos urgentes de la escuela.",
-                tipText = "Desliza las tarjetas de noticias horizontalmente o inclina el móvil hacia ti para abrirlas.",
+                targetId = SpotlightTargetId.HOME_NEXT_CLASS,
+                badgeText = "3 DE 7",
+                title = "Próxima Clase",
+                description = "Aquí verás la clase que tienes en curso o la siguiente del día y el aula donde se imparte. También puedes consultar tu clase agitando el móvil tres veces hacia ti.",
+                tipText = null,
                 icon = Icons.Default.School,
+                accentColor = UgrRed
+            ),
+            SpotlightStep(
+                targetId = SpotlightTargetId.HOME_NEWS,
+                badgeText = "4 DE 7",
+                title = "Noticias",
+                description = "Aquí aparecen las últimas noticias, avisos y eventos oficiales de la ETSIIT.",
+                tipText = null,
+                icon = Icons.Default.Public,
                 accentColor = CampusGreen
             ),
             SpotlightStep(
+                targetId = SpotlightTargetId.HOME_SCHEDULE_BUTTON,
+                badgeText = "5 DE 7",
+                title = "Mi Horario",
+                description = "Consulta tu cuadrante de horario semanal por asignaturas y colores.",
+                tipText = null,
+                icon = Icons.Default.DateRange,
+                accentColor = Color(0xFF1D4ED8)
+            ),
+            SpotlightStep(
                 targetId = SpotlightTargetId.HOME_SERVICES_BUTTON,
-                badgeText = "4 DE 5 · VIDA ACADÉMICA",
-                title = "Servicios, Horario y Profesores",
-                description = "Desde este acceso consultarás los trámites de Secretaría, tu cuadrante de horario semanal por colores y el directorio de profesores con sus despachos y estado de tutorías en vivo.",
-                tipText = "Si inicias sesión con tu TUI, este botón se transforma en «Mi Horario» para llevarte directo a tus clases.",
-                icon = Icons.Default.MenuBook,
-                accentColor = EtsiitBlue
+                badgeText = "6 DE 7",
+                title = "Servicios",
+                description = "Accede a los trámites de Secretaría y al directorio de profesores con sus despachos y estado de tutorías en vivo.",
+                tipText = null,
+                icon = Icons.Default.Info,
+                accentColor = Color(0xFF0F766E)
             ),
             SpotlightStep(
                 targetId = SpotlightTargetId.HOME_DINING_BUTTON,
-                badgeText = "5 DE 5 · VIDA UNIVERSITARIA",
-                title = "Comedores Universitarios UGR",
-                description = "Consulta el menú día a día de los Comedores UGR, revisa los alérgenos de cada plato y abona tu ticket de comedor directamente desde el móvil con huella o PIN.",
-                tipText = "En el siguiente bloque vas a probar tú mismo los gestos físicos con los sensores reales del móvil.",
+                badgeText = "7 DE 7",
+                title = "Comedores",
+                description = "Consulta el menú día a día de los Comedores UGR, revisa los alérgenos de cada plato y abona tu ticket de comedor directamente desde el móvil.",
+                tipText = null,
                 icon = Icons.Default.Restaurant,
                 accentColor = Color(0xFFD97706)
             )
@@ -454,19 +476,12 @@ private fun WelcomeTutorialModal(
                                     fontSize = 15.sp
                                 )
                             }
-                            Column {
-                                Text(
-                                    text = "Recorrido Visual por la Pantalla (5 pasos)",
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 13.sp,
-                                    color = TextPrimary
-                                )
-                                Text(
-                                    text = "Iluminamos cada botón clave para que sepas dónde está todo.",
-                                    fontSize = 11.5.sp,
-                                    color = TextSecondary
-                                )
-                            }
+                            Text(
+                                text = "Recorrido Visual por la Pantalla",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 14.sp,
+                                color = TextPrimary
+                            )
                         }
 
                         HorizontalDivider(color = Color(0xFFE2E8F0))
@@ -489,19 +504,12 @@ private fun WelcomeTutorialModal(
                                     fontSize = 15.sp
                                 )
                             }
-                            Column {
-                                Text(
-                                    text = "Entrenamiento de Gestos en Vivo (6 gestos)",
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 13.sp,
-                                    color = TextPrimary
-                                )
-                                Text(
-                                    text = "Prueba cada gesto con los sensores del móvil y recibe confirmación al instante.",
-                                    fontSize = 11.5.sp,
-                                    color = TextSecondary
-                                )
-                            }
+                            Text(
+                                text = "Entrenamiento de Gestos en Vivo",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 14.sp,
+                                color = TextPrimary
+                            )
                         }
                     }
                 }
@@ -791,20 +799,23 @@ private fun VisualSpotlightTourView(
 
                     Spacer(modifier = Modifier.height(10.dp))
 
-                    // Consejo extra en cajita suave
-                    Surface(
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(12.dp),
-                        color = step.accentColor.copy(alpha = 0.08f)
-                    ) {
-                        Text(
-                            text = "💡 ${step.tipText}",
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = TextPrimary,
-                            lineHeight = 16.sp,
-                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
-                        )
+                    // Consejo extra en cajita suave (solo si tipText no es nulo)
+                    if (!step.tipText.isNullOrBlank()) {
+                        Spacer(modifier = Modifier.height(10.dp))
+                        Surface(
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(12.dp),
+                            color = step.accentColor.copy(alpha = 0.08f)
+                        ) {
+                            Text(
+                                text = "💡 ${step.tipText}",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = TextPrimary,
+                                lineHeight = 16.sp,
+                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
+                            )
+                        }
                     }
 
                     Spacer(modifier = Modifier.height(16.dp))
@@ -846,7 +857,7 @@ private fun VisualSpotlightTourView(
                                 modifier = Modifier.height(40.dp)
                             ) {
                                 Icon(
-                                    imageVector = Icons.Default.ArrowBack,
+                                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                                     contentDescription = "Anterior",
                                     modifier = Modifier.size(16.dp)
                                 )
@@ -860,13 +871,13 @@ private fun VisualSpotlightTourView(
                                 modifier = Modifier.height(40.dp)
                             ) {
                                 Text(
-                                    text = if (stepIndex < totalSteps - 1) "Entendido · Siguiente" else "¡Probar Gestos!",
+                                    text = if (stepIndex < totalSteps - 1) "Siguiente" else "¡Probar Gestos!",
                                     fontSize = 13.sp,
                                     fontWeight = FontWeight.Bold
                                 )
                                 Spacer(modifier = Modifier.width(6.dp))
                                 Icon(
-                                    imageVector = Icons.Default.ArrowForward,
+                                    imageVector = Icons.AutoMirrored.Filled.ArrowForward,
                                     contentDescription = null,
                                     modifier = Modifier.size(16.dp)
                                 )
@@ -1267,7 +1278,7 @@ private fun GestureTrainingLabView(
                         contentPadding = PaddingValues(horizontal = 12.dp)
                     ) {
                         Icon(
-                            imageVector = Icons.Default.ArrowBack,
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Gesto anterior",
                             modifier = Modifier.size(18.dp)
                         )
@@ -1307,7 +1318,7 @@ private fun GestureTrainingLabView(
                             )
                             Spacer(modifier = Modifier.width(6.dp))
                             Icon(
-                                imageVector = Icons.Default.ArrowForward,
+                                imageVector = Icons.AutoMirrored.Filled.ArrowForward,
                                 contentDescription = null,
                                 modifier = Modifier.size(18.dp)
                             )

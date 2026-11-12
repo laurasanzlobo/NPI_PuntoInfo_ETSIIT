@@ -108,6 +108,21 @@ fun HomeScreen(
     )
 
     val pagerState = rememberPagerState(pageCount = { newsList.size })
+    val isTutorialActive = UserSessionRepository.isTutorialActiveState
+
+    // Si el tutorial inicial está activo, garantizamos que siempre haya una próxima clase de NPI visible
+    // para que el spotlight pueda iluminar su tarjeta de forma realista e independiente.
+    val tutorialNpiClass = remember {
+        ClassItem(
+            time = "08:30 - 10:30",
+            subject = "Nuevos Paradigmas de Interacción",
+            acronym = "NPI",
+            room = "Aula 0.5 · PB",
+            professor = "Arturo Montejo Ráez",
+            isPractice = false
+        )
+    }
+    val effectiveClass = if (isTutorialActive) (currentOrNextClass ?: tutorialNpiClass) else currentOrNextClass
 
     // Autoplay suave del carrusel de noticias
     LaunchedEffect(pagerState) {
@@ -126,45 +141,22 @@ fun HomeScreen(
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         // ==========================================
-        // 1. TARJETA SUPERIOR: PRÓXIMA CLASE (si ha iniciado sesión) O SELECCIÓN DE IDIOMA POR BANDERA (si es invitado)
+        // 1. TARJETA SUPERIOR: PRÓXIMA CLASE (si ha iniciado sesión o durante tutorial) O BIENVENIDA (si es invitado)
         // ==========================================
-        if (!profile.isLoggedIn) {
-            Surface(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(18.dp),
-                color = SurfaceWhite,
-                shadowElevation = 2.dp,
-                border = BorderStroke(1.dp, SurfaceBorder.copy(alpha = 0.5f))
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 12.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = stringResource(R.string.welcome_title),
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 15.sp,
-                            color = TextPrimary
-                        )
-                        Text(
-                            text = stringResource(R.string.welcome_subtitle),
-                            fontSize = 12.sp,
-                            color = TextSecondary
-                        )
-                    }
-                }
-            }
-        } else if (currentOrNextClass != null) {
+        if (isTutorialActive || (profile.isLoggedIn && effectiveClass != null)) {
+            val classToUse = effectiveClass ?: tutorialNpiClass
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .onGloballyPositioned { coords ->
+                        TutorialSpotlightRegistry.updateTarget(
+                            SpotlightTargetId.HOME_NEXT_CLASS,
+                            coords.boundsInRoot()
+                        )
+                    }
                     .clickable {
                         if (onShowCurrentClassDialog != null) {
-                            onShowCurrentClassDialog(currentOrNextClass)
+                            onShowCurrentClassDialog(classToUse)
                         } else {
                             onNavigate(Screen.Schedule.route)
                         }
@@ -183,7 +175,7 @@ fun HomeScreen(
                         )
                         .padding(horizontal = 16.dp, vertical = 14.dp)
                 ) {
-                    val rawRoomName = currentOrNextClass.room.split("·")[0].trim()
+                    val rawRoomName = classToUse.room.split("·")[0].trim()
                     val cleanRoom = rawRoomName
                         .replace("Laboratorio", "", ignoreCase = true)
                         .replace("Aula", "", ignoreCase = true)
@@ -225,7 +217,7 @@ fun HomeScreen(
                                 )
                                 Spacer(modifier = Modifier.height(2.dp))
                                 Text(
-                                    text = currentOrNextClass.acronym,
+                                    text = classToUse.acronym,
                                     fontSize = 20.sp,
                                     fontWeight = FontWeight.ExtraBold,
                                     color = Color.White,
@@ -233,7 +225,7 @@ fun HomeScreen(
                                 )
                                 Spacer(modifier = Modifier.height(1.dp))
                                 Text(
-                                    text = "${currentOrNextClass.time}  ·  $cleanRoom",
+                                    text = "${classToUse.time}  ·  $cleanRoom",
                                     fontSize = 14.sp,
                                     fontWeight = FontWeight.SemiBold,
                                     color = Color.White.copy(alpha = 0.95f),
@@ -246,8 +238,8 @@ fun HomeScreen(
                         Spacer(modifier = Modifier.width(8.dp))
                         Surface(
                             onClick = {
-                                val roomName = currentOrNextClass.room.split("·")[0].trim()
-                                val floorName = currentOrNextClass.room.split("·").getOrElse(1) { "ETSIIT" }.trim()
+                                val roomName = classToUse.room.split("·")[0].trim()
+                                val floorName = classToUse.room.split("·").getOrElse(1) { "ETSIIT" }.trim()
                                 onNavigate(Screen.Navigation.createRoute(roomName, floorName))
                             },
                             shape = RoundedCornerShape(14.dp),
@@ -275,6 +267,36 @@ fun HomeScreen(
                     }
                 }
             }
+        } else {
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(18.dp),
+                color = SurfaceWhite,
+                shadowElevation = 2.dp,
+                border = BorderStroke(1.dp, SurfaceBorder.copy(alpha = 0.5f))
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = stringResource(R.string.welcome_title),
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 15.sp,
+                            color = TextPrimary
+                        )
+                        Text(
+                            text = stringResource(R.string.welcome_subtitle),
+                            fontSize = 12.sp,
+                            color = TextSecondary
+                        )
+                    }
+                }
+            }
         }
 
         // ==========================================
@@ -286,7 +308,7 @@ fun HomeScreen(
                 .weight(1f)
                 .onGloballyPositioned { coords ->
                     TutorialSpotlightRegistry.updateTarget(
-                        SpotlightTargetId.HOME_CLASS_AND_NEWS,
+                        SpotlightTargetId.HOME_NEWS,
                         coords.boundsInRoot()
                     )
                 }
@@ -380,10 +402,10 @@ fun HomeScreen(
         }
 
         // ==========================================
-        // 3. PARTE INFERIOR: NAVEGACIÓN SEGÚN ESTADO DE SESIÓN
+        // 3. PARTE INFERIOR: NAVEGACIÓN SEGÚN ESTADO DE SESIÓN (O DURANTE TUTORIAL)
         // ==========================================
-        if (profile.isLoggedIn) {
-            // CON SESIÓN INICIADA: Mi Horario, Servicios y Comedores
+        if (profile.isLoggedIn || isTutorialActive) {
+            // CON SESIÓN INICIADA (o durante el tutorial para guiar los 3 accesos): Mi Horario, Servicios y Comedores
             Column(
                 modifier = Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
@@ -397,6 +419,12 @@ fun HomeScreen(
                     borderColor = Color(0xFFBFDBFE),
                     textColor = Color(0xFF1E3A8A),
                     iconGradient = listOf(Color(0xFF3B82F6), Color(0xFF1D4ED8)),
+                    modifier = Modifier.onGloballyPositioned { coords ->
+                        TutorialSpotlightRegistry.updateTarget(
+                            SpotlightTargetId.HOME_SCHEDULE_BUTTON,
+                            coords.boundsInRoot()
+                        )
+                    },
                     onClick = { onNavigate(Screen.Schedule.route) }
                 )
 
@@ -448,12 +476,6 @@ fun HomeScreen(
                     borderColor = Color(0xFF99F6E4),
                     textColor = Color(0xFF115E59),
                     iconGradient = listOf(Color(0xFF14B8A6), Color(0xFF0F766E)),
-                    modifier = Modifier.onGloballyPositioned { coords ->
-                        TutorialSpotlightRegistry.updateTarget(
-                            SpotlightTargetId.HOME_SERVICES_BUTTON,
-                            coords.boundsInRoot()
-                        )
-                    },
                     onClick = { onNavigate(Screen.Services.route) }
                 )
 
@@ -465,12 +487,6 @@ fun HomeScreen(
                     borderColor = Color(0xFFFDE68A),
                     textColor = Color(0xFF92400E),
                     iconGradient = listOf(Color(0xFFF59E0B), Color(0xFFD97706)),
-                    modifier = Modifier.onGloballyPositioned { coords ->
-                        TutorialSpotlightRegistry.updateTarget(
-                            SpotlightTargetId.HOME_DINING_BUTTON,
-                            coords.boundsInRoot()
-                        )
-                    },
                     onClick = { onNavigate(Screen.Dining.route) }
                 )
             }
