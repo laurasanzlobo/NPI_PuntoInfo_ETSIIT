@@ -193,24 +193,6 @@ fun OriginVerificationDialog(
         onDispose { manager.stopListening() }
     }
 
-    // Launcher de la cámara para el Paso 3 (Escaneo QR)
-    val cameraLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.StartActivityForResult()
-    ) {
-        // Al volver de la cámara, cerramos la ventana
-        onDismiss()
-    }
-
-    fun openCamera() {
-        val intent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
-        try {
-            cameraLauncher.launch(intent)
-        } catch (_: Exception) {
-            val fallbackIntent = Intent(MediaStore.INTENT_ACTION_STILL_IMAGE_CAMERA)
-            runCatching { cameraLauncher.launch(fallbackIntent) }
-        }
-    }
-
     BasicAlertDialog(
         onDismissRequest = onDismiss
     ) {
@@ -556,7 +538,8 @@ fun OriginVerificationDialog(
 
                                 Button(
                                     onClick = {
-                                        openCamera()
+                                        // Simular escaneo de QR guiando directamente desde la entrada principal
+                                        onNodeConfirmed(grafo.obtenerNodoInicioPredeterminado())
                                     },
                                     modifier = Modifier.weight(1.35f),
                                     shape = RoundedCornerShape(12.dp),
