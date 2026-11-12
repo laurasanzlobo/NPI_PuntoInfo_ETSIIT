@@ -529,18 +529,17 @@ internal class TripleForwardTiltDetector {
 }
 
 /**
- * Detector de precisión para el gesto de Acción Rápida (Correo / Reserva Comedor):
- * «Inclinar el móvil hacia ti y volver a la posición de lectura».
+ * Detector del gesto de Acción Rápida (Enviar correo / Confirmar reserva de comedor):
+ * Exige una inclinación deliberada y amplia de cabeceo hacia el usuario (gx > 0) y su retorno
+ * a la posición de lectura base (gx < 0).
  *
  * Utiliza el giroscopio para medir la velocidad angular del cabeceo (eje X, pitch)
- * e integrarla en un ángulo de rotación:
- * 1. Detección de rotación intencionada de cabeceo (|gx| >= 0.55 rad/s) alcanzando >= 0.09 rad (~5.2º).
- * 2. Inmediato movimiento de retorno en sentido contrario hacia la posición de partida.
- * 3. Reposo en la posición inicial.
- *
- * Ventajas fundamentales:
- * - Es IMPOSIBLE que se active por sostener el móvil en vertical o en reposo (gx = 0).
- * - Exige un cabeceo amplio y claro hacia ti (~23º) para no dispararse con gestos pequeños o temblores.
+ * e integrarla en un ángulo de rotación real:
+ * 1. Detección de cabeceo deliberado (|gx| >= 0.40 rad/s) alcanzando >= 0.42 rad (~24º).
+ *    (Evita toques pequeños, movimientos involuntarios o golpes de apenas 10º).
+ * 2. Tolerancia a la cinemática natural de la mano completa (desviación lateral de muñeca).
+ * 3. Movimiento de retorno en sentido contrario hacia la posición de partida.
+ * 4. Reposo en la posición inicial.
  */
 internal class SingleTiltActionDetector {
     private enum class State {
@@ -558,12 +557,12 @@ internal class SingleTiltActionDetector {
     private var accumulatedReturnAngle = 0f
     private var lastTriggeredNs = 0L
 
-    // Parámetros calibrados para cabeceo natural hacia ti y retorno
-    private val minAngularSpeed = 0.70f            // rad/s (~40º/s, cabeceo fluido)
-    private val minTiltAngle = 0.18f                // radianes (~10.3º de cabeceo)
-    private val maxTiltHoldNs = 900_000_000L       // 900 ms máx para completar la ida hacia ti
-    private val maxTotalWindowNs = 1_500_000_000L  // 1.5 s máx para todo el ciclo (ida + vuelta)
-    private val cooldownNs = 1_200_000_000L        // Cooldown tras disparo
+    // Parámetros calibrados para inclinación deliberada con la mano completa y retorno natural
+    private val minAngularSpeed = 0.40f            // rad/s (~23º/s, inicio suave de cabeceo intencionado)
+    private val minTiltAngle = 0.42f                // radianes (~24º de cabeceo; exige un movimiento claro y no un toque leve)
+    private val maxTiltHoldNs = 1_400_000_000L     // 1.4 s máx para completar la ida hacia ti (permite movimientos amplios y pausas naturales)
+    private val maxTotalWindowNs = 2_200_000_000L  // 2.2 s máx para todo el ciclo (ida + vuelta amplia)
+    private val cooldownNs = 1_000_000_000L        // Cooldown de 1 s tras disparo
 
     fun reset() {
         state = State.IDLE
@@ -591,12 +590,13 @@ internal class SingleTiltActionDetector {
             return false
         }
 
-        // El cabeceo hacia el usuario (gx > 0) debe ser dominante sobre giros laterales o desviaciones
-        val isPitchDominant = gx >= 0.70f * abs(gy) && gx >= 0.70f * abs(gz)
+        // El cabeceo hacia el usuario (gx > 0) debe ser el eje primario,
+        // permitiendo la articulación tridimensional natural de la muñeca al sostener con toda la mano.
+        val isPitchDominant = gx >= 0.35f * abs(gy) && gx >= 0.35f * abs(gz)
 
         when (state) {
             State.IDLE -> {
-                // Solo se inicia con un cabeceo cómodo hacia ti (gx > 0)
+                // Se inicia con un cabeceo deliberado hacia ti (gx > 0)
                 if (gx >= minAngularSpeed && isPitchDominant) {
                     state = State.IN_TILT
                     tiltStartNs = timestampNs
@@ -612,15 +612,16 @@ internal class SingleTiltActionDetector {
                     return false
                 }
 
-                if (gx > 0.10f) {
+                if (gx > 0.08f) {
                     accumulatedTiltAngle += gx * dt
-                } else if (-gx >= 0.20f || (accumulatedTiltAngle >= minTiltAngle && -gx >= 0.06f)) {
+                } else if (-gx >= 0.12f || (accumulatedTiltAngle >= minTiltAngle && -gx >= 0.04f)) {
                     // Ha terminado la inclinación hacia ti y empieza el retroceso hacia la posición de lectura
                     if (accumulatedTiltAngle >= minTiltAngle) {
                         state = State.RETURNING
                         returnStartNs = timestampNs
                         accumulatedReturnAngle = if (-gx > 0f) (-gx) * dt else 0f
-                    } else if (-gx >= 0.35f) {
+                    } else if (-gx >= 0.30f) {
+                        // Retroceso sin haber alcanzado el ángulo mínimo de 24º: descartar toque accidental
                         reset()
                     }
                 }
@@ -634,13 +635,13 @@ internal class SingleTiltActionDetector {
                     return false
                 }
 
-                if (-gx > 0.06f) {
+                if (-gx > 0.04f) {
                     accumulatedReturnAngle += (-gx) * dt
                 }
 
-                // Ha recuperado al menos el 55% de la inclinación y se ha detenido en reposo en la posición base
-                val hasReturnedEnough = accumulatedReturnAngle >= (accumulatedTiltAngle * 0.55f).coerceAtLeast(minTiltAngle * 0.70f)
-                val settledAtRest = abs(gx) < 0.60f && abs(gy) < 0.60f
+                // Ha recuperado al menos el 35% de la inclinación (y mín. ~11º) y ha desacelerado al reposo
+                val hasReturnedEnough = accumulatedReturnAngle >= (accumulatedTiltAngle * 0.35f).coerceAtLeast(minTiltAngle * 0.45f)
+                val settledAtRest = abs(gx) < 0.70f && abs(gy) < 0.70f
 
                 if (hasReturnedEnough && settledAtRest) {
                     lastTriggeredNs = timestampNs
@@ -650,13 +651,11 @@ internal class SingleTiltActionDetector {
             }
 
             State.TIMED_OUT -> {
-                // El gesto caducó porque se mantuvo inclinado más de 850 ms.
-                // Esperar a que el usuario termine el movimiento y regrese al reposo para resetear a IDLE sin disparar.
-                if (abs(gx) < 0.35f && abs(gy) < 0.35f && abs(gz) < 0.35f) {
-                    val timeSinceTimeout = timestampNs - tiltStartNs
-                    if (timeSinceTimeout > maxTotalWindowNs + 150_000_000L) {
-                        reset()
-                    }
+                // Si el gesto caducó por mantenerse inclinado, se resetea rápidamente en reposo o tras 300 ms
+                val timeSinceTimeout = timestampNs - tiltStartNs
+                val isCalm = abs(gx) < 0.45f && abs(gy) < 0.45f && abs(gz) < 0.45f
+                if (isCalm || timeSinceTimeout > maxTotalWindowNs + 300_000_000L) {
+                    reset()
                 }
             }
         }
