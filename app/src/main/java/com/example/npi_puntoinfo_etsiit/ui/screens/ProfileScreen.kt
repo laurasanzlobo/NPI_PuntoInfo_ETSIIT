@@ -80,8 +80,7 @@ import kotlinx.coroutines.delay
 @Composable
 fun ProfileScreen(
     onBack: () -> Unit = {},
-    onLoggedOut: () -> Unit = onBack,
-    onRepeatTutorial: (() -> Unit)? = null
+    onLoggedOut: () -> Unit = onBack
 ) {
     val context = LocalContext.current
     val profile = UserSessionRepository.getProfile(context)
@@ -316,44 +315,24 @@ fun ProfileScreen(
 
             val logoutMsg = stringResource(R.string.profile_logout_toast)
             // ==========================================
-            // 4. BOTONES DE TUTORIAL Y CERRAR SESIÓN
+            // 4. BOTÓN DE CERRAR SESIÓN
             // ==========================================
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            OutlinedButton(
+                onClick = {
+                    isLoggingOut = true
+                    onLoggedOut()
+                    UserSessionRepository.logout(context)
+                    Toast.makeText(context, logoutMsg, Toast.LENGTH_SHORT).show()
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(50.dp),
+                shape = RoundedCornerShape(14.dp),
+                colors = ButtonDefaults.outlinedButtonColors(contentColor = UgrRed)
             ) {
-                if (onRepeatTutorial != null) {
-                    OutlinedButton(
-                        onClick = onRepeatTutorial,
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(50.dp),
-                        shape = RoundedCornerShape(14.dp),
-                        colors = ButtonDefaults.outlinedButtonColors(contentColor = EtsiitBlue)
-                    ) {
-                        Icon(imageVector = Icons.Default.School, contentDescription = null, modifier = Modifier.size(18.dp))
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text("Tutorial", fontWeight = FontWeight.Bold)
-                    }
-                }
-
-                OutlinedButton(
-                    onClick = {
-                        isLoggingOut = true
-                        onLoggedOut()
-                        UserSessionRepository.logout(context)
-                        Toast.makeText(context, logoutMsg, Toast.LENGTH_SHORT).show()
-                    },
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(50.dp),
-                    shape = RoundedCornerShape(14.dp),
-                    colors = ButtonDefaults.outlinedButtonColors(contentColor = UgrRed)
-                ) {
-                    Icon(imageVector = Icons.AutoMirrored.Filled.Logout, contentDescription = null, modifier = Modifier.size(18.dp))
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text(stringResource(R.string.profile_logout), fontWeight = FontWeight.Bold)
-                }
+                Icon(imageVector = Icons.AutoMirrored.Filled.Logout, contentDescription = null, modifier = Modifier.size(18.dp))
+                Spacer(modifier = Modifier.width(6.dp))
+                Text(stringResource(R.string.profile_logout), fontWeight = FontWeight.Bold)
             }
         }
     } else {

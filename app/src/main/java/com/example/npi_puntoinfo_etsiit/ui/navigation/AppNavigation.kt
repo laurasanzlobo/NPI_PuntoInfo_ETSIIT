@@ -756,10 +756,6 @@ fun AppNavigation() {
                     onLoggedOut = {
                         isExitingProfileOnLogout = true
                         navigateToTab(Screen.Home.route)
-                    },
-                    onRepeatTutorial = {
-                        navigateToTab(Screen.Home.route)
-                        UserSessionRepository.startTutorialManually()
                     }
                 )
             }

@@ -1537,7 +1537,7 @@ private fun TutorialCompletedModal(
                 Spacer(modifier = Modifier.height(10.dp))
 
                 Text(
-                    text = "Si se quiere repetir más adelante, pulsa el botón «i» de la barra superior o accede desde Mi Perfil.",
+                    text = "Si quieres repetirlo más adelante, pulsa el botón «i» de la barra superior.",
                     fontSize = 12.5.sp,
                     color = TextSecondary,
                     textAlign = TextAlign.Center,
