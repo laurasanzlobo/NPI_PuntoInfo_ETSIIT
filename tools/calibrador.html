@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Calibrador Visual de Panorámicas - NPI ETSIIT</title>
+  <style>
+    :root {
+      --primary: #A6192E;
+      --secondary: #0D9488;
+      --bg: #0F172A;
+      --panel: #1E293B;
+      --panel-hover: #334155;
+      --text: #F8FAFC;
+      --text-muted: #94A3B8;
+      --border: #475569;
+      --accent: #F59E0B;
+      --success: #10B981;
+      --marker-color: #EF4444; /* Rojo brillante para máxima visibilidad */
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* Header */
+    header {
+      background: var(--panel);
+      border-bottom: 1px solid var(--border);
+      padding: 10px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+    .header-title {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .header-title h1 {
+      font-size: 1.1rem;
+      font-weight: 700;
+    }
+    .badge-route {
+      background: var(--primary);
+      color: white;
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 9999px;
+    }
+    .tramo-tabs {
+      display: flex;
+      background: var(--bg);
+      border-radius: 8px;
+      padding: 3px;
+      gap: 4px;
+    }
+    .tab-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      padding: 6px 14px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .tab-btn.active {
+      background: var(--secondary);
+      color: white;
+    }
+
+    /* Layout */
+    .main-container {
+      display: flex;
+      flex: 1;
+      height: calc(100vh - 57px);
+      overflow: hidden;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      width: 320px;
+      background: var(--panel);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+    }
+    .node-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .node-card {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 12px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .node-card:hover {
+      border-color: var(--secondary);
+    }
+    .node-card.active {
+      border-color: var(--secondary);
+      background: rgba(13, 148, 136, 0.15);
+      box-shadow: 0 0 0 1px var(--secondary);
+    }
+    .node-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2px;
+    }
+    .node-order {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--secondary);
+      text-transform: uppercase;
+    }
+    .node-val {
+      font-size: 0.75rem;
+      font-family: monospace;
+      padding: 2px 6px;
+      border-radius: 4px;
+      background: var(--panel);
+      color: var(--accent);
+      font-weight: 700;
+    }
+    .node-title {
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--text);
+      line-height: 1.25;
+    }
+
+    /* Workspace */
+    .workspace {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      background: #020617;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* Info bar */
+    .info-bar {
+      padding: 8px 20px;
+      background: var(--panel);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+    .info-left h2 {
+      font-size: 0.95rem;
+      font-weight: 600;
+      margin-bottom: 1px;
+    }
+    .info-instruction {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+    .info-metrics {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+    .metric-pill {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      padding: 4px 12px;
+      border-radius: 6px;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+    }
+    .metric-label {
+      font-size: 0.6rem;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      font-weight: 700;
+    }
+    .metric-val {
+      font-size: 0.95rem;
+      font-family: monospace;
+      color: var(--marker-color);
+      font-weight: 700;
+    }
+
+    /* Viewport scrollable */
+    .viewport {
+      flex: 1;
+      overflow-x: auto;
+      overflow-y: hidden;
+      position: relative;
+      background: #050505;
+      display: block;
+      white-space: nowrap;
+      cursor: crosshair;
+      user-select: none;
+    }
+    .pano-container {
+      position: relative;
+      display: inline-block;
+      height: 100%;
+      vertical-align: top;
+    }
+    .pano-img {
+      height: 100%;
+      width: auto;
+      display: block;
+      user-select: none;
+      -webkit-user-drag: none;
+    }
+
+    /* Markers */
+    .hairline-hover {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 2px;
+      background: #F59E0B;
+      box-shadow: 0 0 6px #F59E0B;
+      pointer-events: none;
+      display: none;
+      z-index: 10;
+    }
+
+    .hairline-target {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 3px;
+      background: var(--marker-color);
+      box-shadow: 0 0 14px rgba(239, 68, 68, 0.9);
+      pointer-events: none;
+      z-index: 20;
+    }
+
+    .pin-target {
+      position: absolute;
+      top: 20px;
+      transform: translateX(-50%);
+      pointer-events: none;
+      z-index: 30;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+    }
+    .pin-icon {
+      width: 38px;
+      height: 38px;
+      background: var(--marker-color);
+      color: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      font-weight: bold;
+      border: 3px solid white;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.7);
+    }
+    .pin-badge {
+      background: rgba(15, 23, 42, 0.95);
+      border: 1px solid var(--marker-color);
+      color: white;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.6);
+      white-space: nowrap;
+    }
+
+    /* Phone simulation box */
+    .phone-box {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      border-left: 2px dashed rgba(56, 189, 248, 0.6);
+      border-right: 2px dashed rgba(56, 189, 248, 0.6);
+      background: rgba(56, 189, 248, 0.06);
+      pointer-events: none;
+      transform: translateX(-50%);
+      z-index: 5;
+    }
+
+    /* Empty state */
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      color: var(--text-muted);
+      text-align: center;
+      padding: 40px;
+    }
+    .empty-icon { font-size: 3rem; margin-bottom: 12px; }
+
+    /* Action bar */
+    .action-bar {
+      padding: 10px 20px;
+      background: var(--panel);
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+    .nav-buttons { display: flex; gap: 8px; }
+    .btn {
+      padding: 7px 16px;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.15s;
+    }
+    .btn:hover:not(:disabled) {
+      background: var(--panel-hover);
+      border-color: var(--text-muted);
+    }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .btn-primary {
+      background: var(--secondary);
+      border-color: var(--secondary);
+      color: white;
+    }
+    .btn-primary:hover:not(:disabled) { background: #0f766e; }
+
+    .toggle-phone {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 70px;
+      right: 20px;
+      background: var(--success);
+      color: white;
+      padding: 10px 18px;
+      border-radius: 6px;
+      font-weight: 700;
+      font-size: 0.85rem;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+      transform: translateY(80px);
+      opacity: 0;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      pointer-events: none;
+      z-index: 1000;
+    }
+    .toast.show { transform: translateY(0); opacity: 1; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="header-title">
+      <span class="badge-route">NPI ETSIIT</span>
+      <h1>Calibrador Visual de Panorámicas</h1>
+    </div>
+    <div class="tramo-tabs">
+      <button class="tab-btn active" id="tab-ida" onclick="switchTramo('ida')">Ida (ETSIIT &rarr; Auxiliar)</button>
+      <button class="tab-btn" id="tab-vuelta" onclick="switchTramo('vuelta')">Vuelta (Auxiliar &rarr; ETSIIT)</button>
+    </div>
+  </header>
+
+  <div class="main-container">
+    <aside class="sidebar">
+      <div class="node-list" id="node-list"></div>
+    </aside>
+
+    <main class="workspace">
+      <div class="info-bar">
+        <div class="info-left">
+          <h2 id="current-node-name">Cargando...</h2>
+          <div class="info-instruction" id="current-node-instruction">...</div>
+        </div>
+        <div class="info-metrics">
+          <label class="toggle-phone">
+            <input type="checkbox" id="chk-phone" checked onchange="togglePhoneBox()">
+            Mostrar marco móvil
+          </label>
+          <div class="metric-pill">
+            <span class="metric-label">Rumbo Brújula</span>
+            <span class="metric-val" id="metric-rumbo" style="color: var(--accent);">--&deg;</span>
+          </div>
+          <div class="metric-pill">
+            <span class="metric-label">Eje X Seleccionado</span>
+            <span class="metric-val" id="metric-eje">50.0%</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="viewport" id="viewport">
+        <div class="pano-container" id="pano-container">
+          <img id="pano-img" class="pano-img" alt="Panorámica">
+          
+          <div class="hairline-hover" id="hairline-hover"></div>
+          <div class="hairline-target" id="hairline-target"></div>
+          
+          <div class="phone-box" id="phone-box"></div>
+
+          <div class="pin-target" id="pin-target">
+            <div class="pin-icon">&darr;</div>
+            <div class="pin-badge" id="pin-badge">50.0%</div>
+          </div>
+        </div>
+
+        <div class="empty-state" id="empty-state" style="display: none;">
+          <div class="empty-icon">&#128679;</div>
+          <h3>Nodo sin fotografía</h3>
+          <p id="empty-desc">Este nodo está pendiente o en obras.</p>
+        </div>
+      </div>
+
+      <div class="action-bar">
+        <div class="nav-buttons">
+          <button class="btn" id="btn-prev" onclick="prevNode()">&larr; Anterior (A)</button>
+          <button class="btn" id="btn-next" onclick="nextNode()">Siguiente (D) &rarr;</button>
+        </div>
+        <div>
+          <button class="btn btn-primary" id="btn-save" onclick="saveCurrentNode()">Guardar Nodo en JSON (Espacio / Enter)</button>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <div class="toast" id="toast">Guardado correctamente</div>
+
+  <script>
+    let guidanceData = null;
+    let currentTramo = 'ida';
+    let currentIndex = 0;
+    let tempRatio = 0.5;
+
+    async function loadData() {
+      try {
+        const res = await fetch('/api/guidance');
+        guidanceData = await res.json();
+        renderSidebar();
+        renderCurrentNode();
+      } catch (err) {
+        console.error(err);
+        alert('Error cargando guidance_exterior.json');
+      }
+    }
+
+    function switchTramo(tramo) {
+      currentTramo = tramo;
+      currentIndex = 0;
+      document.getElementById('tab-ida').classList.toggle('active', tramo === 'ida');
+      document.getElementById('tab-vuelta').classList.toggle('active', tramo === 'vuelta');
+      renderSidebar();
+      renderCurrentNode();
+    }
+
+    function renderSidebar() {
+      const list = document.getElementById('node-list');
+      list.innerHTML = '';
+      const nodos = guidanceData[currentTramo].nodos;
+
+      nodos.forEach((nodo, idx) => {
+        const card = document.createElement('div');
+        card.className = `node-card ${idx === currentIndex ? 'active' : ''}`;
+        card.onclick = () => selectNode(idx);
+
+        const pct = (nodo.eje_x_camino * 100).toFixed(1);
+        const hasPhoto = nodo.foto !== null;
+
+        card.innerHTML = `
+          <div class="node-card-header">
+            <span class="node-order">Paso ${nodo.orden} &bull; ${nodo.accion}</span>
+            <span class="node-val">${hasPhoto ? pct + '%' : 'SIN FOTO'}</span>
+          </div>
+          <div class="node-title">${nodo.nombre}</div>
+        `;
+        list.appendChild(card);
+      });
+    }
+
+    function selectNode(idx) {
+      currentIndex = idx;
+      renderSidebar();
+      renderCurrentNode();
+    }
+
+    function prevNode() {
+      if (currentIndex > 0) selectNode(currentIndex - 1);
+    }
+
+    function nextNode() {
+      const max = guidanceData[currentTramo].nodos.length - 1;
+      if (currentIndex < max) selectNode(currentIndex + 1);
+    }
+
+    function renderCurrentNode() {
+      const nodo = guidanceData[currentTramo].nodos[currentIndex];
+      document.getElementById('current-node-name').textContent = `Paso ${nodo.orden}: ${nodo.nombre}`;
+      document.getElementById('current-node-instruction').textContent = nodo.instruccion;
+      document.getElementById('metric-rumbo').innerHTML = nodo.rumbo !== null ? `${nodo.rumbo}&deg;` : '--';
+
+      const panoImg = document.getElementById('pano-img');
+      const panoContainer = document.getElementById('pano-container');
+      const emptyState = document.getElementById('empty-state');
+
+      tempRatio = nodo.eje_x_camino !== undefined && nodo.eje_x_camino !== null ? nodo.eje_x_camino : 0.5;
+
+      if (nodo.foto) {
+        panoContainer.style.display = 'inline-block';
+        emptyState.style.display = 'none';
+        panoImg.src = `/${nodo.foto}`;
+        panoImg.onload = () => {
+          updateMarkerPositions();
+          centerViewport();
+        };
+        if (panoImg.complete) {
+          updateMarkerPositions();
+        }
+      } else {
+        panoContainer.style.display = 'none';
+        emptyState.style.display = 'flex';
+        document.getElementById('empty-desc').textContent = nodo.instruccion;
+        document.getElementById('metric-eje').textContent = 'N/A';
+      }
+
+      document.getElementById('btn-prev').disabled = currentIndex === 0;
+      document.getElementById('btn-next').disabled = currentIndex === guidanceData[currentTramo].nodos.length - 1;
+    }
+
+    function updateMarkerPositions() {
+      const panoImg = document.getElementById('pano-img');
+      const hairlineTarget = document.getElementById('hairline-target');
+      const pinTarget = document.getElementById('pin-target');
+      const pinBadge = document.getElementById('pin-badge');
+      const phoneBox = document.getElementById('phone-box');
+
+      const imgWidth = panoImg.clientWidth;
+      const imgHeight = panoImg.clientHeight;
+      if (!imgWidth) return;
+
+      const x = imgWidth * tempRatio;
+
+      hairlineTarget.style.left = `${x}px`;
+      pinTarget.style.left = `${x}px`;
+
+      // Marco simulador móvil vertical 9:16
+      const phoneWidth = imgHeight * (9 / 16);
+      phoneBox.style.left = `${x}px`;
+      phoneBox.style.width = `${phoneWidth}px`;
+
+      const pct = (tempRatio * 100).toFixed(1);
+      pinBadge.textContent = `Avanzar: ${pct}%`;
+      document.getElementById('metric-eje').textContent = `${pct}%`;
+    }
+
+    function centerViewport() {
+      const viewport = document.getElementById('viewport');
+      const panoImg = document.getElementById('pano-img');
+      setTimeout(() => {
+        const x = panoImg.clientWidth * tempRatio;
+        viewport.scrollLeft = x - (viewport.clientWidth / 2);
+      }, 60);
+    }
+
+    function togglePhoneBox() {
+      const chk = document.getElementById('chk-phone');
+      document.getElementById('phone-box').style.display = chk.checked ? 'block' : 'none';
+    }
+
+    // Interacción ratón con cálculo EXACTO sobre la imagen
+    const panoContainer = document.getElementById('pano-container');
+    const panoImg = document.getElementById('pano-img');
+    const hairlineHover = document.getElementById('hairline-hover');
+
+    panoContainer.addEventListener('mousemove', (e) => {
+      const rect = panoImg.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      if (x >= 0 && x <= rect.width) {
+        hairlineHover.style.display = 'block';
+        hairlineHover.style.left = `${x}px`;
+      } else {
+        hairlineHover.style.display = 'none';
+      }
+    });
+
+    panoContainer.addEventListener('mouseleave', () => {
+      hairlineHover.style.display = 'none';
+    });
+
+    panoContainer.addEventListener('click', (e) => {
+      const rect = panoImg.getBoundingClientRect();
+      const clickX = e.clientX - rect.left;
+      if (rect.width > 0) {
+        const ratio = Math.max(0, Math.min(1, clickX / rect.width));
+        tempRatio = Math.round(ratio * 1000) / 1000;
+        updateMarkerPositions();
+      }
+    });
+
+    async function saveCurrentNode() {
+      const nodo = guidanceData[currentTramo].nodos[currentIndex];
+      if (!nodo.foto) {
+        showToast('Este nodo no tiene foto');
+        return;
+      }
+      nodo.eje_x_camino = tempRatio;
+
+      try {
+        const res = await fetch('/api/save', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            tramo: currentTramo,
+            nodoId: nodo.id,
+            eje_x_camino: tempRatio
+          })
+        });
+        const result = await res.json();
+        if (result.ok) {
+          showToast(`Guardado ${(tempRatio*100).toFixed(1)}% en Paso ${nodo.orden}`);
+          renderSidebar();
+        } else {
+          alert('Error guardando en JSON');
+        }
+      } catch (err) {
+        console.error(err);
+        alert('Error conectando con el servidor');
+      }
+    }
+
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      toast.textContent = msg;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 2000);
+    }
+
+    window.addEventListener('keydown', (e) => {
+      if (e.code === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
+        nextNode();
+      } else if (e.code === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
+        prevNode();
+      } else if (e.code === 'Space' || e.key === 'Enter') {
+        e.preventDefault();
+        saveCurrentNode();
+      }
+    });
+
+    loadData();
+  </script>
+</body>
+</html>

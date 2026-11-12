@@ -1,0 +1,901 @@
+package com.example.npi_puntoinfo_etsiit.ui.navigation
+
+import android.app.Activity
+import android.content.ActivityNotFoundException
+import android.content.Context
+import android.content.Intent
+import com.example.npi_puntoinfo_etsiit.GrafoRepository
+import com.example.npi_puntoinfo_etsiit.ResultadoVoz
+import com.example.npi_puntoinfo_etsiit.sensors.ProximityManager
+import android.os.Build
+import android.os.VibrationEffect
+import android.os.Vibrator
+import android.os.VibratorManager
+import android.speech.RecognizerIntent
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.compose.BackHandler
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.AccountCircle
+import androidx.compose.material.icons.filled.EventBusy
+import androidx.compose.material.icons.filled.School
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.saveable.listSaver
+import com.example.npi_puntoinfo_etsiit.data.ClassItem
+import com.example.npi_puntoinfo_etsiit.data.ScheduleRepository
+import com.example.npi_puntoinfo_etsiit.data.UserSessionRepository
+import com.example.npi_puntoinfo_etsiit.ui.components.GestureBadge
+import com.example.npi_puntoinfo_etsiit.ui.components.GestureGuideButton
+import com.example.npi_puntoinfo_etsiit.ui.components.GesturesGuideScreen
+import com.example.npi_puntoinfo_etsiit.ui.components.GestureType
+import java.time.LocalTime
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import com.example.npi_puntoinfo_etsiit.R
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.navigation.NavGraph.Companion.findStartDestination
+import androidx.navigation.NavType
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
+import com.example.npi_puntoinfo_etsiit.sensors.AccelerometerManager
+import com.example.npi_puntoinfo_etsiit.sensors.CampusLocationManager
+import com.example.npi_puntoinfo_etsiit.sensors.DeviceLocationProvider
+import com.example.npi_puntoinfo_etsiit.ui.screens.*
+import com.example.npi_puntoinfo_etsiit.ui.theme.*
+import com.example.npi_puntoinfo_etsiit.outdoor.NavigationJourney
+import com.example.npi_puntoinfo_etsiit.outdoor.EtsiitAccess
+import com.example.npi_puntoinfo_etsiit.outdoor.OutdoorNavigationRoute
+import com.example.npi_puntoinfo_etsiit.outdoor.NavigationTrip
+import com.example.npi_puntoinfo_etsiit.outdoor.TripPhase
+import com.example.npi_puntoinfo_etsiit.outdoor.OutdoorDestinations
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun AppNavigation() {
+    val context = LocalContext.current
+    val navController = rememberNavController()
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentRoute = navBackStackEntry?.destination?.route
+
+    // Estado persistente del destino de guiado activo en toda la sesión de la app
+    var activeDestination by rememberSaveable { mutableStateOf<String?>(null) }
+    var activeLocation by rememberSaveable { mutableStateOf<String?>(null) }
+    var isVerticalGuidanceActive by rememberSaveable { mutableStateOf(false) }
+    var activeEntryNodeId by rememberSaveable { mutableStateOf<String?>(null) }
+    var activeTargetNodeId by rememberSaveable { mutableStateOf<String?>(null) }
+    var canReturnOutdoors by rememberSaveable { mutableStateOf(false) }
+    var activeTrip by rememberSaveable(stateSaver = listSaver<NavigationTrip?, String>(
+        save = { it?.savedValues().orEmpty() },
+        restore = { if (it.isEmpty()) null else NavigationTrip.restore(it) }
+    )) { mutableStateOf<NavigationTrip?>(null) }
+
+    fun clearHandoff() {
+        activeEntryNodeId = null
+        activeTargetNodeId = null
+        canReturnOutdoors = false
+    }
+
+    fun returnToOutdoor() {
+        activeTrip = activeTrip?.returnOutdoors()
+        clearHandoff()
+        activeDestination = null
+        activeLocation = null
+        isVerticalGuidanceActive = false
+        if (!navController.popBackStack(Screen.Outdoor.routePattern, inclusive = false)) {
+            activeTrip?.let { trip ->
+                val target = trip.indoor?.target
+                val route = if (target != null) OutdoorNavigationRoute.forIndoorTarget(target.name, target.location, target.nodeId)
+                    else OutdoorNavigationRoute.create(trip.destinationId)
+                navController.navigate(route) {
+                    popUpTo(navController.graph.findStartDestination().id) {
+                        saveState = false
+                    }
+                    launchSingleTop = true
+                }
+            }
+        }
+    }
+
+    // Diálogo emergente global de Clase Actual (Gesto de 3 inclinaciones hacia adelante)
+    var showCurrentClassDialog by remember { mutableStateOf(false) }
+    var activeClassForDialog by remember { mutableStateOf<ClassItem?>(null) }
+
+    // Guarda temporal al pulsar el botón superior izquierdo de retroceso para evitar disparar proximidad por roce
+    var lastBackClickTimeMs by remember { mutableLongStateOf(0L) }
+
+    // Contadores para forzar el reinicio a 'Hoy' al entrar o pulsar en Horario y Comedores
+    var diningNavCounter by remember { mutableIntStateOf(0) }
+    var scheduleNavCounter by remember { mutableIntStateOf(0) }
+    var scheduleZoomTrigger by remember { mutableIntStateOf(0) }
+    var isDiningPaymentActive by rememberSaveable { mutableStateOf(false) }
+    var diningPaymentCancelTrigger by remember { mutableIntStateOf(0) }
+
+    fun navigateToTab(route: String, preserveBackStack: Boolean = false) {
+        if (!route.startsWith("navigation")) {
+            isVerticalGuidanceActive = false
+        }
+        if (route != Screen.Dining.route) {
+            isDiningPaymentActive = false
+        }
+        if (route == Screen.Dining.route) {
+            diningNavCounter++
+        }
+        if (route == Screen.Schedule.route) {
+            scheduleNavCounter++
+        }
+        if (preserveBackStack) {
+            navController.navigate(route) {
+                launchSingleTop = true
+            }
+        } else {
+            navController.navigate(route) {
+                popUpTo(navController.graph.findStartDestination().id) {
+                    saveState = false
+                }
+                launchSingleTop = true
+                restoreState = false
+            }
+        }
+    }
+
+    fun handleNavigation(route: String) {
+        val preserveBackStack = currentRoute == Screen.Services.route ||
+                currentRoute == Screen.Professors.route ||
+                currentRoute?.startsWith(Screen.Professors.route) == true
+
+        if (route == Screen.Outdoor.route || route.startsWith("${Screen.Outdoor.route}?")) {
+            isVerticalGuidanceActive = false
+            val uri = android.net.Uri.parse("app://$route")
+            val graph = GrafoRepository.getGrafo(context)
+            val name = uri.getQueryParameter("finalDestination")
+            val destinationId = uri.getQueryParameter("destinationId")
+            val combined = if (name != null && destinationId == EtsiitAccess.outdoorId)
+                EtsiitAccess.journey(graph, name, uri.getQueryParameter("finalLocation").orEmpty(),
+                    uri.getQueryParameter("finalNodeId"))
+            else destinationId?.let { EtsiitAccess.diningJourney(graph, it) }
+            val journey = combined ?: OutdoorDestinations.find(destinationId)?.let { NavigationJourney.Outdoor(it) }
+                ?: return
+
+            if (combined != null && destinationId == EtsiitAccess.outdoorId && CampusLocationManager.isUserNearEtsiit(context)) {
+                clearHandoff()
+                activeTrip = null
+                activeDestination = combined.indoor.target.name
+                activeLocation = combined.indoor.target.location
+                activeEntryNodeId = null
+                navigateToTab(Screen.Navigation.route)
+                return
+            }
+
+            activeTrip = NavigationTrip.start(journey)
+            clearHandoff()
+            activeDestination = null
+            activeLocation = null
+            val resolvedRoute = combined?.indoor?.target?.let {
+                OutdoorNavigationRoute.forIndoorTarget(it.name, it.location, it.nodeId)
+            } ?: route
+            navController.navigate(resolvedRoute) {
+                if (!preserveBackStack) {
+                    popUpTo(navController.graph.findStartDestination().id) {
+                        saveState = false
+                    }
+                }
+                launchSingleTop = true
+            }
+        } else if (route.startsWith("navigation?")) {
+            val uri = android.net.Uri.parse("app://$route")
+            val dest = uri.getQueryParameter("destination")
+            val loc = uri.getQueryParameter("location")
+            val graph = GrafoRepository.getGrafo(context)
+            if (dest != null && EtsiitAccess.journey(graph, dest, loc.orEmpty()) != null) {
+                if (CampusLocationManager.isUserNearEtsiit(context)) {
+                    clearHandoff()
+                    activeTrip = null
+                    activeDestination = dest
+                    activeLocation = loc
+                    activeEntryNodeId = null
+                    navigateToTab(Screen.Navigation.route)
+                } else {
+                    handleNavigation(OutdoorNavigationRoute.forIndoorTarget(dest, loc.orEmpty(),
+                        graph.buscarNodoPorDestino(dest)?.id))
+                }
+                return
+            }
+            if (dest?.contains("comedor", ignoreCase = true) == true) {
+                val dining = OutdoorDestinations.diningNamedIn(dest)
+                if (dining != null) {
+                    handleNavigation(OutdoorNavigationRoute.create(dining.id))
+                } else {
+                    val provider = DeviceLocationProvider(context)
+                    val last = runCatching { kotlinx.coroutines.runBlocking { provider.lastKnownLocation() } }.getOrNull()
+                    val nearest = CampusLocationManager.findNearestDiningHall(last?.latitude, last?.longitude)
+                    handleNavigation(OutdoorNavigationRoute.create("dining-${nearest.id}"))
+                }
+                return
+            }
+            clearHandoff()
+            if (!dest.isNullOrBlank()) {
+                activeTrip = null
+                activeDestination = dest
+                activeLocation = loc
+            }
+            navigateToTab(Screen.Navigation.route, preserveBackStack = preserveBackStack)
+        } else if (route == Screen.Profile.route) {
+            navController.navigate(Screen.Profile.route)
+        } else {
+            navigateToTab(route, preserveBackStack = preserveBackStack)
+        }
+    }
+
+    // Asistente de Voz Global (búsqueda de destinos en todo el campus)
+    var isListeningSpeechGlobal by remember { mutableStateOf(false) }
+
+    val globalSpeechLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        isListeningSpeechGlobal = false
+        if (result.resultCode == Activity.RESULT_OK) {
+            val spokenList = result.data?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)
+            val query = spokenList?.firstOrNull()?.trim()
+            if (!query.isNullOrBlank()) {
+
+                // --- 1. BUSCAR PRIMERO EN EL DIRECTORIO DE PROFESORES ---
+                val jsonString = context.assets.open("docentes.json").bufferedReader().use { it.readText() }
+                val jsonArray = org.json.JSONObject(jsonString).getJSONArray("profesores")
+                var foundProfessor: String? = null
+
+                for (i in 0 until jsonArray.length()) {
+                    val nombre = jsonArray.getJSONObject(i).getString("nombre")
+                    // Comprobamos si lo que ha dicho el usuario coincide con algún nombre
+                    if (nombre.contains(query, ignoreCase = true)) {
+                        foundProfessor = nombre
+                        break
+                    }
+                }
+
+                if (foundProfessor != null) {
+                    triggerVibration(context, durationMs = 120)
+                    // Viajamos a la pestaña de profesores pasándole el nombre por la URL interna
+                    navController.navigate("${Screen.Professors.route}?nombre=$foundProfessor")
+                    return@rememberLauncherForActivityResult
+                }
+                // --- FIN DE LA BÚSQUEDA DE PROFESORES ---
+
+                val asksAuxiliar = query.contains("auxiliar", ignoreCase = true)
+                if (asksAuxiliar) {
+                    triggerVibration(context, durationMs = 120)
+                    handleNavigation(OutdoorNavigationRoute.create("etsiit-auxiliar"))
+                    return@rememberLauncherForActivityResult
+                }
+
+                val namedDining = OutdoorDestinations.diningNamedIn(query)
+                if (namedDining != null) {
+                    triggerVibration(context, durationMs = 120)
+                    handleNavigation(OutdoorNavigationRoute.create(namedDining.id))
+                    return@rememberLauncherForActivityResult
+                }
+
+                val asksNearestDining = query.contains("más cercano", ignoreCase = true) &&
+                    (query.contains("comedor", ignoreCase = true) || query.contains("comer", ignoreCase = true))
+                if (asksNearestDining) {
+                    val provider = DeviceLocationProvider(context)
+                    val last = runCatching { kotlinx.coroutines.runBlocking { provider.lastKnownLocation() } }.getOrNull()
+                    val nearest = CampusLocationManager.findNearestDiningHall(last?.latitude, last?.longitude)
+                    triggerVibration(context, durationMs = 120)
+                    handleNavigation(OutdoorNavigationRoute.create("dining-${nearest.id}"))
+                    return@rememberLauncherForActivityResult
+                }
+                val grafo = GrafoRepository.getGrafo(context)
+                when (val res = grafo.resolverDestinoPorVoz(query)) {
+                    is ResultadoVoz.Exito -> {
+                        if (EtsiitAccess.journey(grafo, res.destino.titulo,
+                                res.destino.ubicacion, res.destino.nodo.id) != null) {
+                            triggerVibration(context, durationMs = 120)
+                            handleNavigation(OutdoorNavigationRoute.forIndoorTarget(res.destino.titulo,
+                                res.destino.ubicacion, res.destino.nodo.id))
+                        } else {
+                            activeTrip = null
+                            clearHandoff()
+                            triggerVibration(context, durationMs = 120)
+                            activeDestination = res.destino.titulo
+                            activeLocation = res.destino.ubicacion
+                            navigateToTab(Screen.Navigation.route)
+                        }
+                    }
+                    is ResultadoVoz.Error -> {
+                        Toast.makeText(
+                            context,
+                            res.mensaje,
+                            Toast.LENGTH_LONG
+                        ).show()
+                    }
+                }
+            }
+        }
+    }
+
+    fun launchGlobalVoiceSearch(promptText: String? = null) {
+        val defaultPrompt = if (currentRoute?.startsWith(Screen.Professors.route) == true) {
+            "Di el nombre, apellido o departamento"
+        } else {
+            "¿A dónde quieres ir o a qué profesor buscas?"
+        }
+        val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+            putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+            putExtra(RecognizerIntent.EXTRA_LANGUAGE, "es-ES")
+            putExtra(RecognizerIntent.EXTRA_PROMPT, promptText ?: defaultPrompt)
+        }
+        try {
+            isListeningSpeechGlobal = true
+            globalSpeechLauncher.launch(intent)
+        } catch (_: ActivityNotFoundException) {
+            isListeningSpeechGlobal = false
+            Toast.makeText(context, "El reconocimiento por voz no está disponible en este dispositivo", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    val currentLaunchGlobalVoiceSearch by rememberUpdatedState { launchGlobalVoiceSearch() }
+
+    // Estado reactivo global de sesión: actualiza automáticamente la TopAppBar y los sensores al iniciar o cerrar sesión
+    val currentUserProfile = UserSessionRepository.getProfile(context)
+    val isUserLoggedIn = currentUserProfile.isLoggedIn
+    var isExitingProfileOnLogout by remember { mutableStateOf(false) }
+
+    LaunchedEffect(currentRoute) {
+        if (currentRoute != Screen.Profile.route) {
+            isExitingProfileOnLogout = false
+        }
+    }
+
+    // Indica si el usuario está en la vista inmersiva de cámara escaneando el código QR de la TUI
+    val isScanningQrMode = currentRoute == Screen.Profile.route && !isUserLoggedIn && !isExitingProfileOnLogout
+
+    // Pausar proximidad durante el escaneo QR y el pago para no interrumpir la autenticación.
+    // Al pasar la mano por la cámara frontal / parte superior del móvil o acercarlo a la oreja,
+    // se activa el asistente de voz y se calcula la ruta guiada en el mapa.
+    DisposableEffect(context, isScanningQrMode, isDiningPaymentActive) {
+        if (isScanningQrMode || isDiningPaymentActive) {
+            onDispose { }
+        } else {
+            val proximityManager = ProximityManager(context)
+
+            proximityManager.onNear = {
+                val now = System.currentTimeMillis()
+                if (!isListeningSpeechGlobal && !isScanningQrMode && (now - lastBackClickTimeMs > 800L)) {
+                    triggerVibration(context, durationMs = 80)
+                    currentLaunchGlobalVoiceSearch()
+                }
+            }
+
+            proximityManager.startListening()
+
+            onDispose {
+                proximityManager.stopListening()
+            }
+        }
+    }
+
+    // Pausar también la agitación durante el escaneo QR y la pasarela de pago.
+    // Detecta dinámicamente si hay una clase en curso o próxima (con 30 minutos de antelación).
+    // Si hay clase, el gesto de «¡Llévame!» (giro de muñeca) guía directamente a su aula.
+    DisposableEffect(context, showCurrentClassDialog, activeClassForDialog, isScanningQrMode, isUserLoggedIn,
+        isDiningPaymentActive) {
+        if (isScanningQrMode || isDiningPaymentActive) {
+            onDispose { }
+        } else {
+            val accelerometerManager = AccelerometerManager(context)
+
+            accelerometerManager.onShakeDetected = {
+                if (isUserLoggedIn && !isScanningQrMode) {
+                    triggerVibration(context, durationMs = 150)
+                    activeClassForDialog = ScheduleRepository.getCurrentOrUpcomingClass(context = context)
+                    showCurrentClassDialog = true
+                }
+            }
+
+            if (showCurrentClassDialog && activeClassForDialog != null) {
+                val targetClass = activeClassForDialog!!
+                accelerometerManager.onTakeMeThereGesture = {
+                    triggerVibration(context, durationMs = 150)
+                    val roomName = targetClass.room.split("·")[0].trim()
+                    val floorName = targetClass.room.split("·").getOrElse(1) { "ETSIIT" }.trim()
+                    showCurrentClassDialog = false
+                    activeClassForDialog = null
+                    handleNavigation(Screen.Navigation.createRoute(roomName, floorName))
+                }
+            }
+
+            accelerometerManager.startListening()
+
+            onDispose {
+                accelerometerManager.stopListening()
+            }
+        }
+    }
+
+    // Título superior dinámico según la pantalla activa
+    val currentTitle = when {
+        currentRoute == Screen.Home.route -> ""
+        currentRoute == Screen.Schedule.route -> stringResource(R.string.nav_schedule_title)
+        currentRoute?.startsWith("navigation") == true -> {
+            if (isVerticalGuidanceActive && !activeDestination.isNullOrBlank()) stringResource(R.string.title_step_by_step) else stringResource(R.string.indoor_map_title)
+        }
+        currentRoute == Screen.Dining.route -> {
+            if (isDiningPaymentActive) "Pago Comedor" else stringResource(R.string.title_dining)
+        }
+        currentRoute == Screen.Outdoor.routePattern -> stringResource(R.string.title_outdoor_map)
+        currentRoute == Screen.Professors.route || currentRoute?.startsWith(Screen.Professors.route) == true -> stringResource(R.string.title_professors)
+        currentRoute == Screen.Profile.route -> stringResource(R.string.title_profile)
+        currentRoute == Screen.GesturesGuide.route -> stringResource(R.string.title_gestures_guide)
+        else -> ""
+    }
+
+    Scaffold(
+        topBar = {
+            if (!isScanningQrMode && !isVerticalGuidanceActive) {
+                TopAppBar(
+                    title = {
+                        Text(
+                            text = currentTitle,
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = TextPrimary
+                        )
+                    },
+                    navigationIcon = {
+                        val isHome = currentRoute == Screen.Home.route || currentRoute == null
+                        if (!isHome) {
+                            IconButton(onClick = {
+                                lastBackClickTimeMs = System.currentTimeMillis()
+                                if (isDiningPaymentActive) {
+                                    diningPaymentCancelTrigger++
+                                    return@IconButton
+                                }
+                                if (currentRoute == Screen.Outdoor.routePattern) {
+                                    activeTrip = null
+                                    clearHandoff()
+                                }
+                                if (!navController.popBackStack()) {
+                                    navigateToTab(Screen.Home.route)
+                                }
+                            }) {
+                                Icon(
+                                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                    contentDescription = if (isDiningPaymentActive) "Volver a Comedores" else "Volver a Inicio",
+                                    tint = TextPrimary
+                                )
+                            }
+                        }
+                    },
+                    actions = {
+                        // En la pasarela de pago se ocultan todos los iconos de gestos y el perfil
+                        if (!isDiningPaymentActive) {
+                            // Distintivo informativo del gesto de zoom para el Horario (solo visual, sin click)
+                            if (currentRoute == Screen.Schedule.route) {
+                                GestureBadge(
+                                    type = GestureType.PINCH_ZOOM,
+                                    size = 26.dp,
+                                    iconSize = 14.dp,
+                                    showTooltipOnClick = false,
+                                    onClick = null
+                                )
+
+                                Spacer(modifier = Modifier.width(6.dp))
+                            }
+
+                            // Indicador visual del sensor de proximidad (morado) — En Profesores se integra directamente en la barra de búsqueda
+                            if (currentRoute?.startsWith(Screen.Professors.route) != true) {
+                                GestureBadge(
+                                    type = GestureType.PROXIMITY_VOICE,
+                                    size = 26.dp,
+                                    iconSize = 14.dp,
+                                    showTooltipOnClick = false,
+                                    onClick = null
+                                )
+
+                                Spacer(modifier = Modifier.width(6.dp))
+                            }
+
+                            // Indicador visual del gesto de 3 inclinaciones para clase actual (rojo) — Solo si ha iniciado sesión
+                            val isUserLoggedIn = UserSessionRepository.getProfile(context).isLoggedIn
+                            if (isUserLoggedIn) {
+                                GestureBadge(
+                                    type = GestureType.TRIPLE_SHAKE,
+                                    size = 26.dp,
+                                    iconSize = 14.dp,
+                                    showTooltipOnClick = false,
+                                    onClick = null
+                                )
+
+                                Spacer(modifier = Modifier.width(6.dp))
+                            }
+
+                            // Botón con la 'i' de información sobre gestos: abre la pestaña dedicada de Guía de Gestos
+                            val isGesturesGuideScreen = currentRoute == Screen.GesturesGuide.route
+                            GestureGuideButton(
+                                size = 32.dp,
+                                iconSize = 18.dp,
+                                onClick = {
+                                    if (!isGesturesGuideScreen) {
+                                        navController.navigate(Screen.GesturesGuide.route) {
+                                            launchSingleTop = true
+                                        }
+                                    }
+                                }
+                            )
+
+                            // Icono de perfil de usuario siempre presente a la derecha para que los iconos de gestos no bailen de posición
+                            val isProfileScreen = currentRoute == Screen.Profile.route
+                            IconButton(
+                                onClick = {
+                                    if (!isProfileScreen) {
+                                        navController.navigate(Screen.Profile.route)
+                                    }
+                                }
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.AccountCircle,
+                                    contentDescription = "Perfil",
+                                    tint = if (isProfileScreen) UgrRedDark else UgrRed
+                                )
+                            }
+                        }
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = SurfaceWhite,
+                        scrolledContainerColor = SurfaceWhite,
+                        titleContentColor = TextPrimary,
+                        navigationIconContentColor = TextPrimary,
+                        actionIconContentColor = UgrRed
+                    )
+                )
+            }
+        }
+    ) { innerPadding ->
+        NavHost(
+            navController = navController,
+            startDestination = Screen.Home.route,
+            modifier = Modifier.padding(innerPadding)
+        ) {
+            composable(Screen.Home.route) {
+                HomeScreen(
+                    onNavigate = { route -> handleNavigation(route) },
+                    onLaunchVoiceSearch = { launchGlobalVoiceSearch() },
+                    onShowCurrentClassDialog = { targetClass ->
+                        activeClassForDialog = targetClass ?: ScheduleRepository.getCurrentOrUpcomingClass(context = context)
+                        showCurrentClassDialog = true
+                    }
+                )
+            }
+            composable(Screen.Schedule.route) {
+                ScheduleScreen(
+                    onNavigate = { route -> handleNavigation(route) },
+                    navKey = scheduleNavCounter,
+                    toggleZoomKey = scheduleZoomTrigger
+                )
+            }
+            composable(
+                route = Screen.Navigation.routePattern,
+                arguments = listOf(
+                    navArgument("destination") {
+                        type = NavType.StringType
+                        nullable = true
+                        defaultValue = null
+                    },
+                    navArgument("location") {
+                        type = NavType.StringType
+                        nullable = true
+                        defaultValue = null
+                    }
+                )
+            ) { backStackEntry ->
+                BackHandler(enabled = canReturnOutdoors) { returnToOutdoor() }
+                val destinationArg = backStackEntry.arguments?.getString("destination")
+                val locationArg = backStackEntry.arguments?.getString("location")
+
+                // Si se recibe un nuevo destino explícito desde otra pantalla, se actualiza la ruta activa
+                LaunchedEffect(destinationArg, locationArg) {
+                    if (!destinationArg.isNullOrBlank()) {
+                        activeDestination = destinationArg
+                        activeLocation = locationArg
+                    }
+                }
+
+                NavigationScreen(
+                    destinationName = activeDestination,
+                    destinationLocation = activeLocation,
+                    isVerticalGuidanceActive = isVerticalGuidanceActive,
+                    onPostureChanged = { isVertical ->
+                        isVerticalGuidanceActive = isVertical
+                    },
+                    onSelectDestination = { dest, loc ->
+                        if (EtsiitAccess.journey(GrafoRepository.getGrafo(context), dest, loc) != null) {
+                            handleNavigation(Screen.Navigation.createRoute(dest, loc))
+                        } else {
+                            activeTrip = null
+                            clearHandoff()
+                            activeDestination = dest
+                            activeLocation = loc
+                        }
+                    },
+                    onClearRoute = {
+                        val hadTrip = activeTrip != null
+                        activeTrip = activeTrip?.finish()
+                        clearHandoff()
+                        activeDestination = null
+                        activeLocation = null
+                        isVerticalGuidanceActive = false
+                        if (hadTrip) {
+                            navController.popBackStack(Screen.Outdoor.routePattern, inclusive = true)
+                            activeTrip = null
+                            navigateToTab(Screen.Navigation.route)
+                        }
+                    },
+                    entryNodeId = activeEntryNodeId,
+                    destinationNodeId = activeTargetNodeId,
+                    onReturnOutdoors = if (canReturnOutdoors) ({
+                        returnToOutdoor()
+                    }) else null
+                )
+            }
+            composable(Screen.Dining.route) {
+                DiningScreen(
+                    onNavigate = { route -> handleNavigation(route) },
+                    isCurrentClassDialogVisible = showCurrentClassDialog,
+                    navKey = diningNavCounter,
+                    cancelPaymentKey = diningPaymentCancelTrigger,
+                    onPaymentModeChanged = { active -> isDiningPaymentActive = active }
+                )
+            }
+            composable(
+                route = Screen.Outdoor.routePattern,
+                arguments = listOf("destinationId", "finalDestination", "finalLocation", "finalNodeId").map { name ->
+                    navArgument(name) { type = NavType.StringType; nullable = true; defaultValue = null }
+                }
+            ) { entry ->
+                BackHandler {
+                    activeTrip = null
+                    clearHandoff()
+                    navController.popBackStack()
+                }
+                val trip = activeTrip
+                if (trip != null) {
+                    OutdoorNavigationScreen(
+                        destinationId = entry.arguments?.getString("destinationId"),
+                        finalDestination = entry.arguments?.getString("finalDestination"),
+                        finalLocation = entry.arguments?.getString("finalLocation"),
+                        finalNodeId = entry.arguments?.getString("finalNodeId"),
+                        trip = trip,
+                        onTripChanged = { updated -> if (activeTrip?.id == updated.id) activeTrip = updated },
+                        onSelectOutdoorDestination = { id -> handleNavigation(OutdoorNavigationRoute.create(id)) },
+                        onContinueIndoors = { indoor: NavigationJourney.Indoor ->
+                            activeTrip = activeTrip?.enterIndoors()
+                            activeDestination = indoor.target.name
+                            activeLocation = indoor.target.location
+                            activeEntryNodeId = indoor.entryNodeId
+                            activeTargetNodeId = indoor.target.nodeId
+                            canReturnOutdoors = true
+                            isVerticalGuidanceActive = false
+                            navController.navigate(Screen.Navigation.route) { launchSingleTop = true }
+                        },
+                        onVerticalGuidanceActiveChanged = { isVertical ->
+                            isVerticalGuidanceActive = isVertical
+                        }
+                    )
+                }
+            }
+            composable(
+                route = "${Screen.Professors.route}?nombre={nombre}",
+                arguments = listOf(navArgument("nombre") {
+                    type = NavType.StringType
+                    nullable = true
+                    defaultValue = null
+                })
+            ) { backStackEntry ->
+                val nombreProfesor = backStackEntry.arguments?.getString("nombre")
+                ProfessorsScreen(
+                    onNavigate = { route -> handleNavigation(route) },
+                    searchedName = nombreProfesor // Le pasamos el nombre a tu pantalla
+                )
+            }
+            
+            composable(Screen.Services.route) {
+                ServicesScreen(
+                    onNavigate = { route -> handleNavigation(route) }
+                )
+            }
+
+            composable(Screen.Profile.route) {
+                ProfileScreen(
+                    onBack = {
+                        if (!navController.popBackStack()) {
+                            navigateToTab(Screen.Home.route)
+                        }
+                    },
+                    onLoggedOut = {
+                        isExitingProfileOnLogout = true
+                        navigateToTab(Screen.Home.route)
+                    }
+                )
+            }
+
+            composable(Screen.GesturesGuide.route) {
+                GesturesGuideScreen()
+            }
+        }
+
+        // Diálogo informativo global: Horario de clase actual o próxima (disparado por Triple Shake)
+        if (showCurrentClassDialog) {
+            val currentClass = activeClassForDialog
+            val nowTime = remember(showCurrentClassDialog) { LocalTime.now() }
+
+            AlertDialog(
+                onDismissRequest = {
+                    showCurrentClassDialog = false
+                    activeClassForDialog = null
+                },
+                containerColor = SurfaceWhite,
+                titleContentColor = TextPrimary,
+                textContentColor = TextPrimary,
+                iconContentColor = UgrRed,
+                icon = {
+                    Icon(
+                        imageVector = if (currentClass != null) Icons.Default.School else Icons.Default.EventBusy,
+                        contentDescription = null,
+                        tint = UgrRed,
+                        modifier = Modifier.size(36.dp)
+                    )
+                },
+                title = {
+                    Text(
+                        text = if (currentClass != null) {
+                            val parts = currentClass.time.split("-").map { it.trim() }
+                            val start = try { LocalTime.parse(parts[0]) } catch (_: Exception) { null }
+                            if (start != null && nowTime.isBefore(start)) "Próxima Clase" else "Clase en Curso"
+                        } else {
+                            "Próxima Clase"
+                        },
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 18.sp,
+                        color = TextPrimary
+                    )
+                },
+                text = {
+                    Column {
+                        if (currentClass != null) {
+                            val parts = currentClass.time.split("-").map { it.trim() }
+                            val start = try { LocalTime.parse(parts[0]) } catch (_: Exception) { null }
+                            val isUpcoming = start != null && nowTime.isBefore(start)
+
+                            Text(
+                                text = if (isUpcoming) "Tu próxima clase comienza a las ${parts[0]}:" else "Información de tu clase en curso:",
+                                fontSize = 13.sp,
+                                color = TextSecondary
+                            )
+                            Spacer(modifier = Modifier.height(12.dp))
+                            Card(
+                                colors = CardDefaults.cardColors(containerColor = BackgroundLight),
+                                shape = RoundedCornerShape(12.dp),
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Column(modifier = Modifier.padding(14.dp)) {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        modifier = Modifier.fillMaxWidth()
+                                    ) {
+                                        Text(
+                                            text = "${currentClass.subject} (${currentClass.acronym})",
+                                            fontWeight = FontWeight.Bold,
+                                            fontSize = 15.sp,
+                                            color = TextPrimary,
+                                            modifier = Modifier.weight(1f)
+                                        )
+                                        Spacer(modifier = Modifier.width(6.dp))
+                                        GestureBadge(
+                                            type = GestureType.TAKE_ME_THERE,
+                                            onClick = {
+                                                val roomName = currentClass.room.split("·")[0].trim()
+                                                val floorName = currentClass.room.split("·").getOrElse(1) { "ETSIIT" }.trim()
+                                                showCurrentClassDialog = false
+                                                activeClassForDialog = null
+                                                handleNavigation(Screen.Navigation.createRoute(roomName, floorName))
+                                            }
+                                        )
+                                    }
+                                    Spacer(modifier = Modifier.height(4.dp))
+                                    Text(
+                                        text = "${currentClass.time} · ${currentClass.room}",
+                                        fontSize = 13.sp,
+                                        color = UgrRed,
+                                        fontWeight = FontWeight.SemiBold
+                                    )
+                                    Spacer(modifier = Modifier.height(4.dp))
+                                    Text(
+                                        text = "Profesor/a: ${currentClass.professor}",
+                                        fontSize = 12.sp,
+                                        color = TextSecondary
+                                    )
+                                }
+                            }
+                        } else {
+                            Text(
+                                text = "No tienes clase próximamente.",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 15.sp,
+                                color = TextPrimary
+                            )
+                            Spacer(modifier = Modifier.height(6.dp))
+                            Text(
+                                text = "No tienes ninguna clase programada en tu horario en este momento ni en los próximos 30 minutos.",
+                                fontSize = 13.sp,
+                                color = TextSecondary,
+                                lineHeight = 18.sp
+                            )
+                        }
+                    }
+                },
+                confirmButton = {
+                    Button(
+                        onClick = {
+                            showCurrentClassDialog = false
+                            activeClassForDialog = null
+                        },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = UgrRed,
+                            contentColor = Color.White
+                        ),
+                        shape = RoundedCornerShape(10.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(42.dp)
+                    ) {
+                        Text(
+                            text = "Cerrar",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 14.sp,
+                            color = Color.White
+                        )
+                    }
+                }
+            )
+        }
+    }
+}
+
+/**
+ * Función auxiliar para emitir una vibración háptica al disparar un gesto
+ */
+private fun triggerVibration(context: Context, durationMs: Long = 150) {
+    try {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            val vibratorManager = context.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as? VibratorManager
+            vibratorManager?.defaultVibrator?.vibrate(
+                VibrationEffect.createOneShot(durationMs, VibrationEffect.DEFAULT_AMPLITUDE)
+            )
+        } else {
+            @Suppress("DEPRECATION")
+            val vibrator = context.getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                vibrator?.vibrate(VibrationEffect.createOneShot(durationMs, VibrationEffect.DEFAULT_AMPLITUDE))
+            } else {
+                @Suppress("DEPRECATION")
+                vibrator?.vibrate(durationMs)
+            }
+        }
+    } catch (_: Exception) {
+    }
+}
