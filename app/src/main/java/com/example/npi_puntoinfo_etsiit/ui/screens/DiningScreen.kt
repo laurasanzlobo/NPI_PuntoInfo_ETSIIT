@@ -338,8 +338,6 @@ fun DiningScreen(
                         } else if (isOrdered) {
                             triggerVibration(context, durationMs = 40)
                             Toast.makeText(context, "Ya tienes un menú encargado para este día", Toast.LENGTH_SHORT).show()
-                        } else if (selected != null) {
-                            Toast.makeText(context, "Puedes reservar cualquiera de los cuatro próximos días laborables, pero no hoy.", Toast.LENGTH_SHORT).show()
                         }
                     } else {
                         triggerVibration(context, durationMs = 40)
@@ -982,12 +980,12 @@ fun DiningScreen(
                                 )
                             }
 
-                            if (!isThisDayOrdered) {
+                            if (canReserve && !isThisDayOrdered) {
                                 GestureBadge(
                                     type = GestureType.ACTION_TRIGGER,
                                     size = 28.dp,
                                     iconSize = 16.dp,
-                                    onClick = if (canReserve) { { reserveMenu(menu) } } else null
+                                    onClick = { reserveMenu(menu) }
                                 )
                             }
                         }
