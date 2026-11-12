@@ -285,43 +285,13 @@ fun OriginVerificationDialog(
                             }
 
                             Text(
-                                text = stringResource(R.string.verification_barometer_title),
-                                fontSize = 18.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = TextPrimary
-                            )
-
-                            Text(
                                 text = stringResource(R.string.verification_barometer_prompt, step.estimate.floorName),
-                                fontSize = 14.sp,
+                                fontSize = 17.sp,
                                 color = TextPrimary,
                                 textAlign = TextAlign.Center,
-                                fontWeight = FontWeight.SemiBold
+                                lineHeight = 23.sp,
+                                fontWeight = FontWeight.Bold
                             )
-
-                            Surface(
-                                shape = RoundedCornerShape(12.dp),
-                                color = BackgroundLight,
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                Row(
-                                    modifier = Modifier.padding(10.dp),
-                                    horizontalArrangement = Arrangement.SpaceAround,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Text(
-                                        text = stringResource(R.string.verification_barometer_pressure, step.estimate.pressureHpa),
-                                        fontSize = 11.sp,
-                                        color = TextSecondary
-                                    )
-                                    Text(
-                                        text = stringResource(R.string.verification_barometer_floor, step.estimate.floorCode),
-                                        fontSize = 11.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = CampusTeal
-                                    )
-                                }
-                            }
 
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
@@ -329,18 +299,22 @@ fun OriginVerificationDialog(
                             ) {
                                 OutlinedButton(
                                     onClick = {
-                                        // Si la estimación por barómetro también es errónea, pasamos al Paso 3 (Cámara QR)
+                                        // Si la estimación también es errónea, pasamos al Paso 3 (Cámara QR)
                                         currentStep = VerificationStep.QRScanStep
                                     },
                                     modifier = Modifier.weight(1f),
                                     shape = RoundedCornerShape(12.dp)
                                 ) {
-                                    Text(stringResource(R.string.verification_no_wrong), fontSize = 12.sp)
+                                    Text(
+                                        text = stringResource(R.string.verification_no_not_here),
+                                        fontSize = 14.sp,
+                                        maxLines = 1
+                                    )
                                 }
 
                                 Button(
                                     onClick = {
-                                        // Si dice que SÍ a la planta del barómetro, mostramos la lista de opciones de esa planta
+                                        // Si dice que SÍ a la planta estimada, mostramos la lista de opciones de esa planta
                                         val floorNodes = grafo.obtenerNodosPorPlanta(step.estimate.floorCode)
                                         currentStep = VerificationStep.FloorNodeSelectionStep(
                                             floorCode = step.estimate.floorCode,
@@ -352,7 +326,12 @@ fun OriginVerificationDialog(
                                     shape = RoundedCornerShape(12.dp),
                                     colors = ButtonDefaults.buttonColors(containerColor = CampusTeal)
                                 ) {
-                                    Text(stringResource(R.string.verification_yes_here), fontSize = 12.sp, color = Color.White)
+                                    Text(
+                                        text = stringResource(R.string.verification_yes_here),
+                                        fontSize = 14.sp,
+                                        color = Color.White,
+                                        maxLines = 1
+                                    )
                                 }
                             }
                         }
@@ -505,18 +484,25 @@ fun OriginVerificationDialog(
                             ) {
                                 OutlinedButton(
                                     onClick = onDismiss,
-                                    modifier = Modifier.weight(1f),
-                                    shape = RoundedCornerShape(12.dp)
+                                    modifier = Modifier.weight(0.85f),
+                                    shape = RoundedCornerShape(12.dp),
+                                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 10.dp)
                                 ) {
-                                    Text(stringResource(R.string.cancel), fontSize = 12.sp)
+                                    Text(
+                                        text = stringResource(R.string.cancel),
+                                        fontSize = 13.sp,
+                                        maxLines = 1,
+                                        softWrap = false
+                                    )
                                 }
 
                                 Button(
                                     onClick = {
                                         openCamera()
                                     },
-                                    modifier = Modifier.weight(1f),
+                                    modifier = Modifier.weight(1.35f),
                                     shape = RoundedCornerShape(12.dp),
+                                    contentPadding = PaddingValues(horizontal = 10.dp, vertical = 10.dp),
                                     colors = ButtonDefaults.buttonColors(containerColor = UgrRed)
                                 ) {
                                     Row(
@@ -529,7 +515,13 @@ fun OriginVerificationDialog(
                                             tint = Color.White,
                                             modifier = Modifier.size(16.dp)
                                         )
-                                        Text(stringResource(R.string.open_camera), fontSize = 12.sp, color = Color.White)
+                                        Text(
+                                            text = stringResource(R.string.open_camera),
+                                            fontSize = 13.sp,
+                                            color = Color.White,
+                                            maxLines = 1,
+                                            softWrap = false
+                                        )
                                     }
                                 }
                             }
