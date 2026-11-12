@@ -981,28 +981,40 @@ fun DiningScreen(
                                     style = MaterialTheme.typography.bodySmall, color = TextSecondary
                                 )
                             }
+
+                            if (!isThisDayOrdered) {
+                                GestureBadge(
+                                    type = GestureType.ACTION_TRIGGER,
+                                    size = 28.dp,
+                                    iconSize = 16.dp,
+                                    onClick = if (canReserve) { { reserveMenu(menu) } } else null
+                                )
+                            }
                         }
-                        Button(
-                            onClick = { reserveMenu(menu) },
-                            enabled = canReserve && !isThisDayOrdered,
-                            modifier = Modifier.fillMaxWidth().testTag("dining-reserve-${menu.date}"),
-                            shape = RoundedCornerShape(12.dp),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = UgrRed,
-                                disabledContainerColor = if (isThisDayOrdered) CampusGreen else SurfaceBorder,
-                                disabledContentColor = if (isThisDayOrdered) Color.White else TextSecondary
-                            )
-                        ) {
-                            Text(when {
-                                isThisDayOrdered -> if (isEnglish) "Reserved" else "Reservado"
-                                !hasService -> if (isEnglish) "No service" else "Sin servicio"
-                                else -> if (isEnglish) "Reserve" else "Reservar"
-                            }, fontWeight = FontWeight.Bold)
+                        if (canReserve || isThisDayOrdered) {
+                            Button(
+                                onClick = { reserveMenu(menu) },
+                                enabled = canReserve && !isThisDayOrdered,
+                                modifier = Modifier.fillMaxWidth().testTag("dining-reserve-${menu.date}"),
+                                shape = RoundedCornerShape(12.dp),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = UgrRed,
+                                    disabledContainerColor = if (isThisDayOrdered) CampusGreen else SurfaceBorder,
+                                    disabledContentColor = if (isThisDayOrdered) Color.White else TextSecondary
+                                )
+                            ) {
+                                Text(when {
+                                    isThisDayOrdered -> if (isEnglish) "Reserved" else "Reservado"
+                                    !hasService -> if (isEnglish) "No service" else "Sin servicio"
+                                    else -> if (isEnglish) "Reserve" else "Reservar"
+                                }, fontWeight = FontWeight.Bold)
+                            }
                         }
                         if (!isThisDayOrdered && hasService && !canReserve) {
                             Text(
                                 if (isEnglish) "Reservations are not allowed for today. Swipe to reserve one of the next four working days." else "No se admiten reservas para hoy. Desliza para reservar uno de los cuatro próximos días laborables.",
-                                style = MaterialTheme.typography.bodySmall, color = TextSecondary
+                                style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.5.sp, lineHeight = 17.sp),
+                                color = TextSecondary
                             )
                         }
                     }
