@@ -216,22 +216,22 @@ fun OnboardingTutorialOverlay(
                 accentColor = Color(0xFF1D4ED8)
             ),
             SpotlightStep(
-                targetId = SpotlightTargetId.HOME_SERVICES_BUTTON,
-                badgeText = "6 DE 7",
-                title = "Servicios",
-                description = "Accede a los trámites de Secretaría y al directorio de profesores con sus despachos y estado de tutorías en vivo.",
-                tipText = null,
-                icon = Icons.Default.Info,
-                accentColor = Color(0xFF0F766E)
-            ),
-            SpotlightStep(
                 targetId = SpotlightTargetId.HOME_DINING_BUTTON,
-                badgeText = "7 DE 7",
+                badgeText = "6 DE 7",
                 title = "Comedores",
                 description = "Consulta el menú día a día de los Comedores UGR, revisa los alérgenos de cada plato y abona tu ticket de comedor directamente desde el móvil.",
                 tipText = null,
                 icon = Icons.Default.Restaurant,
                 accentColor = Color(0xFFD97706)
+            ),
+            SpotlightStep(
+                targetId = SpotlightTargetId.HOME_SERVICES_BUTTON,
+                badgeText = "7 DE 7",
+                title = "Servicios",
+                description = "Accede a los trámites de Secretaría y al directorio de profesores con sus despachos y estado de tutorías en vivo.",
+                tipText = null,
+                icon = Icons.Default.Info,
+                accentColor = Color(0xFF0F766E)
             )
         )
     }

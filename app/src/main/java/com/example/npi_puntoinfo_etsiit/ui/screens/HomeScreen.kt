@@ -429,23 +429,6 @@ fun HomeScreen(
                 )
 
                 HomeFlatButton(
-                    title = stringResource(R.string.nav_services_title),
-                    icon = Icons.Default.Info,
-                    accentColor = Color(0xFF0F766E),
-                    bgColor = Color(0xFFF0FDFA),
-                    borderColor = Color(0xFF99F6E4),
-                    textColor = Color(0xFF115E59),
-                    iconGradient = listOf(Color(0xFF14B8A6), Color(0xFF0F766E)),
-                    modifier = Modifier.onGloballyPositioned { coords ->
-                        TutorialSpotlightRegistry.updateTarget(
-                            SpotlightTargetId.HOME_SERVICES_BUTTON,
-                            coords.boundsInRoot()
-                        )
-                    },
-                    onClick = { onNavigate(Screen.Services.route) }
-                )
-
-                HomeFlatButton(
                     title = stringResource(R.string.nav_dining_title),
                     icon = Icons.Default.Restaurant,
                     accentColor = Color(0xFFD97706),
@@ -461,13 +444,7 @@ fun HomeScreen(
                     },
                     onClick = { onNavigate(Screen.Dining.route) }
                 )
-            }
-        } else {
-            // SIN SESIÓN INICIADA: Servicios y Comedores
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
+
                 HomeFlatButton(
                     title = stringResource(R.string.nav_services_title),
                     icon = Icons.Default.Info,
@@ -476,9 +453,21 @@ fun HomeScreen(
                     borderColor = Color(0xFF99F6E4),
                     textColor = Color(0xFF115E59),
                     iconGradient = listOf(Color(0xFF14B8A6), Color(0xFF0F766E)),
+                    modifier = Modifier.onGloballyPositioned { coords ->
+                        TutorialSpotlightRegistry.updateTarget(
+                            SpotlightTargetId.HOME_SERVICES_BUTTON,
+                            coords.boundsInRoot()
+                        )
+                    },
                     onClick = { onNavigate(Screen.Services.route) }
                 )
-
+            }
+        } else {
+            // SIN SESIÓN INICIADA: Comedores y Servicios
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
                 HomeFlatButton(
                     title = stringResource(R.string.nav_dining_title),
                     icon = Icons.Default.Restaurant,
@@ -488,6 +477,17 @@ fun HomeScreen(
                     textColor = Color(0xFF92400E),
                     iconGradient = listOf(Color(0xFFF59E0B), Color(0xFFD97706)),
                     onClick = { onNavigate(Screen.Dining.route) }
+                )
+
+                HomeFlatButton(
+                    title = stringResource(R.string.nav_services_title),
+                    icon = Icons.Default.Info,
+                    accentColor = Color(0xFF0F766E),
+                    bgColor = Color(0xFFF0FDFA),
+                    borderColor = Color(0xFF99F6E4),
+                    textColor = Color(0xFF115E59),
+                    iconGradient = listOf(Color(0xFF14B8A6), Color(0xFF0F766E)),
+                    onClick = { onNavigate(Screen.Services.route) }
                 )
             }
         }
