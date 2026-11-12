@@ -1180,32 +1180,32 @@ private fun GestureTrainingLabView(
 
                 Spacer(modifier = Modifier.height(6.dp))
 
-                // Instrucción clara de cómo hacerlo y para qué sirve
-                Text(
-                    text = gesture.howTo,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = TextPrimary,
-                    textAlign = TextAlign.Center,
-                    lineHeight = 19.sp
-                )
-
-                Spacer(modifier = Modifier.height(4.dp))
+                // Frase única y directa que unifica cómo hacerlo y su función
+                val unifiedInstruction = when (gesture) {
+                    GestureType.PROXIMITY_VOICE -> "Pasa la mano a poca distancia por la parte superior del móvil para activar el asistente de voz."
+                    GestureType.TRIPLE_SHAKE -> "Inclina el móvil adelante y atrás tres veces seguidas para consultar tu próxima clase."
+                    GestureType.TAKE_ME_THERE -> "Inclina el móvil hacia la izquierda y vuelve a la posición inicial para iniciar la ruta."
+                    GestureType.ACTION_TRIGGER -> "Inclina el móvil hacia ti con un cabeceo rápido y vuelve para confirmar la acción."
+                    GestureType.LIFT_PHONE -> "Coloca el móvil en posición vertical frente a ti para activar la vista 360°."
+                    GestureType.PINCH_ZOOM -> "Pellizca con dos dedos sobre la pantalla para ajustar el zoom en mapas y horarios."
+                }
 
                 Text(
-                    text = "Para qué sirve: ${gesture.whatFor}",
-                    fontSize = 12.sp,
+                    text = unifiedInstruction,
+                    fontSize = 13.5.sp,
                     color = TextSecondary,
                     textAlign = TextAlign.Center,
-                    lineHeight = 16.sp
+                    lineHeight = 18.sp,
+                    modifier = Modifier.padding(horizontal = 8.dp)
                 )
 
                 Spacer(modifier = Modifier.height(14.dp))
 
-                // PANEL INTERACTIVO EN VIVO SEGÚN EL GESTO
+                // RECUADRO ÚNICO INTERACTIVO: "¡Ahora pruébalo tú!" (unificado sin logos repetidos)
                 GestureLiveTelemetryBox(
                     gesture = gesture,
                     isCompleted = isGestureCompleted,
+                    feedbackSubtitle = feedbackSubtitle,
                     shakeCount = shakeCount,
                     shakeTotal = shakeTotal,
                     liveTiltX = liveTiltX,
@@ -1216,56 +1216,14 @@ private fun GestureTrainingLabView(
                     onPinchScaleChange = { newScale ->
                         pinchScale = newScale
                         if (abs(newScale - 1f) >= 0.15f) {
-                            markGestureSuccess("¡Zoom multitáctil detectado (${(newScale * 100).toInt()}%)! Perfecto para mapas y horarios.")
+                            markGestureSuccess("¡Zoom multitáctil detectado (${(newScale * 100).toInt()}%)!")
                         }
                     }
                 )
 
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(16.dp))
 
-                // BANNER DE ESTADO: "¡Lo has hecho bien!" o "Esperando gesto..."
-                Surface(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(14.dp),
-                    color = if (isGestureCompleted) CampusGreen.copy(alpha = 0.14f) else Color(0xFFF1F5F9),
-                    border = androidx.compose.foundation.BorderStroke(
-                        width = 1.5.dp,
-                        color = if (isGestureCompleted) CampusGreen else Color(0xFFCBD5E1)
-                    )
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 14.dp, vertical = 12.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(10.dp)
-                    ) {
-                        Icon(
-                            imageVector = if (isGestureCompleted) Icons.Default.CheckCircle else Icons.Default.Vibration,
-                            contentDescription = null,
-                            tint = if (isGestureCompleted) CampusGreen else gesture.badgeColor,
-                            modifier = Modifier.size(24.dp)
-                        )
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = if (isGestureCompleted) "¡Lo has hecho bien! ✓" else "¡Ahora pruébalo tú!",
-                                fontWeight = FontWeight.ExtraBold,
-                                fontSize = 14.sp,
-                                color = if (isGestureCompleted) CampusGreen else TextPrimary
-                            )
-                            Text(
-                                text = feedbackSubtitle,
-                                fontSize = 12.sp,
-                                color = if (isGestureCompleted) Color(0xFF065F46) else TextSecondary,
-                                lineHeight = 16.sp
-                            )
-                        }
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(14.dp))
-
-                // Botones de navegación e intento simulado (para pruebas sin mover el dispositivo)
+                // Botones de navegación e intento simulado
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -1287,7 +1245,7 @@ private fun GestureTrainingLabView(
                     if (!isGestureCompleted) {
                         OutlinedButton(
                             onClick = {
-                                markGestureSuccess("¡Gesto validado correctamente! Ya puedes avanzar al siguiente.")
+                                markGestureSuccess("¡Gesto validado correctamente! Ya puedes avanzar.")
                             },
                             shape = RoundedCornerShape(12.dp),
                             modifier = Modifier
@@ -1331,13 +1289,13 @@ private fun GestureTrainingLabView(
 }
 
 /**
- * Widget visual de telemetría en tiempo real para que el usuario vea cómo responden los sensores
- * mientras realiza cada gesto físico.
+ * Recuadro único interactivo de prueba para cada gesto físico.
  */
 @Composable
 private fun GestureLiveTelemetryBox(
     gesture: GestureType,
     isCompleted: Boolean,
+    feedbackSubtitle: String,
     shakeCount: Int,
     shakeTotal: Int,
     liveTiltX: Float,
@@ -1349,97 +1307,86 @@ private fun GestureLiveTelemetryBox(
 ) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        color = Color(0xFFF8FAFC),
-        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFE2E8F0))
+        shape = RoundedCornerShape(18.dp),
+        color = if (isCompleted) CampusGreen.copy(alpha = 0.12f) else Color(0xFFF8FAFC),
+        border = androidx.compose.foundation.BorderStroke(
+            width = 1.5.dp,
+            color = if (isCompleted) CampusGreen else Color(0xFFE2E8F0)
+        )
     ) {
-        Box(
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(14.dp),
-            contentAlignment = Alignment.Center
+                .padding(horizontal = 14.dp, vertical = 14.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            Text(
+                text = if (isCompleted) "¡Lo has hecho bien! ✓" else "¡Ahora pruébalo tú!",
+                fontWeight = FontWeight.ExtraBold,
+                fontSize = 15.sp,
+                color = if (isCompleted) CampusGreen else TextPrimary
+            )
+
+            Spacer(modifier = Modifier.height(3.dp))
+
+            Text(
+                text = if (isCompleted) feedbackSubtitle else "Esperando a que realices el movimiento...",
+                fontSize = 12.sp,
+                color = if (isCompleted) Color(0xFF065F46) else TextSecondary,
+                textAlign = TextAlign.Center
+            )
+
+            Spacer(modifier = Modifier.height(10.dp))
+
             when (gesture) {
                 GestureType.PROXIMITY_VOICE -> {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(14.dp)
+                    Surface(
+                        shape = RoundedCornerShape(50),
+                        color = if (isProximityNear || isCompleted) CampusGreen.copy(alpha = 0.18f) else Color(0xFFE2E8F0)
                     ) {
-                        Box(
-                            modifier = Modifier
-                                .size(48.dp)
-                                .clip(CircleShape)
-                                .background(
-                                    if (isProximityNear || isCompleted) CampusGreen.copy(alpha = 0.2f)
-                                    else gesture.badgeColor.copy(alpha = 0.12f)
-                                ),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Mic,
-                                contentDescription = null,
-                                tint = if (isProximityNear || isCompleted) CampusGreen else gesture.badgeColor,
-                                modifier = Modifier.size(26.dp)
-                            )
-                        }
-                        Column {
-                            Text(
-                                text = if (isProximityNear || isCompleted) "Sensor superior: ¡MANO DETECTADA!" else "Sensor superior: Esperando tu mano...",
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 13.sp,
-                                color = if (isProximityNear || isCompleted) CampusGreen else TextPrimary
-                            )
-                            Text(
-                                text = "Pasa la mano a 2-3 cm del auricular superior del teléfono.",
-                                fontSize = 11.5.sp,
-                                color = TextSecondary
-                            )
-                        }
+                        Text(
+                            text = if (isProximityNear || isCompleted) "✓ Mano detectada en el sensor" else "✋ Esperando tu mano en el sensor...",
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = if (isProximityNear || isCompleted) CampusGreen else TextSecondary,
+                            modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp)
+                        )
                     }
                 }
 
                 GestureType.TRIPLE_SHAKE -> {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(
-                            text = "Contador de inclinaciones en vivo",
-                            fontSize = 11.5.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = TextSecondary
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Row(
-                            horizontalArrangement = Arrangement.spacedBy(16.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            for (i in 1..shakeTotal) {
-                                val reached = isCompleted || shakeCount >= i
-                                Box(
-                                    modifier = Modifier
-                                        .size(42.dp)
-                                        .clip(CircleShape)
-                                        .background(if (reached) CampusGreen else Color(0xFFE2E8F0))
-                                        .border(
-                                            width = 2.dp,
-                                            color = if (reached) CampusGreen else Color(0xFFCBD5E1),
-                                            shape = CircleShape
-                                        ),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    if (reached) {
-                                        Icon(
-                                            imageVector = Icons.Default.Check,
-                                            contentDescription = null,
-                                            tint = Color.White,
-                                            modifier = Modifier.size(22.dp)
-                                        )
-                                    } else {
-                                        Text(
-                                            text = "$i",
-                                            fontWeight = FontWeight.ExtraBold,
-                                            fontSize = 15.sp,
-                                            color = TextSecondary
-                                        )
-                                    }
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(16.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        for (i in 1..shakeTotal) {
+                            val reached = isCompleted || shakeCount >= i
+                            Box(
+                                modifier = Modifier
+                                    .size(42.dp)
+                                    .clip(CircleShape)
+                                    .background(if (reached) CampusGreen else Color(0xFFE2E8F0))
+                                    .border(
+                                        width = 2.dp,
+                                        color = if (reached) CampusGreen else Color(0xFFCBD5E1),
+                                        shape = CircleShape
+                                    ),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                if (reached) {
+                                    Icon(
+                                        imageVector = Icons.Default.Check,
+                                        contentDescription = null,
+                                        tint = Color.White,
+                                        modifier = Modifier.size(22.dp)
+                                    )
+                                } else {
+                                    Text(
+                                        text = "$i",
+                                        fontWeight = FontWeight.ExtraBold,
+                                        fontSize = 15.sp,
+                                        color = TextSecondary
+                                    )
                                 }
                             }
                         }
@@ -1447,77 +1394,51 @@ private fun GestureLiveTelemetryBox(
                 }
 
                 GestureType.TAKE_ME_THERE -> {
-                    // Indicador de inclinación lateral izquierda/derecha (eje X)
                     val normalizedOffset = (-liveTiltX / 6.5f).coerceIn(-1f, 1f)
-                    Column(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalAlignment = Alignment.CenterHorizontally
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(28.dp)
+                            .clip(RoundedCornerShape(50))
+                            .background(Color(0xFFE2E8F0)),
+                        contentAlignment = Alignment.Center
                     ) {
-                        Text(
-                            text = "Medidor de giro lateral (inclina hacia la IZQUIERDA ⬅ y vuelve)",
-                            fontSize = 11.5.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = TextSecondary
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
                         Box(
                             modifier = Modifier
-                                .fillMaxWidth()
-                                .height(28.dp)
-                                .clip(RoundedCornerShape(50))
-                                .background(Color(0xFFE2E8F0)),
+                                .align(Alignment.CenterStart)
+                                .fillMaxHeight()
+                                .width(72.dp)
+                                .background(CampusGreen.copy(alpha = 0.28f)),
                             contentAlignment = Alignment.Center
                         ) {
-                            // Zona objetivo a la izquierda
-                            Box(
-                                modifier = Modifier
-                                    .align(Alignment.CenterStart)
-                                    .fillMaxHeight()
-                                    .width(72.dp)
-                                    .background(CampusGreen.copy(alpha = 0.28f)),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Text(
-                                    text = "⬅ META",
-                                    fontSize = 10.sp,
-                                    fontWeight = FontWeight.ExtraBold,
-                                    color = CampusGreen
-                                )
-                            }
-                            // Bolita que se mueve con el acelerómetro
-                            Box(
-                                modifier = Modifier
-                                    .offset(x = (normalizedOffset * 90).dp)
-                                    .size(22.dp)
-                                    .clip(CircleShape)
-                                    .background(if (isCompleted) CampusGreen else gesture.badgeColor)
+                            Text(
+                                text = "⬅ META",
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.ExtraBold,
+                                color = CampusGreen
                             )
                         }
+                        Box(
+                            modifier = Modifier
+                                .offset(x = (normalizedOffset * 90).dp)
+                                .size(22.dp)
+                                .clip(CircleShape)
+                                .background(if (isCompleted) CampusGreen else gesture.badgeColor)
+                        )
                     }
                 }
 
                 GestureType.ACTION_TRIGGER -> {
-                    // Indicador de cabeceo hacia delante/atrás (eje Z)
-                    val progress = ((abs(liveTiltZ) - 2f) / 6f).coerceIn(0f, 1f)
-                    Column(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalAlignment = Alignment.CenterHorizontally
+                    Surface(
+                        shape = RoundedCornerShape(50),
+                        color = if (isCompleted) CampusGreen.copy(alpha = 0.18f) else Color(0xFFE2E8F0)
                     ) {
                         Text(
-                            text = "Sensor de cabeceo (inclina el móvil hacia ti y vuelve)",
-                            fontSize = 11.5.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = TextSecondary
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        LinearProgressIndicator(
-                            progress = { if (isCompleted) 1f else progress },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(12.dp)
-                                .clip(RoundedCornerShape(50)),
-                            color = if (isCompleted) CampusGreen else gesture.badgeColor,
-                            trackColor = Color(0xFFE2E8F0)
+                            text = if (isCompleted) "✓ Inclinación hacia ti detectada" else "📲 Inclina la parte superior hacia ti y vuelve",
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = if (isCompleted) CampusGreen else TextSecondary,
+                            modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp)
                         )
                     }
                 }
@@ -1534,12 +1455,12 @@ private fun GestureLiveTelemetryBox(
                             fontWeight = FontWeight.Bold,
                             color = if (isCompleted) CampusGreen else TextPrimary
                         )
-                        Spacer(modifier = Modifier.height(6.dp))
+                        Spacer(modifier = Modifier.height(4.dp))
                         LinearProgressIndicator(
                             progress = { if (isCompleted) 1f else verticality },
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(12.dp)
+                                .height(10.dp)
                                 .clip(RoundedCornerShape(50)),
                             color = if (isCompleted) CampusGreen else gesture.badgeColor,
                             trackColor = Color(0xFFE2E8F0)
@@ -1548,11 +1469,10 @@ private fun GestureLiveTelemetryBox(
                 }
 
                 GestureType.PINCH_ZOOM -> {
-                    // Área interactiva multitáctil para pellizcar con 2 dedos
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(92.dp)
+                            .height(82.dp)
                             .clip(RoundedCornerShape(14.dp))
                             .background(
                                 if (isCompleted) CampusGreen.copy(alpha = 0.12f)
@@ -1571,23 +1491,12 @@ private fun GestureLiveTelemetryBox(
                             },
                         contentAlignment = Alignment.Center
                     ) {
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            modifier = Modifier.scale(pinchScale.coerceIn(0.75f, 1.35f))
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.TouchApp,
-                                contentDescription = null,
-                                tint = if (isCompleted) CampusGreen else gesture.badgeColor,
-                                modifier = Modifier.size(28.dp)
-                            )
-                            Text(
-                                text = "Pellizca aquí con 2 dedos · Zoom: ${(pinchScale * 100).toInt()}%",
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = if (isCompleted) CampusGreen else gesture.badgeColor
-                            )
-                        }
+                        Text(
+                            text = "Pellizca aquí con 2 dedos · Zoom: ${(pinchScale * 100).toInt()}%",
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = if (isCompleted) CampusGreen else gesture.badgeColor
+                        )
                     }
                 }
             }
@@ -1649,35 +1558,27 @@ private fun TutorialCompletedModal(
                     textAlign = TextAlign.Center
                 )
 
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(10.dp))
 
                 Text(
-                    text = "Ya dominas la interfaz y los gestos multimodales del Punto de Información ETSIIT. Este tutorial no volverá a saltar solo cuando abras la app ni al cerrar sesión.",
-                    fontSize = 13.5.sp,
-                    color = TextSecondary,
-                    textAlign = TextAlign.Center,
-                    lineHeight = 19.sp
+                    text = "Este tutorial no volverá a mostrarse automáticamente.",
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = TextPrimary,
+                    textAlign = TextAlign.Center
                 )
 
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(6.dp))
 
-                Surface(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(14.dp),
-                    color = EtsiitBlue.copy(alpha = 0.08f)
-                ) {
-                    Text(
-                        text = "💡 ¿Quieres repetirlo más adelante? Pulsa el botón «i» en la barra superior de cualquier pantalla o entra en «Mi Perfil».",
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = TextPrimary,
-                        textAlign = TextAlign.Center,
-                        lineHeight = 17.sp,
-                        modifier = Modifier.padding(12.dp)
-                    )
-                }
+                Text(
+                    text = "Si se quiere repetir más adelante, pulsa el botón «i» de la barra superior o accede desde Mi Perfil.",
+                    fontSize = 12.5.sp,
+                    color = TextSecondary,
+                    textAlign = TextAlign.Center,
+                    lineHeight = 17.sp
+                )
 
-                Spacer(modifier = Modifier.height(20.dp))
+                Spacer(modifier = Modifier.height(22.dp))
 
                 Button(
                     onClick = onFinish,
