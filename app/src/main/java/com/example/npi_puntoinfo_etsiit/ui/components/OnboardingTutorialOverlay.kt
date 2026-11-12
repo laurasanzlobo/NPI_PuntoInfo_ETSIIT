@@ -1335,151 +1335,132 @@ private fun GestureLiveTelemetryBox(
                 textAlign = TextAlign.Center
             )
 
-            Spacer(modifier = Modifier.height(10.dp))
+            val hasTelemetryWidget = gesture in listOf(
+                GestureType.TRIPLE_SHAKE,
+                GestureType.TAKE_ME_THERE,
+                GestureType.ACTION_TRIGGER,
+                GestureType.LIFT_PHONE
+            )
 
-            when (gesture) {
-                GestureType.PROXIMITY_VOICE -> {
-                    Surface(
-                        shape = RoundedCornerShape(50),
-                        color = if (isCompleted || isProximityNear) CampusGreen.copy(alpha = 0.18f) else Color(0xFFE2E8F0)
-                    ) {
-                        Text(
-                            text = if (isCompleted) "✓ Mano detectada en el sensor" else if (isProximityNear) "✋ Mano detectada en el sensor" else "✋ Sensor superior esperando tu mano...",
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = if (isCompleted || isProximityNear) CampusGreen else TextSecondary,
-                            modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp)
-                        )
-                    }
-                }
+            if (hasTelemetryWidget) {
+                Spacer(modifier = Modifier.height(10.dp))
 
-                GestureType.TRIPLE_SHAKE -> {
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(16.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        for (i in 1..shakeTotal) {
-                            val reached = if (i == 3) isCompleted else (isCompleted || shakeCount >= i)
-                            Box(
-                                modifier = Modifier
-                                    .size(42.dp)
-                                    .clip(CircleShape)
-                                    .background(if (reached) CampusGreen else Color(0xFFE2E8F0))
-                                    .border(
-                                        width = 2.dp,
-                                        color = if (reached) CampusGreen else Color(0xFFCBD5E1),
-                                        shape = CircleShape
-                                    ),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                if (reached) {
-                                    Icon(
-                                        imageVector = Icons.Default.Check,
-                                        contentDescription = null,
-                                        tint = Color.White,
-                                        modifier = Modifier.size(22.dp)
-                                    )
-                                } else {
-                                    Text(
-                                        text = "$i",
-                                        fontWeight = FontWeight.ExtraBold,
-                                        fontSize = 15.sp,
-                                        color = TextSecondary
-                                    )
+                when (gesture) {
+                    GestureType.TRIPLE_SHAKE -> {
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(16.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            for (i in 1..shakeTotal) {
+                                val reached = if (i == 3) isCompleted else (isCompleted || shakeCount >= i)
+                                Box(
+                                    modifier = Modifier
+                                        .size(42.dp)
+                                        .clip(CircleShape)
+                                        .background(if (reached) CampusGreen else Color(0xFFE2E8F0))
+                                        .border(
+                                            width = 2.dp,
+                                            color = if (reached) CampusGreen else Color(0xFFCBD5E1),
+                                            shape = CircleShape
+                                        ),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    if (reached) {
+                                        Icon(
+                                            imageVector = Icons.Default.Check,
+                                            contentDescription = null,
+                                            tint = Color.White,
+                                            modifier = Modifier.size(22.dp)
+                                        )
+                                    } else {
+                                        Text(
+                                            text = "$i",
+                                            fontWeight = FontWeight.ExtraBold,
+                                            fontSize = 15.sp,
+                                            color = TextSecondary
+                                        )
+                                    }
                                 }
                             }
                         }
                     }
-                }
 
-                GestureType.TAKE_ME_THERE -> {
-                    val normalizedOffset = (-liveTiltX / 6.5f).coerceIn(-1f, 1f)
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(28.dp)
-                            .clip(RoundedCornerShape(50))
-                            .background(Color(0xFFE2E8F0)),
-                        contentAlignment = Alignment.Center
-                    ) {
+                    GestureType.TAKE_ME_THERE -> {
+                        val normalizedOffset = (-liveTiltX / 6.5f).coerceIn(-1f, 1f)
                         Box(
-                            modifier = Modifier
-                                .align(Alignment.CenterStart)
-                                .fillMaxHeight()
-                                .width(72.dp)
-                                .background(CampusGreen.copy(alpha = 0.28f)),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                text = "⬅ META",
-                                fontSize = 10.sp,
-                                fontWeight = FontWeight.ExtraBold,
-                                color = CampusGreen
-                            )
-                        }
-                        Box(
-                            modifier = Modifier
-                                .offset(x = (normalizedOffset * 90).dp)
-                                .size(22.dp)
-                                .clip(CircleShape)
-                                .background(if (isCompleted) CampusGreen else gesture.badgeColor)
-                        )
-                    }
-                }
-
-                GestureType.ACTION_TRIGGER -> {
-                    Surface(
-                        shape = RoundedCornerShape(50),
-                        color = if (isCompleted) CampusGreen.copy(alpha = 0.18f) else Color(0xFFE2E8F0)
-                    ) {
-                        Text(
-                            text = if (isCompleted) "✓ Inclinación hacia ti detectada" else "📲 Inclina hacia ti y vuelve a tu posición",
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = if (isCompleted) CampusGreen else TextSecondary,
-                            modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp)
-                        )
-                    }
-                }
-
-                GestureType.LIFT_PHONE -> {
-                    val verticality = ((liveTiltY - 6.2f) / 3.2f).coerceIn(0f, 1f)
-                    Column(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Text(
-                            text = "Nivel de verticalidad: ${(if (isCompleted) 100 else (verticality * 100).toInt())}%",
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = if (isCompleted) CampusGreen else TextPrimary
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        LinearProgressIndicator(
-                            progress = { if (isCompleted) 1f else verticality },
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(10.dp)
-                                .clip(RoundedCornerShape(50)),
-                            color = if (isCompleted) CampusGreen else gesture.badgeColor,
-                            trackColor = Color(0xFFE2E8F0)
-                        )
+                                .height(28.dp)
+                                .clip(RoundedCornerShape(50))
+                                .background(Color(0xFFE2E8F0)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .align(Alignment.CenterStart)
+                                    .fillMaxHeight()
+                                    .width(72.dp)
+                                    .background(CampusGreen.copy(alpha = 0.28f)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = "⬅ META",
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.ExtraBold,
+                                    color = CampusGreen
+                                )
+                            }
+                            Box(
+                                modifier = Modifier
+                                    .offset(x = (normalizedOffset * 90).dp)
+                                    .size(22.dp)
+                                    .clip(CircleShape)
+                                    .background(if (isCompleted) CampusGreen else gesture.badgeColor)
+                            )
+                        }
                     }
-                }
 
-                GestureType.PINCH_ZOOM -> {
-                    Surface(
-                        shape = RoundedCornerShape(50),
-                        color = if (isCompleted) CampusGreen.copy(alpha = 0.18f) else Color(0xFFE2E8F0)
-                    ) {
-                        Text(
-                            text = if (isCompleted) "✓ Gesto de pellizco detectado" else "👆 Pellizca con dos dedos en cualquier parte de la pantalla",
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = if (isCompleted) CampusGreen else TextSecondary,
-                            modifier = Modifier.padding(horizontal = 14.dp, vertical = 7.dp)
-                        )
+                    GestureType.ACTION_TRIGGER -> {
+                        Surface(
+                            shape = RoundedCornerShape(50),
+                            color = if (isCompleted) CampusGreen.copy(alpha = 0.18f) else Color(0xFFE2E8F0)
+                        ) {
+                            Text(
+                                text = if (isCompleted) "✓ Inclinación hacia ti detectada" else "📲 Inclina hacia ti y vuelve a tu posición",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = if (isCompleted) CampusGreen else TextSecondary,
+                                modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp)
+                            )
+                        }
                     }
+
+                    GestureType.LIFT_PHONE -> {
+                        val verticality = ((liveTiltY - 6.2f) / 3.2f).coerceIn(0f, 1f)
+                        Column(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Text(
+                                text = "Nivel de verticalidad: ${(if (isCompleted) 100 else (verticality * 100).toInt())}%",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = if (isCompleted) CampusGreen else TextPrimary
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            LinearProgressIndicator(
+                                progress = { if (isCompleted) 1f else verticality },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(10.dp)
+                                    .clip(RoundedCornerShape(50)),
+                                color = if (isCompleted) CampusGreen else gesture.badgeColor,
+                                trackColor = Color(0xFFE2E8F0)
+                            )
+                        }
+                    }
+
+                    else -> {}
                 }
             }
         }
