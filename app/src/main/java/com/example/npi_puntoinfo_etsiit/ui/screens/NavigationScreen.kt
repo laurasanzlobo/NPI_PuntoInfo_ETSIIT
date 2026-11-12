@@ -107,7 +107,7 @@ fun NavigationScreen(
     val grafo = remember(context) { GrafoRepository.getGrafo(context) }
 
     // Estimación del aula de origen según el horario del usuario (si está en clase o acaba de terminar)
-    val estimatedClassroom = remember(context) {
+    val estimatedClassroom = remember(context, activeDestination) {
         com.example.npi_puntoinfo_etsiit.data.ScheduleRepository.estimateCurrentOrRecentClassroom(context)
     }
 
