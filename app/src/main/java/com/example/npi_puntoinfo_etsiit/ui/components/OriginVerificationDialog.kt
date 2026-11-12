@@ -22,6 +22,7 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Place
 import androidx.compose.material.icons.filled.QrCodeScanner
+import androidx.compose.material.icons.filled.Restaurant
 import androidx.compose.material.icons.filled.School
 import androidx.compose.material.icons.filled.Speed
 import androidx.compose.material3.*
@@ -57,6 +58,9 @@ import kotlinx.coroutines.flow.collectLatest
  * Estados del flujo de verificación del nodo de origen inicial
  */
 sealed class VerificationStep {
+    // Paso 0: Caso especial ruta demo Aula 1.1 (inicio desde Comedor Aynadamar)
+    data class DemoComedorStep(val node: Nodo) : VerificationStep()
+
     // Paso 1: Confirmación del aula estimada por el Horario
     data class ScheduleStep(val estimated: EstimatedClassroom, val node: Nodo) : VerificationStep()
 
@@ -221,10 +225,22 @@ fun formatearNombreNodoAmigable(
 fun OriginVerificationDialog(
     grafo: GrafoETSIIT,
     estimatedClassroom: EstimatedClassroom?,
+    destinationTitle: String = "",
     onNodeConfirmed: (Nodo) -> Unit,
     onDismiss: () -> Unit
 ) {
     val context = LocalContext.current
+
+    val isDemoRouteToAula11 = remember(destinationTitle) {
+        destinationTitle.contains("1.1", ignoreCase = true) ||
+            destinationTitle.contains("A_11", ignoreCase = true)
+    }
+
+    val nodoComedor = remember(grafo) {
+        grafo.buscarNodoPorDestino("Comedor")
+            ?: grafo.obtenerNodoPorId("Comedor_PSS")
+            ?: grafo.obtenerNodoInicioPredeterminado()
+    }
 
     // Coordenadas GPS del usuario para distinguir entre el edificio de las aulas y el de zonas comunes
     var userCoordinates by remember {
@@ -258,10 +274,14 @@ fun OriginVerificationDialog(
         }
     }
 
-    // Determinar paso inicial: si hay aula estimada por horario, empezamos en Paso 1 (ScheduleStep);
-    // si no hay horario activo, pasamos directamente a Paso 2 (BarometerStep).
-    val initialStep = remember(estimatedClassroom) {
-        if (estimatedClassroom != null) {
+    // Determinar paso inicial:
+    // 1. Si es la ruta demo hacia Aula 1.1, iniciamos con la pregunta del Comedor
+    // 2. Si hay aula estimada por horario, empezamos en Paso 1 (ScheduleStep)
+    // 3. Si no hay horario activo, pasamos directamente a Paso 2 (BarometerStep)
+    val initialStep = remember(isDemoRouteToAula11, estimatedClassroom) {
+        if (isDemoRouteToAula11) {
+            VerificationStep.DemoComedorStep(nodoComedor)
+        } else if (estimatedClassroom != null) {
             val node = grafo.buscarNodoPorDestino(estimatedClassroom.roomName)
             if (node != null) VerificationStep.ScheduleStep(estimatedClassroom, node) else null
         } else null
@@ -315,6 +335,70 @@ fun OriginVerificationDialog(
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     when (step) {
+                        // =========================================================================
+                        // PASO 0: CONFIRMACIÓN DE ORIGEN COMEDOR PARA RUTA DEMO AULA 1.1
+                        // =========================================================================
+                        is VerificationStep.DemoComedorStep -> {
+                            Surface(
+                                shape = CircleShape,
+                                color = CampusTeal.copy(alpha = 0.12f),
+                                modifier = Modifier.size(54.dp)
+                            ) {
+                                Box(contentAlignment = Alignment.Center) {
+                                    Icon(
+                                        imageVector = Icons.Default.Restaurant,
+                                        contentDescription = null,
+                                        tint = CampusTeal,
+                                        modifier = Modifier.size(28.dp)
+                                    )
+                                }
+                            }
+
+                            Text(
+                                text = stringResource(R.string.verification_prompt_comedor),
+                                fontSize = 17.sp,
+                                lineHeight = 23.sp,
+                                color = TextPrimary,
+                                textAlign = TextAlign.Center,
+                                fontWeight = FontWeight.Bold
+                            )
+
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(10.dp)
+                            ) {
+                                OutlinedButton(
+                                    onClick = {
+                                        currentStep = VerificationStep.QRScanStep
+                                    },
+                                    modifier = Modifier.weight(1f),
+                                    shape = RoundedCornerShape(12.dp)
+                                ) {
+                                    Text(
+                                        text = stringResource(R.string.verification_no_not_here),
+                                        fontSize = 14.sp,
+                                        maxLines = 1
+                                    )
+                                }
+
+                                Button(
+                                    onClick = {
+                                        onNodeConfirmed(step.node)
+                                    },
+                                    modifier = Modifier.weight(1f),
+                                    shape = RoundedCornerShape(12.dp),
+                                    colors = ButtonDefaults.buttonColors(containerColor = CampusTeal)
+                                ) {
+                                    Text(
+                                        text = stringResource(R.string.verification_yes_here),
+                                        fontSize = 14.sp,
+                                        color = Color.White,
+                                        maxLines = 1
+                                    )
+                                }
+                            }
+                        }
+
                         // =========================================================================
                         // PASO 1: CONFIRMACIÓN DE ORIGEN SEGÚN HORARIO
                         // =========================================================================
@@ -640,8 +724,9 @@ fun OriginVerificationDialog(
 
                                 Button(
                                     onClick = {
-                                        // Simular escaneo de QR guiando directamente desde la entrada principal
-                                        onNodeConfirmed(grafo.obtenerNodoInicioPredeterminado())
+                                        // Simular escaneo de QR: si es la ruta demo al Aula 1.1, se simula el QR del comedor; si no, entrada principal
+                                        val confirmedNode = if (isDemoRouteToAula11) nodoComedor else grafo.obtenerNodoInicioPredeterminado()
+                                        onNodeConfirmed(confirmedNode)
                                     },
                                     modifier = Modifier.weight(1.35f),
                                     shape = RoundedCornerShape(12.dp),

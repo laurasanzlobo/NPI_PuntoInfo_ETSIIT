@@ -579,6 +579,7 @@ fun NavigationScreen(
             com.example.npi_puntoinfo_etsiit.ui.components.OriginVerificationDialog(
                 grafo = grafo,
                 estimatedClassroom = estimatedClassroom,
+                destinationTitle = primaryTitle.ifBlank { activeDestination },
                 onNodeConfirmed = { confirmedNode ->
                     userConfirmedNodeId = confirmedNode.id
                     selectedEntryNodeId = confirmedNode.id

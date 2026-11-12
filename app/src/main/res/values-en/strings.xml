@@ -67,6 +67,7 @@
 
     <!-- Origin Verification Dialog -->
     <string name="verification_dialog_title">Location Verification</string>
+    <string name="verification_prompt_comedor">Are you currently at the Aynadamar Dining Hall?</string>
     <string name="verification_prompt_schedule">Are you currently in %1$s at %2$s on %3$s?</string>
     <string name="verification_yes_here">Yes</string>
     <string name="verification_no_not_here">No</string>

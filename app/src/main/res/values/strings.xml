@@ -67,6 +67,7 @@
 
     <!-- Origin Verification Dialog -->
     <string name="verification_dialog_title">Verificación de Ubicación</string>
+    <string name="verification_prompt_comedor">¿Te encuentras actualmente en el Comedor Aynadamar?</string>
     <string name="verification_prompt_schedule">¿Te encuentras actualmente en la asignatura %1$s en el %2$s de la %3$s?</string>
     <string name="verification_yes_here">Sí</string>
     <string name="verification_no_not_here">No</string>
