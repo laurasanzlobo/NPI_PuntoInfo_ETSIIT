@@ -2,6 +2,7 @@ package com.example.npi_puntoinfo_etsiit.ui.screens
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.app.Activity
 import android.content.Context
 import android.content.pm.PackageManager
 import android.graphics.SurfaceTexture
@@ -23,6 +24,7 @@ import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -307,6 +309,121 @@ fun ProfileScreen(
                                 checkedTrackColor = CampusTeal
                             )
                         )
+                    }
+                }
+            }
+
+            // ==========================================
+            // 4. PREFERENCIA DE IDIOMA (ESPAÑOL / ENGLISH)
+            // ==========================================
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(20.dp),
+                colors = CardDefaults.cardColors(containerColor = SurfaceWhite),
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 18.dp, vertical = 14.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(44.dp)
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(EtsiitBlue.copy(alpha = 0.12f)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Language,
+                                contentDescription = null,
+                                tint = EtsiitBlue,
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
+                        Column {
+                            Text(
+                                text = stringResource(R.string.profile_app_language),
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = TextPrimary
+                            )
+                            Text(
+                                text = if (profile.language == "en") "English" else "Español",
+                                fontSize = 12.sp,
+                                color = TextSecondary,
+                                lineHeight = 16.sp
+                            )
+                        }
+                    }
+
+                    // Selector compacto con banderas de España y Reino Unido
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        val isSpanish = profile.language != "en"
+
+                        // Bandera de España
+                        Surface(
+                            shape = RoundedCornerShape(10.dp),
+                            color = if (isSpanish) UgrRed.copy(alpha = 0.12f) else BackgroundLight,
+                            border = if (isSpanish) BorderStroke(1.5.dp, UgrRed) else BorderStroke(1.dp, SurfaceBorder.copy(alpha = 0.4f)),
+                            modifier = Modifier.clickable {
+                                if (profile.language != "es") {
+                                    UserSessionRepository.updateLanguage(context, "es")
+                                    (context as? Activity)?.recreate()
+                                }
+                            }
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 9.dp, vertical = 6.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                Text("🇪🇸", fontSize = 16.sp)
+                                Text(
+                                    text = "ES",
+                                    fontSize = 11.5.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = if (isSpanish) UgrRed else TextSecondary
+                                )
+                            }
+                        }
+
+                        // Bandera del Reino Unido
+                        Surface(
+                            shape = RoundedCornerShape(10.dp),
+                            color = if (!isSpanish) EtsiitBlue.copy(alpha = 0.12f) else BackgroundLight,
+                            border = if (!isSpanish) BorderStroke(1.5.dp, EtsiitBlue) else BorderStroke(1.dp, SurfaceBorder.copy(alpha = 0.4f)),
+                            modifier = Modifier.clickable {
+                                if (profile.language != "en") {
+                                    UserSessionRepository.updateLanguage(context, "en")
+                                    (context as? Activity)?.recreate()
+                                }
+                            }
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 9.dp, vertical = 6.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                Text("🇬🇧", fontSize = 16.sp)
+                                Text(
+                                    text = "EN",
+                                    fontSize = 11.5.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = if (!isSpanish) EtsiitBlue else TextSecondary
+                                )
+                            }
+                        }
                     }
                 }
             }

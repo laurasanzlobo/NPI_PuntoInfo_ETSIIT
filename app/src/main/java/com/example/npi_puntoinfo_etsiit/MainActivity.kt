@@ -12,6 +12,9 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        val profile = com.example.npi_puntoinfo_etsiit.data.UserSessionRepository.getProfile(this)
+        com.example.npi_puntoinfo_etsiit.data.UserSessionRepository.applyAppLocale(this, profile.language)
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             window.decorView.isForceDarkAllowed = false
         }

@@ -125,12 +125,29 @@ object UserSessionRepository {
         return newProfile
     }
 
+    fun applyAppLocale(context: Context, language: String) {
+        val locale = java.util.Locale.forLanguageTag(language)
+        java.util.Locale.setDefault(locale)
+        val res = context.resources
+        val config = res.configuration
+        config.setLocale(locale)
+        config.setLayoutDirection(locale)
+        @Suppress("DEPRECATION")
+        res.updateConfiguration(config, res.displayMetrics)
+
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+            val localeManager = context.getSystemService(android.app.LocaleManager::class.java)
+            localeManager?.applicationLocales = android.os.LocaleList(locale)
+        }
+    }
+
     /**
      * Actualiza el idioma preferido de la app ("es" / "en").
      */
     fun updateLanguage(context: Context, language: String) {
         val current = getProfile(context)
         saveProfile(context, current.copy(language = language))
+        applyAppLocale(context, language)
     }
 
     /**
