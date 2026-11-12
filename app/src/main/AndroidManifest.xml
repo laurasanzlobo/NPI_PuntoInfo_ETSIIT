@@ -5,6 +5,9 @@
     <!-- Permiso para vibrar cuando se detectan gestos -->
     <uses-permission android:name="android.permission.VIBRATE" />
 
+    <!-- Permiso para conteo y reconocimiento de pasos físicos (Pedómetro) -->
+    <uses-permission android:name="android.permission.ACTIVITY_RECOGNITION" />
+
     <!-- Autenticación nativa para confirmar reservas simuladas, sin acceder a credenciales. -->
     <uses-permission android:name="android.permission.USE_BIOMETRIC" />
     <uses-permission android:name="android.permission.USE_FINGERPRINT" android:maxSdkVersion="28" />

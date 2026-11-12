@@ -1,5 +1,6 @@
 package com.example.npi_puntoinfo_etsiit.ui.components
 
+import androidx.annotation.StringRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -24,7 +25,9 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.PathNode
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
+import com.example.npi_puntoinfo_etsiit.R
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.npi_puntoinfo_etsiit.ui.theme.*
@@ -203,68 +206,74 @@ val PinchZoomIcon: ImageVector by lazy {
  * Tipos de gestos físicos soportados en la aplicación Punto Info ETSIIT.
  */
 enum class GestureType(
-    val title: String,
-    val gestureName: String,
-    val description: String,
-    val howTo: String,
-    val whatFor: String,
+    @StringRes val titleRes: Int,
+    @StringRes val gestureNameRes: Int,
+    @StringRes val descriptionRes: Int,
+    @StringRes val howToRes: Int,
+    @StringRes val whatForRes: Int,
     val icon: ImageVector,
     val badgeColor: Color
 ) {
     TAKE_ME_THERE(
-        title = "Llévame",
-        gestureName = "Inclinar a la izquierda",
-        description = "Inclina el móvil hacia la izquierda y devuélvelo a tu posición inicial para iniciar el guiado hasta el destino.",
-        howTo = "Inclina el móvil hacia la izquierda.",
-        whatFor = "Te guía directamente hasta el destino indicado.",
+        titleRes = R.string.gesture_take_me_there_title,
+        gestureNameRes = R.string.gesture_take_me_there_name,
+        descriptionRes = R.string.gesture_take_me_there_desc,
+        howToRes = R.string.gesture_take_me_there_howto,
+        whatForRes = R.string.gesture_take_me_there_whatfor,
         icon = WristTwistIcon,
         badgeColor = CampusTeal
     ),
     TRIPLE_SHAKE(
-        title = "Clase actual",
-        gestureName = "3 veces hacia adelante",
-        description = "Echa la punta superior del móvil hacia adelante 3 veces (1, 2, 3) y vuelve a tu posición para consultar tu clase actual o próxima.",
-        howTo = "Inclina la punta superior 3 veces hacia adelante.",
-        whatFor = "Muestra tu clase actual o próxima y su aula.",
+        titleRes = R.string.gesture_triple_shake_title,
+        gestureNameRes = R.string.gesture_triple_shake_name,
+        descriptionRes = R.string.gesture_triple_shake_desc,
+        howToRes = R.string.gesture_triple_shake_howto,
+        whatForRes = R.string.gesture_triple_shake_whatfor,
         icon = Icons.Default.Vibration,
         badgeColor = UgrRed
     ),
     ACTION_TRIGGER(
-        title = "Confirmar / Enviar",
-        gestureName = "Inclinar hacia ti",
-        description = "Inclina el móvil hacia ti y vuelve a la posición inicial para encargar menú en comedores o enviar un correo al profesor.",
-        howTo = "Inclina el móvil hacia ti.",
-        whatFor = "Reserva el menú para llevar en Comedores o escribe al profesor.",
+        titleRes = R.string.gesture_action_trigger_title,
+        gestureNameRes = R.string.gesture_action_trigger_name,
+        descriptionRes = R.string.gesture_action_trigger_desc,
+        howToRes = R.string.gesture_action_trigger_howto,
+        whatForRes = R.string.gesture_action_trigger_whatfor,
         icon = TiltTowardsUserIcon,
         badgeColor = WarningAmber
     ),
     LIFT_PHONE(
-        title = "Guiado paso a paso",
-        gestureName = "Levantar el móvil",
-        description = "Levanta el móvil en vertical frente a ti para ver el guiado paso a paso con fotos reales del recorrido.",
-        howTo = "Sube el móvil en vertical frente a ti.",
-        whatFor = "Cambia de ver el mapa 2D a un guiado paso a paso con fotos reales.",
+        titleRes = R.string.gesture_lift_phone_title,
+        gestureNameRes = R.string.gesture_lift_phone_name,
+        descriptionRes = R.string.gesture_lift_phone_desc,
+        howToRes = R.string.gesture_lift_phone_howto,
+        whatForRes = R.string.gesture_lift_phone_whatfor,
         icon = Icons.Default.ArrowUpward,
         badgeColor = EtsiitBlue
     ),
     PROXIMITY_VOICE(
-        title = "Búsqueda por voz",
-        gestureName = "Acercar la mano",
-        description = "Acerca la mano al sensor superior del móvil (junto a la cámara frontal) para activar el asistente de voz y buscar cualquier destino.",
-        howTo = "Acerca la mano a poca distancia de la parte superior del móvil.",
-        whatFor = "Búsqueda por voz para guiarte a aulas, comedores o profesores.",
+        titleRes = R.string.gesture_proximity_voice_title,
+        gestureNameRes = R.string.gesture_proximity_voice_name,
+        descriptionRes = R.string.gesture_proximity_voice_desc,
+        howToRes = R.string.gesture_proximity_voice_howto,
+        whatForRes = R.string.gesture_proximity_voice_whatfor,
         icon = Icons.Default.Mic,
         badgeColor = VoicePurple
     ),
     PINCH_ZOOM(
-        title = "Zoom Horario",
-        gestureName = "Pellizco con 2 dedos",
-        description = "Haz el gesto de zoom con dos dedos (abrir o cerrar pellizco) para alternar entre la vista panorámica de 3 días y la vista detallada de 1 día.",
-        howTo = "Abre o junta 2 dedos sobre la pantalla.",
-        whatFor = "Alterna entre ver 3 días a la vez o el día actual ampliado con todos sus detalles.",
+        titleRes = R.string.gesture_pinch_zoom_title,
+        gestureNameRes = R.string.gesture_pinch_zoom_name,
+        descriptionRes = R.string.gesture_pinch_zoom_desc,
+        howToRes = R.string.gesture_pinch_zoom_howto,
+        whatForRes = R.string.gesture_pinch_zoom_whatfor,
         icon = PinchZoomIcon,
         badgeColor = Color(0xFF4F46E5)
-    )
+    );
+
+    val title: String @Composable get() = stringResource(titleRes)
+    val gestureName: String @Composable get() = stringResource(gestureNameRes)
+    val description: String @Composable get() = stringResource(descriptionRes)
+    val howTo: String @Composable get() = stringResource(howToRes)
+    val whatFor: String @Composable get() = stringResource(whatForRes)
 }
 
 /**
@@ -419,7 +428,7 @@ fun GestureExplanationDialog(
                 )
                 Spacer(modifier = Modifier.height(2.dp))
                 Text(
-                    text = "Gesto: ${type.gestureName}",
+                    text = stringResource(R.string.gesture_name_label, type.gestureName),
                     fontSize = 12.sp,
                     fontWeight = FontWeight.SemiBold,
                     color = type.badgeColor
@@ -436,7 +445,7 @@ fun GestureExplanationDialog(
                 )
                 Spacer(modifier = Modifier.height(2.dp))
                 Text(
-                    text = "• Cómo es el gesto:",
+                    text = stringResource(R.string.gesture_how_to_label),
                     fontWeight = FontWeight.SemiBold,
                     fontSize = 11.sp,
                     color = TextPrimary
@@ -448,7 +457,7 @@ fun GestureExplanationDialog(
                     lineHeight = 16.sp
                 )
                 Text(
-                    text = "• Para qué sirve:",
+                    text = stringResource(R.string.gesture_what_for_label),
                     fontWeight = FontWeight.SemiBold,
                     fontSize = 11.sp,
                     color = TextPrimary
@@ -474,7 +483,7 @@ fun GestureExplanationDialog(
                     .height(42.dp)
             ) {
                 Text(
-                    text = "Entendido",
+                    text = stringResource(R.string.understood),
                     fontWeight = FontWeight.Bold,
                     fontSize = 14.sp,
                     color = Color.White
@@ -680,7 +689,7 @@ fun GesturesGuideScreen(
 
                         // Para qué sirve (con "Uso:")
                         Text(
-                            text = "Uso: ${gesture.whatFor}",
+                            text = stringResource(R.string.gesture_usage_label, gesture.whatFor),
                             fontSize = 11.5.sp,
                             color = TextSecondary,
                             lineHeight = 14.sp,

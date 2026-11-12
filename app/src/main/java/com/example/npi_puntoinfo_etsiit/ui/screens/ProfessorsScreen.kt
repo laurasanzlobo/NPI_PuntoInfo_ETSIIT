@@ -420,14 +420,15 @@ fun ProfessorsScreen(onNavigate: (String) -> Unit, searchedName: String? = null)
     val context = LocalContext.current
     val profile = UserSessionRepository.getProfile(context)
     val isLoggedIn = profile.isLoggedIn
+    val isEnglish = profile.language == "en"
     var selectedProfessor by remember { mutableStateOf<Professor?>(null) }
     var searchQuery by remember { mutableStateOf(searchedName ?: "") }
-    var selectedFilterCategory by remember(isLoggedIn) {
-        mutableStateOf(if (isLoggedIn) "Mis Profesores" else "Todos")
+    var selectedFilterCategory by remember(isLoggedIn, isEnglish) {
+        mutableStateOf(if (isLoggedIn) (if (isEnglish) "My Professors" else "Mis Profesores") else (if (isEnglish) "All" else "Todos"))
     }
 
-    LaunchedEffect(isLoggedIn) {
-        selectedFilterCategory = if (isLoggedIn) "Mis Profesores" else "Todos"
+    LaunchedEffect(isLoggedIn, isEnglish) {
+        selectedFilterCategory = if (isLoggedIn) (if (isEnglish) "My Professors" else "Mis Profesores") else (if (isEnglish) "All" else "Todos")
     }
 
     // Motor Text-to-Speech (TTS) en español para el diálogo conversacional
@@ -650,11 +651,11 @@ fun ProfessorsScreen(onNavigate: (String) -> Unit, searchedName: String? = null)
 
         val filtered = professorsList.filter { prof ->
             val matchesCategory = when (selectedFilterCategory) {
-                "Mis Profesores" -> prof.isMyTeacher
+                "Mis Profesores", "My Professors" -> prof.isMyTeacher
                 "CCIA" -> prof.department.contains("Computación", ignoreCase = true)
                 "LSI" -> prof.department.contains("Lenguajes", ignoreCase = true)
-                "Otras Áreas" -> !prof.isExternal && !prof.department.contains("Computación", ignoreCase = true) && !prof.department.contains("Lenguajes", ignoreCase = true)
-                "Exterior UGR" -> prof.isExternal
+                "Otras Áreas", "Other Departments" -> !prof.isExternal && !prof.department.contains("Computación", ignoreCase = true) && !prof.department.contains("Lenguajes", ignoreCase = true)
+                "Exterior UGR", "External UGR" -> prof.isExternal
                 else -> true
             }
 
@@ -1267,9 +1268,11 @@ fun ProfessorsScreen(onNavigate: (String) -> Unit, searchedName: String? = null)
 
             // Chips de filtrado rápido
             val categories = if (isLoggedIn) {
-                listOf("Mis Profesores", "Todos", "CCIA", "LSI", "Otras Áreas", "Exterior UGR")
+                if (isEnglish) listOf("My Professors", "All", "CCIA", "LSI", "Other Departments", "External UGR")
+                else listOf("Mis Profesores", "Todos", "CCIA", "LSI", "Otras Áreas", "Exterior UGR")
             } else {
-                listOf("Todos", "CCIA", "LSI", "Otras Áreas", "Exterior UGR")
+                if (isEnglish) listOf("All", "CCIA", "LSI", "Other Departments", "External UGR")
+                else listOf("Todos", "CCIA", "LSI", "Otras Áreas", "Exterior UGR")
             }
             LazyRow(
                 horizontalArrangement = Arrangement.spacedBy(6.dp),

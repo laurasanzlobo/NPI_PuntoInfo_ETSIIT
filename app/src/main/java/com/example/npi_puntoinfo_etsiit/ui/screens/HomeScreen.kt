@@ -1,6 +1,7 @@
 package com.example.npi_puntoinfo_etsiit.ui.screens
 
 import androidx.annotation.DrawableRes
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -36,6 +37,7 @@ import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -82,30 +84,28 @@ fun HomeScreen(
     }
 
     // Noticias oficiales reales de la ETSIIT con sus fotografías oficiales
-    val newsList = remember {
-        listOf(
-            NewsItem(
-                title = "IV Olimpiada Informática de Granada",
-                subtitle = "Fase clasificatoria provincial integrada en la Olimpiada de Andalucía.",
-                imageRes = R.drawable.noticia_olimpiada
-            ),
-            NewsItem(
-                title = "Liderazgo en el Ranking Shanghai 2026",
-                subtitle = "La ETSIIT y la UGR se consolidan en el top internacional de informática.",
-                imageRes = R.drawable.noticia_shanghai
-            ),
-            NewsItem(
-                title = "Emisión Instantánea de la TUI 2026/27",
-                subtitle = "Puntos de emisión activa en el campus para obtener tu carné universitario.",
-                imageRes = R.drawable.noticia_tui
-            ),
-            NewsItem(
-                title = "Plan de Tutorización Nuevos Alumnos",
-                subtitle = "Apoyo y mentoría para estudiantes que inician sus estudios en la escuela.",
-                imageRes = R.drawable.noticia_tutorizacion
-            )
+    val newsList = listOf(
+        NewsItem(
+            title = stringResource(R.string.news_1_title),
+            subtitle = stringResource(R.string.news_1_subtitle),
+            imageRes = R.drawable.noticia_olimpiada
+        ),
+        NewsItem(
+            title = stringResource(R.string.news_2_title),
+            subtitle = stringResource(R.string.news_2_subtitle),
+            imageRes = R.drawable.noticia_shanghai
+        ),
+        NewsItem(
+            title = stringResource(R.string.news_3_title),
+            subtitle = stringResource(R.string.news_3_subtitle),
+            imageRes = R.drawable.noticia_tui
+        ),
+        NewsItem(
+            title = stringResource(R.string.news_4_title),
+            subtitle = stringResource(R.string.news_4_subtitle),
+            imageRes = R.drawable.noticia_tutorizacion
         )
-    }
+    )
 
     val pagerState = rememberPagerState(pageCount = { newsList.size })
 
@@ -126,9 +126,39 @@ fun HomeScreen(
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         // ==========================================
-        // 1. TARJETA SUPERIOR: PRÓXIMA CLASE (Solo visible si ha iniciado sesión y hay clase; si no, se oculta y las noticias se expanden)
+        // 1. TARJETA SUPERIOR: PRÓXIMA CLASE (si ha iniciado sesión) O SELECCIÓN DE IDIOMA POR BANDERA (si es invitado)
         // ==========================================
-        if (profile.isLoggedIn && currentOrNextClass != null) {
+        if (!profile.isLoggedIn) {
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(18.dp),
+                color = SurfaceWhite,
+                shadowElevation = 2.dp,
+                border = BorderStroke(1.dp, SurfaceBorder.copy(alpha = 0.5f))
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = stringResource(R.string.welcome_title),
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 15.sp,
+                            color = TextPrimary
+                        )
+                        Text(
+                            text = stringResource(R.string.welcome_subtitle),
+                            fontSize = 12.sp,
+                            color = TextSecondary
+                        )
+                    }
+                }
+            }
+        } else if (currentOrNextClass != null) {
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -187,7 +217,7 @@ fun HomeScreen(
 
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(
-                                    text = "PRÓXIMA CLASE",
+                                    text = stringResource(R.string.next_class_header),
                                     fontSize = 11.sp,
                                     fontWeight = FontWeight.ExtraBold,
                                     color = Color.White.copy(alpha = 0.85f),
@@ -235,7 +265,7 @@ fun HomeScreen(
                                     modifier = Modifier.size(18.dp)
                                 )
                                 Text(
-                                    text = "Ir",
+                                    text = stringResource(R.string.go),
                                     color = UgrRed,
                                     fontWeight = FontWeight.ExtraBold,
                                     fontSize = 15.sp
@@ -359,7 +389,8 @@ fun HomeScreen(
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 HomeFlatButton(
-                    title = "Mi Horario",
+                    title = stringResource(R.string.nav_schedule_title),
+                    subtitle = stringResource(R.string.nav_schedule_subtitle),
                     icon = Icons.Default.DateRange,
                     accentColor = Color(0xFF1D4ED8),
                     bgColor = Color(0xFFF0F7FF),
@@ -370,7 +401,7 @@ fun HomeScreen(
                 )
 
                 HomeFlatButton(
-                    title = "Servicios",
+                    title = stringResource(R.string.nav_services_title),
                     icon = Icons.Default.Info,
                     accentColor = Color(0xFF0F766E),
                     bgColor = Color(0xFFF0FDFA),
@@ -387,7 +418,7 @@ fun HomeScreen(
                 )
 
                 HomeFlatButton(
-                    title = "Comedores",
+                    title = stringResource(R.string.nav_dining_title),
                     icon = Icons.Default.Restaurant,
                     accentColor = Color(0xFFD97706),
                     bgColor = Color(0xFFFFFBEB),
@@ -410,7 +441,7 @@ fun HomeScreen(
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 HomeFlatButton(
-                    title = "Servicios",
+                    title = stringResource(R.string.nav_services_title),
                     icon = Icons.Default.Info,
                     accentColor = Color(0xFF0F766E),
                     bgColor = Color(0xFFF0FDFA),
@@ -427,7 +458,7 @@ fun HomeScreen(
                 )
 
                 HomeFlatButton(
-                    title = "Comedores",
+                    title = stringResource(R.string.nav_dining_title),
                     icon = Icons.Default.Restaurant,
                     accentColor = Color(0xFFD97706),
                     bgColor = Color(0xFFFFFBEB),

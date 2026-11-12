@@ -66,33 +66,35 @@ object UserSessionRepository {
             return loggedOut
         }
 
-        val loaded = try {
+        val systemLanguage = if (java.util.Locale.getDefault().language.equals("en", ignoreCase = true)) "en" else "es"
+        val loadedWithSysLang = (try {
             gson.fromJson(json, UserProfile::class.java) ?: UserProfile(isLoggedIn = false)
         } catch (_: Exception) {
             UserProfile(isLoggedIn = false)
-        }
+        }).copy(language = systemLanguage)
 
-        if (!loaded.isLoggedIn) {
-            currentProfileState = loaded
-            return loaded
+        if (!loadedWithSysLang.isLoggedIn) {
+            currentProfileState = loadedWithSysLang
+            return loadedWithSysLang
         }
 
         // Si está logueado, garantizamos los datos oficiales de Elena Morales Vega y sus 6 asignaturas
-        val hasAllSix = officialMatricula.keys.all { loaded.matricula.containsKey(it) }
-        val finalProfile = if (!hasAllSix || loaded.name.contains("José", ignoreCase = true) || loaded.name.contains("Pedregosa", ignoreCase = true) || loaded.dni == "48291054") {
-            val updated = loaded.copy(
+        val hasAllSix = officialMatricula.keys.all { loadedWithSysLang.matricula.containsKey(it) }
+        val finalProfile = if (!hasAllSix || loadedWithSysLang.name.contains("José", ignoreCase = true) || loadedWithSysLang.name.contains("Pedregosa", ignoreCase = true) || loadedWithSysLang.dni == "48291054") {
+            val updated = loadedWithSysLang.copy(
                 name = "Elena Morales Vega",
                 dni = "48291054R",
                 primaryCourse = 4,
                 primaryGroup = "A",
                 cuatrimestre = 1,
                 matricula = officialMatricula,
+                language = systemLanguage,
                 isLoggedIn = true
             )
             saveProfile(context, updated)
             updated
         } else {
-            loaded
+            loadedWithSysLang
         }
         currentProfileState = finalProfile
         return finalProfile
@@ -102,6 +104,7 @@ object UserSessionRepository {
      * Inicia sesión con el perfil oficial preconfigurado de la estudiante tras escanear TUI / QR.
      */
     fun loginWithOfficialProfile(context: Context, isAccessibleRouting: Boolean = false): UserProfile {
+        val currentLang = getProfile(context).language
         val newProfile = UserProfile(
             name = "Elena Morales Vega",
             dni = "48291054R",
@@ -115,10 +118,19 @@ object UserSessionRepository {
             cuatrimestre = 1,
             matricula = officialMatricula,
             isAccessibleRouting = isAccessibleRouting,
+            language = currentLang,
             isLoggedIn = true
         )
         saveProfile(context, newProfile)
         return newProfile
+    }
+
+    /**
+     * Actualiza el idioma preferido de la app ("es" / "en").
+     */
+    fun updateLanguage(context: Context, language: String) {
+        val current = getProfile(context)
+        saveProfile(context, current.copy(language = language))
     }
 
     /**

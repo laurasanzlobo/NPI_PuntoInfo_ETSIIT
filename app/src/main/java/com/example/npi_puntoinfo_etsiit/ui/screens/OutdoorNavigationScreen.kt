@@ -510,16 +510,18 @@ fun OutdoorNavigationScreen(
                         modifier = Modifier.fillMaxWidth(),
                         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
                     ) {
+                        val isEnglish = java.util.Locale.getDefault().language.equals("en", ignoreCase = true)
                         Text(
-                            text = state.destination?.name ?: "Seleccionar destino UGR",
+                            text = state.destination?.getLocalizedName(isEnglish) ?: if (isEnglish) "Select UGR destination" else "Seleccionar destino UGR",
                             fontWeight = FontWeight.SemiBold,
                             color = TextPrimary,
                             maxLines = 1
                         )
                     }
                     DropdownMenu(expanded = destinationMenu, onDismissRequest = { destinationMenu = false }) {
+                        val isEnglish = java.util.Locale.getDefault().language.equals("en", ignoreCase = true)
                         OutdoorDestinations.mapDestinations.forEach { destination ->
-                            DropdownMenuItem(text = { Text(destination.name) }, onClick = {
+                            DropdownMenuItem(text = { Text(destination.getLocalizedName(isEnglish)) }, onClick = {
                                 selectDestination(destination.id)
                             })
                         }
@@ -541,8 +543,10 @@ fun OutdoorNavigationScreen(
                         shadowElevation = 2.dp,
                         border = BorderStroke(1.dp, SurfaceBorder.copy(alpha = 0.5f))
                     ) {
+                        val isEnglish = java.util.Locale.getDefault().language.equals("en", ignoreCase = true)
+                        val localizedTarget = if (isEnglish && indoor.target.name == "Comedor Aynadamar") "Aynadamar Dining Hall" else indoor.target.name
                         Text(
-                            text = "${indoor.target.name} · ${indoor.target.location}",
+                            text = "$localizedTarget · ${indoor.target.location}",
                             modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
                             style = MaterialTheme.typography.bodySmall,
                             fontWeight = FontWeight.Medium,
@@ -555,8 +559,9 @@ fun OutdoorNavigationScreen(
                         color = SurfaceWhite.copy(alpha = 0.95f),
                         shadowElevation = 2.dp
                     ) {
+                        val isEnglish = java.util.Locale.getDefault().language.equals("en", ignoreCase = true)
                         Text(
-                            text = "Sin ruta interior para $finalDestination",
+                            text = if (isEnglish) "No indoor route for $finalDestination" else "Sin ruta interior para $finalDestination",
                             modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.error
@@ -620,10 +625,12 @@ fun OutdoorNavigationScreen(
             ) {
                 // Aviso de llegada
                 if (showArrival && indoor == null) {
+                    val isEnglish = java.util.Locale.getDefault().language.equals("en", ignoreCase = true)
+                    val destName = state.destination?.getLocalizedName(isEnglish) ?: ""
                     Surface(color = MaterialTheme.colorScheme.secondaryContainer, shape = RoundedCornerShape(10.dp)) {
                         Row(Modifier.padding(horizontal = 12.dp, vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
-                            Text("Estás cerca de ${state.destination?.name}. Comprueba el acceso.", Modifier.weight(1f), style = MaterialTheme.typography.bodySmall)
-                            TextButton(onClick = { showArrival = false }) { Text("Cerrar", style = MaterialTheme.typography.labelMedium) }
+                            Text(if (isEnglish) "You are near $destName. Check entry." else "Estás cerca de $destName. Comprueba el acceso.", Modifier.weight(1f), style = MaterialTheme.typography.bodySmall)
+                            TextButton(onClick = { showArrival = false }) { Text(if (isEnglish) "Close" else "Cerrar", style = MaterialTheme.typography.labelMedium) }
                         }
                     }
                 }
@@ -657,6 +664,7 @@ fun OutdoorNavigationScreen(
 
                 if (route != null) {
                     // Resumen de la ruta exterior
+                    val isEnglish = java.util.Locale.getDefault().language.equals("en", ignoreCase = true)
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically,
@@ -671,7 +679,7 @@ fun OutdoorNavigationScreen(
                                 color = TextPrimary
                             )
                             Text(
-                                text = state.destination?.name ?: "Ruta peatonal exterior",
+                                text = state.destination?.getLocalizedName(isEnglish) ?: if (isEnglish) "Outdoor walking route" else "Ruta peatonal exterior",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = TextSecondary,
                                 fontWeight = FontWeight.Medium
@@ -942,8 +950,13 @@ fun OutdoorNavigationScreen(
                                 tint = UgrRed,
                                 modifier = Modifier.size(42.dp)
                             )
+                            val isEnglish = java.util.Locale.getDefault().language.equals("en", ignoreCase = true)
                             Text(
-                                text = if (turnLeft) "Gira a la izquierda" else "Gira a la derecha",
+                                text = if (turnLeft) {
+                                    if (isEnglish) "Turn left" else "Gira a la izquierda"
+                                } else {
+                                    if (isEnglish) "Turn right" else "Gira a la derecha"
+                                },
                                 fontSize = 18.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = Color.White,

@@ -44,6 +44,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import com.example.npi_puntoinfo_etsiit.R
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -172,6 +174,17 @@ fun AppNavigation() {
             else destinationId?.let { EtsiitAccess.diningJourney(graph, it) }
             val journey = combined ?: OutdoorDestinations.find(destinationId)?.let { NavigationJourney.Outdoor(it) }
                 ?: return
+
+            if (combined != null && destinationId == EtsiitAccess.outdoorId && CampusLocationManager.isUserNearEtsiit(context)) {
+                clearHandoff()
+                activeTrip = null
+                activeDestination = combined.indoor.target.name
+                activeLocation = combined.indoor.target.location
+                activeEntryNodeId = null
+                navigateToTab(Screen.Navigation.route)
+                return
+            }
+
             activeTrip = NavigationTrip.start(journey)
             clearHandoff()
             activeDestination = null
@@ -193,8 +206,17 @@ fun AppNavigation() {
             val loc = uri.getQueryParameter("location")
             val graph = GrafoRepository.getGrafo(context)
             if (dest != null && EtsiitAccess.journey(graph, dest, loc.orEmpty()) != null) {
-                handleNavigation(OutdoorNavigationRoute.forIndoorTarget(dest, loc.orEmpty(),
-                    graph.buscarNodoPorDestino(dest)?.id))
+                if (CampusLocationManager.isUserNearEtsiit(context)) {
+                    clearHandoff()
+                    activeTrip = null
+                    activeDestination = dest
+                    activeLocation = loc
+                    activeEntryNodeId = null
+                    navigateToTab(Screen.Navigation.route)
+                } else {
+                    handleNavigation(OutdoorNavigationRoute.forIndoorTarget(dest, loc.orEmpty(),
+                        graph.buscarNodoPorDestino(dest)?.id))
+                }
                 return
             }
             if (dest?.contains("comedor", ignoreCase = true) == true) {
@@ -418,18 +440,17 @@ fun AppNavigation() {
     // Título superior dinámico según la pantalla activa
     val currentTitle = when {
         currentRoute == Screen.Home.route -> ""
-        currentRoute == Screen.Schedule.route -> "Mi Horario"
+        currentRoute == Screen.Schedule.route -> stringResource(R.string.nav_schedule_title)
         currentRoute?.startsWith("navigation") == true -> {
-            if (isVerticalGuidanceActive && !activeDestination.isNullOrBlank()) "Guiado Paso a Paso" else "Mapa ETSIIT"
+            if (isVerticalGuidanceActive && !activeDestination.isNullOrBlank()) stringResource(R.string.title_step_by_step) else stringResource(R.string.indoor_map_title)
         }
         currentRoute == Screen.Dining.route -> {
-            if (isDiningPaymentActive) "Pago Comedor" else "Comedores"
+            if (isDiningPaymentActive) "Pago Comedor" else stringResource(R.string.title_dining)
         }
-        currentRoute == Screen.Outdoor.routePattern -> "Mapa exterior"
-        currentRoute == Screen.Professors.route || currentRoute?.startsWith(Screen.Professors.route) == true -> "Profesores"
-        currentRoute == Screen.Services.route -> "Servicios del Campus"
-        currentRoute == Screen.Profile.route -> "Mi Perfil"
-        currentRoute == Screen.GesturesGuide.route -> "Guía de Gestos"
+        currentRoute == Screen.Outdoor.routePattern -> stringResource(R.string.title_outdoor_map)
+        currentRoute == Screen.Professors.route || currentRoute?.startsWith(Screen.Professors.route) == true -> stringResource(R.string.title_professors)
+        currentRoute == Screen.Profile.route -> stringResource(R.string.title_profile)
+        currentRoute == Screen.GesturesGuide.route -> stringResource(R.string.title_gestures_guide)
         else -> ""
     }
 
@@ -724,7 +745,7 @@ fun AppNavigation() {
                     onNavigate = { route -> handleNavigation(route) }
                 )
             }
-            
+
             composable(Screen.Profile.route) {
                 ProfileScreen(
                     onBack = {

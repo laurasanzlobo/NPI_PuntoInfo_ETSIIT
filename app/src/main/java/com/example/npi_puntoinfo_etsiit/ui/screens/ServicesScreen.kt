@@ -48,13 +48,14 @@ fun ServicesScreen(
     val context = LocalContext.current
     val profile = UserSessionRepository.getProfile(context)
     val isLoggedIn = profile.isLoggedIn
+    val isEnglish = profile.language == "en"
 
-    val services = remember {
+    val services = remember(isEnglish) {
         listOf(
             CampusServiceItem(
                 id = "conserjeria",
-                title = "Conserjería",
-                subtitle = "Planta Baja · Ayuda",
+                title = if (isEnglish) "Reception / Janitor" else "Conserjería",
+                subtitle = if (isEnglish) "Ground Floor · Help" else "Planta Baja · Ayuda",
                 icon = Icons.Default.SupportAgent,
                 isFunctional = true,
                 accentColor = Color(0xFFD97706),
@@ -64,8 +65,8 @@ fun ServicesScreen(
             ),
             CampusServiceItem(
                 id = "biblioteca",
-                title = "Biblioteca",
-                subtitle = "Planta 1 · Estudio",
+                title = if (isEnglish) "Library" else "Biblioteca",
+                subtitle = if (isEnglish) "1st Floor · Study" else "Planta 1 · Estudio",
                 icon = Icons.Default.LocalLibrary,
                 isFunctional = true,
                 accentColor = Color(0xFF1D4ED8),
@@ -75,8 +76,8 @@ fun ServicesScreen(
             ),
             CampusServiceItem(
                 id = "cafeteria",
-                title = "Cafetería",
-                subtitle = "Planta -1 · Desayunos",
+                title = if (isEnglish) "Cafeteria" else "Cafetería",
+                subtitle = if (isEnglish) "Floor -1 · Breakfast" else "Planta -1 · Desayunos",
                 icon = Icons.Default.LocalCafe,
                 isFunctional = true,
                 accentColor = Color(0xFFC2410C),
@@ -86,8 +87,8 @@ fun ServicesScreen(
             ),
             CampusServiceItem(
                 id = "secretaria",
-                title = "Secretaría",
-                subtitle = "Planta Baja · Trámites",
+                title = if (isEnglish) "Secretary's Office" else "Secretaría",
+                subtitle = if (isEnglish) "Ground Floor · Administration" else "Planta Baja · Trámites",
                 icon = Icons.Default.MeetingRoom,
                 isFunctional = true,
                 accentColor = Color(0xFF7C3AED),
@@ -97,8 +98,8 @@ fun ServicesScreen(
             ),
             CampusServiceItem(
                 id = "clubes",
-                title = "Clubes y Actividades",
-                subtitle = "Planta -1 · Ocio",
+                title = if (isEnglish) "Clubs & Activities" else "Clubes y Actividades",
+                subtitle = if (isEnglish) "Floor -1 · Leisure" else "Planta -1 · Ocio",
                 icon = Icons.Default.Groups,
                 isFunctional = false,
                 accentColor = Color(0xFFE11D48),
@@ -108,8 +109,8 @@ fun ServicesScreen(
             ),
             CampusServiceItem(
                 id = "movilidad",
-                title = "Relaciones Inter.",
-                subtitle = "Planta Baja · Movilidad",
+                title = if (isEnglish) "International Relations" else "Relaciones Inter.",
+                subtitle = if (isEnglish) "Ground Floor · Mobility" else "Planta Baja · Movilidad",
                 icon = Icons.Default.Public,
                 isFunctional = false,
                 accentColor = Color(0xFF0284C7),
@@ -125,7 +126,7 @@ fun ServicesScreen(
     // Diálogo informativo breve para servicios que son solo etiqueta
     if (selectedInfoService != null) {
         val s = selectedInfoService!!
-        val plantaUbicacion = if (s.id == "clubes") "Planta -1" else "Planta Baja"
+        val plantaUbicacion = if (isEnglish) (if (s.id == "clubes") "Floor -1" else "Ground Floor") else (if (s.id == "clubes") "Planta -1" else "Planta Baja")
         AlertDialog(
             onDismissRequest = { selectedInfoService = null },
             title = {
@@ -137,7 +138,10 @@ fun ServicesScreen(
             },
             text = {
                 Text(
-                    text = "El servicio de ${s.title} se encuentra ubicado en la $plantaUbicacion de la ETSIIT. Actualmente está configurado como servicio informativo.",
+                    text = if (isEnglish)
+                        "The ${s.title} service is located on $plantaUbicacion at ETSIIT. Currently configured as an informational service."
+                    else
+                        "El servicio de ${s.title} se encuentra ubicado en la $plantaUbicacion de la ETSIIT. Actualmente está configurado como servicio informativo.",
                     fontSize = 13.sp,
                     color = TextSecondary,
                     lineHeight = 18.sp
@@ -145,7 +149,7 @@ fun ServicesScreen(
             },
             confirmButton = {
                 TextButton(onClick = { selectedInfoService = null }) {
-                    Text("Entendido", color = CampusTeal, fontWeight = FontWeight.Bold)
+                    Text(if (isEnglish) "Got it" else "Entendido", color = CampusTeal, fontWeight = FontWeight.Bold)
                 }
             }
         )
@@ -186,13 +190,13 @@ fun ServicesScreen(
                 }
                 Column {
                     Text(
-                        text = "Servicios del Campus",
+                        text = if (isEnglish) "Campus Services" else "Servicios del Campus",
                         fontWeight = FontWeight.Bold,
                         fontSize = 15.sp,
                         color = TextPrimary
                     )
                     Text(
-                        text = "Selecciona un servicio para ver su ruta o información",
+                        text = if (isEnglish) "Select a service to view its route or information" else "Selecciona un servicio para ver su ruta o información",
                         fontSize = 12.sp,
                         color = TextSecondary
                     )
@@ -237,7 +241,7 @@ fun ServicesScreen(
                     modifier = Modifier.weight(1f)
                 ) {
                     Text(
-                        text = "Profesores y Tutorías",
+                        text = if (isEnglish) "Professors & Office Hours" else "Profesores y Tutorías",
                         fontWeight = FontWeight.Bold,
                         fontSize = 15.sp,
                         color = Color(0xFF115E59)

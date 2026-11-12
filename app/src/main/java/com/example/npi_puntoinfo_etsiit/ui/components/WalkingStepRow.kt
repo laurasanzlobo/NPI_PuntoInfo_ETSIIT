@@ -18,6 +18,8 @@ import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import com.example.npi_puntoinfo_etsiit.R
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -89,7 +91,7 @@ fun WalkingStepRow(step: WalkingStep, number: Int) {
                         .height(42.dp)
                 ) {
                     Text(
-                        text = "Cerrar",
+                        text = stringResource(R.string.close),
                         fontWeight = FontWeight.Bold,
                         fontSize = 14.sp,
                         color = Color.White

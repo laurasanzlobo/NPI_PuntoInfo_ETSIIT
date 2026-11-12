@@ -8,7 +8,18 @@ data class GeoPoint(val latitude: Double, val longitude: Double) {
 }
 
 /** El motor solo necesita un identificador, una etiqueta y coordenadas, no un nodo interior. */
-data class OutdoorDestination(val id: String, val name: String, val description: String, val point: GeoPoint)
+data class OutdoorDestination(val id: String, val name: String, val description: String, val point: GeoPoint) {
+    fun getLocalizedName(isEnglish: Boolean = java.util.Locale.getDefault().language.equals("en", ignoreCase = true)): String {
+        return if (isEnglish) {
+            when {
+                id.startsWith("dining-") || name.contains("Comedor") -> "Aynadamar Dining Hall"
+                id == "etsiit" -> "ETSIIT Main Building"
+                id == "etsiit-auxiliar" -> "ETSIIT Auxiliary Building"
+                else -> name
+            }
+        } else name
+    }
+}
 
 object OutdoorDestinations {
     // Destinos visibles en el selector del mapa exterior (solo ETSIIT y Edificio Auxiliar)
