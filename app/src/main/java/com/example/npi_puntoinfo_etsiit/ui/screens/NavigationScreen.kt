@@ -276,9 +276,9 @@ fun NavigationScreen(
             }
         } else {
             val bottomPadding = if (hasActiveRoute && rutaCalculada != null) {
-                128.dp
+                148.dp
             } else {
-                98.dp
+                24.dp
             }
 
             MapaRutaView(
@@ -319,7 +319,7 @@ fun NavigationScreen(
             }
         }
 
-        // 2. CABECERA FLOTANTE SUPERIOR (Oculta durante el guiado vertical a pantalla completa)
+        // 2. CABECERA FLOTANTE SUPERIOR: Destino + Selector de Planta + Leyenda de colores
         if (!isVerticalGuidanceActive) {
             Column(
                 modifier = Modifier
@@ -328,114 +328,60 @@ fun NavigationScreen(
                     .padding(horizontal = 14.dp, vertical = 8.dp),
                 verticalArrangement = Arrangement.spacedBy(6.dp)
             ) {
-            // Píldora ovalada con el destino / título
-            Surface(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(24.dp),
-                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)),
-                color = SurfaceWhite.copy(alpha = 0.96f),
-                shadowElevation = 3.dp
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 8.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
+                // Píldora compacta con el destino (sin "Desde" ni planta redundante)
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(20.dp),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)),
+                    color = SurfaceWhite.copy(alpha = 0.96f),
+                    shadowElevation = 3.dp
                 ) {
                     Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 14.dp, vertical = 8.dp),
                         verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.weight(1f)
+                        horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Box(
-                            modifier = Modifier
-                                .size(34.dp)
-                                .clip(CircleShape)
-                                .background(
-                                    (if (isVerticalGuidanceActive) EtsiitBlue else UgrRed).copy(alpha = 0.12f)
-                                ),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                imageVector = if (isVerticalGuidanceActive) Icons.AutoMirrored.Filled.DirectionsWalk else Icons.Default.Place,
-                                contentDescription = null,
-                                tint = if (isVerticalGuidanceActive) EtsiitBlue else UgrRed,
-                                modifier = Modifier.size(20.dp)
-                            )
-                        }
-                        Spacer(modifier = Modifier.width(10.dp))
-                        Column {
-                            Text(
-                                text = if (hasActiveRoute) formattedTitle else stringResource(R.string.indoor_map_title),
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 15.sp,
-                                color = TextPrimary,
-                                maxLines = 1
-                            )
-                            if (hasActiveRoute && subtitleText.isNotBlank() && subtitleText != "Ruta activa") {
-                                Text(
-                                    text = subtitleText,
-                                    fontSize = 12.sp,
-                                    color = TextSecondary,
-                                    maxLines = 1
-                                )
-                            } else if (!hasActiveRoute) {
-                                Text(
-                                    text = stringResource(R.string.indoor_map_subtitle),
-                                    fontSize = 12.sp,
-                                    color = TextSecondary,
-                                    maxLines = 1
-                                )
-                            }
-                            if (hasActiveRoute && nodoInicio != null) {
-                                Surface(
-                                    shape = RoundedCornerShape(6.dp),
-                                    color = EtsiitBlue.copy(alpha = 0.10f),
-                                    modifier = Modifier
-                                        .padding(top = 2.dp)
-                                        .clickable { showVerificationDialog = true }
-                                ) {
-                                    Row(
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.spacedBy(4.dp),
-                                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-                                    ) {
-                                        Box(
-                                            modifier = Modifier
-                                                .size(6.dp)
-                                                .clip(CircleShape)
-                                                .background(Color(0xFF10B981))
-                                        )
-                                        Text(
-                                            text = stringResource(R.string.from_label, com.example.npi_puntoinfo_etsiit.ui.components.formatearNombreNodoAmigable(nodoInicio)),
-                                            fontSize = 10.sp,
-                                            fontWeight = FontWeight.Bold,
-                                            color = EtsiitBlue
-                                        )
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    if (hasActiveRoute) {
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                            modifier = Modifier.weight(1f)
                         ) {
-                            // Loguito del gesto del acelerómetro (flecha hacia arriba / levantar el móvil)
-                            GestureBadge(
-                                type = GestureType.LIFT_PHONE,
-                                size = 28.dp,
-                                iconSize = 16.dp,
-                                onClick = {
-                                    val next = !isVerticalGuidanceActive
-                                    isManualGuidanceLocked = next
-                                    onPostureChanged(next)
+                            Box(
+                                modifier = Modifier
+                                    .size(32.dp)
+                                    .clip(CircleShape)
+                                    .background(UgrRed.copy(alpha = 0.12f)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Place,
+                                    contentDescription = null,
+                                    tint = UgrRed,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
+                            Spacer(modifier = Modifier.width(10.dp))
+                            Column {
+                                Text(
+                                    text = if (hasActiveRoute) formattedTitle else stringResource(R.string.indoor_map_title),
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 15.sp,
+                                    color = TextPrimary,
+                                    maxLines = 1
+                                )
+                                if (!hasActiveRoute) {
+                                    Text(
+                                        text = stringResource(R.string.indoor_map_subtitle),
+                                        fontSize = 12.sp,
+                                        color = TextSecondary,
+                                        maxLines = 1
+                                    )
                                 }
-                            )
+                            }
+                        }
 
-                            // Botón para finalizar / cancelar la ruta activa
+                        if (hasActiveRoute) {
                             IconButton(
                                 onClick = onClearRoute,
                                 modifier = Modifier.size(28.dp)
@@ -450,98 +396,70 @@ fun NavigationScreen(
                         }
                     }
                 }
-            }
 
-            // Fila para el botón "Volver al exterior" (alineado a la derecha, igual que "Ya estoy dentro" en GPS)
-            if (onReturnOutdoors != null) {
-                Row(
+                // Selector de plantas y leyenda de colores en la parte superior
+                Surface(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.End
+                    shape = RoundedCornerShape(16.dp),
+                    border = BorderStroke(1.dp, SurfaceBorder.copy(alpha = 0.5f)),
+                    color = SurfaceWhite.copy(alpha = 0.96f),
+                    shadowElevation = 3.dp
                 ) {
-                    CompactReturnOutdoorsButton(
-                        onClick = onReturnOutdoors
-                    )
-                }
-            }
-        }
-    }
-
-        // 3. TARJETA INFERIOR FLOTANTE (Solo cuando no está activo el modo vertical completo)
-        if (!isVerticalGuidanceActive) {
-            Surface(
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .fillMaxWidth()
-                    .padding(12.dp),
-                shape = RoundedCornerShape(20.dp),
-                color = SurfaceWhite.copy(alpha = 0.96f),
-                shadowElevation = 6.dp,
-                border = BorderStroke(1.dp, SurfaceBorder.copy(alpha = 0.5f))
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(14.dp)
-                        .animateContentSize(),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    // Selector de plantas con scroll horizontal
-                    Row(
+                    Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .horizontalScroll(rememberScrollState()),
-                        horizontalArrangement = Arrangement.spacedBy(6.dp),
-                        verticalAlignment = Alignment.CenterVertically
+                            .padding(horizontal = 12.dp, vertical = 8.dp)
+                            .animateContentSize(),
+                        verticalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
-                        Text(
-                            text = stringResource(R.string.floor_label),
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = TextSecondary
-                        )
-                        plantasDisponibles.forEach { p ->
-                            val esActiva = (p == plantaSeleccionada)
-                            val tieneRuta = plantasEnRuta.contains(p)
-                            FilterChip(
-                                selected = esActiva,
-                                onClick = { plantaSeleccionada = p },
-                                label = {
-                                    Text(
-                                        text = formatearPlanta(p),
-                                        fontSize = 11.sp,
-                                        fontWeight = if (esActiva) FontWeight.Bold else FontWeight.Normal
-                                    )
-                                },
-                                colors = FilterChipDefaults.filterChipColors(
-                                    selectedContainerColor = EtsiitBlue.copy(alpha = 0.14f),
-                                    selectedLabelColor = EtsiitBlue
-                                ),
-                                leadingIcon = if (hasActiveRoute && tieneRuta && plantasDisponibles.size > plantasEnRuta.size) {
-                                    {
-                                        Box(
-                                            Modifier
-                                                .size(6.dp)
-                                                .clip(CircleShape)
-                                                .background(if (esActiva) EtsiitBlue else CampusTeal)
-                                        )
-                                    }
-                                } else null
-                            )
-                        }
-                    }
-
-                    // Si hay ruta activa: leyenda a la izquierda y distancia en metros a la derecha
-                    if (hasActiveRoute && rutaCalculada != null) {
-                        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
-
                         Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .horizontalScroll(rememberScrollState()),
+                            horizontalArrangement = Arrangement.spacedBy(6.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            // Leyenda: Inicio, Destino, Escalera / Ascensor
+                            Text(
+                                text = stringResource(R.string.floor_label),
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = TextSecondary
+                            )
+                            plantasDisponibles.forEach { p ->
+                                val esActiva = (p == plantaSeleccionada)
+                                val tieneRuta = plantasEnRuta.contains(p)
+                                FilterChip(
+                                    selected = esActiva,
+                                    onClick = { plantaSeleccionada = p },
+                                    label = {
+                                        Text(
+                                            text = formatearPlanta(p),
+                                            fontSize = 11.sp,
+                                            fontWeight = if (esActiva) FontWeight.Bold else FontWeight.Normal
+                                        )
+                                    },
+                                    colors = FilterChipDefaults.filterChipColors(
+                                        selectedContainerColor = EtsiitBlue.copy(alpha = 0.14f),
+                                        selectedLabelColor = EtsiitBlue
+                                    ),
+                                    leadingIcon = if (hasActiveRoute && tieneRuta && plantasDisponibles.size > plantasEnRuta.size) {
+                                        {
+                                            Box(
+                                                Modifier
+                                                    .size(6.dp)
+                                                    .clip(CircleShape)
+                                                    .background(if (esActiva) EtsiitBlue else CampusTeal)
+                                            )
+                                        }
+                                    } else null
+                                )
+                            }
+                        }
+
+                        if (hasActiveRoute && rutaCalculada != null) {
                             Row(
-                                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(12.dp),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Row(
@@ -568,26 +486,95 @@ fun NavigationScreen(
                                     }
                                 }
                             }
-
-                            // Alineado a la derecha del todo: solo los metros
-                            Surface(
-                                shape = RoundedCornerShape(8.dp),
-                                color = EtsiitBlue.copy(alpha = 0.10f)
-                            ) {
-                                Text(
-                                    text = "${rutaCalculada.distanciaMetros} m",
-                                    fontSize = 12.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = EtsiitBlue,
-                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-                                )
-                            }
+                        } else if (!hasActiveRoute) {
+                            Text(
+                                text = stringResource(R.string.explore_floors_hint),
+                                fontSize = 11.sp,
+                                color = TextSecondary
+                            )
                         }
-                    } else if (!hasActiveRoute) {
+                    }
+                }
+
+                // Fila para el botón "Volver al exterior" (alineado a la derecha, igual que "Ya estoy dentro" en GPS)
+                if (onReturnOutdoors != null) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.End
+                    ) {
+                        CompactReturnOutdoorsButton(
+                            onClick = onReturnOutdoors
+                        )
+                    }
+                }
+            }
+        }
+
+        // 3. TARJETA INFERIOR FLOTANTE: Igual que en guiado exterior (distancia + gesto + botón rojo iniciar paso a paso)
+        if (!isVerticalGuidanceActive && hasActiveRoute && rutaCalculada != null) {
+            Surface(
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .fillMaxWidth()
+                    .padding(12.dp),
+                shape = RoundedCornerShape(20.dp),
+                color = SurfaceWhite.copy(alpha = 0.96f),
+                shadowElevation = 6.dp,
+                border = BorderStroke(1.dp, SurfaceBorder.copy(alpha = 0.5f))
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(14.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "${rutaCalculada.distanciaMetros} m",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = TextPrimary
+                            )
+                            Text(
+                                text = formattedTitle,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = TextSecondary,
+                                fontWeight = FontWeight.Medium
+                            )
+                        }
+
+                        GestureBadge(
+                            type = GestureType.LIFT_PHONE,
+                            size = 38.dp,
+                            iconSize = 20.dp,
+                            onClick = {
+                                isManualGuidanceLocked = true
+                                onPostureChanged(true)
+                            }
+                        )
+                    }
+
+                    Button(
+                        onClick = {
+                            isManualGuidanceLocked = true
+                            onPostureChanged(true)
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(52.dp),
+                        shape = RoundedCornerShape(14.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = UgrRed)
+                    ) {
                         Text(
-                            text = stringResource(R.string.explore_floors_hint),
-                            fontSize = 11.sp,
-                            color = TextSecondary
+                            text = "Iniciar guiado paso a paso",
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White
                         )
                     }
                 }
