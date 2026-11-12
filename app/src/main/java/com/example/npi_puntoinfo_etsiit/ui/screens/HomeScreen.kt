@@ -382,7 +382,6 @@ fun HomeScreen(
             ) {
                 HomeFlatButton(
                     title = stringResource(R.string.nav_schedule_title),
-                    subtitle = stringResource(R.string.nav_schedule_subtitle),
                     icon = Icons.Default.DateRange,
                     accentColor = Color(0xFF1D4ED8),
                     bgColor = Color(0xFFF0F7FF),
