@@ -205,7 +205,7 @@ fun OriginVerificationDialog(
                             ) {
                                 Box(contentAlignment = Alignment.Center) {
                                     Icon(
-                                        imageVector = Icons.Default.School,
+                                        imageVector = Icons.Default.Place,
                                         contentDescription = null,
                                         tint = if (isOngoing) EtsiitBlue else WarningAmber,
                                         modifier = Modifier.size(28.dp)
@@ -214,43 +214,18 @@ fun OriginVerificationDialog(
                             }
 
                             Text(
-                                text = stringResource(R.string.verification_dialog_title),
-                                fontSize = 18.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = TextPrimary
-                            )
-
-                            Text(
-                                text = stringResource(R.string.verification_prompt_schedule, step.estimated.roomName, step.estimated.floorName),
-                                fontSize = 14.sp,
+                                text = stringResource(
+                                    R.string.verification_prompt_schedule,
+                                    step.estimated.classItem.acronym,
+                                    step.estimated.roomName,
+                                    step.estimated.floorName.lowercase()
+                                ),
+                                fontSize = 17.sp,
+                                lineHeight = 23.sp,
                                 color = TextPrimary,
                                 textAlign = TextAlign.Center,
-                                fontWeight = FontWeight.SemiBold
+                                fontWeight = FontWeight.Bold
                             )
-
-                            Surface(
-                                shape = RoundedCornerShape(12.dp),
-                                color = BackgroundLight,
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                Column(
-                                    modifier = Modifier.padding(12.dp),
-                                    horizontalAlignment = Alignment.CenterHorizontally
-                                ) {
-                                    Text(
-                                        text = step.estimated.explanation,
-                                        fontSize = 12.sp,
-                                        color = TextSecondary,
-                                        textAlign = TextAlign.Center
-                                    )
-                                    Text(
-                                        text = stringResource(R.string.verification_subject, step.estimated.classItem.subject),
-                                        fontSize = 11.sp,
-                                        color = TextSecondary,
-                                        fontWeight = FontWeight.Bold
-                                    )
-                                }
-                            }
 
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
@@ -264,7 +239,11 @@ fun OriginVerificationDialog(
                                     modifier = Modifier.weight(1f),
                                     shape = RoundedCornerShape(12.dp)
                                 ) {
-                                    Text(stringResource(R.string.verification_no_not_here), fontSize = 12.sp)
+                                    Text(
+                                        text = stringResource(R.string.verification_no_not_here),
+                                        fontSize = 14.sp,
+                                        maxLines = 1
+                                    )
                                 }
 
                                 Button(
@@ -276,7 +255,12 @@ fun OriginVerificationDialog(
                                     shape = RoundedCornerShape(12.dp),
                                     colors = ButtonDefaults.buttonColors(containerColor = EtsiitBlue)
                                 ) {
-                                    Text(stringResource(R.string.verification_yes_here), fontSize = 12.sp, color = Color.White)
+                                    Text(
+                                        text = stringResource(R.string.verification_yes_here),
+                                        fontSize = 14.sp,
+                                        color = Color.White,
+                                        maxLines = 1
+                                    )
                                 }
                             }
                         }
