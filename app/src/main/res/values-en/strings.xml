@@ -140,7 +140,7 @@
     <string name="profile_fast_route">Fast Route (Stairs)</string>
     <string name="profile_accessible_desc">Prioritizes elevators for reduced mobility</string>
     <string name="profile_fast_desc">Uses stairs and direct paths between floors</string>
-    <string name="profile_app_language">App Language</string>
+    <string name="profile_app_language">Language</string>
     <string name="profile_app_language_en">App Language</string>
     <string name="profile_lang_spanish">Spanish (Español)</string>
     <string name="profile_lang_english">English (Inglés)</string>

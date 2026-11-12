@@ -140,7 +140,7 @@
     <string name="profile_fast_route">Ruta Rápida (Escaleras)</string>
     <string name="profile_accessible_desc">Prioriza ascensores para movilidad reducida</string>
     <string name="profile_fast_desc">Usa escaleras y tramos directos entre plantas</string>
-    <string name="profile_app_language">Idioma de la Aplicación</string>
+    <string name="profile_app_language">Idioma</string>
     <string name="profile_app_language_en">App Language</string>
     <string name="profile_lang_spanish">Español (Spanish)</string>
     <string name="profile_lang_english">English (Inglés)</string>

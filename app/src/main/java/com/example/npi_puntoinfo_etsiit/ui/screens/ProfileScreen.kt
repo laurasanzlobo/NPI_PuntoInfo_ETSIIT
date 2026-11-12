@@ -348,20 +348,12 @@ fun ProfileScreen(
                                 modifier = Modifier.size(24.dp)
                             )
                         }
-                        Column {
-                            Text(
-                                text = stringResource(R.string.profile_app_language),
-                                fontSize = 14.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = TextPrimary
-                            )
-                            Text(
-                                text = if (profile.language == "en") "English" else "Español",
-                                fontSize = 12.sp,
-                                color = TextSecondary,
-                                lineHeight = 16.sp
-                            )
-                        }
+                        Text(
+                            text = stringResource(R.string.profile_app_language),
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = TextPrimary
+                        )
                     }
 
                     // Selector compacto con banderas de España y Reino Unido
