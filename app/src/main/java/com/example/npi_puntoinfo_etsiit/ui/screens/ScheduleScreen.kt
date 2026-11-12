@@ -625,12 +625,7 @@ private fun CarouselDayCard(
     onClassClick: (ClassItem) -> Unit,
     onCardClick: () -> Unit
 ) {
-    val hasActiveNow = day.classes.any { it.isCurrent }
-    val borderColor = when {
-        hasActiveNow -> CampusGreen
-        day.isToday -> UgrRed
-        else -> SurfaceBorder
-    }
+    val borderColor = if (day.isToday) UgrRed else SurfaceBorder
     val f = focusFactor.coerceIn(0f, 1f)
 
     Card(
@@ -638,7 +633,7 @@ private fun CarouselDayCard(
         shape = RoundedCornerShape(18.dp),
         colors = CardDefaults.cardColors(containerColor = SurfaceWhite),
         elevation = CardDefaults.cardElevation(defaultElevation = (1f + 1.5f * f).dp),
-        border = BorderStroke(if (day.isToday || hasActiveNow) 2.dp else 1.dp, borderColor)
+        border = BorderStroke(if (day.isToday) 2.dp else 1.dp, borderColor)
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
             // Cabecera del día centrada: si es HOY siempre se mantiene roja (incluso al deslizar a otros días)
