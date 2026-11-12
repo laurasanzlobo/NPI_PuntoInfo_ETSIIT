@@ -72,7 +72,9 @@
     <string name="verification_no_not_here">No</string>
     <string name="verification_subject">Asignatura: %1$s</string>
     <string name="verification_barometer_title">Estimación por Barómetro</string>
-    <string name="verification_barometer_prompt">¿Te encuentras actualmente en la %1$s?</string>
+    <string name="verification_barometer_prompt">¿Estás en la %1$s del %2$s?</string>
+    <string name="building_classrooms">edificio de las aulas</string>
+    <string name="building_common_areas">edificio de zonas comunes</string>
     <string name="verification_barometer_pressure">Presión: %1$.1f hPa</string>
     <string name="verification_barometer_floor">Planta estimada: %1$s</string>
     <string name="verification_no_wrong">No, es errónea</string>

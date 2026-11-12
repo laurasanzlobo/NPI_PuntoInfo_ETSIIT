@@ -44,7 +44,14 @@ import com.example.npi_puntoinfo_etsiit.data.EstimatedClassroom
 import com.example.npi_puntoinfo_etsiit.formatearPlanta
 import com.example.npi_puntoinfo_etsiit.sensors.BarometerFloorEstimate
 import com.example.npi_puntoinfo_etsiit.sensors.BarometerManager
+import com.example.npi_puntoinfo_etsiit.sensors.CampusLocationManager
+import com.example.npi_puntoinfo_etsiit.sensors.DeviceCoordinates
+import com.example.npi_puntoinfo_etsiit.sensors.DeviceLocationProvider
+import com.example.npi_puntoinfo_etsiit.sensors.EtsiitBuilding
+import com.example.npi_puntoinfo_etsiit.sensors.LocationPermission
 import com.example.npi_puntoinfo_etsiit.ui.theme.*
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.collectLatest
 
 /**
  * Estados del flujo de verificación del nodo de origen inicial
@@ -53,10 +60,10 @@ sealed class VerificationStep {
     // Paso 1: Confirmación del aula estimada por el Horario
     data class ScheduleStep(val estimated: EstimatedClassroom, val node: Nodo) : VerificationStep()
 
-    // Paso 2: Estimación de la planta mediante el Barómetro
+    // Paso 2: Estimación de la planta mediante el Barómetro y del edificio mediante GPS
     data class BarometerStep(val estimate: BarometerFloorEstimate) : VerificationStep()
 
-    // Paso 2.1: Selección del nodo más cercano dentro de la planta estimada por el Barómetro
+    // Paso 2.1: Selección del nodo más cercano dentro de la planta y edificio estimados
     data class FloorNodeSelectionStep(val floorCode: String, val floorName: String, val nodes: List<Nodo>) : VerificationStep()
 
     // Paso 3: Ambas estimaciones fallaron -> Escanear código QR mediante la cámara
@@ -72,6 +79,8 @@ fun formatearNombreNodoAmigable(
 ): String {
     val n = nodo.nombre
     return when {
+        n.equals("A_Menos1", ignoreCase = true) -> if (isEnglish) "Classroom -1" else "Aula -1"
+        n.equals("A_Menos2", ignoreCase = true) -> if (isEnglish) "Classroom -2" else "Aula -2"
         n.startsWith("A_") -> {
             val num = n.removePrefix("A_")
             val p = if (num.length >= 2) num.substring(0, 1) else "0"
@@ -85,10 +94,10 @@ fun formatearNombreNodoAmigable(
             if (isEnglish) "Laboratory $p.$rest" else "Laboratorio $p.$rest"
         }
         n.startsWith("D_") -> {
-            val rest = n.replace("_", " ")
+            val rest = n.removePrefix("D_").replace("_", " ")
             if (isEnglish) "Office $rest" else "Despacho $rest"
         }
-        n.equals("Entrada_Exterior", ignoreCase = true) || n.contains("Entrada", ignoreCase = true) ->
+        n.equals("Entrada_Exterior", ignoreCase = true) ->
             if (isEnglish) "Main Outside Entrance" else "Entrada Principal Exterior"
         n.equals("Vestibulo", ignoreCase = true) ->
             if (isEnglish) "Entrance Lobby" else "Vestíbulo de Entrada"
@@ -117,6 +126,38 @@ fun OriginVerificationDialog(
     onDismiss: () -> Unit
 ) {
     val context = LocalContext.current
+
+    // Coordenadas GPS del usuario para distinguir entre el edificio de las aulas y el de zonas comunes
+    var userCoordinates by remember {
+        mutableStateOf<DeviceCoordinates?>(
+            DeviceLocationProvider.getInstantLocation(context) ?: CampusLocationManager.lastKnownLocation
+        )
+    }
+
+    LaunchedEffect(context) {
+        val provider = DeviceLocationProvider(context)
+        val perm = provider.permission()
+        if (perm != LocationPermission.DENIED) {
+            DeviceLocationProvider.getInstantLocation(context)?.let {
+                userCoordinates = it
+                CampusLocationManager.lastKnownLocation = it
+            }
+            provider.lastKnownLocation()?.let {
+                userCoordinates = it
+                CampusLocationManager.lastKnownLocation = it
+            }
+            if (provider.isLocationEnabled()) {
+                provider.updates(perm, 2_000L)
+                    .catch { }
+                    .collectLatest { coords ->
+                        if (coords != null) {
+                            userCoordinates = coords
+                            CampusLocationManager.lastKnownLocation = coords
+                        }
+                    }
+            }
+        }
+    }
 
     // Determinar paso inicial: si hay aula estimada por horario, empezamos en Paso 1 (ScheduleStep);
     // si no hay horario activo, pasamos directamente a Paso 2 (BarometerStep).
@@ -266,9 +307,19 @@ fun OriginVerificationDialog(
                         }
 
                         // =========================================================================
-                        // PASO 2: ESTIMACIÓN DE PLANTA POR BARÓMETRO
+                        // PASO 2: ESTIMACIÓN DE PLANTA (BARÓMETRO) Y EDIFICIO (GPS)
                         // =========================================================================
                         is VerificationStep.BarometerStep -> {
+                            val detectedBuilding = CampusLocationManager.estimateEtsiitBuilding(
+                                userLat = userCoordinates?.latitude,
+                                userLon = userCoordinates?.longitude,
+                                floorCode = step.estimate.floorCode
+                            )
+                            val buildingLabel = when (detectedBuilding) {
+                                EtsiitBuilding.AULAS -> stringResource(R.string.building_classrooms)
+                                EtsiitBuilding.ZONAS_COMUNES -> stringResource(R.string.building_common_areas)
+                            }
+
                             Surface(
                                 shape = CircleShape,
                                 color = CampusTeal.copy(alpha = 0.12f),
@@ -285,7 +336,11 @@ fun OriginVerificationDialog(
                             }
 
                             Text(
-                                text = stringResource(R.string.verification_barometer_prompt, step.estimate.floorName),
+                                text = stringResource(
+                                    R.string.verification_barometer_prompt,
+                                    step.estimate.floorName.lowercase(),
+                                    buildingLabel
+                                ),
                                 fontSize = 17.sp,
                                 color = TextPrimary,
                                 textAlign = TextAlign.Center,
@@ -299,7 +354,7 @@ fun OriginVerificationDialog(
                             ) {
                                 OutlinedButton(
                                     onClick = {
-                                        // Si la estimación también es errónea, pasamos al Paso 3 (Cámara QR)
+                                        // Si la estimación también es errónea, pasamos directamente al Paso 3 (Cámara QR)
                                         currentStep = VerificationStep.QRScanStep
                                     },
                                     modifier = Modifier.weight(1f),
@@ -314,8 +369,11 @@ fun OriginVerificationDialog(
 
                                 Button(
                                     onClick = {
-                                        // Si dice que SÍ a la planta estimada, mostramos la lista de opciones de esa planta
-                                        val floorNodes = grafo.obtenerNodosPorPlanta(step.estimate.floorCode)
+                                        // Si dice que SÍ, filtramos los nodos solo por la planta y el edificio detectado
+                                        val floorNodes = grafo.obtenerNodosPorPlanta(
+                                            planta = step.estimate.floorCode,
+                                            edificio = detectedBuilding.graphCode
+                                        )
                                         currentStep = VerificationStep.FloorNodeSelectionStep(
                                             floorCode = step.estimate.floorCode,
                                             floorName = step.estimate.floorName,

@@ -137,13 +137,29 @@ class GrafoETSIIT {
     }
 
     /**
-     * Devuelve todos los nodos pertenecientes a una planta específica.
+     * Devuelve los nodos seleccionables pertenecientes a una planta específica,
+     * filtrando opcionalmente por edificio ("laboratorios" para aulas, "despachos" para zonas comunes)
+     * y excluyendo nodos intermedios de pasillo.
      */
-    fun obtenerNodosPorPlanta(planta: String): List<Nodo> {
+    fun obtenerNodosPorPlanta(planta: String, edificio: String? = null): List<Nodo> {
         val norm = normalizarPlanta(planta)
-        return directorioNodos.values
+        val floorNodes = directorioNodos.values
             .filter { normalizarPlanta(it.planta) == norm }
-            .sortedBy { it.nombre }
+            .filter {
+                !it.tipo.equals("pasillo", ignoreCase = true) &&
+                    !it.tipo.equals("pasillo_exterior", ignoreCase = true)
+            }
+
+        if (edificio.isNullOrBlank()) {
+            return floorNodes.sortedBy { it.nombre }
+        }
+
+        val byBuilding = floorNodes.filter { node ->
+            node.edificio.equals(edificio, ignoreCase = true) ||
+                (norm == "PSS" && edificio.equals("despachos", ignoreCase = true) && node.tipo.equals("aula", ignoreCase = true))
+        }
+
+        return (if (byBuilding.isNotEmpty()) byBuilding else floorNodes).sortedBy { it.nombre }
     }
 
     /**
