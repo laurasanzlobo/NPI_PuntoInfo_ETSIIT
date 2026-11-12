@@ -192,7 +192,7 @@ fun OnboardingTutorialOverlay(
                 targetId = SpotlightTargetId.HOME_NEXT_CLASS,
                 badgeText = "3 DE 7",
                 title = "Próxima Clase",
-                description = "Aquí verás la clase que tienes en curso o la siguiente del día y el aula donde se imparte. También puedes consultar tu clase agitando el móvil tres veces hacia ti.",
+                description = "Aquí verás la clase que tienes en curso o la siguiente del día y el aula donde se imparte.",
                 tipText = null,
                 icon = Icons.Default.School,
                 accentColor = UgrRed
@@ -210,7 +210,7 @@ fun OnboardingTutorialOverlay(
                 targetId = SpotlightTargetId.HOME_SCHEDULE_BUTTON,
                 badgeText = "5 DE 7",
                 title = "Mi Horario",
-                description = "Consulta tu cuadrante de horario semanal por asignaturas y colores.",
+                description = "Consulta tu horario semanal.",
                 tipText = null,
                 icon = Icons.Default.DateRange,
                 accentColor = Color(0xFF1D4ED8)
@@ -219,7 +219,7 @@ fun OnboardingTutorialOverlay(
                 targetId = SpotlightTargetId.HOME_DINING_BUTTON,
                 badgeText = "6 DE 7",
                 title = "Comedores",
-                description = "Consulta el menú día a día de los Comedores UGR, revisa los alérgenos de cada plato y abona tu ticket de comedor directamente desde el móvil.",
+                description = "Consulta el menú día a día de los Comedores UGR, con la posibilidad de reservar el menú para recoger.",
                 tipText = null,
                 icon = Icons.Default.Restaurant,
                 accentColor = Color(0xFFD97706)
@@ -228,7 +228,7 @@ fun OnboardingTutorialOverlay(
                 targetId = SpotlightTargetId.HOME_SERVICES_BUTTON,
                 badgeText = "7 DE 7",
                 title = "Servicios",
-                description = "Accede a los trámites de Secretaría y al directorio de profesores con sus despachos y estado de tutorías en vivo.",
+                description = "Accede al resto de servicios de la UGR, como los profesores, la secretaría, las actividades...",
                 tipText = null,
                 icon = Icons.Default.Info,
                 accentColor = Color(0xFF0F766E)
@@ -674,42 +674,6 @@ private fun VisualSpotlightTourView(
                     cornerRadius = cornerRadius,
                     style = Stroke(width = 2.5.dp.toPx())
                 )
-
-                // Pequeña línea indicadora desde el Spotlight hacia la tarjeta
-                val lineX = targetRect.center.x.coerceIn(48.dp.toPx(), size.width - 48.dp.toPx())
-                if (placeCardAtBottom) {
-                    val startY = holeTopLeft.y + holeSize.height + 6.dp.toPx()
-                    val endY = (startY + 28.dp.toPx()).coerceAtMost(size.height * 0.55f)
-                    if (endY > startY) {
-                        drawLine(
-                            color = Color.White.copy(alpha = 0.85f),
-                            start = Offset(lineX, startY),
-                            end = Offset(lineX, endY),
-                            strokeWidth = 3.dp.toPx()
-                        )
-                        drawCircle(
-                            color = step.accentColor,
-                            radius = 5.dp.toPx(),
-                            center = Offset(lineX, endY)
-                        )
-                    }
-                } else {
-                    val startY = holeTopLeft.y - 6.dp.toPx()
-                    val endY = (startY - 28.dp.toPx()).coerceAtLeast(size.height * 0.40f)
-                    if (startY > endY) {
-                        drawLine(
-                            color = Color.White.copy(alpha = 0.85f),
-                            start = Offset(lineX, startY),
-                            end = Offset(lineX, endY),
-                            strokeWidth = 3.dp.toPx()
-                        )
-                        drawCircle(
-                            color = step.accentColor,
-                            radius = 5.dp.toPx(),
-                            center = Offset(lineX, endY)
-                        )
-                    }
-                }
             }
         }
 
@@ -734,7 +698,7 @@ private fun VisualSpotlightTourView(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(20.dp)
+                        .padding(horizontal = 16.dp, vertical = 18.dp)
                 ) {
                     // Fila superior: Badge de paso + Botón cerrar/saltar
                     Row(
@@ -747,7 +711,7 @@ private fun VisualSpotlightTourView(
                             color = step.accentColor.copy(alpha = 0.14f)
                         ) {
                             Row(
-                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 5.dp),
+                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.spacedBy(6.dp)
                             ) {
@@ -758,8 +722,8 @@ private fun VisualSpotlightTourView(
                                     modifier = Modifier.size(15.dp)
                                 )
                                 Text(
-                                    text = step.badgeText,
-                                    fontSize = 11.sp,
+                                    text = "${step.badgeText} · ${step.title.uppercase()}",
+                                    fontSize = 11.5.sp,
                                     fontWeight = FontWeight.ExtraBold,
                                     color = step.accentColor
                                 )
@@ -782,19 +746,10 @@ private fun VisualSpotlightTourView(
                     Spacer(modifier = Modifier.height(12.dp))
 
                     Text(
-                        text = step.title,
-                        fontSize = 19.sp,
-                        fontWeight = FontWeight.ExtraBold,
-                        color = TextPrimary
-                    )
-
-                    Spacer(modifier = Modifier.height(6.dp))
-
-                    Text(
                         text = step.description,
-                        fontSize = 13.5.sp,
-                        color = TextPrimary.copy(alpha = 0.85f),
-                        lineHeight = 19.sp
+                        fontSize = 14.sp,
+                        color = TextPrimary.copy(alpha = 0.9f),
+                        lineHeight = 20.sp
                     )
 
                     Spacer(modifier = Modifier.height(10.dp))
@@ -828,15 +783,15 @@ private fun VisualSpotlightTourView(
                     ) {
                         // Puntos de progreso
                         Row(
-                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                            horizontalArrangement = Arrangement.spacedBy(4.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             repeat(totalSteps) { idx ->
                                 val isSelected = idx == stepIndex
                                 Box(
                                     modifier = Modifier
-                                        .height(8.dp)
-                                        .width(if (isSelected) 22.dp else 8.dp)
+                                        .height(7.dp)
+                                        .width(if (isSelected) 16.dp else 6.dp)
                                         .clip(CircleShape)
                                         .background(
                                             if (isSelected) step.accentColor
@@ -847,14 +802,16 @@ private fun VisualSpotlightTourView(
                         }
 
                         Row(
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            horizontalArrangement = Arrangement.spacedBy(6.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             OutlinedButton(
                                 onClick = onPrevious,
                                 shape = RoundedCornerShape(12.dp),
-                                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
-                                modifier = Modifier.height(40.dp)
+                                contentPadding = PaddingValues(0.dp),
+                                modifier = Modifier
+                                    .height(38.dp)
+                                    .width(36.dp)
                             ) {
                                 Icon(
                                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
@@ -867,19 +824,19 @@ private fun VisualSpotlightTourView(
                                 onClick = onNext,
                                 shape = RoundedCornerShape(12.dp),
                                 colors = ButtonDefaults.buttonColors(containerColor = step.accentColor),
-                                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-                                modifier = Modifier.height(40.dp)
+                                contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp),
+                                modifier = Modifier.height(38.dp)
                             ) {
                                 Text(
-                                    text = if (stepIndex < totalSteps - 1) "Siguiente" else "¡Probar Gestos!",
+                                    text = if (stepIndex < totalSteps - 1) "Siguiente" else "Probar gestos",
                                     fontSize = 13.sp,
                                     fontWeight = FontWeight.Bold
                                 )
-                                Spacer(modifier = Modifier.width(6.dp))
+                                Spacer(modifier = Modifier.width(4.dp))
                                 Icon(
                                     imageVector = Icons.AutoMirrored.Filled.ArrowForward,
                                     contentDescription = null,
-                                    modifier = Modifier.size(16.dp)
+                                    modifier = Modifier.size(15.dp)
                                 )
                             }
                         }
