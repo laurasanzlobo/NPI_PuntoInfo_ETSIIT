@@ -18,17 +18,26 @@
 \definecolor{sensorGreen}{RGB}{22, 101, 52}
 \definecolor{softBg}{RGB}{246, 248, 251}
 
+% Paleta de colores UML (Azul UGR / Pizarra y Gris)
+\definecolor{umlHeader}{HTML}{2C3E50}
+\definecolor{umlSingleton}{HTML}{1E3A8A}
+\definecolor{umlDataClass}{HTML}{0F766E}
+\definecolor{umlBody}{HTML}{F8F9FA}
+\definecolor{umlBorder}{HTML}{34495E}
+\definecolor{umlText}{HTML}{1E293B}
+
 \usepackage[plainpages=false, pdfpagelabels=true, colorlinks=true, linkcolor=etsiitBlue, urlcolor=etsiitBlue, citecolor=ugrRed]{hyperref}
 
 % --- Tablas, listas y gráficos simples ---
 \usepackage{booktabs}
 \usepackage{tabularx}
 \usepackage{array}
+\usepackage{float}
 \usepackage{enumitem}
 \usepackage{graphicx}
 \usepackage{caption}
 \usepackage{tikz}
-\usetikzlibrary{shapes.geometric, arrows.meta, positioning}
+\usetikzlibrary{shapes.geometric, shapes.multipart, arrows.meta, positioning, calc, fit, backgrounds}
 \usepackage{textcomp}
 \usepackage{eurosym}
 
@@ -319,6 +328,246 @@ Cuando el usuario inicia una ruta dentro de la ETSIIT sin venir guiado desde fue
 \label{fig:origen}
 \end{figure}
 
+\clearpage
+\subsection{Principales clases, atributos y métodos}
+Para estructurar la lógica de la aplicación bajo un enfoque modular, desacoplado y reactivo en Jetpack Compose, el sistema se apoya en un conjunto de componentes especializados encargados del enrutamiento, la captura sensorial, la gestión del estado y la persistencia. En la Tabla~\ref{tab:clases} se sintetizan las clases centrales del proyecto, detallando sus atributos más representativos y sus métodos principales. Como complemento visual, la Figura~\ref{fig:uml_arquitectura_npi} modela las relaciones arquitectónicas y dependencias entre estos componentes mediante un diagrama de clases UML.
+
+\begin{table}[H]
+\centering
+\footnotesize
+\setlength{\tabcolsep}{4.5pt}
+\renewcommand{\arraystretch}{1.28}
+\begin{tabularx}{\textwidth}{>{\bfseries\raggedright\arraybackslash}p{3.4cm} >{\raggedright\arraybackslash}p{4.1cm} >{\raggedright\arraybackslash}p{3.4cm} >{\raggedright\arraybackslash}X}
+\toprule
+\textbf{Clase} & \textbf{Responsabilidad} & \textbf{Atributos principales} & \textbf{Métodos más relevantes} \\
+\midrule
+GrafoETSIIT & Carga y modela la topología de la escuela, calcula rutas óptimas con Dijkstra y resuelve destinos por voz. & \texttt{conexiones}, \newline \texttt{directorioNodos} & \texttt{cargarDesdeAssets()}, \newline \texttt{calcularRuta\allowbreak Dijkstra()}, \newline \texttt{calcularRuta\allowbreak Completa()}, \newline \texttt{obtenerRutaForzada\allowbreak Ascensor()}, \newline \texttt{resolverDestino\allowbreak PorVoz()} \\
+\midrule
+IndoorTripState & Modela el estado inmutable y reactivo del recorrido interior paso a paso guiado por podómetro. & \texttt{tripId}, \texttt{route}, \texttt{steps}, \texttt{currentStepIndex}, \texttt{totalStepsTaken} & \texttt{onStepDetected()}, \newline \texttt{advanceStep\allowbreak Manually()}, \newline \texttt{currentStep}, \newline \texttt{totalRouteSteps} \\
+\midrule
+OutdoorNavigator & Gestiona la progresión de la navegación exterior hacia hitos geolocalizados y detecta la llegada al centro. & \texttt{trip}, \texttt{currentStepIndex}, \texttt{proximityThreshold\allowbreak Meters} & \texttt{updateLocation()}, \newline \texttt{onHeadingChanged()}, \newline \texttt{advanceToNextStep()}, \newline \texttt{hasArrived()} \\
+\midrule
+Accelerometer\allowbreak Manager & Reconoce gestos físicos de acelerómetro y giroscopio mediante máquinas de estados e histéresis. & Umbrales de inclinación (\texttt{TILT\_LEFT\_STRONG}, \texttt{verticalMinY}), callbacks gestuales & \texttt{startListening()}, \newline \texttt{stopListening()}, \newline \texttt{onSensorChanged()} \\
+\midrule
+CampusLocation\allowbreak Manager & Provee geolocalización, determina el edificio de la ETSIIT (Aulas vs.\ Zonas Comunes) y busca comedores cercanos. & Coordenadas ETSIIT, polígonos de recintos, lista de comedores UGR & \texttt{detectCurrent\allowbreak Building()}, \newline \texttt{isInsideEtsiit()}, \newline \texttt{getClosest\allowbreak DiningHall()} \\
+\midrule
+DiningPayment\allowbreak Authorizer & Autoriza y procesa la reserva de menú para llevar exigiendo verificación biométrica o PIN del dispositivo. & \texttt{authenticator}, \newline \texttt{activity} & \texttt{authorizeAndPay()} \\
+\midrule
+UserSession\allowbreak Repository & Gestiona la persistencia local de sesión (\textit{SharedPreferences}), el perfil TUI, el idioma y la preferencia accesible. & Claves de sesión (\texttt{IS\_LOGGED\_IN}, \texttt{ACCESSIBILITY\_\allowbreak ENABLED}) & \texttt{getProfile()}, \newline \texttt{saveProfile()}, \newline \texttt{setAccessibility\allowbreak Enabled()}, \newline \texttt{isAccessibility\allowbreak Enabled()} \\
+\bottomrule
+\end{tabularx}
+\caption{Clases principales del software, variables de clase más relevantes y métodos destacados.}
+\label{tab:clases}
+\end{table}
+
+\begin{figure}[H]
+    \centering
+    \resizebox{\textwidth}{!}{%
+    \begin{tikzpicture}[
+        >=Stealth,
+        font=\sffamily\footnotesize,
+        % Estilo base para clases UML (3 compartimentos: cabecera, atributos, métodos)
+        umlclass/.style={
+            rectangle split,
+            rectangle split parts=3,
+            rectangle split part align={center, left, left},
+            draw=slateborder,
+            line width=0.85pt,
+            rounded corners=2.5pt,
+            rectangle split part fill={headerbg, bodybg, bodybg},
+            text=darktext,
+            inner sep=5pt,
+            align=left,
+            minimum width=4.6cm
+        },
+        % Estilo para notas UML
+        umlnote/.style={
+            rectangle,
+            draw=noteborder,
+            fill=notebg,
+            line width=0.7pt,
+            rounded corners=2pt,
+            text=darktext,
+            font=\sffamily\scriptsize,
+            inner sep=4.5pt,
+            align=left
+        },
+        % Estilo para dependencias UML
+        umldep/.style={
+            ->,
+            dashed,
+            dash pattern=on 4pt off 2.5pt,
+            line width=0.8pt,
+            draw=arrowcolor
+        },
+        % Estilo para anclaje de notas
+        noteline/.style={
+            dotted,
+            line width=0.75pt,
+            draw=noteborder
+        },
+        % Etiquetas sobre flechas
+        deplabel/.style={
+            font=\sffamily\scriptsize\itshape,
+            text=labelcolor,
+            fill=white,
+            inner sep=1.5pt
+        }
+    ]
+
+    % Paleta cromática sobria (azules grisáceos y grises suaves)
+    \definecolor{slateborder}{HTML}{3B5978}
+    \definecolor{headerbg}{HTML}{DCE6F1}
+    \definecolor{bodybg}{HTML}{F8FAFC}
+    \definecolor{darktext}{HTML}{1E293B}
+    \definecolor{arrowcolor}{HTML}{475569}
+    \definecolor{labelcolor}{HTML}{334155}
+    \definecolor{noteborder}{HTML}{94A3B8}
+    \definecolor{notebg}{HTML}{F1F5F9}
+
+    % =========================================================================
+    % NIVEL 1: Configuración, Hardware/Sensores y Geolocalización Base
+    % =========================================================================
+
+    \node[umlclass] (session) {
+        \scriptsize\textit{\guillemotleft object\guillemotright}\\[-1pt]
+        \textbf{UserSessionRepository}
+        \nodepart{second}
+        \texttt{- PREFS\_NAME: String}\\
+        \texttt{- KEY\_PROFILE: String}\\
+        \texttt{+ isTutorialActiveState: Boolean}
+        \nodepart{third}
+        \texttt{+ getProfile(context): UserProfile}\\
+        \texttt{+ saveProfile(context, profile)}\\
+        \texttt{+ updateLanguage(context, lang)}
+    };
+
+    \node[umlclass, right=1.8cm of session] (accel) {
+        \textbf{AccelerometerManager}
+        \nodepart{second}
+        \texttt{- TILT\_LEFT\_STRONG\_THRESHOLD: Float}\\
+        \texttt{- verticalMinYThreshold: Float}\\
+        \texttt{+ onTakeMeThereGesture: (() -> Unit)?}
+        \nodepart{third}
+        \texttt{+ startListening()}\\
+        \texttt{+ stopListening()}\\
+        \texttt{+ onSensorChanged(event: SensorEvent)}
+    };
+
+    \node[umlclass, right=1.8cm of accel] (location) {
+        \scriptsize\textit{\guillemotleft object\guillemotright}\\[-1pt]
+        \textbf{CampusLocationManager}
+        \nodepart{second}
+        \texttt{+ ugrDiningHalls: List<UgrDiningHall>}\\
+        \texttt{+ lastKnownLocation: Coordinates?}
+        \nodepart{third}
+        \texttt{+ findNearestDiningHall(lat, lon)}\\
+        \texttt{+ isUserNearEtsiit(context): Boolean}\\
+        \texttt{+ estimateEtsiitBuilding(lat, lon)}
+    };
+
+    % =========================================================================
+    % NIVEL 2: Motores de Cálculo de Rutas y Navegación Exterior
+    % =========================================================================
+
+    \node[umlclass, below=2.0cm of session.south west, anchor=north west] (grafo) {
+        \textbf{GrafoETSIIT}
+        \nodepart{second}
+        \texttt{- conexiones: Map<String, List<Arista>>}\\
+        \texttt{- directorioNodos: Map<String, Nodo>}
+        \nodepart{third}
+        \texttt{+ cargarDesdeAssets(context)}\\
+        \texttt{+ calcularRutaCompleta(orig, dest): RutaCalculada?}\\
+        \texttt{+ obtenerRutaForzadaAscensor(): RutaCalculada?}\\
+        \texttt{+ resolverDestinoPorVoz(texto): ResultadoVoz}
+    };
+
+    \node[umlclass, below=2.0cm of location.south east, anchor=north east] (outdoor) {
+        \textbf{OutdoorNavigator}
+        \nodepart{second}
+        \texttt{- gps: GpsLocationReader}\\
+        \texttt{- routes: WalkingRouteSource}\\
+        \texttt{+ state: StateFlow<OutdoorUiState>}
+        \nodepart{third}
+        \texttt{+ selectDestination(id)}\\
+        \texttt{+ requestRoute(scope)}\\
+        \texttt{+ trackActivePosition(scope)}
+    };
+
+    % =========================================================================
+    % NIVEL 3: Estado de Navegación Interior y Pagos en Comedores
+    % =========================================================================
+
+    \node[umlclass, below=1.8cm of grafo.south west, anchor=north west] (indoor) {
+        \scriptsize\textit{\guillemotleft data class\guillemotright}\\[-1pt]
+        \textbf{IndoorTripState}
+        \nodepart{second}
+        \texttt{+ tripId: String}\\
+        \texttt{+ route: RutaCalculada}\\
+        \texttt{+ steps: List<IndoorStep>}\\
+        \texttt{+ currentStepIndex: Int}
+        \nodepart{third}
+        \texttt{+ onStepDetected(): IndoorTripState}\\
+        \texttt{+ nextStepManual(): IndoorTripState}\\
+        \texttt{+ buildFromRoute(route): IndoorTripState}
+    };
+
+    \node[umlclass, below=1.8cm of outdoor.south east, anchor=north east] (payment) {
+        \textbf{DiningPaymentAuthorizer}
+        \nodepart{second}
+        \texttt{- authenticator: DeviceAuthenticator}
+        \nodepart{third}
+        \texttt{+ confirm(onResult)}\\
+        \texttt{+ cancel()}
+    };
+
+    % =========================================================================
+    % NOTAS EXPLICATIVAS (Mediación de UI / Compose)
+    % =========================================================================
+
+    \node[umlnote, below=1.85cm of accel] (note_compose) {
+        \textbf{Orquestación UI (Jetpack Compose):}\\
+        \texttt{AppNavigation} y las pantallas leen el\\
+        perfil accesible (\texttt{UserSessionRepository}),\\
+        escuchan gestos (\texttt{AccelerometerManager})\\
+        y coordinan las rutas y transiciones\\
+        entre \texttt{OutdoorNavigator} e \texttt{IndoorTripState}.
+    };
+
+    \node[umlnote] at ($(indoor.east)!0.5!(payment.west)$) (note_dining) {
+        \textbf{Flujo Comedores (\texttt{DiningScreen}):}\\
+        Consulta el comedor más cercano en\\
+        \texttt{CampusLocationManager} y solicita\\
+        verificación biométrica a\\
+        \texttt{DiningPaymentAuthorizer}.
+    };
+
+    % =========================================================================
+    % RELACIONES DE DEPENDENCIA UML REALES Y COORDINACIÓN UI
+    % =========================================================================
+
+    % Dependencia directa real en código: IndoorTripState importa RutaCalculada de GrafoETSIIT
+    \draw[umldep] (indoor.north) -- (grafo.south -| indoor.north)
+        node[midway, right=2pt, deplabel] {usa \texttt{RutaCalculada}};
+
+    % Anclajes de coordinación UI (sin dependencias directas falsas en código ni cruces sobre cajas)
+    \draw[noteline] (note_compose.north) -- (accel.south);
+    \draw[noteline] (note_compose.north west) -- (session.south east);
+    \draw[noteline] (note_compose.north east) -- (location.south west);
+    \draw[noteline] (note_compose.west) -- (grafo.east);
+    \draw[noteline] (note_compose.east) -- (outdoor.west);
+    \draw[noteline] (note_compose.south west) |- (indoor.east);
+
+    \draw[noteline] (note_dining.east) -- (payment.west);
+    \draw[noteline] (note_dining.north) -- (note_compose.south);
+
+    \end{tikzpicture}%
+    }
+    \caption{Diagrama UML simplificado de los componentes principales de la aplicación y su coordinación desde la interfaz.}
+    \label{fig:uml_arquitectura_npi}
+\end{figure}
+
+\clearpage
 % =========================================================================
 \section{Descripción Detallada de Pantallas y Funcionalidades}
 % =========================================================================
@@ -357,8 +606,8 @@ Desde \texttt{ServicesScreen.kt} el usuario accede a una tarjeta destacada inter
 
 Por su parte, \texttt{ProfessorsScreen.kt} gestiona la base local de \textbf{36 docentes} (\texttt{assets/docentes.json}) con sus fotografías de avatar:
 \begin{itemize}[leftmargin=1.8em]
-    \item \textbf{Ordenación y estado en tiempo real:} Si el estudiante está identificado, sus profesores salen los primeros marcados con una estrella. Para cada docente se evalúa la hora actual frente a su horario de clase y tutorías, mostrando si está \textit{En tutoría}, \textit{En clase} o \textit{Fuera de horario}. Además, incluimos un selector de \textit{Modo Demo horario} en pantalla para poder probar distintos instantes de la semana durante una demostración.
-    \item \textbf{Búsqueda por voz, lectura TTS y correo por gesto:} Cuenta con buscador escrito y por voz integrada en la propia barra. Al abrir la ficha de un profesor se puede pulsar el botón para escuchar sus tutorías leídas en voz alta con \textbf{\texttt{TextToSpeech}}, realizar el gesto \textbf{«¡Llévame!»} hasta su despacho o inclinar el móvil hacia uno mismo y volver para abrir directamente la app de correo (\texttt{Intent.ACTION\_SENDTO}) con la dirección y el asunto ya rellenos.
+    \item \textbf{Cuadrícula, ordenación y estado en tiempo real:} La pantalla muestra una cuadrícula en dos columnas con tarjetas de 160\,dp de altura que integran la foto circular de 80\,dp, el nombre corto (nombre de pila y primer apellido mediante \texttt{formatShortProfessorName}) y una píldora con el estado en directo (\textit{En tutoría}, \textit{En clase} o \textit{Fuera de horario}), ordenados alfabéticamente sin sesgo de tildes (\texttt{normalizarTexto}) y priorizando a los profesores del alumno si ha iniciado sesión (con estrella roja). Se incluye además un selector de \textit{Modo Demo horario} para simular diferentes momentos de la semana en demostraciones.
+    \item \textbf{Ficha desplegable (\textit{ModalBottomSheet}) y acciones multimodales:} Cuenta con buscador escrito y por voz integrado en la barra superior. Al pulsar sobre cualquier docente se despliega una ficha inferior donde consultar sus horarios de tutorías, pulsar el botón \textbf{[Oír]} para escuchar las indicaciones por voz natural con \textbf{\texttt{TextToSpeech}} (*«...en el despacho 225...»*), pulsar sobre la fotografía para ampliarla a pantalla completa con la asignatura y departamento completos, o ejecutar sus dos acciones principales mediante botones con insignia gestual: ir al despacho con el botón directo \textbf{[DXXX]} y gesto \textbf{«¡Llévame!»}, o redactar un correo con el botón \textbf{[Correo]} mediante el gesto de cabeceo hacia uno mismo (\texttt{Intent.ACTION\_SENDTO}).
 \end{itemize}
 
 \subsection{Navegación Interior, Exterior y Asistente de Voz}
