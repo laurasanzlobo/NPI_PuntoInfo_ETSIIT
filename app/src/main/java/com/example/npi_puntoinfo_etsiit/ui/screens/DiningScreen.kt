@@ -244,7 +244,11 @@ fun DiningScreen(
     var selectedMenuType by rememberSaveable { mutableStateOf(DiningMenuType.TRADITIONAL) }
 
     val orderPreferences = remember(context) {
-        context.getSharedPreferences("npi_demo_dining_orders", Context.MODE_PRIVATE)
+        context.getSharedPreferences("npi_demo_dining_orders", Context.MODE_PRIVATE).also { prefs ->
+            if (!prefs.getBoolean("dining_orders_reset_v2", false)) {
+                prefs.edit().clear().putBoolean("dining_orders_reset_v2", true).apply()
+            }
+        }
     }
     val ordersPlaced = remember(orderPreferences) {
         mutableStateMapOf<String, String>().apply {
@@ -293,7 +297,7 @@ fun DiningScreen(
     }
 
     fun reserveMenu(menu: DayDiningMenu) {
-        if (!DiningReservationPolicy.canReserve(menu.date, dateProvider()) ||
+        if (!isLoggedIn || !DiningReservationPolicy.canReserve(menu.date, dateProvider()) ||
             ordersPlaced.containsKey(menu.date.toString()) || isPaymentProcessing) return
         orderMenuType = selectedMenuType
         paymentError = null
@@ -734,7 +738,7 @@ fun DiningScreen(
             modifier = Modifier.fillMaxWidth().weight(1f).testTag("dining-menu-pager")
         ) { page ->
             val menu = menuList[page]
-            val dayOrderedType = ordersPlaced[menu.date.toString()]
+            val dayOrderedType = if (isLoggedIn) ordersPlaced[menu.date.toString()] else null
             val isThisDayOrdered = !dayOrderedType.isNullOrBlank()
             val isDisplayedMenuReserved = dayOrderedType == selectedMenuType.label
             val hasService = DiningReservationPolicy.hasService(menu.date)
@@ -980,7 +984,7 @@ fun DiningScreen(
                                 )
                             }
 
-                            if (canReserve && !isThisDayOrdered) {
+                            if (isLoggedIn && canReserve && !isThisDayOrdered) {
                                 GestureBadge(
                                     type = GestureType.ACTION_TRIGGER,
                                     size = 28.dp,
@@ -989,7 +993,7 @@ fun DiningScreen(
                                 )
                             }
                         }
-                        if (canReserve || isThisDayOrdered) {
+                        if (isLoggedIn && (canReserve || isThisDayOrdered)) {
                             Button(
                                 onClick = { reserveMenu(menu) },
                                 enabled = canReserve && !isThisDayOrdered,
@@ -1008,7 +1012,13 @@ fun DiningScreen(
                                 }, fontWeight = FontWeight.Bold)
                             }
                         }
-                        if (!isThisDayOrdered && hasService && !canReserve) {
+                        if (!isLoggedIn && hasService) {
+                            Text(
+                                if (isEnglish) "Sign in with your TUI to reserve your menu." else "Inicia sesión con tu TUI para poder reservar tu menú.",
+                                style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.5.sp, lineHeight = 17.sp),
+                                color = TextSecondary
+                            )
+                        } else if (!isThisDayOrdered && hasService && !canReserve) {
                             Text(
                                 if (isEnglish) "Reservations are not allowed for today. Swipe to reserve one of the next four working days." else "No se admiten reservas para hoy. Desliza para reservar uno de los cuatro próximos días laborables.",
                                 style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.5.sp, lineHeight = 17.sp),

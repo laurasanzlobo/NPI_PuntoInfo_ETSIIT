@@ -675,45 +675,6 @@ private fun LiveTuiQrCameraScanner(
                 }
             }
         }
-
-        // 5. Pie inferior con botón de respaldo para pruebas / simulación
-        Column(
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .fillMaxWidth()
-                .padding(horizontal = 24.dp, vertical = 26.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            OutlinedButton(
-                onClick = {
-                    if (!isScanningTriggered) {
-                        isScanningTriggered = true
-                        currentOnScanSuccess()
-                    }
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(48.dp),
-                shape = RoundedCornerShape(14.dp),
-                colors = ButtonDefaults.outlinedButtonColors(
-                    containerColor = Color.Black.copy(alpha = 0.45f),
-                    contentColor = Color.White
-                ),
-                border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.35f))
-            ) {
-                Icon(
-                    imageVector = Icons.Default.QrCode,
-                    contentDescription = null,
-                    modifier = Modifier.size(18.dp)
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = stringResource(R.string.profile_simulate_btn),
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.SemiBold
-                )
-            }
-        }
     }
 }
 
