@@ -108,14 +108,7 @@ data class IndoorTripState(
             for (i in 0 until nodos.size - 1) {
                 val from = nodos[i]
                 val to = nodos[i + 1]
-
-                val dx = to.x - from.x
-                val dy = to.y - from.y
-                val approxDistPixels = kotlin.math.sqrt((dx * dx + dy * dy).toDouble())
-                val approxDistMeters = (approxDistPixels * 0.15).roundToInt().coerceAtLeast(3)
-
-                // ~1.3 pasos por metro (zancada de 0.75m)
-                val targetSteps = (approxDistMeters * 1.3).roundToInt().coerceAtLeast(3)
+                val (approxDistMeters, targetSteps) = estimateSegmentFromCoords(from, to)
 
                 val nextNode = if (i + 2 < nodos.size) nodos[i + 2] else null
                 val maneuver = determineManeuver(from, to, nextNode)
@@ -190,11 +183,18 @@ data class IndoorTripState(
                         )
                     } else fromNode
 
-                    val dx = toNode.x - fromNode.x
-                    val dy = toNode.y - fromNode.y
-                    val approxDistPixels = kotlin.math.sqrt((dx * dx + dy * dy).toDouble())
-                    val approxDistMeters = if (isFinalStep) 0 else (approxDistPixels * 0.15).roundToInt().coerceAtLeast(3)
-                    val targetSteps = if (isFinalStep) 0 else (approxDistMeters * 1.3).roundToInt().coerceAtLeast(3)
+                    val hasCalibratedSteps = curr.has("pasos") && !curr.isNull("pasos")
+                    val targetSteps = when {
+                        isFinalStep -> 0
+                        hasCalibratedSteps -> curr.optInt("pasos", 0).coerceAtLeast(1)
+                        else -> estimateSegmentFromCoords(fromNode, toNode).second
+                    }
+                    val approxDistMeters = when {
+                        isFinalStep -> 0
+                        curr.has("metros") && !curr.isNull("metros") -> curr.optInt("metros", 0).coerceAtLeast(1)
+                        hasCalibratedSteps -> (targetSteps * 0.75).roundToInt().coerceAtLeast(1)
+                        else -> estimateSegmentFromCoords(fromNode, toNode).first
+                    }
 
                     // La acción y la foto corresponden al nodo en el que se encuentra el usuario (curr)
                     val currAccion = curr.optString("accion", "RECTO").trim()
@@ -275,6 +275,19 @@ data class IndoorTripState(
             } catch (_: Exception) {
                 return null
             }
+        }
+
+        private fun estimateSegmentFromCoords(from: Nodo, to: Nodo): Pair<Int, Int> {
+            // Entre plantas distintas no comparamos píxeles de imágenes diferentes
+            if (!from.planta.equals(to.planta, ignoreCase = true)) {
+                return 12 to 16
+            }
+            val dx = to.x - from.x
+            val dy = to.y - from.y
+            val approxDistPixels = kotlin.math.sqrt((dx * dx + dy * dy).toDouble())
+            val approxDistMeters = (approxDistPixels * 0.075).roundToInt().coerceAtLeast(3)
+            val targetSteps = (approxDistMeters * 1.3).roundToInt().coerceAtLeast(3)
+            return approxDistMeters to targetSteps
         }
 
         private fun determineManeuver(from: Nodo, to: Nodo, next: Nodo?): Maneuver {

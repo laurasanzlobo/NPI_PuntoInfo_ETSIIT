@@ -158,17 +158,14 @@ fun AppNavigation() {
     }
 
     val clearActiveRoute: () -> Unit = {
-        val hadTrip = activeTrip != null
         activeTrip = activeTrip?.finish()
         clearHandoff()
         activeDestination = null
         activeLocation = null
         isVerticalGuidanceActive = false
-        if (hadTrip) {
-            navController.popBackStack(Screen.Outdoor.routePattern, inclusive = true)
-            activeTrip = null
-            navigateToTab(Screen.Navigation.route)
-        }
+        navController.popBackStack(Screen.Outdoor.routePattern, inclusive = true)
+        activeTrip = null
+        navigateToTab(Screen.Home.route)
     }
 
     fun handleNavigation(route: String) {
@@ -493,11 +490,7 @@ fun AppNavigation() {
                                     diningPaymentCancelTrigger++
                                     return@IconButton
                                 }
-                                if (currentRoute == Screen.Outdoor.routePattern) {
-                                    activeTrip = null
-                                    clearHandoff()
-                                }
-                                if (currentRoute?.startsWith("navigation") == true && activeDestination != null) {
+                                if (currentRoute == Screen.Outdoor.routePattern || currentRoute?.startsWith("navigation") == true) {
                                     clearActiveRoute()
                                     return@IconButton
                                 }

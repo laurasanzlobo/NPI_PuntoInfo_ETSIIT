@@ -22,7 +22,8 @@
         "accion": "GIRO_IZQUIERDA",
         "instruccion": "Gira a la izquierda en el pasillo",
         "instruccion_en": "Turn left in the hallway",
-        "eje_x_camino": 0.388
+        "eje_x_camino": 0.388,
+        "pasos": 8
       },
       {
         "id": "int_esc_02",
@@ -38,7 +39,8 @@
         "accion": "SUBIR_ESCALERAS",
         "instruccion": "Sube las escaleras",
         "instruccion_en": "Go up the stairs",
-        "eje_x_camino": 0.503
+        "eje_x_camino": 0.503,
+        "pasos": 20
       },
       {
         "id": "int_comun_09",
@@ -54,7 +56,8 @@
         "accion": "RECTO",
         "instruccion": "Sal hacia el exterior",
         "instruccion_en": "Go outside",
-        "eje_x_camino": 0.521
+        "eje_x_camino": 0.521,
+        "pasos": 10
       },
       {
         "id": "int_comun_10",
@@ -70,7 +73,8 @@
         "accion": "RECTO",
         "instruccion": "Avanza recto hasta el final del pasillo",
         "instruccion_en": "Go straight to the end of the hallway",
-        "eje_x_camino": 0.788
+        "eje_x_camino": 0.788,
+        "pasos": 30
       },
       {
         "id": "int_esc_03",
@@ -86,7 +90,8 @@
         "accion": "GIRO_LIGERO_DERECHA",
         "instruccion": "Avanza y gira a la derecha hacia las escaleras",
         "instruccion_en": "Go ahead and turn right towards the stairs",
-        "eje_x_camino": 0.53
+        "eje_x_camino": 0.53,
+        "pasos": 25
       },
       {
         "id": "int_esc_04",
@@ -102,7 +107,8 @@
         "accion": "SUBIR_ESCALERAS",
         "instruccion": "Sube un piso por las escaleras",
         "instruccion_en": "Go up one floor via the stairs",
-        "eje_x_camino": 0.432
+        "eje_x_camino": 0.432,
+        "pasos": 35
       },
       {
         "id": "int_esc_05",
@@ -118,7 +124,8 @@
         "accion": "GIRO_DERECHA",
         "instruccion": "Entra por la puerta al piso 1 del aulario",
         "instruccion_en": "Enter through the door to Floor 1 of the classroom building",
-        "eje_x_camino": 0.617
+        "eje_x_camino": 0.617,
+        "pasos": 6
       },
       {
         "id": "int_comun_11",
@@ -134,7 +141,8 @@
         "accion": "GIRO_DERECHA",
         "instruccion": "Avanza y tendrás el aula a tu derecha",
         "instruccion_en": "Go ahead and the classroom will be on your right",
-        "eje_x_camino": 0.559
+        "eje_x_camino": 0.559,
+        "pasos": 5
       },
       {
         "id": "int_comun_12",
@@ -150,7 +158,8 @@
         "accion": "FIN",
         "instruccion": "Has llegado al Aula 1.1",
         "instruccion_en": "You have arrived at Classroom 1.1",
-        "eje_x_camino": 0.5
+        "eje_x_camino": 0.5,
+        "pasos": 0
       }
     ]
   },
@@ -172,7 +181,8 @@
         "accion": "GIRO_IZQUIERDA",
         "instruccion": "Gira a la izquierda en el pasillo",
         "instruccion_en": "Turn left in the hallway",
-        "eje_x_camino": 0.388
+        "eje_x_camino": 0.388,
+        "pasos": 14
       },
       {
         "id": "int_asc_02",
@@ -188,7 +198,8 @@
         "accion": "SUBIR_ASCENSOR",
         "instruccion": "Sube al ascensor y pulsa 0",
         "instruccion_en": "Take the elevator and press 0",
-        "eje_x_camino": 0.467
+        "eje_x_camino": 0.467,
+        "pasos": 5
       },
       {
         "id": "int_asc_03",
@@ -204,7 +215,8 @@
         "accion": "GIRO_DERECHA",
         "instruccion": "Gira a la derecha en el vestíbulo",
         "instruccion_en": "Turn right in the lobby",
-        "eje_x_camino": 0.767
+        "eje_x_camino": 0.767,
+        "pasos": 5
       },
       {
         "id": "int_asc_04",
@@ -220,7 +232,8 @@
         "accion": "RECTO",
         "instruccion": "Avanza hacia la puerta que da al exterior",
         "instruccion_en": "Walk towards the door leading outside",
-        "eje_x_camino": 0.579
+        "eje_x_camino": 0.579,
+        "pasos": 6
       },
       {
         "id": "int_comun_09",
@@ -236,7 +249,8 @@
         "accion": "RECTO",
         "instruccion": "Sal hacia el exterior",
         "instruccion_en": "Go outside",
-        "eje_x_camino": 0.521
+        "eje_x_camino": 0.521,
+        "pasos": 7
       },
       {
         "id": "int_comun_10",
@@ -252,7 +266,8 @@
         "accion": "RECTO",
         "instruccion": "Avanza recto hasta el final del pasillo",
         "instruccion_en": "Go straight to the end of the hallway",
-        "eje_x_camino": 0.788
+        "eje_x_camino": 0.788,
+        "pasos": 26
       },
       {
         "id": "int_asc_05",
@@ -268,7 +283,8 @@
         "accion": "GIRO_DERECHA",
         "instruccion": "Entra al aulario",
         "instruccion_en": "Enter the classroom building",
-        "eje_x_camino": 0.524
+        "eje_x_camino": 0.524,
+        "pasos": 15
       },
       {
         "id": "int_asc_06",
@@ -284,7 +300,8 @@
         "accion": "RECTO",
         "instruccion": "Avanza hacia el ascensor",
         "instruccion_en": "Walk towards the elevator",
-        "eje_x_camino": 0.623
+        "eje_x_camino": 0.623,
+        "pasos": 7
       },
       {
         "id": "int_asc_07",
@@ -300,7 +317,8 @@
         "accion": "SUBIR_ASCENSOR",
         "instruccion": "Sube al ascensor y pulsa 1",
         "instruccion_en": "Take the elevator and press 1",
-        "eje_x_camino": 0.806
+        "eje_x_camino": 0.806,
+        "pasos": 4
       },
       {
         "id": "int_asc_08",
@@ -316,7 +334,8 @@
         "accion": "RECTO",
         "instruccion": "Avanza por el pasillo",
         "instruccion_en": "Walk along the hallway",
-        "eje_x_camino": 0.442
+        "eje_x_camino": 0.442,
+        "pasos": 60
       },
       {
         "id": "int_comun_11",
@@ -332,7 +351,8 @@
         "accion": "GIRO_DERECHA",
         "instruccion": "Avanza y tendrás el aula a tu derecha",
         "instruccion_en": "Go ahead and the classroom will be on your right",
-        "eje_x_camino": 0.559
+        "eje_x_camino": 0.559,
+        "pasos": 12
       },
       {
         "id": "int_comun_12",
@@ -348,7 +368,8 @@
         "accion": "FIN",
         "instruccion": "Has llegado al Aula 1.1",
         "instruccion_en": "You have arrived at Classroom 1.1",
-        "eje_x_camino": 0.5
+        "eje_x_camino": 0.5,
+        "pasos": 0
       }
     ]
   }

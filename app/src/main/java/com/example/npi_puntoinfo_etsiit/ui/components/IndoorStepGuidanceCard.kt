@@ -212,7 +212,11 @@ fun IndoorStepGuidanceCard(
                 )
 
                 // Barra de Progresión de Pasos por Sensor
-                val progressFraction = (tripState.currentStepProgress.toFloat() / step.targetSteps.toFloat()).coerceIn(0f, 1f)
+                val progressFraction = if (step.targetSteps > 0) {
+                    (tripState.currentStepProgress.toFloat() / step.targetSteps.toFloat()).coerceIn(0f, 1f)
+                } else {
+                    1f
+                }
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     LinearProgressIndicator(
                         progress = { progressFraction },

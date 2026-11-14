@@ -1,10 +1,15 @@
 package com.example.npi_puntoinfo_etsiit.ui.screens
 
+import android.Manifest
 import android.content.Context
+import android.content.pm.PackageManager
 import android.os.Build
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.ContextCompat
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -178,8 +183,35 @@ fun NavigationScreen(
         )
     }
 
+    var hasStepPermission by remember {
+        mutableStateOf(
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                ContextCompat.checkSelfPermission(
+                    context,
+                    Manifest.permission.ACTIVITY_RECOGNITION
+                ) == PackageManager.PERMISSION_GRANTED
+            } else {
+                true
+            }
+        )
+    }
+
+    val stepPermissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        hasStepPermission = granted
+    }
+
+    LaunchedEffect(hasActiveRoute, rutaCalculada) {
+        if (hasActiveRoute && rutaCalculada != null &&
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && !hasStepPermission
+        ) {
+            stepPermissionLauncher.launch(Manifest.permission.ACTIVITY_RECOGNITION)
+        }
+    }
+
     // Pedómetro: monitorea pasos en interiores para avanzar automáticamente entre waypoints de la ruta
-    DisposableEffect(context, hasActiveRoute, rutaCalculada) {
+    DisposableEffect(context, hasActiveRoute, rutaCalculada, hasStepPermission) {
         val pedometerManager = com.example.npi_puntoinfo_etsiit.sensors.PedometerManager(context)
 
         if (hasActiveRoute && rutaCalculada != null) {
