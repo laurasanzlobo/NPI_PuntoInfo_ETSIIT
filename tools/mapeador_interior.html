@@ -1,0 +1,1414 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mapeador y Calibrador de Ruta Interior — ETSIIT</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body { display: flex; flex-direction: column; height: 100vh; background: #0f172a; color: #f8fafc; overflow: hidden; }
+
+    /* BARRA SUPERIOR */
+    header {
+      height: 58px;
+      background: #1e293b;
+      border-bottom: 1px solid #334155;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 18px;
+      z-index: 20;
+    }
+    .brand { display: flex; align-items: center; gap: 12px; font-weight: 800; font-size: 1.05rem; color: #f8fafc; }
+    .brand span.badge { background: #e11d48; color: #fff; font-size: 0.72rem; padding: 3px 8px; border-radius: 999px; }
+
+    .tabs { display: flex; gap: 6px; }
+    .tab-btn {
+      padding: 8px 14px;
+      border-radius: 8px;
+      border: 1px solid #334155;
+      background: #0f172a;
+      color: #94a3b8;
+      font-weight: 600;
+      font-size: 0.84rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .tab-btn.active { background: #38bdf8; color: #0f172a; border-color: #38bdf8; font-weight: 700; }
+
+    .actions { display: flex; gap: 8px; align-items: center; }
+    .btn {
+      padding: 8px 13px;
+      border-radius: 8px;
+      border: none;
+      font-weight: 700;
+      font-size: 0.82rem;
+      cursor: pointer;
+      transition: transform 0.1s, opacity 0.15s;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .btn:active { transform: scale(0.98); }
+    .btn-save { background: #0284c7; color: #fff; }
+    .btn-save:hover { background: #0369a1; }
+    .btn-rename { background: #10b981; color: #052e16; }
+    .btn-rename:hover { background: #34d399; }
+    .btn-danger { background: #ef4444; color: #fff; }
+    .btn-secondary { background: #334155; color: #e2e8f0; }
+
+    /* CONTENEDOR DE PESTAÑAS */
+    .tab-content { display: none; flex: 1; overflow: hidden; }
+    .tab-content.active { display: flex; }
+
+    /* PESTAÑA 1: MAPEADOR */
+    .left-panel {
+      width: 350px;
+      background: #1e293b;
+      border-right: 1px solid #334155;
+      display: flex;
+      flex-direction: column;
+      padding: 12px;
+      gap: 10px;
+      overflow-y: auto;
+    }
+    .right-panel {
+      width: 380px;
+      background: #1e293b;
+      border-left: 1px solid #334155;
+      display: flex;
+      flex-direction: column;
+      padding: 12px;
+      gap: 10px;
+      overflow-y: auto;
+    }
+    .center-map {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      background: #020617;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card {
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 10px;
+      padding: 10px;
+    }
+    .card-title {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #94a3b8;
+      font-weight: 700;
+      margin-bottom: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    /* SELECTOR TIPO DE TRAMO */
+    .tramo-selector { display: flex; gap: 6px; }
+    .tramo-opt {
+      flex: 1;
+      padding: 8px 6px;
+      border-radius: 8px;
+      border: 2px solid #334155;
+      background: #1e293b;
+      color: #cbd5e1;
+      font-size: 0.78rem;
+      font-weight: 700;
+      text-align: center;
+      cursor: pointer;
+    }
+    .tramo-opt[data-tramo="COMUN"].active { border-color: #10b981; background: rgba(16, 185, 129, 0.2); color: #6ee7b7; }
+    .tramo-opt[data-tramo="ESCALERAS"].active { border-color: #3b82f6; background: rgba(59, 130, 246, 0.2); color: #93c5fd; }
+    .tramo-opt[data-tramo="ASCENSOR"].active { border-color: #f59e0b; background: rgba(245, 158, 11, 0.2); color: #fcd34d; }
+
+    /* GALERÍA DE FOTOS */
+    .photo-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 7px;
+      max-height: 270px;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+    .photo-item {
+      border: 2px solid #334155;
+      border-radius: 8px;
+      overflow: hidden;
+      background: #1e293b;
+      cursor: pointer;
+      position: relative;
+      transition: border-color 0.15s;
+    }
+    .photo-item:hover { border-color: #64748b; }
+    .photo-item.selected { border-color: #38bdf8; box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.35); }
+    .photo-item.used { border-color: #10b981; }
+    .photo-item img { width: 100%; height: 68px; object-fit: cover; display: block; }
+    .photo-item .p-name {
+      font-size: 0.68rem;
+      padding: 4px 5px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      color: #e2e8f0;
+    }
+    .photo-item .used-badge {
+      position: absolute;
+      top: 4px;
+      right: 4px;
+      background: #10b981;
+      color: #052e16;
+      font-size: 0.65rem;
+      font-weight: 800;
+      padding: 1px 5px;
+      border-radius: 4px;
+    }
+
+    /* VISTA PREVIA DE FOTO SELECCIONADA */
+    .photo-preview-box {
+      width: 100%;
+      height: 175px;
+      background: #020617;
+      border-radius: 8px;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid #334155;
+      position: relative;
+    }
+    .photo-preview-box img {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+    }
+    .photo-preview-label {
+      position: absolute;
+      bottom: 6px;
+      left: 6px;
+      right: 6px;
+      background: rgba(15, 23, 42, 0.85);
+      padding: 4px 8px;
+      border-radius: 5px;
+      font-size: 0.72rem;
+      color: #38bdf8;
+      font-weight: 600;
+      text-align: center;
+    }
+
+    /* BARRA DE HERRAMIENTAS DEL MAPA */
+    .map-toolbar {
+      background: rgba(30, 41, 59, 0.95);
+      border-bottom: 1px solid #334155;
+      padding: 8px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      z-index: 10;
+    }
+    .floor-pills { display: flex; gap: 6px; }
+    .floor-btn {
+      padding: 6px 12px;
+      border-radius: 6px;
+      border: 1px solid #475569;
+      background: #0f172a;
+      color: #cbd5e1;
+      font-weight: 700;
+      font-size: 0.8rem;
+      cursor: pointer;
+    }
+    .floor-btn.active { background: #e11d48; color: #fff; border-color: #e11d48; }
+
+    #map-viewport {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+      cursor: crosshair;
+    }
+    #map-viewport.panning { cursor: grabbing; }
+    canvas#map-canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      transform-origin: 0 0;
+    }
+
+    .map-hint {
+      position: absolute;
+      bottom: 14px;
+      left: 14px;
+      background: rgba(15, 23, 42, 0.9);
+      border: 1px solid #334155;
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 0.76rem;
+      color: #cbd5e1;
+      pointer-events: none;
+    }
+
+    /* LISTA DE NODOS CREADOS */
+    .node-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      flex: 1;
+      overflow-y: auto;
+    }
+    .node-card {
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-left: 4px solid #10b981;
+      border-radius: 8px;
+      padding: 8px;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .node-card[data-tramo="ESCALERAS"] { border-left-color: #3b82f6; }
+    .node-card[data-tramo="ASCENSOR"] { border-left-color: #f59e0b; }
+    .node-card.selected { background: #1e293b; border-color: #38bdf8; box-shadow: 0 0 0 1px #38bdf8; }
+
+    .node-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.78rem;
+      font-weight: 700;
+    }
+    .rename-pill {
+      font-family: monospace;
+      font-size: 0.72rem;
+      padding: 2px 6px;
+      border-radius: 4px;
+      background: #1e293b;
+      color: #38bdf8;
+      border: 1px solid #334155;
+    }
+    .node-card-sub {
+      font-size: 0.71rem;
+      color: #94a3b8;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .mini-btns { display: flex; gap: 4px; }
+    .mini-btn {
+      background: #334155;
+      border: none;
+      color: #f8fafc;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 0.7rem;
+      cursor: pointer;
+    }
+    .mini-btn:hover { background: #475569; }
+
+    input, select, textarea {
+      width: 100%;
+      padding: 6px 8px;
+      border-radius: 6px;
+      border: 1px solid #475569;
+      background: #1e293b;
+      color: #fff;
+      font-size: 0.8rem;
+    }
+    label.field-lbl { font-size: 0.7rem; color: #94a3b8; margin-top: 4px; display: block; }
+
+    /* PESTAÑA 2: CALIBRADOR EJE X */
+    .calib-layout {
+      display: flex;
+      width: 100%;
+      height: 100%;
+    }
+    .calib-sidebar {
+      width: 340px;
+      background: #1e293b;
+      border-right: 1px solid #334155;
+      padding: 12px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .calib-stage {
+      flex: 1;
+      background: #020617;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      position: relative;
+    }
+    .calib-img-wrapper {
+      position: relative;
+      max-width: 90%;
+      max-height: 78vh;
+      border: 2px solid #334155;
+      border-radius: 10px;
+      overflow: hidden;
+      cursor: ew-resize;
+      user-select: none;
+    }
+    .calib-img-wrapper img {
+      display: block;
+      max-width: 100%;
+      max-height: 78vh;
+      pointer-events: none;
+    }
+    .calib-line {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 3px;
+      background: #e11d48;
+      box-shadow: 0 0 10px #e11d48;
+      pointer-events: none;
+    }
+    .calib-target-dot {
+      position: absolute;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: rgba(225, 29, 72, 0.85);
+      border: 3px solid #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 900;
+      font-size: 14px;
+      pointer-events: none;
+    }
+
+    /* PESTAÑA 3: JSON */
+    .json-viewer {
+      flex: 1;
+      padding: 20px;
+      background: #020617;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    pre#json-output {
+      flex: 1;
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 10px;
+      padding: 16px;
+      overflow: auto;
+      font-family: monospace;
+      font-size: 0.82rem;
+      color: #38bdf8;
+    }
+
+    #toast {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: #10b981;
+      color: #052e16;
+      font-weight: 800;
+      padding: 12px 18px;
+      border-radius: 10px;
+      box-shadow: 0 8px 25px rgba(0,0,0,0.4);
+      display: none;
+      z-index: 100;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="brand">
+      <span>🏛️ Mapeador Ruta Interior ETSIIT</span>
+      <span class="badge">Comedor ➔ Aula 1.1</span>
+    </div>
+
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab('tab-map', this)">1. 📍 Marcar Puntos y Fotos</button>
+      <button class="tab-btn" onclick="switchTab('tab-calib', this)">2. 🎯 Calibrar Eje X (Fotos)</button>
+      <button class="tab-btn" onclick="switchTab('tab-json', this)">3. 📄 JSON Generado</button>
+    </div>
+
+    <div class="actions">
+      <button class="btn btn-save" onclick="saveAll(false)">💾 Guardar JSON</button>
+      <button class="btn btn-rename" onclick="saveAll(true)">🏷️ Guardar JSON + Renombrar Fotos</button>
+    </div>
+  </header>
+
+  <!-- ========================================================================= -->
+  <!-- PESTAÑA 1: MAPEADOR DE PUNTOS Y FOTOS                                     -->
+  <!-- ========================================================================= -->
+  <div id="tab-map" class="tab-content active">
+    <!-- PANEL IZQUIERDO -->
+    <div class="left-panel">
+      <div class="card">
+        <div class="card-title">
+          <span>Paso A: Elegir Tipo de Tramo</span>
+        </div>
+        <div class="tramo-selector">
+          <div class="tramo-opt active" data-tramo="COMUN" onclick="selectTramoType('COMUN')">🟢 Común</div>
+          <div class="tramo-opt" data-tramo="ESCALERAS" onclick="selectTramoType('ESCALERAS')">🔵 Escaleras</div>
+          <div class="tramo-opt" data-tramo="ASCENSOR" onclick="selectTramoType('ASCENSOR')">🟡 Ascensor</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">
+          <span>Paso B: Seleccionar Foto (<span id="photo-count">0</span>)</span>
+          <span style="font-size: 0.68rem; color:#38bdf8;">Clic en foto y luego clic en mapa</span>
+        </div>
+        <div id="photo-grid" class="photo-grid"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">
+          <span>Vista Previa de la Foto Activa</span>
+        </div>
+        <div class="photo-preview-box">
+          <img id="preview-img" src="" alt="Selecciona una foto" style="display:none;" />
+          <div id="preview-label" class="photo-preview-label">Ninguna foto seleccionada</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MAPA CENTRAL -->
+    <div class="center-map">
+      <div class="map-toolbar">
+        <div class="floor-pills">
+          <button class="floor-btn active" data-floor="PSS" onclick="loadFloor('PSS')">PSS (Planta -1 / Comedor)</button>
+          <button class="floor-btn" data-floor="PB" onclick="loadFloor('PB')">PB (Planta Baja)</button>
+          <button class="floor-btn" data-floor="P1" onclick="loadFloor('P1')">P1 (Planta 1 - Aula 1.1)</button>
+          <button class="floor-btn" data-floor="P2" onclick="loadFloor('P2')">P2</button>
+          <button class="floor-btn" data-floor="P3" onclick="loadFloor('P3')">P3</button>
+        </div>
+
+        <div style="display:flex; align-items:center; gap: 14px;">
+          <label style="font-size: 0.78rem; display:flex; align-items:center; gap:6px; cursor:pointer;">
+            <input type="checkbox" id="chk-ref-nodes" checked onchange="renderMap()" style="width:auto;" />
+            Ver nodos guía del grafo
+          </label>
+          <button class="btn btn-secondary" style="padding: 5px 10px;" onclick="resetZoom()">↺ Centrar Mapa</button>
+        </div>
+      </div>
+
+      <div id="map-viewport">
+        <canvas id="map-canvas"></canvas>
+      </div>
+
+      <div class="map-hint">
+        🖱️ <b>Clic Izquierdo en el mapa</b>: Coloca el nodo con la foto seleccionada (o arrastra un nodo existente) &nbsp;|&nbsp;
+        <b>Rueda</b>: Zoom &nbsp;|&nbsp; <b>Clic Derecho o Shift+Arrastrar</b>: Mover el plano
+      </div>
+    </div>
+
+    <!-- PANEL DERECHO: LISTA DE NODOS Y DETALLES -->
+    <div class="right-panel">
+      <div class="card" style="flex: 1; display:flex; flex-direction:column; min-height: 220px;">
+        <div class="card-title">
+          <span>Secuencia de Nodos (<span id="nodes-total">0</span>)</span>
+          <button class="mini-btn" onclick="clearAllNodes()" style="background:#ef4444;">Vaciar</button>
+        </div>
+        <div id="node-list" class="node-list"></div>
+      </div>
+
+      <div class="card" id="editor-card">
+        <div class="card-title">
+          <span>Editar Nodo Seleccionado</span>
+          <span id="edit-node-badge" class="rename-pill">-</span>
+        </div>
+        <div id="node-form">
+          <label class="field-lbl">Nombre descriptivo del punto</label>
+          <input type="text" id="inp-nombre" placeholder="Ej: Salida Comedor / Escalera PB..." oninput="updateSelectedNodeField()" />
+
+          <div style="display:flex; gap:6px; margin-top:4px;">
+            <div style="flex:1;">
+              <label class="field-lbl">Tramo</label>
+              <select id="inp-tramo" onchange="updateSelectedNodeField()">
+                <option value="COMUN">🟢 Común</option>
+                <option value="ESCALERAS">🔵 Escaleras</option>
+                <option value="ASCENSOR">🟡 Ascensor</option>
+              </select>
+            </div>
+            <div style="flex:1;">
+              <label class="field-lbl">Acción</label>
+              <select id="inp-accion" onchange="updateSelectedNodeField()">
+                <option value="INICIO">INICIO</option>
+                <option value="RECTO">RECTO</option>
+                <option value="GIRO_DERECHA">GIRO_DERECHA</option>
+                <option value="GIRO_IZQUIERDA">GIRO_IZQUIERDA</option>
+                <option value="SUBIR_ESCALERAS">SUBIR_ESCALERAS</option>
+                <option value="SUBIR_ASCENSOR">SUBIR_ASCENSOR</option>
+                <option value="FIN">FIN</option>
+              </select>
+            </div>
+          </div>
+
+          <div style="display:flex; gap:6px; margin-top:4px;">
+            <div style="flex:1;">
+              <label class="field-lbl">Planta</label>
+              <input type="text" id="inp-planta" readonly />
+            </div>
+            <div style="flex:1;">
+              <label class="field-lbl">Coord X</label>
+              <input type="number" id="inp-x" oninput="updateSelectedNodeField()" />
+            </div>
+            <div style="flex:1;">
+              <label class="field-lbl">Coord Y</label>
+              <input type="number" id="inp-y" oninput="updateSelectedNodeField()" />
+            </div>
+          </div>
+
+          <label class="field-lbl">Instrucción paso a paso</label>
+          <textarea id="inp-instruccion" rows="2" placeholder="Instrucción para el usuario..." oninput="updateSelectedNodeField()"></textarea>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- PESTAÑA 2: CALIBRADOR DEL EJE X SOBRE LAS FOTOS                           -->
+  <!-- ========================================================================= -->
+  <div id="tab-calib" class="tab-content">
+    <div class="calib-layout">
+      <div class="calib-sidebar">
+        <div class="card-title">Selecciona Nodo para Calibrar Eje X</div>
+        <div id="calib-node-list" class="node-list"></div>
+      </div>
+      <div class="calib-stage">
+        <div style="margin-bottom: 12px; text-align: center;">
+          <h3 id="calib-title" style="font-size: 1.05rem;">Selecciona un nodo a la izquierda</h3>
+          <p id="calib-subtitle" style="font-size: 0.82rem; color: #38bdf8; margin-top: 4px;">
+            Haz clic o arrastra la línea roja hacia el centro del camino / puerta hacia donde debe avanzar el usuario
+          </p>
+        </div>
+
+        <div id="calib-wrapper" class="calib-img-wrapper" style="display:none;">
+          <img id="calib-img" src="" alt="Foto a calibrar" />
+          <div id="calib-line" class="calib-line" style="left: 50%;"></div>
+          <div id="calib-dot" class="calib-target-dot" style="left: 50%;">↑</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- PESTAÑA 3: VISOR JSON                                                     -->
+  <!-- ========================================================================= -->
+  <div id="tab-json" class="tab-content">
+    <div class="json-viewer">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <h3>Vista en vivo de <code>app/src/main/assets/guidance_interior.json</code></h3>
+        <button class="btn btn-save" onclick="copyJson()">📋 Copiar JSON al Portapapeles</button>
+      </div>
+      <pre id="json-output"></pre>
+    </div>
+  </div>
+
+  <div id="toast">¡Guardado correctamente!</div>
+
+  <script>
+    // =========================================================================
+    // ESTADO GLOBAL
+    // =========================================================================
+    let availablePhotos = [];
+    let activePhoto = null;
+    let activeTramoType = 'COMUN'; // 'COMUN' | 'ESCALERAS' | 'ASCENSOR'
+    let currentFloor = 'PSS';
+
+    // Lista maestra de nodos creados por Laura en la sesión
+    // Cada item: { uid, tramo: 'COMUN'|'ESCALERAS'|'ASCENSOR', nombre, planta, x, y, foto_original, accion, instruccion, eje_x_camino }
+    let masterNodes = [];
+    let selectedNodeUid = null;
+    let calibSelectedUid = null;
+
+    // Estado del mapa y canvas
+    const canvas = document.getElementById('map-canvas');
+    const ctx = canvas.getContext('2d');
+    const viewport = document.getElementById('map-viewport');
+    let floorImg = new Image();
+    let floorImgLoaded = false;
+    let refGraph = { nodos: [], aristas: [] };
+
+    let zoom = 0.55;
+    let panX = 30;
+    let panY = 20;
+    let isPanning = false;
+    let isDraggingNode = false;
+    let startPanX = 0, startPanY = 0;
+
+    // =========================================================================
+    // INICIALIZACIÓN
+    // =========================================================================
+    async function init() {
+      try {
+        const res = await fetch('/api/init');
+        const data = await res.json();
+        availablePhotos = data.photos || [];
+        if (availablePhotos.length > 0) {
+          activePhoto = availablePhotos[0];
+        }
+        if (data.guidance) {
+          loadFromSavedGuidance(data.guidance);
+        }
+      } catch (e) {
+        console.error('Error cargando init:', e);
+      }
+
+      recomputeNamesAndOrders();
+      renderPhotoGallery();
+      updatePhotoPreview();
+      renderNodeList();
+      await loadFloor('PSS');
+    }
+
+    function loadFromSavedGuidance(g) {
+      // Reconstruir masterNodes sin duplicar los comunes
+      const esc = (g.escaleras && g.escaleras.nodos) ? g.escaleras.nodos : [];
+      const asc = (g.ascensor && g.ascensor.nodos) ? g.ascensor.nodos : [];
+      if (esc.length === 0 && asc.length === 0) return;
+
+      const list = [];
+      let idxEsc = 0;
+      const ascOnly = asc.filter(n => n.tipo_tramo === 'ASCENSOR');
+      let insertedAsc = false;
+
+      for (const n of esc) {
+        if (n.tipo_tramo === 'ESCALERAS') {
+          list.push(nodeFromJson(n, 'ESCALERAS'));
+        } else {
+          // Si ya habíamos pasado por escaleras y ahora vuelve a ser común, metemos antes los de ascensor
+          if (!insertedAsc && list.some(x => x.tramo === 'ESCALERAS')) {
+            for (const a of ascOnly) list.push(nodeFromJson(a, 'ASCENSOR'));
+            insertedAsc = true;
+          }
+          list.push(nodeFromJson(n, 'COMUN'));
+        }
+      }
+      if (!insertedAsc) {
+        for (const a of ascOnly) list.push(nodeFromJson(a, 'ASCENSOR'));
+      }
+      masterNodes = list;
+      if (masterNodes.length > 0) {
+        selectedNodeUid = masterNodes[0].uid;
+      }
+    }
+
+    function nodeFromJson(n, tramo) {
+      return {
+        uid: 'u_' + Math.random().toString(36).slice(2, 9),
+        tramo: tramo,
+        nombre: n.nombre || 'Paso',
+        planta: n.planta || 'PSS',
+        x: Math.round(n.x || 500),
+        y: Math.round(n.y || 500),
+        foto_original: n.foto_original || (n.foto ? n.foto.split('/').pop() : ''),
+        accion: n.accion || 'RECTO',
+        instruccion: n.instruccion || '',
+        eje_x_camino: typeof n.eje_x_camino === 'number' ? n.eje_x_camino : 0.5
+      };
+    }
+
+    // =========================================================================
+    // CÁLCULO AUTOMÁTICO DE NUMERACIÓN (OPCIÓN 1 DE LAURA)
+    // =========================================================================
+    // Regla Opción 1:
+    // - Nodos comunes iniciales: interior_1.jpg, interior_2.jpg...
+    // - Cuando empieza la bifurcación (después del nodo común K):
+    //   - Rama escaleras empieza en K+1: interior_3_escaleras.jpg, interior_4_escaleras.jpg...
+    //   - Rama ascensor empieza también en K+1: interior_3_ascensor.jpg, interior_4_ascensor.jpg...
+    // - Nodos comunes finales (tras la bifurcación): continúan después del máximo alcanzado.
+    function recomputeNamesAndOrders() {
+      let commonBeforeCount = 0;
+      let seenBranch = false;
+
+      // Primero contamos cuántos comunes van antes de la primera rama
+      for (const n of masterNodes) {
+        if (n.tramo === 'COMUN' && !seenBranch) {
+          commonBeforeCount++;
+        } else if (n.tramo === 'ESCALERAS' || n.tramo === 'ASCENSOR') {
+          seenBranch = true;
+        }
+      }
+
+      let curCommonBefore = 0;
+      let curEsc = commonBeforeCount;
+      let curAsc = commonBeforeCount;
+
+      // Primera pasada para comunes iniciales y ramas
+      for (const n of masterNodes) {
+        if (n.tramo === 'ESCALERAS') {
+          curEsc++;
+          n.stepNumber = curEsc;
+          n.newFileName = `interior_${curEsc}_escaleras.jpg`;
+          n.id = `int_esc_${String(curEsc).padStart(2, '0')}`;
+        } else if (n.tramo === 'ASCENSOR') {
+          curAsc++;
+          n.stepNumber = curAsc;
+          n.newFileName = `interior_${curAsc}_ascensor.jpg`;
+          n.id = `int_asc_${String(curAsc).padStart(2, '0')}`;
+        }
+      }
+
+      let curCommonAfter = Math.max(curEsc, curAsc);
+      seenBranch = false;
+
+      for (const n of masterNodes) {
+        if (n.tramo === 'ESCALERAS' || n.tramo === 'ASCENSOR') {
+          seenBranch = true;
+        } else if (n.tramo === 'COMUN') {
+          if (!seenBranch) {
+            curCommonBefore++;
+            n.stepNumber = curCommonBefore;
+            n.newFileName = `interior_${curCommonBefore}.jpg`;
+            n.id = `int_comun_${String(curCommonBefore).padStart(2, '0')}`;
+          } else {
+            curCommonAfter++;
+            n.stepNumber = curCommonAfter;
+            n.newFileName = `interior_${curCommonAfter}.jpg`;
+            n.id = `int_comun_${String(curCommonAfter).padStart(2, '0')}`;
+          }
+        }
+      }
+    }
+
+    // =========================================================================
+    // GALERÍA DE FOTOS
+    // =========================================================================
+    function renderPhotoGallery() {
+      const grid = document.getElementById('photo-grid');
+      document.getElementById('photo-count').textContent = availablePhotos.length;
+      grid.innerHTML = '';
+
+      const usedMap = new Map();
+      for (const n of masterNodes) {
+        if (n.foto_original) {
+          usedMap.set(n.foto_original, n.newFileName.replace('.jpg', ''));
+        }
+      }
+
+      for (const fname of availablePhotos) {
+        const div = document.createElement('div');
+        const isSel = (fname === activePhoto);
+        const usedTag = usedMap.get(fname);
+        div.className = 'photo-item' + (isSel ? ' selected' : '') + (usedTag ? ' used' : '');
+        div.onclick = () => {
+          activePhoto = fname;
+          // Si hay un nodo seleccionado y el usuario clica otra foto con Alt, o desde galería:
+          renderPhotoGallery();
+          updatePhotoPreview();
+        };
+
+        div.innerHTML = `
+          <img src="/fotos_originales/${encodeURIComponent(fname)}" loading="lazy" />
+          ${usedTag ? `<span class="used-badge">✓ ${usedTag}</span>` : ''}
+          <div class="p-name" title="${fname}">${fname}</div>
+        `;
+        grid.appendChild(div);
+      }
+    }
+
+    function updatePhotoPreview() {
+      const img = document.getElementById('preview-img');
+      const lbl = document.getElementById('preview-label');
+      if (activePhoto) {
+        img.src = `/fotos_originales/${encodeURIComponent(activePhoto)}`;
+        img.style.display = 'block';
+        lbl.textContent = `Foto activa: ${activePhoto}`;
+      } else {
+        img.style.display = 'none';
+        lbl.textContent = 'Selecciona una foto';
+      }
+    }
+
+    function selectTramoType(tramo) {
+      activeTramoType = tramo;
+      document.querySelectorAll('.tramo-opt').forEach(el => {
+        el.classList.toggle('active', el.dataset.tramo === tramo);
+      });
+    }
+
+    // =========================================================================
+    // CARGA DE PLANTA Y RENDERIZADO DEL MAPA
+    // =========================================================================
+    async function loadFloor(floor) {
+      currentFloor = floor;
+      document.querySelectorAll('.floor-btn').forEach(b => {
+        b.classList.toggle('active', b.dataset.floor === floor);
+      });
+
+      floorImgLoaded = false;
+      floorImg.src = `/mapas/${floor}.jpeg`;
+      floorImg.onload = () => {
+        canvas.width = floorImg.width;
+        canvas.height = floorImg.height;
+        floorImgLoaded = true;
+        renderMap();
+      };
+
+      try {
+        const r = await fetch(`/api/planta/${floor}`);
+        if (r.ok) {
+          refGraph = await r.json();
+        } else {
+          refGraph = { nodos: [], aristas: [] };
+        }
+      } catch (e) {
+        refGraph = { nodos: [], aristas: [] };
+      }
+      renderMap();
+    }
+
+    function resetZoom() {
+      zoom = 0.55;
+      panX = 30;
+      panY = 20;
+      renderMap();
+    }
+
+    function screenToWorld(sx, sy) {
+      return { x: (sx - panX) / zoom, y: (sy - panY) / zoom };
+    }
+
+    function renderMap() {
+      if (!floorImgLoaded) return;
+      canvas.style.transform = `translate(${panX}px, ${panY}px) scale(${zoom})`;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(floorImg, 0, 0);
+
+      // 1. Nodos de referencia del grafo oficial (si está activado)
+      const showRef = document.getElementById('chk-ref-nodes').checked;
+      if (showRef && refGraph.nodos) {
+        for (const rn of refGraph.nodos) {
+          ctx.beginPath();
+          ctx.arc(rn.x, rn.y, 5, 0, Math.PI * 2);
+          ctx.fillStyle = 'rgba(100, 116, 139, 0.55)';
+          ctx.fill();
+          ctx.font = '10px sans-serif';
+          ctx.fillStyle = 'rgba(15, 23, 42, 0.65)';
+          ctx.fillText(rn.nombre, rn.x + 7, rn.y + 3);
+        }
+      }
+
+      // 2. Líneas de conexión entre nuestros nodos en esta planta
+      const floorNodes = masterNodes.filter(n => n.planta === currentFloor);
+
+      // Dibujar polilínea de Escaleras (Comunes + Escaleras)
+      drawBranchPath(
+        masterNodes.filter(n => (n.tramo === 'COMUN' || n.tramo === 'ESCALERAS') && n.planta === currentFloor),
+        '#3b82f6'
+      );
+      // Dibujar polilínea de Ascensor (Comunes + Ascensor)
+      drawBranchPath(
+        masterNodes.filter(n => (n.tramo === 'COMUN' || n.tramo === 'ASCENSOR') && n.planta === currentFloor),
+        '#f59e0b'
+      );
+
+      // 3. Dibujar los marcadores de nuestros nodos en la planta actual
+      for (const n of floorNodes) {
+        const isSel = (n.uid === selectedNodeUid);
+        const color = n.tramo === 'COMUN' ? '#10b981' : (n.tramo === 'ESCALERAS' ? '#3b82f6' : '#f59e0b');
+
+        ctx.beginPath();
+        ctx.arc(n.x, n.y, isSel ? 16 : 13, 0, Math.PI * 2);
+        ctx.fillStyle = color;
+        ctx.fill();
+        ctx.lineWidth = isSel ? 4 : 2.5;
+        ctx.strokeStyle = isSel ? '#ffffff' : '#0f172a';
+        ctx.stroke();
+
+        // Número dentro del círculo
+        ctx.fillStyle = '#020617';
+        ctx.font = 'bold 12px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        const shortTag = n.tramo === 'ESCALERAS' ? `${n.stepNumber}E` : (n.tramo === 'ASCENSOR' ? `${n.stepNumber}A` : `${n.stepNumber}`);
+        ctx.fillText(shortTag, n.x, n.y);
+
+        // Etiqueta flotante con el nuevo nombre de foto
+        ctx.textAlign = 'left';
+        ctx.font = 'bold 12px sans-serif';
+        const label = `${n.newFileName} (${n.foto_original})`;
+        const tw = ctx.measureText(label).width;
+        ctx.fillStyle = 'rgba(15, 23, 42, 0.9)';
+        ctx.fillRect(n.x + 18, n.y - 11, tw + 10, 22);
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 1.5;
+        ctx.strokeRect(n.x + 18, n.y - 11, tw + 10, 22);
+        ctx.fillStyle = '#f8fafc';
+        ctx.fillText(label, n.x + 23, n.y + 1);
+      }
+    }
+
+    function drawBranchPath(nodesOnFloor, strokeColor) {
+      if (nodesOnFloor.length < 2) return;
+      ctx.save();
+      ctx.beginPath();
+      ctx.setLineDash([8, 5]);
+      ctx.lineWidth = 4;
+      ctx.strokeStyle = strokeColor;
+      ctx.moveTo(nodesOnFloor[0].x, nodesOnFloor[0].y);
+      for (let i = 1; i < nodesOnFloor.length; i++) {
+        ctx.lineTo(nodesOnFloor[i].x, nodesOnFloor[i].y);
+      }
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    function findMasterNodeAt(wx, wy) {
+      const floorNodes = masterNodes.filter(n => n.planta === currentFloor);
+      for (let i = floorNodes.length - 1; i >= 0; i--) {
+        const n = floorNodes[i];
+        if (Math.hypot(n.x - wx, n.y - wy) <= 20 / zoom) {
+          return n;
+        }
+      }
+      return null;
+    }
+
+    // Eventos del ratón sobre el mapa
+    viewport.addEventListener('contextmenu', e => e.preventDefault());
+
+    viewport.addEventListener('wheel', e => {
+      e.preventDefault();
+      const factor = e.deltaY < 0 ? 1.15 : 0.87;
+      const rect = viewport.getBoundingClientRect();
+      const mx = e.clientX - rect.left;
+      const my = e.clientY - rect.top;
+      panX = mx - (mx - panX) * factor;
+      panY = my - (my - panY) * factor;
+      zoom = Math.min(Math.max(zoom * factor, 0.15), 3.5);
+      renderMap();
+    });
+
+    viewport.addEventListener('mousedown', e => {
+      const rect = viewport.getBoundingClientRect();
+      const sx = e.clientX - rect.left;
+      const sy = e.clientY - rect.top;
+      const wpos = screenToWorld(sx, sy);
+
+      // Clic derecho, botón central o Shift+Clic -> Mover mapa
+      if (e.button === 2 || e.button === 1 || e.shiftKey) {
+        isPanning = true;
+        viewport.classList.add('panning');
+        startPanX = e.clientX - panX;
+        startPanY = e.clientY - panY;
+        return;
+      }
+
+      if (e.button === 0) {
+        const clickedNode = findMasterNodeAt(wpos.x, wpos.y);
+        if (clickedNode) {
+          selectedNodeUid = clickedNode.uid;
+          isDraggingNode = true;
+          populateNodeEditor();
+          renderNodeList();
+          renderMap();
+        } else {
+          // Crear un nuevo nodo en este punto con la foto activa
+          createNewNodeAt(Math.round(wpos.x), Math.round(wpos.y));
+        }
+      }
+    });
+
+    window.addEventListener('mousemove', e => {
+      if (isPanning) {
+        panX = e.clientX - startPanX;
+        panY = e.clientY - startPanY;
+        renderMap();
+      } else if (isDraggingNode && selectedNodeUid) {
+        const rect = viewport.getBoundingClientRect();
+        const wpos = screenToWorld(e.clientX - rect.left, e.clientY - rect.top);
+        const node = masterNodes.find(n => n.uid === selectedNodeUid);
+        if (node) {
+          node.x = Math.round(wpos.x);
+          node.y = Math.round(wpos.y);
+          populateNodeEditor();
+          renderMap();
+        }
+      }
+    });
+
+    window.addEventListener('mouseup', () => {
+      isPanning = false;
+      isDraggingNode = false;
+      viewport.classList.remove('panning');
+    });
+
+    function createNewNodeAt(x, y) {
+      if (!activePhoto) {
+        alert('Selecciona primero una foto de la galería de la izquierda.');
+        return;
+      }
+      const cleanBase = activePhoto.replace(/\.[^.]+$/, '');
+      const defaultAccion = masterNodes.length === 0 ? 'INICIO' : (
+        activeTramoType === 'ESCALERAS' ? 'SUBIR_ESCALERAS' : (
+          activeTramoType === 'ASCENSOR' ? 'SUBIR_ASCENSOR' : 'RECTO'
+        )
+      );
+
+      const newNode = {
+        uid: 'u_' + Math.random().toString(36).slice(2, 9),
+        tramo: activeTramoType,
+        nombre: cleanBase,
+        planta: currentFloor,
+        x: x,
+        y: y,
+        foto_original: activePhoto,
+        accion: defaultAccion,
+        instruccion: `Avanza hacia ${cleanBase} (${currentFloor}).`,
+        eje_x_camino: 0.5
+      };
+
+      masterNodes.push(newNode);
+      selectedNodeUid = newNode.uid;
+
+      // Avanzar automáticamente a la siguiente foto no usada en la galería para ahorrar clics
+      recomputeNamesAndOrders();
+      const usedOriginals = new Set(masterNodes.map(n => n.foto_original));
+      const nextUnused = availablePhotos.find(p => !usedOriginals.has(p));
+      if (nextUnused) {
+        activePhoto = nextUnused;
+      }
+
+      renderPhotoGallery();
+      updatePhotoPreview();
+      renderNodeList();
+      populateNodeEditor();
+      renderMap();
+    }
+
+    // =========================================================================
+    // LISTA Y EDICIÓN DE NODOS (PANEL DERECHO)
+    // =========================================================================
+    function renderNodeList() {
+      recomputeNamesAndOrders();
+      const container = document.getElementById('node-list');
+      document.getElementById('nodes-total').textContent = masterNodes.length;
+      container.innerHTML = '';
+
+      masterNodes.forEach((n, idx) => {
+        const card = document.createElement('div');
+        card.className = 'node-card' + (n.uid === selectedNodeUid ? ' selected' : '');
+        card.dataset.tramo = n.tramo;
+        card.onclick = () => {
+          selectedNodeUid = n.uid;
+          if (n.planta !== currentFloor) {
+            loadFloor(n.planta);
+          } else {
+            renderMap();
+          }
+          renderNodeList();
+          populateNodeEditor();
+        };
+
+        const badgeIcon = n.tramo === 'COMUN' ? '🟢' : (n.tramo === 'ESCALERAS' ? '🔵' : '🟡');
+
+        card.innerHTML = `
+          <div class="node-card-header">
+            <span>${badgeIcon} ${n.nombre}</span>
+            <span class="rename-pill">${n.newFileName}</span>
+          </div>
+          <div class="node-card-sub">
+            <span>📸 Orig: <b>${n.foto_original}</b> · 🗺️ ${n.planta} (${n.x}, ${n.y})</span>
+            <div class="mini-btns" onclick="event.stopPropagation();">
+              <button class="mini-btn" title="Subir" onclick="moveNode(${idx}, -1)">⬆</button>
+              <button class="mini-btn" title="Bajar" onclick="moveNode(${idx}, 1)">⬇</button>
+              <button class="mini-btn" title="Cambiar a la foto seleccionada en galería" onclick="assignActivePhotoToNode('${n.uid}')">🔄 Foto</button>
+              <button class="mini-btn" style="background:#ef4444;" title="Borrar nodo" onclick="deleteNode('${n.uid}')">🗑</button>
+            </div>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    function moveNode(idx, dir) {
+      const target = idx + dir;
+      if (target < 0 || target >= masterNodes.length) return;
+      const tmp = masterNodes[idx];
+      masterNodes[idx] = masterNodes[target];
+      masterNodes[target] = tmp;
+      recomputeNamesAndOrders();
+      renderNodeList();
+      populateNodeEditor();
+      renderMap();
+    }
+
+    function assignActivePhotoToNode(uid) {
+      const node = masterNodes.find(n => n.uid === uid);
+      if (node && activePhoto) {
+        node.foto_original = activePhoto;
+        recomputeNamesAndOrders();
+        renderPhotoGallery();
+        renderNodeList();
+        populateNodeEditor();
+        renderMap();
+      }
+    }
+
+    function deleteNode(uid) {
+      masterNodes = masterNodes.filter(n => n.uid !== uid);
+      if (selectedNodeUid === uid) {
+        selectedNodeUid = masterNodes.length > 0 ? masterNodes[0].uid : null;
+      }
+      recomputeNamesAndOrders();
+      renderPhotoGallery();
+      renderNodeList();
+      populateNodeEditor();
+      renderMap();
+    }
+
+    function clearAllNodes() {
+      if (!confirm('¿Seguro que quieres vaciar la lista de nodos para empezar de cero?')) return;
+      masterNodes = [];
+      selectedNodeUid = null;
+      recomputeNamesAndOrders();
+      renderPhotoGallery();
+      renderNodeList();
+      populateNodeEditor();
+      renderMap();
+    }
+
+    function populateNodeEditor() {
+      const node = masterNodes.find(n => n.uid === selectedNodeUid);
+      const badge = document.getElementById('edit-node-badge');
+      if (!node) {
+        badge.textContent = 'Sin selección';
+        document.getElementById('inp-nombre').value = '';
+        document.getElementById('inp-planta').value = '';
+        document.getElementById('inp-x').value = '';
+        document.getElementById('inp-y').value = '';
+        document.getElementById('inp-instruccion').value = '';
+        return;
+      }
+      badge.textContent = node.newFileName;
+      document.getElementById('inp-nombre').value = node.nombre;
+      document.getElementById('inp-tramo').value = node.tramo;
+      document.getElementById('inp-accion').value = node.accion;
+      document.getElementById('inp-planta').value = node.planta;
+      document.getElementById('inp-x').value = node.x;
+      document.getElementById('inp-y').value = node.y;
+      document.getElementById('inp-instruccion').value = node.instruccion;
+    }
+
+    function updateSelectedNodeField() {
+      const node = masterNodes.find(n => n.uid === selectedNodeUid);
+      if (!node) return;
+      node.nombre = document.getElementById('inp-nombre').value;
+      node.tramo = document.getElementById('inp-tramo').value;
+      node.accion = document.getElementById('inp-accion').value;
+      node.x = parseInt(document.getElementById('inp-x').value || '0', 10);
+      node.y = parseInt(document.getElementById('inp-y').value || '0', 10);
+      node.instruccion = document.getElementById('inp-instruccion').value;
+
+      recomputeNamesAndOrders();
+      document.getElementById('edit-node-badge').textContent = node.newFileName;
+      renderNodeList();
+      renderMap();
+    }
+
+    // =========================================================================
+    // PESTAÑA 2: CALIBRACIÓN DEL EJE X
+    // =========================================================================
+    function renderCalibTab() {
+      recomputeNamesAndOrders();
+      const listEl = document.getElementById('calib-node-list');
+      listEl.innerHTML = '';
+
+      if (!calibSelectedUid && masterNodes.length > 0) {
+        calibSelectedUid = masterNodes[0].uid;
+      }
+
+      for (const n of masterNodes) {
+        const card = document.createElement('div');
+        card.className = 'node-card' + (n.uid === calibSelectedUid ? ' selected' : '');
+        card.dataset.tramo = n.tramo;
+        card.onclick = () => {
+          calibSelectedUid = n.uid;
+          renderCalibTab();
+        };
+        card.innerHTML = `
+          <div class="node-card-header">
+            <span>${n.newFileName}</span>
+            <span class="rename-pill">eje_x: ${n.eje_x_camino.toFixed(3)}</span>
+          </div>
+          <div class="node-card-sub">
+            <span>${n.nombre} (${n.foto_original})</span>
+          </div>
+        `;
+        listEl.appendChild(card);
+      }
+
+      const activeNode = masterNodes.find(n => n.uid === calibSelectedUid);
+      const wrapper = document.getElementById('calib-wrapper');
+      const img = document.getElementById('calib-img');
+      const title = document.getElementById('calib-title');
+
+      if (!activeNode) {
+        wrapper.style.display = 'none';
+        title.textContent = 'No hay nodos creados todavía';
+        return;
+      }
+
+      wrapper.style.display = 'inline-block';
+      img.src = `/fotos_originales/${encodeURIComponent(activeNode.foto_original)}`;
+      title.textContent = `${activeNode.newFileName} — ${activeNode.nombre} (eje_x_camino = ${activeNode.eje_x_camino.toFixed(3)})`;
+      updateCalibLinePosition(activeNode.eje_x_camino);
+    }
+
+    function updateCalibLinePosition(val) {
+      const pct = (val * 100).toFixed(2) + '%';
+      document.getElementById('calib-line').style.left = pct;
+      document.getElementById('calib-dot').style.left = pct;
+    }
+
+    const calibWrapper = document.getElementById('calib-wrapper');
+    let isDraggingCalib = false;
+
+    function handleCalibPointer(e) {
+      const activeNode = masterNodes.find(n => n.uid === calibSelectedUid);
+      if (!activeNode) return;
+      const rect = calibWrapper.getBoundingClientRect();
+      let ratio = (e.clientX - rect.left) / rect.width;
+      ratio = Math.max(0, Math.min(1, ratio));
+      activeNode.eje_x_camino = Math.round(ratio * 1000) / 1000;
+      updateCalibLinePosition(activeNode.eje_x_camino);
+      document.getElementById('calib-title').textContent =
+        `${activeNode.newFileName} — ${activeNode.nombre} (eje_x_camino = ${activeNode.eje_x_camino.toFixed(3)})`;
+    }
+
+    calibWrapper.addEventListener('mousedown', e => {
+      isDraggingCalib = true;
+      handleCalibPointer(e);
+    });
+    window.addEventListener('mousemove', e => {
+      if (isDraggingCalib) handleCalibPointer(e);
+    });
+    window.addEventListener('mouseup', () => {
+      if (isDraggingCalib) {
+        isDraggingCalib = false;
+        renderCalibTab();
+      }
+    });
+
+    // =========================================================================
+    // CONSTRUCCIÓN DEL JSON FINAL Y GUARDADO / RENOMBRADO
+    // =========================================================================
+    function buildGuidanceJson() {
+      recomputeNamesAndOrders();
+
+      const formatNode = (n, idxOrder) => ({
+        id: n.id,
+        orden: idxOrder,
+        tipo_tramo: n.tramo,
+        nombre: n.nombre,
+        planta: n.planta,
+        x: n.x,
+        y: n.y,
+        rumbo: null,
+        foto: `rutas/comedor_Aula11/${n.newFileName}`,
+        foto_original: n.foto_original,
+        accion: n.accion,
+        instruccion: n.instruccion,
+        eje_x_camino: n.eje_x_camino
+      });
+
+      const nodosEscaleras = masterNodes
+        .filter(n => n.tramo === 'COMUN' || n.tramo === 'ESCALERAS')
+        .map((n, i) => formatNode(n, i + 1));
+
+      const nodosAscensor = masterNodes
+        .filter(n => n.tramo === 'COMUN' || n.tramo === 'ASCENSOR')
+        .map((n, i) => formatNode(n, i + 1));
+
+      return {
+        version: "1.0",
+        ruta_id: "interior_comedor_aula11",
+        titulo: "Ruta Interior: Comedor -> Aula 1.1",
+        origen: "Comedor ETSIIT",
+        destino: "Aula 1.1 (Planta 1)",
+        escaleras: {
+          descripcion: "Ruta estándar por escaleras",
+          tipo: "ESTANDAR_ESCALERAS",
+          nodos: nodosEscaleras
+        },
+        ascensor: {
+          descripcion: "Ruta accesible por ascensor (movilidad reducida / silla de ruedas)",
+          tipo: "ACCESIBLE_ASCENSOR",
+          nodos: nodosAscensor
+        }
+      };
+    }
+
+    async function saveAll(renameFiles) {
+      const guidance = buildGuidanceJson();
+      const renameMap = masterNodes.map(n => ({
+        original: n.foto_original,
+        nuevo: n.newFileName
+      }));
+
+      try {
+        const res = await fetch('/api/save', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            guidance: guidance,
+            rename_files: renameFiles,
+            rename_map: renameMap
+          })
+        });
+        const out = await res.json();
+        if (out.ok) {
+          showToast(renameFiles
+            ? `✅ JSON guardado y ${out.renamed.length} fotos renombradas automáticamente`
+            : `✅ JSON guardado en guidance_interior.json`);
+          document.getElementById('json-output').textContent = JSON.stringify(guidance, null, 2);
+        }
+      } catch (e) {
+        alert('Error al guardar: ' + e.message);
+      }
+    }
+
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.style.display = 'block';
+      setTimeout(() => { t.style.display = 'none'; }, 3500);
+    }
+
+    function switchTab(tabId, btn) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+      document.getElementById(tabId).classList.add('active');
+      btn.classList.add('active');
+
+      if (tabId === 'tab-calib') {
+        renderCalibTab();
+      } else if (tabId === 'tab-json') {
+        const g = buildGuidanceJson();
+        document.getElementById('json-output').textContent = JSON.stringify(g, null, 2);
+      } else if (tabId === 'tab-map') {
+        renderMap();
+      }
+    }
+
+    function copyJson() {
+      const text = document.getElementById('json-output').textContent;
+      navigator.clipboard.writeText(text);
+      showToast('📋 JSON copiado al portapapeles');
+    }
+
+    init();
+  </script>
+</body>
+</html>

@@ -81,7 +81,7 @@ class OutdoorNavigator(
         }
     }
 
-    /** Refresca solo el marcador/proximidad, sin recalcular ni reenviar posiciones a ORS. */
+    /** Refresca solo el marcador/proximidad, sin recalcular la ruta. */
     suspend fun updateActivePosition() {
         if (job?.isActive == true || mutableState.value.route !is WalkingRouteResult.Success) return
         val version = requestVersion
@@ -92,7 +92,7 @@ class OutdoorNavigator(
         }
     }
 
-    /** La cancelación del scope STARTED retira la suscripción, sin consultar ORS. */
+    /** La cancelación del scope STARTED retira la suscripción. */
     suspend fun trackActivePosition(
         intervalMillis: Long,
         requireRoute: Boolean = true,
@@ -105,7 +105,7 @@ class OutdoorNavigator(
         val destinationId = mutableState.value.destination?.id
         gps.updates(intervalMillis).collect { location ->
             coroutineContext.ensureActive()
-            // Refrescar/calcular la ruta no debe silenciar la proximidad independiente de ORS.
+            // Refrescar/calcular la ruta no debe silenciar la proximidad independiente.
             val sameRequest = if (requireRoute) requestVersion == version
                 else mutableState.value.destination?.id == destinationId
             if (sameRequest && canTrack()) {

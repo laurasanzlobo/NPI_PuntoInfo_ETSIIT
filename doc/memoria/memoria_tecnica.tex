@@ -1,0 +1,667 @@
+\documentclass[11pt,a4paper]{article}
+
+% --- Idioma y tipografía ---
+\usepackage[utf8]{inputenc}
+\usepackage[spanish,es-tabla,es-noquoting]{babel}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+
+% --- Márgenes ---
+\usepackage[top=2.4cm, bottom=2.4cm, left=2.4cm, right=2.4cm, headheight=22pt]{geometry}
+
+% --- Colores y enlaces ---
+\usepackage{xcolor}
+\definecolor{ugrRed}{RGB}{140, 20, 25}
+\definecolor{etsiitBlue}{RGB}{20, 50, 95}
+\definecolor{darkGray}{RGB}{45, 50, 56}
+\definecolor{sensorGreen}{RGB}{22, 101, 52}
+\definecolor{softBg}{RGB}{246, 248, 251}
+
+% Paleta de colores UML (Azul UGR / Pizarra y Gris)
+\definecolor{umlHeader}{HTML}{2C3E50}
+\definecolor{umlSingleton}{HTML}{1E3A8A}
+\definecolor{umlDataClass}{HTML}{0F766E}
+\definecolor{umlBody}{HTML}{F8F9FA}
+\definecolor{umlBorder}{HTML}{34495E}
+\definecolor{umlText}{HTML}{1E293B}
+
+\usepackage[plainpages=false, pdfpagelabels=true, colorlinks=true, linkcolor=etsiitBlue, urlcolor=etsiitBlue, citecolor=ugrRed]{hyperref}
+
+% --- Tablas, listas y gráficos simples ---
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{array}
+\usepackage{float}
+\usepackage{enumitem}
+\usepackage{graphicx}
+\usepackage{caption}
+\usepackage{tikz}
+\usetikzlibrary{shapes.geometric, shapes.multipart, arrows.meta, positioning, calc, fit, backgrounds}
+\usepackage{textcomp}
+\usepackage{eurosym}
+
+% --- Estilo de títulos y cabeceras ---
+\usepackage{titlesec}
+\titleformat{\section}{\Large\bfseries\color{etsiitBlue}}{\thesection}{0.8em}{}[\titlerule]
+\titleformat{\subsection}{\large\bfseries\color{etsiitBlue!90}}{\thesubsection}{0.7em}{}
+\titleformat{\subsubsection}{\normalsize\bfseries\color{ugrRed}}{\thesubsubsection}{0.6em}{}
+
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small \textit{NPI --- Punto de Información Multimodal ETSIIT}}
+\fancyhead[R]{\small \textit{Memoria Técnica --- Entrega 1 (Android)}}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+\setlength{\parskip}{0.45em}
+\setlength{\parindent}{0pt}
+\setlength{\emergencystretch}{2.5em}
+\sloppy
+
+\begin{document}
+
+% =========================================================================
+% PORTADA
+% =========================================================================
+\begin{titlepage}
+    \centering
+    \vspace*{0.4cm}
+    \IfFileExists{doc/memoria/images/logo-ugr-grande.png}{%
+        \includegraphics[width=0.40\textwidth]{doc/memoria/images/logo-ugr-grande.png}%
+    }{\IfFileExists{images/logo-ugr-grande.png}{%
+        \includegraphics[width=0.40\textwidth]{images/logo-ugr-grande.png}%
+    }{}}\par
+    \vspace{0.6cm}
+    {\scshape\Large Universidad de Granada \par}
+    \vspace{0.2cm}
+    {\scshape\large Escuela Técnica Superior de Ingenierías Informática y de Telecomunicación \par}
+    \vspace{0.2cm}
+    {\normalsize Grado en Ingeniería Informática --- 4.º Curso \par}
+    \vspace{0.1cm}
+    {\normalsize Asignatura: Nuevos Paradigmas de Interacción (NPI) \par}
+
+    \vspace{0.8cm}
+    \hrule height 1.5pt
+    \vspace{0.4cm}
+    {\huge \bfseries Memoria Técnica del Proyecto \par}
+    \vspace{0.3cm}
+    {\Large \bfseries Punto de Información ETSIIT \par}
+    \vspace{0.15cm}
+    {\normalsize Práctica 1 --- Dispositivos Móviles (Android) \par}
+    \vspace{0.4cm}
+    \hrule height 0.8pt
+
+    \vspace{0.9cm}
+    {\large\bfseries
+    Pablo Álvarez Fernández\\[0.35em]
+    Estrella Muñoz Ortega\\[0.35em]
+    José Pedregosa García\\[0.35em]
+    Ángela Rodríguez Machado\\[0.35em]
+    Laura Sanz Lobo\par}
+
+    \vfill
+    {\normalsize Profesor responsable: Marcelino Cabrera Cuevas \par}
+    \vspace{0.15cm}
+    {\normalsize Curso Académico 2026/2027 --- Granada, noviembre de 2026 \par}
+\end{titlepage}
+
+% =========================================================================
+% RESUMEN E ÍNDICE
+% =========================================================================
+\pagenumbering{roman}
+
+\begin{abstract}
+\noindent En esta memoria recogemos el diseño, la organización del equipo y el funcionamiento técnico de \textbf{PuntoInfo ETSIIT}, la aplicación Android que hemos desarrollado para la primera entrega de \textit{Nuevos Paradigmas de Interacción}. El proyecto convierte el típico punto de información fijo del vestíbulo de la escuela en un asistente móvil que acompaña al estudiante tanto por el exterior del Campus de Aynadamar como por el interior de la ETSIIT, apostando por la interacción natural mediante gestos físicos, voz, sensores del teléfono y controles táctiles claros.
+
+A lo largo del documento explicamos cómo hemos repartido el trabajo entre los cinco integrantes del grupo, por qué elegimos Kotlin y Jetpack Compose, qué sensores de categorías distintas utilizamos (movimiento, presión atmosférica, proximidad, GPS, cámara, biometría y audio/voz) y cómo resolvemos problemas prácticos reales: evitar gestos accidentales en mano, deducir el punto de partida dentro de un edificio sin GPS vertical, alternar automáticamente entre el plano 2D y fotografías reales guiadas al levantar el teléfono, reservar el menú para llevar del comedor mediante confirmación biométrica y ofrecer toda la interfaz en español e inglés y con rutas accesibles por ascensor.
+\end{abstract}
+
+\vspace{0.1cm}
+{\small
+\setlength{\parskip}{0pt}
+\tableofcontents
+}
+\newpage
+\pagenumbering{arabic}
+
+% =========================================================================
+\section{Introducción y Objetivos}
+% =========================================================================
+
+\subsection{Qué problema queremos resolver}
+Quien llega a la Escuela Técnica Superior de Ingenierías Informática y de Telecomunicación (ETSIIT) buscando un aula, un laboratorio en el edificio auxiliar, el despacho de un profesor para una tutoría o el comedor universitario suele encontrarse con información repartida en portales web estáticos, PDFs de horarios y carteles físicos en el vestíbulo. Cuando uno va caminando, o con poco tiempo entre clases, consultar tablas pequeñas en la pantalla táctil o orientarse entre las seis plantas del centro resulta incómodo y poco práctico.
+
+Con \textbf{PuntoInfo ETSIIT} nos propusimos llevar esa información al bolsillo del estudiante bajo el enfoque de las \textbf{Interfaces Naturales de Usuario (NUI)}: que la aplicación aproveche los sensores del móvil, el contexto horario y el entorno físico para dar respuestas directas sin obligar a rellenar formularios ni a navegar por menús profundos.
+
+\vspace{-0.25cm}
+\subsection{Objetivos del proyecto}
+Siguiendo las pautas del guion de la práctica, fijamos cuatro objetivos principales:
+\begin{enumerate}[leftmargin=1.8em]
+    \item \textbf{Sustituir la navegación táctil pesada por interacción multimodal:} Combinar gestos físicos con el móvil en la mano, búsqueda global por voz mediante el sensor de proximidad, gestos de pellizco con dos dedos y lectura en voz alta (\textit{Text-to-Speech}), manteniendo siempre botones visibles como respaldo para cualquier situación.
+    \item \textbf{Pantalla principal limpia y sin desplazamiento vertical:} Prescindir de la clásica barra inferior de pestañas y organizar la pantalla de inicio en un único vistazo sin \textit{scroll}: próxima clase arriba (al identificarse), carrusel de noticias de la escuela en el centro y accesos grandes abajo.
+    \item \textbf{Continuidad entre el exterior y el interior con accesibilidad real:} Guiar tanto en el exterior del campus (entre el edificio principal, el Edificio Auxiliar y el Comedor Aynadamar) como dentro de la ETSIIT, adaptando los recorridos si el usuario activa la preferencia de movilidad reducida (uso de ascensor en lugar de escaleras).
+    \item \textbf{Personalización académica, bilingüismo y funcionamiento sin conexión:} Cargar el horario y los profesores del alumno tras identificarse con su tarjeta universitaria (TUI), ofrecer toda la aplicación y las indicaciones de ruta en español e inglés, y mantener los datos esenciales guardados en local para no depender de Internet dentro de la escuela.
+\end{enumerate}
+
+% =========================================================================
+\vspace{-0.25cm}
+\section{Planificación del Proyecto y Reparto de Tareas}
+% =========================================================================
+
+Desde el inicio acordamos un plan de trabajo dividido en dos etapas y un reparto equilibrado entre los cinco miembros del equipo para poder avanzar en paralelo sobre los distintos módulos sin bloquearnos entre nosotros.
+
+\vspace{-0.25cm}
+\subsection{Fases de desarrollo seguidas}
+\begin{itemize}[leftmargin=1.8em]
+    \item \textbf{Etapa 1 (Arquitectura base, datos y sensores principales):} Creación del proyecto en Android Studio con Jetpack Compose, definición de la navegación principal, carga del horario del curso y del directorio docente, digitalización del grafo de plantas de la ETSIIT, primera versión de los detectores gestuales con el acelerómetro y conexión inicial con el GPS y la identificación mediante la TUI.
+    \item \textbf{Etapa 2 (Refinamiento de interfaz, rutas fotográficas y multimodalidad):} Simplificación de las pantallas para evitar el \textit{scroll} en el inicio y eliminar la barra inferior, mejora de los gestos exigiendo movimiento de ida y vuelta para eliminar disparos accidentales, verificación escalonada del punto de inicio en interiores mediante barómetro y horario, incorporación de fotografías calibradas paso a paso para interior y exterior junto con el podómetro y la brújula, pasarela de reserva en comedores con huella dactilar, traducción completa al inglés y tutorial interactivo inicial.
+\end{itemize}
+
+\subsection{Reparto de trabajo entre los 5 integrantes}
+Para coordinar el desarrollo entre los cinco miembros del grupo sin pisarnos los ficheros, repartimos las distintas áreas de la aplicación de la siguiente manera:
+
+\begin{itemize}[leftmargin=1.6em, itemsep=0.55em]
+    \item \textbf{Laura Sanz Lobo:} Se encargó de la arquitectura base de la aplicación en Kotlin y Jetpack Compose (\texttt{AppNavigation}, el diseño sin desplazamiento vertical de la pantalla principal \texttt{HomeScreen} y la pantalla de \textit{Guía de Gestos}). También desarrolló la gestión completa del horario del estudiante (\texttt{horarios\_etsiit.json}, \texttt{ScheduleRepository} y \texttt{ScheduleScreen} con alternancia entre la vista de 3 días y la de 1 día mediante pellizco de dos dedos), participó junto con Estrella en el desarrollo de los sensores de movimiento y proximidad (\texttt{AccelerometerManager} y \texttt{ProximityManager}) y diseñó el tutorial interactivo inicial (\texttt{OnboardingTutorialOverlay}).
+
+    \item \textbf{José Pedregosa García:} Implementó el módulo de identificación con la Tarjeta Universitaria Inteligente (\texttt{ProfileScreen} con el lector en vivo del código QR del reverso de la TUI mediante cámara y Google ML Kit, la gestión de sesión en \texttt{UserSessionRepository} y los selectores de idioma y accesibilidad). Además, desarrolló el flujo escalonado para estimar el punto de partida dentro del edificio (\texttt{OriginVerificationDialog}), combinando la consulta automática al horario del alumno con la lectura de presión del barómetro (\texttt{BarometerManager}), la detección del edificio y el escaneo QR de respaldo.
+
+    \item \textbf{Ángela Rodríguez Machado:} Realizó el modelado topológico de la escuela mediante el grafo completo de las seis plantas de la ETSIIT (\texttt{grafo\_etsiit\_completo.json}, adaptación de los planos por planta y cálculo de rutas mínimas con el algoritmo de Dijkstra en \texttt{GrafoETSIIT} y \texttt{MapaRutaView}). Asimismo, implementó la pantalla de servicios (\texttt{ServicesScreen}) y el directorio completo de profesores (\texttt{ProfessorsScreen} y \texttt{docentes.json} con los 36 docentes), incluyendo el cálculo de estado en horario o tutoría, la lectura en voz alta con \texttt{TextToSpeech} y el envío de correo mediante gesto físico.
+
+    \item \textbf{Estrella Muñoz Ortega:} Desarrolló de forma coordinada con Laura la detección de gestos físicos con acelerómetro y giroscopio y asumió el sistema de guiado paso a paso en interiores: vista fotográfica a pantalla completa activada al levantar el móvil (\texttt{IndoorStepGuidanceCard}), avance automático por pasos mediante el podómetro (\texttt{PedometerManager}), calibración de las rutas interiores por escaleras y por ascensor (\texttt{guidance\_interior.json}) y soporte bilingüe español/inglés en toda la interfaz y en las instrucciones de ruta.
+
+    \item \textbf{Pablo Álvarez Fernández:} Implementó la localización exterior y los mapas por el campus (\texttt{GpsLocationReader}, \texttt{CampusLocationManager}, \texttt{OutdoorNavigator}, visor \texttt{OutdoorMap} con MapLibre y el proveedor local \texttt{LocalExteriorRouteSource} sobre las rutas calibradas de \texttt{guidance\_exterior.json} entre la ETSIIT Principal y el Edificio Auxiliar, junto con \texttt{ArrivalDetector} para la detección automática de llegada a la ETSIIT). También desarrolló el módulo completo de Comedores (\texttt{DiningScreen}), el cálculo de distancia al comedor más cercano, las reglas de reserva (\texttt{DiningReservationPolicy}) y la pasarela de pago simulada confirmada con huella dactilar o bloqueo del teléfono (\texttt{DiningPaymentAuthorizer} y \texttt{AndroidDeviceAuthenticator}).
+\end{itemize}
+
+% =========================================================================
+\section{Plataforma, Bibliotecas, Permisos y Tolerancia a Fallos}
+% =========================================================================
+
+\subsection{Plataforma Android objetivo y entorno de desarrollo}
+Desarrollamos la aplicación en \textbf{Android Studio} usando \textbf{Kotlin (2.2.10)} y \textbf{Jetpack Compose} con \textit{Material Design 3} (compilación sobre Java 11). Elegimos Compose porque nuestra interfaz tiene que reaccionar continuamente a eventos de sensores (giros del teléfono, pasos caminados, lectura de presión o cambios de coordenadas) de forma limpia sin ir manipulando vistas XML a mano.
+
+En el fichero \texttt{app/build.gradle.kts} configuramos:
+\begin{itemize}[leftmargin=1.8em]
+    \item \textbf{Plataforma objetivo:} Teléfonos móviles Android con versión mínima \textbf{Android 8.0 Oreo (\texttt{minSdk = 26})} y compilación y destino en \textbf{API 37 (\texttt{compileSdk = 37}, \texttt{targetSdk = 37})}. Elegir el nivel 26 como mínimo nos permite usar de forma nativa las APIs de vibración controlada (\texttt{VibrationEffect}) y las clases modernas de fecha y hora (\texttt{java.time}) manteniendo compatibilidad con prácticamente cualquier terminal Android en uso.
+    \item \textbf{Hardware no bloqueante:} En \texttt{AndroidManifest.xml} declaramos la cámara con \texttt{android:required="false"} para que la aplicación pueda instalarse incluso si un dispositivo carece de este elemento físico o no concede acceso a él.
+\end{itemize}
+
+\subsection{Bibliotecas externas empleadas}
+En la Tabla~\ref{tab:dependencias} resumimos únicamente las bibliotecas reales incluidas en \texttt{app/build.gradle.kts} y en \texttt{gradle/libs.versions.toml}, junto a su papel concreto en la aplicación. Todas corresponden a SDKs oficiales o bibliotecas de código abierto utilizadas respetando su autoría y licencias de distribución.
+
+\vspace{0.5cm}
+
+\begin{table}[htbp]
+\centering
+\small
+\renewcommand{\arraystretch}{1.22}
+\begin{tabularx}{\textwidth}{>{\ttfamily\raggedright\arraybackslash}p{5.8cm} X}
+\toprule
+\normalfont\bfseries Biblioteca / Dependencia & \textbf{Función en PuntoInfo ETSIIT} \\
+\midrule
+androidx.compose.material3 (BOM) & Interfaz declarativa completa, tarjetas, diálogos e iconos extendidos. \\
+androidx.navigation:\allowbreak navigation-compose & Navegación entre pantallas conservando el estado de ruta activa y el idioma. \\
+com.google.android.gms:\allowbreak play-services-location & Acceso al cliente de ubicación fusionada (\texttt{FusedLocationProviderClient}) para GPS exterior y detección de edificio. \\
+org.maplibre.gl:\allowbreak android-sdk & Visor vectorial de mapas exteriores (estilo libre OpenFreeMap) para campus y comedores. \\
+com.google.mlkit:\allowbreak barcode-scanning & Lector en vivo del código QR del reverso de la tarjeta TUI usando la cámara trasera. \\
+com.google.code.gson:gson & Lectura de los ficheros JSON locales (grafo completo, horarios y docentes). \\
+{\normalfont APIs nativas del SDK Android} & \texttt{SensorManager}, \texttt{Camera2}, \texttt{BiometricPrompt}, \texttt{RecognizerIntent} y \texttt{TextToSpeech}. \\
+\bottomrule
+\end{tabularx}
+\caption{Dependencias externas y APIs principales configuradas en el proyecto.}
+\label{tab:dependencias}
+\end{table}
+
+\clearpage
+\subsection{Gestión de permisos y funcionamiento ante fallos o sin Internet}
+Todos los permisos sensibles declarados en \texttt{AndroidManifest.xml} se solicitan en tiempo de ejecución únicamente cuando el usuario entra en la función que los necesita, evitando pedirlos todos de golpe al abrir la app y evitando bloqueos si alguno se rechaza:
+\begin{itemize}[leftmargin=1.8em]
+    \item \textbf{Cámara (\texttt{CAMERA}):} Se pide al abrir la pantalla de acceso con TUI si aún no se ha concedido; mientras no esté aceptado, se informa al usuario claramente en pantalla sin cerrar la aplicación.
+    \item \textbf{Ubicación (\texttt{ACCESS\_FINE\_LOCATION} y \texttt{ACCESS\_COARSE\_LOCATION}):} Se solicita en la pantalla de mapa exterior y en el diálogo de localización interior. Si se deniega o la ubicación del móvil está apagada, \texttt{OutdoorNavigationScreen} ofrece accesos directos a los Ajustes del sistema y permite igualmente entrar manualmente al mapa interior.
+    \item \textbf{Actividad física (\texttt{ACTIVITY\_RECOGNITION}):} Necesaria en Android 10 o superior para el contador hardware de pasos (\texttt{TYPE\_STEP\_DETECTOR}). Si el teléfono no tiene este sensor (como ocurre en algunos emuladores) o no está disponible, \texttt{PedometerManager} conmuta a una estimación de pasos por movimiento sobre el acelerómetro y mantiene siempre botones táctiles de paso anterior y siguiente como alternativa.
+    \item \textbf{Biometría y bloqueo (\texttt{USE\_BIOMETRIC}, \texttt{USE\_FINGERPRINT}):} Para confirmar la reserva de comedor, \texttt{AndroidDeviceAuthenticator} comprueba primero si el teléfono tiene un bloqueo configurado (\texttt{KeyguardManager}); si no existe ninguno, muestra un mensaje claro pidiendo configurar PIN, patrón o biometría y nunca valida la reserva sin autenticación.
+    \item \textbf{Audio y reconocimiento de voz (\texttt{RECORD\_AUDIO}):} El lanzamiento del micrófono del sistema está protegido frente a dispositivos sin servicio de voz mediante bloques de control (\texttt{ActivityNotFoundException}), mostrando un aviso amigable en ese caso.
+    \item \textbf{Uso sin conexión a Internet (\texttt{INTERNET}, \texttt{ACCESS\_NETWORK\_STATE}):} Toda la base de datos de la escuela y el guiado completo están empaquetados dentro del APK en \texttt{app/src/main/assets/}: planos WebP de las 6 plantas, grafo de 306 nodos, horarios del curso, 36 docentes y las fotografías calibradas tanto de la ruta interior como de la ruta exterior entre el edificio principal y el auxiliar. Gracias a esto, tanto el cálculo de rutas como toda la navegación y resto de funciones operan completamente en local sin depender de servidores externos; los permisos de red se utilizan únicamente para descargar las teselas del mapa vectorial \textit{OpenFreeMap} en el visor exterior (\texttt{OutdoorMap}), mostrando la ruta calibrada sobre el mapa en local incluso sin conexión.
+\end{itemize}
+
+% =========================================================================
+\section{Sensores e Interacción Multimodal}
+% =========================================================================
+
+\subsection{Justificación de sensores desde distintas categorías}
+Para cumplir con holgura el requisito del guion de usar al menos cuatro sensores de categorías diferentes (evitando apoyarnos únicamente en el movimiento), nuestra aplicación combina \textbf{seis categorías físicas distintas}, sintetizadas en la Tabla~\ref{tab:sensores}.
+
+\begin{table}[H]
+\centering
+\footnotesize
+\renewcommand{\arraystretch}{1.18}
+\begin{tabularx}{\textwidth}{>{\bfseries\raggedright\arraybackslash}p{2.4cm} >{\raggedright\arraybackslash}p{3.2cm} X}
+\toprule
+\textbf{Categoría} & \textbf{Sensores / Hardware} & \textbf{Para qué se usa y por qué tiene sentido} \\
+\midrule
+1. Movimiento e inercia & Acelerómetro, giroscopio y detector de pasos (\texttt{TYPE\_STEP\_DETECTOR}) & Permiten reconocer gestos con una mano mientras se camina (iniciar ruta, consultar la clase actual o confirmar acciones), detectar si se levanta el móvil en vertical para ver fotos paso a paso y avanzar automáticamente los tramos interiores al andar. \\
+2. Ambiental & Barómetro (\texttt{TYPE\_PRESSURE}) & En interiores el GPS no distingue entre plantas superpuestas; la variación de presión atmosférica (unos 0,4\,hPa por planta sobre la altitud de Granada) ayuda a estimar si estamos en semisótano, baja o plantas superiores. \\
+3. Proximidad infrarroja & Sensor frontal (\texttt{TYPE\_PROXIMITY}) & Pasar la mano cerca de la parte superior del móvil abre el asistente de voz al instante sin tener que buscar ni acertar en un botón de micrófono mientras se va andando. \\
+4. Posicionamiento exterior & GPS / Ubicación fusionada (\texttt{FusedLocation}) & Calcula la distancia al Comedor Aynadamar, distingue en qué edificio de la ETSIIT se encuentra el alumno (Aulas frente a Zonas Comunes), avanza las fotos del recorrido exterior cada $\le 12$\,m y avisa al llegar al edificio. \\
+5. Visión por computador & Cámara trasera + Google ML Kit & Escanea en vivo el código QR del reverso de la tarjeta TUI al abrir sesión en \textit{Mi Perfil}, evitando tener que teclear usuario y contraseña en el móvil. \\
+6. Biometría, voz y multitáctil & Lector biométrico (\texttt{BiometricPrompt}), micrófono/altavoz (TTS) y pantalla táctil & Autorización segura por huella o bloqueo del terminal al reservar menú; búsqueda por voz y lectura de tutorías (\textit{TextToSpeech}); y pellizco con dos dedos en \textit{Mi Horario} y los mapas. \\
+\bottomrule
+\end{tabularx}
+\caption{Categorías de sensores integradas en la aplicación y justificación de su uso.}
+\label{tab:sensores}
+\end{table}
+
+\subsection{Catálogo de los 6 gestos de la aplicación}
+Para que el usuario sepa en todo momento qué gestos existen y cuándo están disponibles, creamos el componente \texttt{GestureBadge} con seis insignias codificadas por color que coinciden exactamente con la pantalla de \textit{Guía de Gestos} accesible desde el botón \texttt{(i)} de la barra superior (Tabla~\ref{tab:gestos}).
+
+\begin{table}[H]
+\centering
+\footnotesize
+\renewcommand{\arraystretch}{1.15}
+\begin{tabularx}{\textwidth}{>{\bfseries\raggedright\arraybackslash}p{2.5cm} >{\raggedright\arraybackslash}p{1.8cm} >{\raggedright\arraybackslash}p{3.4cm} X}
+\toprule
+\textbf{Nombre del gesto} & \textbf{Insignia} & \textbf{Cómo se realiza} & \textbf{Dónde y qué acción ejecuta} \\
+\midrule
+«¡Llévame!» & Color verde azulado & Inclinar el móvil a la izquierda y volver al frente rápidamente. & En tarjeta de clase actual, detalle de asignatura, comedor y ficha de profesor: inicia la navegación directa al destino. \\
+Clase actual & Color rojo UGR & Tres inclinaciones rápidas hacia adelante y volver hacia ti. & En cualquier pantalla general (con sesión iniciada): abre la tarjeta con tu clase actual o la próxima en empezar. \\
+Confirmar / Enviar & Color ámbar & Partiendo de lectura normal, llevar el móvil a vertical hacia ti y volver. & En el verificador de ubicación inicial (confirma tu punto de partida o abre la cámara QR), en \textit{Comedores} (reserva de menú de días futuros) y en ficha de \textit{Profesores} (abre el correo ya rellenado). \\
+Levantar móvil & Color azul ETSIIT & Colocar el móvil en vertical frente a los ojos. & En los mapas interior y exterior con ruta activa: abre o cierra el guiado fotográfico paso a paso. \\
+Voz por proximidad & Color morado & Acercar la mano a la parte superior frontal del teléfono. & Desde cualquier pantalla general: activa el micrófono para buscar aulas, despachos, edificios, comedor o profesores. \\
+Pellizco de zoom & Color índigo & Separar o juntar dos dedos sobre la pantalla. & En \textit{Mi Horario}: cambia entre la vista panorámica de 3 días y el detalle de 1 día completo. \\
+\bottomrule
+\end{tabularx}
+\caption{Resumen de los seis gestos multimodales integrados y su identificación visual.}
+\label{tab:gestos}
+\end{table}
+
+\subsection{Cómo evitamos disparos accidentales (\textit{Midas Touch})}
+Uno de los mayores retos al programar gestos con el acelerómetro fue que, en las primeras pruebas reales caminando, los gestos se disparaban solos al meter el móvil en el bolsillo, al mover el brazo o al girarlo levemente. Para lograr que el reconocimiento fuera cómodo pero fiable diseñamos estas reglas comunes en \texttt{AccelerometerManager.kt}:
+
+\begin{enumerate}[leftmargin=1.8em]
+    \item \textbf{Partir siempre de postura normal de lectura:} Ningún gesto físico de acción se arma si el móvil está apoyado plano sobre una mesa, boca abajo o colgando verticalmente mientras caminamos. El usuario debe estar sujetándolo de forma natural para leer.
+    \item \textbf{Regla obligatoria de ida y vuelta:} Tanto el giro a la izquierda («¡Llévame!»), como las tres inclinaciones para ver la clase actual o la inclinación hacia uno mismo para confirmar una acción \textbf{no se disparan a mitad del movimiento}. Exigimos realizar el movimiento y regresar a la postura inicial en un tiempo acotado; así el usuario termina mirando la pantalla, siente una vibración corta de confirmación y ve el resultado al instante.
+    \item \textbf{Combinación de acelerómetro y giroscopio:} En los cabeceos hacia adelante o hacia el usuario, usar solo la gravedad engaña cuando hay sacudidas al andar. Al combinarla con la rotación medida por el giroscopio distinguimos un giro deliberado de muñeca de un bache o paso normal.
+    \item \textbf{Estabilidad al levantar el móvil en rutas:} Para entrar en las fotografías paso a paso pedimos que el teléfono se ponga vertical, pero para salir de ellas no basta un leve vaivén al caminar: hay que inclinarlo claramente hacia una postura horizontal de lectura.
+    \item \textbf{Filtro en el sensor de proximidad:} En varios móviles la parte superior queda muy cerca de la flecha de volver atrás. Por ello exigimos mantener la mano frente al sensor unos instantes ($\approx 0{,}3$\,s) antes de lanzar el micrófono, evitando activaciones por un roce puntual del dedo.
+    \item \textbf{Pausa automática en momentos delicados:} Mientras el usuario escanea el QR de la TUI, está en la pasarela de pago del comedor, realiza el tutorial inicial o va siguiendo una ruta paso a paso, los gestos globales (voz y clase actual) se desactivan temporalmente para no estorbar.
+\end{enumerate}
+
+% =========================================================================
+\section{Arquitectura del Sistema}
+% =========================================================================
+
+\subsection{Organización del código en cuatro capas}
+Para trabajar en equipo sin pisarnos el código, dividimos el proyecto bajo el paquete raíz \texttt{com.example.npi\_puntoinfo\_etsiit} en cuatro capas claras y desacopladas:
+
+\begin{enumerate}[leftmargin=1.8em]
+    \item \textbf{Capa de interfaz y navegación (\texttt{ui/screens}, \texttt{ui/components}, \texttt{ui/navigation}):} Contiene \texttt{AppNavigation.kt}, que coordina todas las rutas entre pantallas, la barra superior adaptativa con las insignias de gestos, el asistente global de voz y los diálogos compartidos. Aquí viven también las pantallas (\texttt{HomeScreen}, \texttt{ScheduleScreen}, \texttt{DiningScreen}, \texttt{ServicesScreen}, \texttt{ProfessorsScreen}, \texttt{NavigationScreen}, \texttt{OutdoorNavigationScreen} y \texttt{ProfileScreen}) y componentes reutilizables como los visores de mapa (\texttt{MapaRutaView}, \texttt{OutdoorMap}), el tutorial inicial (\texttt{OnboardingTutorialOverlay}) y el verificador de ubicación (\texttt{OriginVerificationDialog}).
+    \clearpage
+    \item \textbf{Capa de lógica y enrutamiento (\texttt{GrafoETSIIT.kt}, \texttt{indoor/}, \texttt{outdoor/}, \texttt{data/}):} Agrupa el cálculo de rutas interiores con Dijkstra y la interpretación de frases de voz; la gestión del recorrido paso a paso en interior (\texttt{IndoorTripState}) y exterior (\texttt{OutdoorNavigator}, \texttt{LocalExteriorRouteSource}, \texttt{GuidanceExteriorRepository}, \texttt{NavigationJourney}, \texttt{ArrivalDetector}); y las reglas de negocio de horarios, sesión de usuario (\texttt{UserSessionRepository}), fechas reservables y autorización de pago (\texttt{DiningReservationPolicy}, \texttt{DiningPaymentAuthorizer}).
+    \item \textbf{Capa de sensores y hardware (\texttt{sensors/}):} Encapsula cada acceso hardware en su propio gestor (\texttt{AccelerometerManager}, \texttt{ProximityManager}, \texttt{BarometerManager}, \texttt{PedometerManager}, \texttt{CampusLocationManager}, \texttt{GpsLocationReader} y \texttt{AndroidDeviceAuthenticator}). Cada pantalla registra y libera los sensores necesarios dentro de su ciclo de vida (\texttt{DisposableEffect}) para no gastar batería cuando no se utilizan.
+    \item \textbf{Capa de datos locales y recursos (\texttt{assets/}, \texttt{res/values*}):} Almacena el grafo de las seis plantas (\texttt{grafo\_etsiit\_completo.json}; los JSON individuales por planta quedan en la herramienta auxiliar \texttt{editor\_mapa/}), los planos WebP, los horarios (\texttt{horarios\_etsiit.json}), los 36 profesores (\texttt{docentes.json}) con sus fotografías, los ficheros de guiado fotográfico calibrado (\texttt{guidance\_interior.json} y \texttt{guidance\_exterior.json}) y los diccionarios de textos en español (\texttt{values/strings.xml}) e inglés (\texttt{values-en/strings.xml}).
+\end{enumerate}
+
+\subsection{Flujo de estimación del origen en interiores}
+Cuando el usuario inicia una ruta dentro de la ETSIIT sin venir guiado desde fuera, no podemos depender de la altura del GPS ni queremos obligarle a buscar su aula en una lista gigante de más de trescientos puntos. Por ello diseñamos un diálogo en tres pasos simples (\texttt{OriginVerificationDialog.kt}) que intenta adivinar el origen de menor a mayor esfuerzo para el usuario, tal como ilustra la Figura~\ref{fig:origen}. (En el caso concreto de probar la ruta de demostración hacia el Aula 1.1, pregunta además directamente si se parte desde el Comedor Aynadamar). Todos sus botones de confirmación (\textit{«Sí»}, selección de aula y \textit{«Abrir Cámara»}) muestran la insignia gestual correspondiente y permiten confirmar mediante el gesto de inclinar el móvil hacia uno mismo (\textit{Confirmar / Enviar}), pausando mientras tanto el detector de levantamiento para evitar conflictos; además, el origen confirmado se conserva en la sesión si el usuario consulta temporalmente la \textit{Guía de Gestos} o su \textit{Perfil} antes de regresar al mapa.
+
+\vspace{0.6cm}
+
+\begin{figure}[htbp]
+\centering
+\resizebox{\textwidth}{!}{%
+\begin{tikzpicture}[
+    node distance=2.8cm,
+    paso/.style={rectangle, rounded corners=6pt, draw=etsiitBlue, fill=softBg, thick, minimum width=3.8cm, minimum height=1.8cm, align=center, font=\small\sffamily},
+    exito/.style={rectangle, rounded corners=6pt, draw=sensorGreen, fill=sensorGreen!10, very thick, minimum width=5.0cm, minimum height=1.25cm, align=center, font=\small\sffamily\bfseries},
+    flecha/.style={-Stealth, thick, draw=etsiitBlue}
+]
+\node[paso] (p1) {\textbf{1. Consulta al horario}\\Si tienes clase ahora o acaba\\de terminar, pregunta:\\\textit{«¿Estás en este aula?»}};
+\node[paso, right=2.8cm of p1] (p2) {\textbf{2. GPS + Barómetro}\\Detecta edificio (Aulas / Comunes)\\y planta aproximada:\\\textit{elige aula de esa planta}};
+\node[paso, right=2.8cm of p2] (p3) {\textbf{3. Código QR de puerta}\\Respaldo final si fallan\\las estimaciones previas:\\\textit{escanea el QR del entorno}};
+\node[exito, below=1.4cm of p2] (ok) {Origen confirmado en el grafo $\rightarrow$ Inicio de la ruta guiada};
+
+\draw[flecha] (p1) -- node[above=4pt, font=\footnotesize\bfseries\color{ugrRed}]{No / Sin clase} (p2);
+\draw[flecha] (p2) -- node[above=4pt, font=\footnotesize\bfseries\color{ugrRed}]{No coincide} (p3);
+\draw[flecha] (p1.south) |- node[near start, left=4pt, font=\footnotesize\bfseries\color{sensorGreen}]{Sí} (ok.west);
+\draw[flecha] (p2.south) -- node[right=4pt, font=\footnotesize\bfseries\color{sensorGreen}]{Sí (confirma aula)} (ok.north);
+\draw[flecha] (p3.south) |- node[near start, right=4pt, font=\footnotesize\bfseries\color{sensorGreen}]{QR leído} (ok.east);
+\end{tikzpicture}%
+}
+\caption{Flujo en cascada de tres pasos para localizar el punto de partida en interiores.}
+\label{fig:origen}
+\end{figure}
+
+\clearpage
+\subsection{Principales clases, atributos y métodos}
+Para estructurar la lógica de la aplicación bajo un enfoque modular, desacoplado y reactivo en Jetpack Compose, el sistema se apoya en un conjunto de componentes especializados encargados del enrutamiento, la captura sensorial, la gestión del estado y la persistencia. En la Tabla~\ref{tab:clases} se sintetizan las clases centrales del proyecto, detallando sus atributos más representativos y sus métodos principales.
+
+\vspace{0.4cm}
+
+\begin{table}[H]
+\centering
+\footnotesize
+\setlength{\tabcolsep}{4.5pt}
+\renewcommand{\arraystretch}{1.28}
+\begin{tabularx}{\textwidth}{>{\bfseries\raggedright\arraybackslash}p{3.4cm} >{\raggedright\arraybackslash}p{4.1cm} >{\raggedright\arraybackslash}p{3.4cm} >{\raggedright\arraybackslash}X}
+\toprule
+\textbf{Clase} & \textbf{Responsabilidad} & \textbf{Atributos principales} & \textbf{Métodos más relevantes} \\
+\midrule
+GrafoETSIIT & Carga y modela la topología de la escuela, calcula rutas óptimas con Dijkstra y resuelve destinos por voz. & \texttt{conexiones}, \newline \texttt{directorioNodos} & \texttt{cargarDesdeAssets()}, \newline \texttt{calcularRuta\allowbreak Dijkstra()}, \newline \texttt{calcularRuta\allowbreak Completa()}, \newline \texttt{obtenerRutaForzada\allowbreak Ascensor()}, \newline \texttt{resolverDestino\allowbreak PorVoz()} \\
+\midrule
+IndoorTripState & Modela el estado inmutable y reactivo del recorrido interior paso a paso guiado por podómetro. & \texttt{tripId}, \texttt{route}, \texttt{steps}, \texttt{currentStepIndex}, \texttt{totalStepsTaken} & \texttt{onStepDetected()}, \newline \texttt{nextStepManual()}, \newline \texttt{previousStepManual()}, \newline \texttt{buildFromRoute()} \\
+\midrule
+OutdoorNavigator & Coordina la lectura GPS y el proveedor local de rutas exteriores manteniendo el estado reactivo (\texttt{OutdoorUiState}). & \texttt{gps}, \texttt{routes}, \newline \texttt{state} (\texttt{StateFlow}) & \texttt{selectDestination()}, \newline \texttt{refreshLocation()}, \newline \texttt{requestRoute()}, \newline \texttt{onStart()}, \texttt{onStop()} \\
+\midrule
+Accelerometer\allowbreak Manager & Reconoce gestos físicos de acelerómetro y giroscopio mediante máquinas de estados e histéresis. & \texttt{TILT\_LEFT\_STRONG\_\allowbreak THRESHOLD}, \newline \texttt{verticalMinY\allowbreak Threshold}, callbacks & \texttt{startListening()}, \newline \texttt{stopListening()}, \newline \texttt{onSensorChanged()} \\
+\midrule
+CampusLocation\allowbreak Manager & Provee geolocalización, determina el edificio de la ETSIIT (Aulas vs.\ Zonas Comunes) y busca comedores cercanos. & \texttt{ugrDiningHalls}, \newline \texttt{lastKnownLocation}, polígonos de recintos & \texttt{estimateEtsiit\allowbreak Building()}, \newline \texttt{isUserNearEtsiit()}, \newline \texttt{findNearest\allowbreak DiningHall()} \\
+\midrule
+DiningPayment\allowbreak Authorizer & Autoriza y procesa la reserva de menú para llevar exigiendo verificación biométrica o bloqueo del dispositivo. & \texttt{authenticator} & \texttt{confirm(onResult)}, \newline \texttt{cancel()} \\
+\midrule
+UserSession\allowbreak Repository & Gestiona la persistencia local de sesión (\textit{SharedPreferences}), el perfil TUI, el idioma y el estado del tutorial inicial. & \texttt{PREFS\_NAME}, \texttt{KEY\_PROFILE}, \newline \texttt{isTutorial\allowbreak ActiveState} & \texttt{getProfile()}, \newline \texttt{loginWithOfficial\allowbreak Profile()}, \newline \texttt{saveProfile()}, \newline \texttt{updateLanguage()} \\
+\bottomrule
+\end{tabularx}
+\caption{Clases principales del software, variables de clase más relevantes y métodos destacados.}
+\label{tab:clases}
+\end{table}
+
+Como complemento visual, la Figura~\ref{fig:uml_arquitectura_npi} modela las relaciones arquitectónicas y dependencias entre estos componentes mediante un diagrama de clases UML.
+
+\begin{figure}[H]
+    \centering
+    \resizebox{\textwidth}{!}{%
+    \begin{tikzpicture}[
+        >=Stealth,
+        font=\sffamily\footnotesize,
+        % Estilo base para clases UML (3 compartimentos: cabecera, atributos, métodos)
+        umlclass/.style={
+            rectangle split,
+            rectangle split parts=3,
+            rectangle split part align={center, left, left},
+            draw=slateborder,
+            line width=0.85pt,
+            rounded corners=2.5pt,
+            rectangle split part fill={headerbg, bodybg, bodybg},
+            text=darktext,
+            inner sep=5pt,
+            align=left,
+            minimum width=4.6cm
+        },
+        % Estilo para notas UML
+        umlnote/.style={
+            rectangle,
+            draw=noteborder,
+            fill=notebg,
+            line width=0.7pt,
+            rounded corners=2pt,
+            text=darktext,
+            font=\sffamily\scriptsize,
+            inner sep=4.5pt,
+            align=left
+        },
+        % Estilo para dependencias UML
+        umldep/.style={
+            ->,
+            dashed,
+            dash pattern=on 4pt off 2.5pt,
+            line width=0.8pt,
+            draw=arrowcolor
+        },
+        % Estilo para anclaje de notas
+        noteline/.style={
+            dotted,
+            line width=0.75pt,
+            draw=noteborder
+        },
+        % Etiquetas sobre flechas
+        deplabel/.style={
+            font=\sffamily\scriptsize\itshape,
+            text=labelcolor,
+            fill=white,
+            inner sep=1.5pt
+        }
+    ]
+
+    % Paleta cromática sobria (azules grisáceos y grises suaves)
+    \definecolor{slateborder}{HTML}{3B5978}
+    \definecolor{headerbg}{HTML}{DCE6F1}
+    \definecolor{bodybg}{HTML}{F8FAFC}
+    \definecolor{darktext}{HTML}{1E293B}
+    \definecolor{arrowcolor}{HTML}{475569}
+    \definecolor{labelcolor}{HTML}{334155}
+    \definecolor{noteborder}{HTML}{94A3B8}
+    \definecolor{notebg}{HTML}{F1F5F9}
+
+    % =========================================================================
+    % NIVEL 1: Configuración, Hardware/Sensores y Geolocalización Base
+    % =========================================================================
+
+    \node[umlclass] (session) {
+        \scriptsize\textit{\guillemotleft object\guillemotright}\\[-1pt]
+        \textbf{UserSessionRepository}
+        \nodepart{second}
+        \texttt{- PREFS\_NAME: String}\\
+        \texttt{- KEY\_PROFILE: String}\\
+        \texttt{+ isTutorialActiveState: Boolean}
+        \nodepart{third}
+        \texttt{+ getProfile(context): UserProfile}\\
+        \texttt{+ saveProfile(context, profile)}\\
+        \texttt{+ updateLanguage(context, lang)}
+    };
+
+    \node[umlclass, right=1.8cm of session] (accel) {
+        \textbf{AccelerometerManager}
+        \nodepart{second}
+        \texttt{- TILT\_LEFT\_STRONG\_THRESHOLD: Float}\\
+        \texttt{- verticalMinYThreshold: Float}\\
+        \texttt{+ onTakeMeThereGesture: (() -> Unit)?}
+        \nodepart{third}
+        \texttt{+ startListening()}\\
+        \texttt{+ stopListening()}\\
+        \texttt{+ onSensorChanged(event: SensorEvent)}
+    };
+
+    \node[umlclass, right=1.8cm of accel] (location) {
+        \scriptsize\textit{\guillemotleft object\guillemotright}\\[-1pt]
+        \textbf{CampusLocationManager}
+        \nodepart{second}
+        \texttt{+ ugrDiningHalls: List<UgrDiningHall>}\\
+        \texttt{+ lastKnownLocation: Coordinates?}
+        \nodepart{third}
+        \texttt{+ findNearestDiningHall(lat, lon)}\\
+        \texttt{+ isUserNearEtsiit(context): Boolean}\\
+        \texttt{+ estimateEtsiitBuilding(lat, lon)}
+    };
+
+    % =========================================================================
+    % NIVEL 2: Motores de Cálculo de Rutas y Navegación Exterior
+    % =========================================================================
+
+    \node[umlclass, below=2.0cm of session.south west, anchor=north west] (grafo) {
+        \textbf{GrafoETSIIT}
+        \nodepart{second}
+        \texttt{- conexiones: Map<String, List<Arista>>}\\
+        \texttt{- directorioNodos: Map<String, Nodo>}
+        \nodepart{third}
+        \texttt{+ cargarDesdeAssets(context)}\\
+        \texttt{+ calcularRutaCompleta(orig, dest): RutaCalculada?}\\
+        \texttt{+ obtenerRutaForzadaAscensor(): RutaCalculada?}\\
+        \texttt{+ resolverDestinoPorVoz(texto): ResultadoVoz}
+    };
+
+    \node[umlclass, below=2.0cm of location.south east, anchor=north east] (outdoor) {
+        \textbf{OutdoorNavigator}
+        \nodepart{second}
+        \texttt{- gps: GpsLocationReader}\\
+        \texttt{- routes: WalkingRouteSource}\\
+        \texttt{+ state: StateFlow<OutdoorUiState>}
+        \nodepart{third}
+        \texttt{+ selectDestination(id)}\\
+        \texttt{+ refreshLocation(scope)}\\
+        \texttt{+ requestRoute(scope)}\\
+        \texttt{+ onStart() / onStop()}
+    };
+
+    % =========================================================================
+    % NIVEL 3: Estado de Navegación Interior y Pagos en Comedores
+    % =========================================================================
+
+    \node[umlclass, below=1.8cm of grafo.south west, anchor=north west] (indoor) {
+        \scriptsize\textit{\guillemotleft data class\guillemotright}\\[-1pt]
+        \textbf{IndoorTripState}
+        \nodepart{second}
+        \texttt{+ tripId: String}\\
+        \texttt{+ route: RutaCalculada}\\
+        \texttt{+ steps: List<IndoorStep>}\\
+        \texttt{+ currentStepIndex: Int}
+        \nodepart{third}
+        \texttt{+ onStepDetected(): IndoorTripState}\\
+        \texttt{+ nextStepManual(): IndoorTripState}\\
+        \texttt{+ buildFromRoute(route): IndoorTripState}
+    };
+
+    \node[umlclass, below=1.8cm of outdoor.south east, anchor=north east] (payment) {
+        \textbf{DiningPaymentAuthorizer}
+        \nodepart{second}
+        \texttt{- authenticator: DeviceAuthenticator}
+        \nodepart{third}
+        \texttt{+ confirm(onResult)}\\
+        \texttt{+ cancel()}
+    };
+
+    % =========================================================================
+    % NOTAS EXPLICATIVAS (Mediación de UI / Compose)
+    % =========================================================================
+
+    \node[umlnote] at ($(grafo.east)!0.5!(outdoor.west)$) (note_compose) {
+        \textbf{Orquestación UI (Jetpack Compose):}\\
+        \texttt{AppNavigation} y las pantallas leen el\\
+        perfil accesible (\texttt{UserSessionRepository}),\\
+        escuchan gestos (\texttt{AccelerometerManager})\\
+        y coordinan las rutas y transiciones\\
+        entre \texttt{OutdoorNavigator} e \texttt{IndoorTripState}.
+    };
+
+    \node[umlnote] at ($(indoor.east)!0.5!(payment.west)$) (note_dining) {
+        \textbf{Flujo Comedores (\texttt{DiningScreen}):}\\
+        Consulta el comedor más cercano en\\
+        \texttt{CampusLocationManager} y solicita\\
+        verificación biométrica a\\
+        \texttt{DiningPaymentAuthorizer}.
+    };
+
+    % =========================================================================
+    % RELACIONES DE DEPENDENCIA UML REALES Y COORDINACIÓN UI
+    % =========================================================================
+
+    % Dependencia directa real en código: IndoorTripState importa RutaCalculada de GrafoETSIIT
+    \draw[umldep] (indoor.north) -- (grafo.south -| indoor.north)
+        node[midway, right=2pt, deplabel] {usa \texttt{RutaCalculada}};
+
+    % Anclajes de coordinación UI (sin dependencias directas falsas en código ni cruces sobre cajas)
+    \draw[noteline] (note_compose.north) -- (accel.south);
+    \draw[noteline] (note_compose.north west) -- (session.south east);
+    \draw[noteline] (note_compose.north east) -- (location.south west);
+    \draw[noteline] (note_compose.west) -- (grafo.east);
+    \draw[noteline] (note_compose.east) -- (outdoor.west);
+    \draw[noteline] (note_compose.south west) |- (indoor.east);
+
+    \draw[noteline] (note_dining.east) -- (payment.west);
+    \draw[noteline] (note_dining.north) -- (note_compose.south);
+
+    \end{tikzpicture}%
+    }
+    \caption{Diagrama UML simplificado de los componentes principales de la aplicación y su coordinación desde la interfaz.}
+    \label{fig:uml_arquitectura_npi}
+\end{figure}
+
+% =========================================================================
+\section{Descripción Detallada de Pantallas y Funcionalidades}
+% =========================================================================
+
+\subsection{Pantalla Principal sin \textit{scroll} y Tutorial Interactivo}
+Al abrir la aplicación, \texttt{HomeScreen.kt} prescinde por completo de barras inferiores de navegación y distribuye el contenido por pesos proporcionales de altura para caber siempre en una sola pantalla:
+\begin{itemize}[leftmargin=1.8em]
+    \item \textbf{Modo invitado vs. sesión iniciada:} Si aún no se ha iniciado sesión con la TUI, muestra en la parte central un carrusel automático (cambia cada 5 segundos) con 4 noticias reales de la ETSIIT y, en la parte inferior, dos botones amplios y de alto contraste: \textbf{Comedores} y \textbf{Servicios}. Al identificarse con la TUI, se desbloquea en la parte superior la tarjeta dinámica de \textbf{Próxima clase} (con botón directo \textit{Ir} y gesto «¡Llévame!») y el acceso a \textbf{Mi Horario}.
+    \item \textbf{Barra superior contextual:} En la esquina superior derecha muestra siempre en pequeño los distintivos de los gestos activos en la pantalla actual, el botón \texttt{(i)} que abre la \textbf{Guía de Gestos} (pantalla sin \textit{scroll} donde también aparece el botón para repetir el tutorial en cualquier momento) y el acceso al perfil.
+    \item \textbf{Tutorial inicial con \textit{Spotlight} (\texttt{OnboardingTutorialOverlay.kt}):} La primera vez que se ejecuta la app arranca automáticamente un recorrido en cuatro fases: bienvenida, visita guiada iluminando uno a uno los \textbf{7 elementos clave} de la pantalla principal mediante un recorte sobre fondo oscuro, un laboratorio práctico donde probar en directo los \textbf{6 gestos} (con indicador de progreso al inclinar el teléfono y validación con vibración al superar o saltar cada prueba) y una pantalla final de resumen.
+\end{itemize}
+
+\subsection{Perfil Universitario, Acceso por QR de la TUI, Idioma y Accesibilidad}
+Al pulsar el icono de usuario se abre \texttt{ProfileScreen.kt}:
+\begin{itemize}[leftmargin=1.8em]
+    \item \textbf{Acceso mediante cámara y código QR:} Si no hay sesión activa, la pantalla abre directamente una vista de cámara en directo (\texttt{Camera2} con \texttt{TextureView}) conectada a \textbf{Google ML Kit Barcode Scanning}, analizando fotogramas en tiempo real exclusivamente para detectar un código QR (como el del reverso de la tarjeta universitaria TUI). Al reconocerlo, inicia sesión cargando el perfil académico oficial preconfigurado para demostración (\textit{Elena Morales Vega}, 4.º de Grado en Ingeniería Informática, Grupo A y sus 6 asignaturas matriculadas), sin obligar a teclear usuario ni contraseña.
+    \item \textbf{Preferencias y personalización:} Con la sesión iniciada, el alumno ve su ficha y expediente junto a dos ajustes inmediatos que se aplican a toda la app: el interruptor de \textbf{Ruta accesible} (prioriza el ascensor en rutas interiores) y el selector compacto de idioma entre \textbf{Español} y \textbf{Inglés} con banderas, que actualiza la configuración regional de Android en el acto.
+\end{itemize}
+
+\subsection{Mi Horario y Zoom Multitáctil con Dos Dedos}
+La pantalla \texttt{ScheduleScreen.kt} carga desde \texttt{assets/horarios\_etsiit.json} el horario correspondiente a las 6 asignaturas del perfil (\texttt{PTC}, \texttt{SS}, \texttt{TIC}, \texttt{NPI}, \texttt{VC} y \texttt{PL}), cruzando también cada sesión con su docente en \texttt{docentes.json}.
+\begin{itemize}[leftmargin=1.8em]
+    \item \textbf{Cambio de vista mediante pellizco:} Con un gesto de dos dedos en cualquier parte de la pantalla (\texttt{calculateZoom}), el estudiante alterna con suavidad y vibración entre la \textbf{vista panorámica de 3 días} (carrusel con proporción 30\,\%--40\,\%--30\,\% destacando el día central) y la \textbf{vista detallada de 1 día}, resaltando el día actual con el borde rojo institucional y destacando en verde la clase que esté en curso.
+    \item \textbf{Navegación desde clase:} Al tocar una asignatura se abre una ventana emergente con sus datos (teoría o prácticas, aula o laboratorio y profesor) donde está activo el gesto \textbf{«¡Llévame!»} para iniciar la ruta hacia ese aula.
+\end{itemize}
+
+\subsection{Comedores Universitarios y Reserva con Huella Dactilar}
+En \texttt{DiningScreen.kt} el usuario consulta los menús diarios (Primer Plato, Segundo Plato y Postre, con tarifa de \textbf{4,00\,\euro}) en sus versiones \textbf{Tradicional} y \textbf{Vegetariano}.
+\begin{itemize}[leftmargin=1.8em]
+    \item \textbf{Ventana de días y comedor cercano:} Siguiendo \texttt{DiningReservationPolicy}, el carrusel muestra el menú de \textbf{hoy y los cuatro próximos días laborables}, saltando los fines de semana (si hoy es fin de semana muestra aviso de cierre sin servicio). En la tarjeta aparece además la barra de \textbf{Comedor más cercano} (\textit{Comedor Aynadamar}) con la distancia calculada por GPS y la insignia de \textbf{«¡Llévame!»} para ir a pie.
+    \item \textbf{Reserva para llevar y pasarela simulada con biometría:} Solo es posible reservar si se ha \textbf{iniciado sesión con la TUI} y exclusivamente para cualquiera de los \textbf{cuatro días laborables futuros} (la página del día actual deshabilita el botón y oculta la insignia de gesto para evitar reservas fuera de plazo). El estudiante puede pulsar el botón o hacer el gesto físico de \textbf{inclinar el móvil hacia sí y volver}. En la pantalla de confirmación visual elige entre \textbf{Bizum} o \textbf{Tarjeta} (sin formularios bancarios ni cargos reales) y al pulsar en pagar, \texttt{DiningPaymentAuthorizer} solicita mediante \texttt{BiometricPrompt} la huella dactilar o el bloqueo nativo del dispositivo. Si el usuario cancela o falla la biometría no se guarda nada; si autentica correctamente, la tarjeta pasa a verde con estado \textit{Reservado} y persiste localmente por fecha.
+\end{itemize}
+
+\subsection{Servicios de la ETSIIT y Directorio de Profesores}
+Desde \texttt{ServicesScreen.kt} el usuario accede a una tarjeta destacada interactiva para \textbf{Profesores y Tutorías} y a una cuadrícula visual en dos columnas con seis servicios del centro (\textit{Conserjería}, \textit{Biblioteca}, \textit{Cafetería}, \textit{Secretaría}, \textit{Clubes y Actividades} y \textit{Relaciones Internacionales}).
+
+Por su parte, \texttt{ProfessorsScreen.kt} gestiona la base local de \textbf{36 docentes} (\texttt{assets/docentes.json}) con sus fotografías de avatar:
+\begin{itemize}[leftmargin=1.8em]
+    \item \textbf{Cuadrícula, ordenación y estado en tiempo real:} La pantalla muestra una cuadrícula en dos columnas con tarjetas de 160\,dp de altura que integran la foto circular de 80\,dp, el nombre corto (nombre de pila y primer apellido mediante \texttt{formatShortProfessorName}) y una píldora con el estado en directo (\textit{En tutoría}, \textit{En clase} o \textit{Fuera de horario}), ordenados alfabéticamente sin sesgo de tildes (\texttt{normalizarTexto}) y priorizando a los profesores del alumno si ha iniciado sesión (con estrella roja). Se incluye además un selector de \textit{Modo Demo horario} para simular diferentes momentos de la semana en demostraciones.
+    \item \textbf{Ficha desplegable (\textit{ModalBottomSheet}) y acciones multimodales:} Cuenta con buscador escrito y por voz integrado en la barra superior. Al pulsar sobre cualquier docente se despliega una ficha inferior donde consultar sus horarios de tutorías, pulsar el botón \textbf{[Oír]} para escuchar las indicaciones por voz natural con \textbf{\texttt{TextToSpeech}} (*«...en el despacho 225...»*), pulsar sobre la fotografía para ampliarla a pantalla completa con la asignatura y departamento completos, o ejecutar sus dos acciones principales mediante botones con insignia gestual: ir al despacho con su botón directo (p.\,ej., \textbf{D225}) y gesto \textbf{«¡Llévame!»}, o redactar un correo con el botón \textbf{[Correo]} mediante el gesto de cabeceo hacia uno mismo (\texttt{Intent.ACTION\_SENDTO}).
+\end{itemize}
+
+\vspace{0.35cm}
+\subsection{Navegación Interior, Exterior y Asistente de Voz}
+En el apartado de rutas combinamos la base completa del edificio con un guiado paso a paso práctico y adaptado a uso real:
+\begin{itemize}[leftmargin=1.8em]
+    \item \textbf{Modelado completo con Dijkstra y transición a rutas calibradas:} En una primera fase digitalizamos los planos completos de las 6 plantas (\texttt{PSS}, \texttt{PB}, \texttt{P1}, \texttt{P2}, \texttt{P3} y \texttt{P4}) con una herramienta web propia en \texttt{editor\_mapa/}, construyendo el grafo de \textbf{306 nodos y 333 aristas} (\texttt{grafo\_etsiit\_completo.json}) sobre el que \texttt{GrafoETSIIT.kt} calcula la ruta más corta con \textbf{Dijkstra} y la dibuja en el plano 2D (\texttt{MapaRutaView.kt}) con selector de plantas. Sin embargo, comprobamos después que capturar fotografías calibradas para todos los rincones de las 6 plantas no era necesario para validar el sistema, por lo que para el \textbf{guiado paso a paso} definimos rutas controladas calibradas con nuestras propias herramientas web/Python de \texttt{tools/}:
+    \begin{itemize}
+        \item \textbf{Interior (\texttt{guidance\_interior.json}):} Recorrido completo entre el Comedor de la ETSIIT y el Aula 1.1 con dos variantes reales: \textbf{escaleras (9 nodos)} o \textbf{ascensor accesible (12 nodos)}, seleccionables según la preferencia de movilidad reducida (también con trazado forzado por ascensor en el mapa 2D).
+        \item \textbf{Exterior (\texttt{guidance\_exterior.json}):} Recorrido real de \textbf{9 hitos de ida y 9 de vuelta} entre la ETSIIT Principal y el Edificio Auxiliar, calibrando coordenadas GPS, rumbo magnético y la posición horizontal del camino (\texttt{eje\_x\_camino}) dentro de cada foto panorámica.
+    \end{itemize}
+    \clearpage
+    \item \textbf{Guiado fotográfico automático al levantar el móvil:} Con una ruta activa (tanto dentro como fuera), basta colocar el móvil en vertical frente a uno para pasar a pantalla completa con la fotografía real del tramo. Usando la brújula del móvil (\textit{Vector de rotación} / Acelerómetro + Magnetómetro), la imagen panorámica se recorta hacia donde mira el usuario: si apunta en la dirección correcta del camino ve la flecha y los pasos o metros que quedan; si está girado respecto al rumbo adecuado ($> 28^\circ$ fuera o $> 35^\circ$ dentro), la pantalla le indica claramente \textit{«Gira a la izquierda»} o \textit{«Gira a la derecha»}. Dentro del edificio los tramos avanzan solos con el \textbf{podómetro} (\texttt{PedometerManager}), y fuera por \textbf{proximidad GPS} al estar a $\le 12$\,m del siguiente hito, dejando siempre botones de avance/retroceso manual.
+    \vspace{0.2cm}
+    \item \textbf{Mapa exterior calibrado y transición al interior:} \texttt{OutdoorNavigationScreen} y \texttt{LocalExteriorRouteSource} cargan desde \texttt{GuidanceExteriorRepository} las rutas peatonales calibradas de ida y vuelta entre la \textbf{ETSIIT Principal} y el \textbf{Edificio Auxiliar} sin depender de APIs externas de cálculo de rutas, representándolas sobre el visor \textbf{MapLibre} con teselas \textit{OpenFreeMap}. Cuando el trayecto parte de fuera hacia un aula o despacho concreto, \texttt{NavigationJourney} conserva el destino final durante todo el desplazamiento y, al llegar físicamente al centro, \texttt{ArrivalDetector} e \texttt{IndoorArrivalDialog} permiten enlazar de forma directa con la navegación interior hasta ese punto.
+    \vspace{0.2cm}
+    \item \textbf{Asistente global de voz por proximidad:} Al acercar la mano al sensor frontal en casi cualquier pantalla, \texttt{AppNavigation} lanza el reconocimiento de voz y comprueba primero si coincide con alguno de los 36 profesores, después si pide ir al Edificio Auxiliar o al Comedor, y finalmente interpreta destinos interiores en \texttt{GrafoETSIIT} (normalizando tildes y expresiones habladas como \textit{«aula uno punto cinco»} o despachos).
+\end{itemize}
+
+% =========================================================================
+\vspace{0.4cm}
+\section{Accesibilidad, Diseño Visual y Verificación}
+% =========================================================================
+
+\subsection{Accesibilidad, diseño ergonómico e idioma}
+Hemos cuidado que la experiencia sea uniforme y comprensible desde el primer minuto:
+\begin{itemize}[leftmargin=1.8em]
+    \item \textbf{Paleta institucional y legibilidad:} Uso del rojo corporativo de la UGR (\texttt{\#8C1419}) y azul ETSIIT (\texttt{\#14325F}) sobre fondos claros de alto contraste, tarjetas amplias, botones táctiles generosos y eliminación de barras pequeñas en la zona inferior.
+    \item \textbf{Multimodalidad inclusiva:} Toda acción gestual tiene equivalencia táctil directa, las confirmaciones importantes combinan aviso visual con vibración háptica y la ficha del profesor ofrece lectura por voz de sus tutorías.
+    \item \textbf{Accesibilidad física y lingüística:} Soporte continuo de español e inglés (\texttt{values/strings.xml}, \texttt{values-en/strings.xml} y textos bilingües en pasos de ruta y nodos) e interruptor global de rutas por ascensor sin escaleras.
+\end{itemize}
+
+\clearpage
+\subsection{Pruebas y comprobación del sistema}
+Para verificar el comportamiento de la aplicación combinamos pruebas reales en el teléfono caminando por el interior de la ETSIIT y entre el edificio principal y el auxiliar (comprobando el cambio entre mapa y fotos, los giros por brújula, el recuento de pasos, las reservas biométricas y el lector QR con una tarjeta TUI) junto con la batería automatizada incluida en el proyecto:
+\begin{itemize}[leftmargin=1.8em]
+    \item \textbf{Pruebas unitarias (\texttt{app/src/test/}, 18 ficheros JUnit, 138 casos verificados en verde):} Verifican el estado del viaje interior (\texttt{IndoorTripStateTest}), la detección del gesto de confirmación por inclinación (\texttt{SingleTiltActionDetectorTest}), el catálogo exterior y cálculo de distancias GPS (\texttt{GuidanceExteriorRepositoryTest}, \texttt{OutdoorDistancesTest}, \texttt{GpsLocationReaderTest}), las políticas de fechas y autorización de pagos de comedor (\texttt{DiningReservationPolicyTest}, \texttt{DiningPaymentAuthorizerTest}) y la lógica de llegada exterior y transición al edificio (\texttt{ArrivalDetectorTest}, \texttt{NavigationJourneyTest}, \texttt{OutdoorNavigatorTest}, \texttt{OutdoorRoutingTest}).
+    \item \textbf{Pruebas instrumentadas de interfaz (\texttt{app/src/androidTest/}, 5 ficheros Compose Test / Espresso):} Cubren el flujo visual completo de reserva y pago en \textit{Comedores} (\texttt{DiningPaymentTest}), la integración exterior-interior desde comedor, horario o profesores (\texttt{OutdoorNavigationIntegrationTest}), la presentación de llegada y entrada manual al edificio (\texttt{IndoorArrivalPresentationTest}) y la visualización limpia de pasos peatonales (\texttt{WalkingStepPresentationTest}).
+\end{itemize}
+
+% =========================================================================
+\section{Conclusiones}
+% =========================================================================
+
+El desarrollo de \textbf{PuntoInfo ETSIIT} nos ha permitido comprobar de primera mano que añadir sensores a una aplicación móvil solo mejora la experiencia cuando detrás hay un diseño cuidadoso de cuándo y cómo deben actuar. Exigir un ciclo completo de ida y vuelta en los gestos del acelerómetro y el giroscopio, apoyarse en la combinación de horario, GPS y barómetro para evitar formularios al ubicarse dentro de la escuela, y pausar los gestos globales durante momentos concretos como el pago o el guiado paso a paso han sido claves para que el sistema resulte natural y predecible.
+
+Al mismo tiempo, adaptar el guiado fotográfico paso a paso a rutas reales calibradas sobre el Campus de Aynadamar (manteniendo el grafo completo de seis plantas y el algoritmo de Dijkstra para la vista general en plano 2D) nos permitió centrar el esfuerzo en ofrecer una demostración sólida, bilingüe, accesible y operativa incluso sin conexión a Internet.
+
+\end{document}

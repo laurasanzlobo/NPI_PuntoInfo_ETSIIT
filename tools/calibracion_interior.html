@@ -1,0 +1,820 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Calibrador Eje X - Ruta Interior (Comedor &rarr; Aula 1.1)</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card: #1e293b;
+      --card-border: #334155;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --primary: #a6192e;
+      --secondary: #0ea5e9;
+      --accent: #f59e0b;
+      --marker: #ef4444;
+      --success: #10b981;
+      --vp-border: #38bdf8;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      background: var(--card);
+      border-bottom: 1px solid var(--card-border);
+      padding: 12px 20px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-shrink: 0;
+    }
+
+    .title-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .badge {
+      background: var(--primary);
+      color: white;
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 999px;
+    }
+
+    h1 {
+      font-size: 1.15rem;
+      font-weight: 700;
+    }
+
+    .mode-toggle {
+      display: flex;
+      background: var(--bg);
+      border-radius: 8px;
+      padding: 3px;
+      gap: 4px;
+    }
+
+    .btn-mode {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      padding: 6px 14px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-mode.active {
+      background: var(--secondary);
+      color: white;
+    }
+
+    /* Node selector bar */
+    .steps-bar {
+      background: #131d31;
+      border-bottom: 1px solid var(--card-border);
+      padding: 8px 16px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      overflow-x: auto;
+      flex-shrink: 0;
+    }
+
+    .step-pill {
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      color: var(--text-muted);
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.15s;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .step-pill:hover {
+      background: #334155;
+      color: var(--text);
+    }
+
+    .step-pill.active {
+      background: var(--secondary);
+      border-color: var(--secondary);
+      color: white;
+      box-shadow: 0 0 10px rgba(14, 165, 233, 0.4);
+    }
+
+    .step-pill.highlight {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+    .step-pill.highlight.active {
+      background: var(--accent);
+      color: #000;
+    }
+
+    main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      padding: 14px 20px;
+      gap: 12px;
+      overflow: hidden;
+    }
+
+    /* Controls Panel */
+    .controls-panel {
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      padding: 12px 18px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      flex-shrink: 0;
+    }
+
+    .node-meta {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .node-title {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .node-inst {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    .metrics-group {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+
+    .metric-item {
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+    }
+
+    .metric-label {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .metric-val {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--secondary);
+      font-family: ui-monospace, monospace;
+    }
+
+    .actions-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .btn {
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.15s;
+    }
+
+    .btn-nav {
+      background: var(--bg);
+      border: 1px solid var(--card-border);
+      color: var(--text);
+    }
+    .btn-nav:hover:not(:disabled) { background: #334155; }
+    .btn-nav:disabled { opacity: 0.35; cursor: not-allowed; }
+
+    .btn-copy {
+      background: #3b82f6;
+      color: white;
+    }
+    .btn-copy:hover { background: #2563eb; }
+
+    .btn-save {
+      background: var(--success);
+      color: white;
+    }
+    .btn-save:hover { background: #059669; }
+
+    /* Canvas Stage */
+    .stage-wrapper {
+      flex: 1;
+      background: #020617;
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      overflow: auto;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: crosshair;
+      user-select: none;
+      min-height: 380px;
+    }
+
+    .image-container {
+      position: relative;
+      display: inline-block;
+      line-height: 0;
+    }
+
+    .image-container img {
+      max-height: 65vh;
+      width: auto;
+      display: block;
+      user-select: none;
+      -webkit-user-drag: none;
+    }
+
+    /* Markers */
+    .guide-line {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 2px;
+      background: var(--marker);
+      box-shadow: 0 0 10px var(--marker), 0 0 4px white;
+      pointer-events: none;
+      transform: translateX(-50%);
+      z-index: 10;
+    }
+
+    .guide-line::before, .guide-line::after {
+      content: "";
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 14px;
+      height: 14px;
+      background: var(--marker);
+      border: 2px solid white;
+      border-radius: 50%;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.6);
+    }
+    .guide-line::before { top: 0; }
+    .guide-line::after { bottom: 0; }
+
+    .viewport-box {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      border-left: 2px dashed rgba(56, 189, 248, 0.8);
+      border-right: 2px dashed rgba(56, 189, 248, 0.8);
+      background: rgba(56, 189, 248, 0.09);
+      pointer-events: none;
+      transform: translateX(-50%);
+      z-index: 5;
+    }
+
+    .viewport-label {
+      position: absolute;
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(15, 23, 42, 0.85);
+      border: 1px solid rgba(56, 189, 248, 0.6);
+      color: #38bdf8;
+      font-size: 0.72rem;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 4px;
+      white-space: nowrap;
+      pointer-events: none;
+    }
+
+    .hover-line {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 1px;
+      background: rgba(255, 255, 255, 0.4);
+      pointer-events: none;
+      transform: translateX(-50%);
+      z-index: 8;
+      display: none;
+    }
+
+    .footer-help {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      line-height: 1.4;
+      flex-shrink: 0;
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: var(--success);
+      color: white;
+      padding: 12px 20px;
+      border-radius: 8px;
+      font-weight: 700;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+      transform: translateY(100px);
+      opacity: 0;
+      transition: all 0.25s ease;
+      z-index: 100;
+    }
+    .toast.show {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="title-group">
+      <span class="badge">NPI ETSIIT</span>
+      <h1>Calibrador de Eje X - Guiado Interior</h1>
+    </div>
+
+    <div class="mode-toggle">
+      <button class="btn-mode active" id="btn-escaleras" onclick="switchRoute('escaleras')">🪜 Por Escaleras (9 pasos)</button>
+      <button class="btn-mode" id="btn-ascensor" onclick="switchRoute('ascensor')">🛗 Por Ascensor (12 pasos)</button>
+    </div>
+  </header>
+
+  <div class="steps-bar" id="steps-bar"></div>
+
+  <main>
+    <div class="controls-panel">
+      <div class="node-meta">
+        <div class="node-title">
+          <span id="txt-node-badge" style="background: #334155; padding: 2px 8px; border-radius: 6px; font-size: 0.8rem; font-family: monospace;">int_esc_04</span>
+          <span id="txt-node-name">Paso 6: Escaleras a Planta 1</span>
+        </div>
+        <div class="node-inst" id="txt-node-inst">Sube un piso por las escaleras</div>
+      </div>
+
+      <div class="metrics-group">
+        <div class="metric-item">
+          <span class="metric-label">Eje X Normalizado</span>
+          <span class="metric-val" id="val-eje-x">0.788</span>
+        </div>
+        <div class="metric-item">
+          <span class="metric-label">Porcentaje</span>
+          <span class="metric-val" id="val-pct">78.8%</span>
+        </div>
+        <div class="metric-item">
+          <span class="metric-label">Píxel</span>
+          <span class="metric-val" id="val-px" style="font-size: 1.1rem; color: var(--text-muted);">- / -</span>
+        </div>
+      </div>
+
+      <div class="actions-group">
+        <button class="btn btn-nav" id="btn-prev" onclick="navStep(-1)">⬅️ Anterior</button>
+        <button class="btn btn-nav" id="btn-next" onclick="navStep(1)">Siguiente ➡️</button>
+        <button class="btn btn-copy" onclick="copySnippet()">📋 Copiar</button>
+        <button class="btn btn-save" onclick="saveToApi()">💾 Guardar en JSON</button>
+      </div>
+    </div>
+
+    <div class="stage-wrapper" id="stage-wrapper">
+      <div class="image-container" id="img-container">
+        <img id="target-img" src="" alt="Panorámica del interior" />
+        <div class="hover-line" id="hover-line"></div>
+        <div class="viewport-box" id="viewport-box">
+          <span class="viewport-label">📱 Pantalla Móvil (9:16)</span>
+        </div>
+        <div class="guide-line" id="guide-line"></div>
+      </div>
+    </div>
+
+    <div class="footer-help">
+      💡 <strong>Instrucciones:</strong> Haz clic sobre la foto exactamente en el punto donde se encuentra el camino o la escalera. La <strong>línea roja</strong> marca el eje X y el <strong>recuadro azul</strong> muestra qué parte de la panorámica verá el usuario en su móvil. Usa las teclas de flecha <strong>&larr;</strong> y <strong>&rarr;</strong> para cambiar de paso rápidamente.
+    </div>
+  </main>
+
+  <div class="toast" id="toast">Copiado al portapapeles</div>
+
+  <script>
+    const routesData = {
+      escaleras: [
+        {
+          id: "int_comun_01",
+          orden: 1,
+          nombre: "Paso 1: Comedor (Inicio)",
+          instruccion: "Gira a la izquierda en el pasillo",
+          foto: "rutas/comedor_Aula11/interior_1.jpg",
+          ejeX: 0.388
+        },
+        {
+          id: "int_esc_02",
+          orden: 2,
+          nombre: "Paso 2: Escaleras Sótano",
+          instruccion: "Sube las escaleras",
+          foto: "rutas/comedor_Aula11/interior_2_escaleras.jpg",
+          ejeX: 0.503
+        },
+        {
+          id: "int_comun_09",
+          orden: 3,
+          nombre: "Paso 3: Salida Exterior PB",
+          instruccion: "Sal hacia el exterior",
+          foto: "rutas/comedor_Aula11/interior_9.jpg",
+          ejeX: 0.521
+        },
+        {
+          id: "int_comun_10",
+          orden: 4,
+          nombre: "Paso 4: Pasillo Exterior",
+          instruccion: "Avanza recto hasta el final del pasillo",
+          foto: "rutas/comedor_Aula11/interior_10.jpg",
+          ejeX: 0.788
+        },
+        {
+          id: "int_esc_03",
+          orden: 5,
+          nombre: "Paso 5: Pasillo Escaleras Out",
+          instruccion: "Avanza y gira a la derecha hacia las escaleras",
+          foto: "rutas/comedor_Aula11/interior_3_escaleras.jpg",
+          ejeX: 0.530
+        },
+        {
+          id: "int_esc_04",
+          orden: 6,
+          nombre: "Paso 6: Escaleras a Planta 1 (⚠️)",
+          instruccion: "Sube un piso por las escaleras",
+          foto: "rutas/comedor_Aula11/interior_4_escaleras.jpg",
+          ejeX: 0.788,
+          highlight: true
+        },
+        {
+          id: "int_esc_05",
+          orden: 7,
+          nombre: "Paso 7: Llegada Escaleras P1",
+          instruccion: "Entra por la puerta al piso 1 del aulario",
+          foto: "rutas/comedor_Aula11/interior_5_escaleras.jpg",
+          ejeX: 0.617
+        },
+        {
+          id: "int_comun_11",
+          orden: 8,
+          nombre: "Paso 8: Pasillo Aulario P1",
+          instruccion: "Avanza y tendrás el aula a tu derecha",
+          foto: "rutas/comedor_Aula11/interior_11.jpg",
+          ejeX: 0.559
+        },
+        {
+          id: "int_comun_12",
+          orden: 9,
+          nombre: "Paso 9: Aula 1.1 (Destino)",
+          instruccion: "Has llegado al Aula 1.1",
+          foto: "rutas/comedor_Aula11/interior_12.jpg",
+          ejeX: 0.500
+        }
+      ],
+      ascensor: [
+        {
+          id: "int_comun_01",
+          orden: 1,
+          nombre: "Paso 1: Comedor (Inicio)",
+          instruccion: "Gira a la izquierda en el pasillo",
+          foto: "rutas/comedor_Aula11/interior_1.jpg",
+          ejeX: 0.388
+        },
+        {
+          id: "int_asc_02",
+          orden: 2,
+          nombre: "Paso 2: Puerta Ascensor Sótano",
+          instruccion: "Sube al ascensor y pulsa 0",
+          foto: "rutas/comedor_Aula11/interior_2_ascensor.jpg",
+          ejeX: 0.467
+        },
+        {
+          id: "int_asc_03",
+          orden: 3,
+          nombre: "Paso 3: Salida Ascensor PB",
+          instruccion: "Gira a la derecha en el vestíbulo",
+          foto: "rutas/comedor_Aula11/interior_3_ascensor.jpg",
+          ejeX: 0.767
+        },
+        {
+          id: "int_asc_04",
+          orden: 4,
+          nombre: "Paso 4: Recepción Pasillo",
+          instruccion: "Avanza hacia la puerta que da al exterior",
+          foto: "rutas/comedor_Aula11/interior_4_ascensor.jpg",
+          ejeX: 0.499
+        },
+        {
+          id: "int_comun_09",
+          orden: 5,
+          nombre: "Paso 5: Salida Exterior PB",
+          instruccion: "Sal hacia el exterior",
+          foto: "rutas/comedor_Aula11/interior_9.jpg",
+          ejeX: 0.521
+        },
+        {
+          id: "int_comun_10",
+          orden: 6,
+          nombre: "Paso 6: Pasillo Exterior",
+          instruccion: "Avanza recto hasta el final del pasillo",
+          foto: "rutas/comedor_Aula11/interior_10.jpg",
+          ejeX: 0.788
+        },
+        {
+          id: "int_asc_05",
+          orden: 7,
+          nombre: "Paso 7: Entrada Aulario",
+          instruccion: "Entra al aulario",
+          foto: "rutas/comedor_Aula11/interior_5_ascensor.jpg",
+          ejeX: 0.524
+        },
+        {
+          id: "int_asc_06",
+          orden: 8,
+          nombre: "Paso 8: Pasillo Aulario PB",
+          instruccion: "Avanza hacia el ascensor",
+          foto: "rutas/comedor_Aula11/interior_6_ascensor.jpg",
+          ejeX: 0.604
+        },
+        {
+          id: "int_asc_07",
+          orden: 9,
+          nombre: "Paso 9: Ascensor Aulario PB",
+          instruccion: "Sube al ascensor y pulsa 1",
+          foto: "rutas/comedor_Aula11/interior_7_ascensor.jpg",
+          ejeX: 0.745
+        },
+        {
+          id: "int_asc_08",
+          orden: 10,
+          nombre: "Paso 10: Pasillo Aulario P1",
+          instruccion: "Avanza por el pasillo",
+          foto: "rutas/comedor_Aula11/interior_8_ascensor.jpg",
+          ejeX: 0.413
+        },
+        {
+          id: "int_comun_11",
+          orden: 11,
+          nombre: "Paso 11: Pasillo Aula 1.1",
+          instruccion: "Avanza y tendrás el aula a tu derecha",
+          foto: "rutas/comedor_Aula11/interior_11.jpg",
+          ejeX: 0.559
+        },
+        {
+          id: "int_comun_12",
+          orden: 12,
+          nombre: "Paso 12: Aula 1.1 (Destino)",
+          instruccion: "Has llegado al Aula 1.1",
+          foto: "rutas/comedor_Aula11/interior_12.jpg",
+          ejeX: 0.500
+        }
+      ]
+    };
+
+    let currentRouteKey = "escaleras";
+    // Empezar directamente en el Paso 6 (índice 5: Escaleras a Planta 1)
+    let currentStepIndex = 5;
+
+    const stepsBar = document.getElementById("steps-bar");
+    const imgEl = document.getElementById("target-img");
+    const container = document.getElementById("img-container");
+    const guideLine = document.getElementById("guide-line");
+    const hoverLine = document.getElementById("hover-line");
+    const viewportBox = document.getElementById("viewport-box");
+    const txtNodeBadge = document.getElementById("txt-node-badge");
+    const txtNodeName = document.getElementById("txt-node-name");
+    const txtNodeInst = document.getElementById("txt-node-inst");
+    const valEjeX = document.getElementById("val-eje-x");
+    const valPct = document.getElementById("val-pct");
+    const valPx = document.getElementById("val-px");
+    const btnPrev = document.getElementById("btn-prev");
+    const btnNext = document.getElementById("btn-next");
+
+    function renderStepsBar() {
+      stepsBar.innerHTML = "";
+      const list = routesData[currentRouteKey];
+      list.forEach((item, idx) => {
+        const btn = document.createElement("button");
+        btn.className = "step-pill" + (idx === currentStepIndex ? " active" : "") + (item.highlight ? " highlight" : "");
+        btn.innerHTML = `<span>${item.orden}.</span> ${item.nombre.split(":")[1]?.trim() || item.nombre}`;
+        btn.onclick = () => selectStep(idx);
+        stepsBar.appendChild(btn);
+      });
+    }
+
+    function switchRoute(key) {
+      currentRouteKey = key;
+      document.getElementById("btn-escaleras").classList.toggle("active", key === "escaleras");
+      document.getElementById("btn-ascensor").classList.toggle("active", key === "ascensor");
+      currentStepIndex = 0;
+      renderStepsBar();
+      selectStep(0);
+    }
+
+    function selectStep(idx) {
+      const list = routesData[currentRouteKey];
+      if (idx < 0 || idx >= list.length) return;
+      currentStepIndex = idx;
+
+      renderStepsBar();
+
+      btnPrev.disabled = (idx === 0);
+      btnNext.disabled = (idx === list.length - 1);
+
+      const step = list[idx];
+      txtNodeBadge.textContent = step.id;
+      txtNodeName.textContent = step.nombre;
+      txtNodeInst.textContent = step.instruccion;
+
+      // Rutas posibles de la foto (relativas para file:// y http)
+      const possiblePaths = [
+        "../app/src/main/assets/" + step.foto,
+        "app/src/main/assets/" + step.foto,
+        "/" + step.foto
+      ];
+
+      let pathIdx = 0;
+      function tryLoad() {
+        if (pathIdx >= possiblePaths.length) return;
+        imgEl.onerror = () => {
+          pathIdx++;
+          tryLoad();
+        };
+        imgEl.src = possiblePaths[pathIdx];
+      }
+      tryLoad();
+    }
+
+    imgEl.onload = () => {
+      const step = routesData[currentRouteKey][currentStepIndex];
+      updateMarkers(step.ejeX);
+    };
+
+    function updateMarkers(ejeX) {
+      const step = routesData[currentRouteKey][currentStepIndex];
+      step.ejeX = ejeX;
+
+      const w = imgEl.clientWidth;
+      const h = imgEl.clientHeight;
+      const naturalW = imgEl.naturalWidth;
+
+      const posX = w * ejeX;
+      guideLine.style.left = `${posX}px`;
+
+      // Simular viewport 9:16 móvil
+      const vpW = Math.min(w * 0.45, (h * (9 / 16)) * 1.5);
+      viewportBox.style.width = `${vpW}px`;
+      viewportBox.style.left = `${posX}px`;
+
+      valEjeX.textContent = ejeX.toFixed(3);
+      valPct.textContent = `${(ejeX * 100).toFixed(1)}%`;
+      if (naturalW > 0) {
+        valPx.textContent = `${Math.round(naturalW * ejeX)} / ${naturalW} px`;
+      }
+    }
+
+    container.addEventListener("mousemove", (e) => {
+      const rect = imgEl.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      if (x >= 0 && x <= rect.width) {
+        hoverLine.style.display = "block";
+        hoverLine.style.left = `${x}px`;
+      }
+    });
+
+    container.addEventListener("mouseleave", () => {
+      hoverLine.style.display = "none";
+    });
+
+    container.addEventListener("click", (e) => {
+      const rect = imgEl.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      if (x < 0 || x > rect.width) return;
+      const ejeX = Math.max(0, Math.min(1, x / rect.width));
+      updateMarkers(ejeX);
+    });
+
+    function navStep(delta) {
+      selectStep(currentStepIndex + delta);
+    }
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "ArrowLeft") navStep(-1);
+      if (e.key === "ArrowRight") navStep(1);
+    });
+
+    function showToast(msg) {
+      const toast = document.getElementById("toast");
+      toast.textContent = msg;
+      toast.classList.add("show");
+      setTimeout(() => toast.classList.remove("show"), 2500);
+    }
+
+    function copySnippet() {
+      const step = routesData[currentRouteKey][currentStepIndex];
+      const text = `"eje_x_camino": ${step.ejeX.toFixed(3)}`;
+      navigator.clipboard.writeText(text).then(() => {
+        showToast(`Copiado: ${text}`);
+      }).catch(() => {
+        showToast(`Valor: ${step.ejeX.toFixed(3)}`);
+      });
+    }
+
+    async function saveToApi() {
+      const step = routesData[currentRouteKey][currentStepIndex];
+      try {
+        const resp = await fetch("/api/save", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            tramo: "interior",
+            nodoId: step.id,
+            eje_x_camino: Number(step.ejeX.toFixed(3))
+          })
+        });
+        if (resp.ok) {
+          showToast(`¡Guardado ${step.id} = ${step.ejeX.toFixed(3)} en guidance_interior.json!`);
+        } else {
+          copySnippet();
+        }
+      } catch (err) {
+        copySnippet();
+      }
+    }
+
+    // Cargar valores en vivo si el servidor local está activo
+    async function loadLiveGuidance() {
+      try {
+        const resp = await fetch("/api/guidance");
+        if (resp.ok) {
+          const data = await resp.json();
+          const escNodes = data.interior_escaleras?.nodos || data.interior?.nodos || [];
+          escNodes.forEach(node => {
+            const found = routesData.escaleras.find(s => s.id === node.id);
+            if (found && typeof node.eje_x_camino === "number") {
+              found.ejeX = node.eje_x_camino;
+            }
+          });
+
+          const ascNodes = data.interior_ascensor?.nodos || [];
+          ascNodes.forEach(node => {
+            const found = routesData.ascensor.find(s => s.id === node.id);
+            if (found && typeof node.eje_x_camino === "number") {
+              found.ejeX = node.eje_x_camino;
+            }
+          });
+        }
+      } catch (e) {
+        // Modo offline / file://
+      }
+      renderStepsBar();
+      selectStep(currentStepIndex);
+    }
+
+    loadLiveGuidance();
+  </script>
+</body>
+</html>

@@ -1,6 +1,7 @@
 package com.example.npi_puntoinfo_etsiit.ui.screens
 
 import androidx.annotation.DrawableRes
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -12,10 +13,17 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.LocalCafe
+import androidx.compose.material.icons.filled.LocalLibrary
+import androidx.compose.material.icons.filled.MeetingRoom
 import androidx.compose.material.icons.filled.Navigation
+import androidx.compose.material.icons.filled.Print
+import androidx.compose.material.icons.filled.Public
 import androidx.compose.material.icons.filled.Restaurant
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.School
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -25,15 +33,21 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.boundsInRoot
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.npi_puntoinfo_etsiit.R
+import com.example.npi_puntoinfo_etsiit.data.ClassItem
 import com.example.npi_puntoinfo_etsiit.data.ScheduleRepository
 import com.example.npi_puntoinfo_etsiit.data.UserSessionRepository
+import com.example.npi_puntoinfo_etsiit.ui.components.SpotlightTargetId
+import com.example.npi_puntoinfo_etsiit.ui.components.TutorialSpotlightRegistry
 import com.example.npi_puntoinfo_etsiit.ui.navigation.Screen
 import com.example.npi_puntoinfo_etsiit.ui.theme.*
 import kotlinx.coroutines.delay
@@ -55,7 +69,8 @@ data class NewsItem(
 @Composable
 fun HomeScreen(
     onNavigate: (String) -> Unit,
-    onLaunchVoiceSearch: () -> Unit = {}
+    onLaunchVoiceSearch: () -> Unit = {},
+    onShowCurrentClassDialog: ((ClassItem?) -> Unit)? = null
 ) {
     val context = LocalContext.current
     val profile = UserSessionRepository.getProfile(context)
@@ -69,32 +84,45 @@ fun HomeScreen(
     }
 
     // Noticias oficiales reales de la ETSIIT con sus fotografías oficiales
-    val newsList = remember {
-        listOf(
-            NewsItem(
-                title = "IV Olimpiada Informática de Granada",
-                subtitle = "Fase clasificatoria provincial integrada en la Olimpiada de Andalucía.",
-                imageRes = R.drawable.noticia_olimpiada
-            ),
-            NewsItem(
-                title = "Liderazgo en el Ranking Shanghai 2026",
-                subtitle = "La ETSIIT y la UGR se consolidan en el top internacional de informática.",
-                imageRes = R.drawable.noticia_shanghai
-            ),
-            NewsItem(
-                title = "Emisión Instantánea de la TUI 2026/27",
-                subtitle = "Puntos de emisión activa en el campus para obtener tu carné universitario.",
-                imageRes = R.drawable.noticia_tui
-            ),
-            NewsItem(
-                title = "Plan de Tutorización Nuevos Alumnos",
-                subtitle = "Apoyo y mentoría para estudiantes que inician sus estudios en la escuela.",
-                imageRes = R.drawable.noticia_tutorizacion
-            )
+    val newsList = listOf(
+        NewsItem(
+            title = stringResource(R.string.news_1_title),
+            subtitle = stringResource(R.string.news_1_subtitle),
+            imageRes = R.drawable.noticia_olimpiada
+        ),
+        NewsItem(
+            title = stringResource(R.string.news_2_title),
+            subtitle = stringResource(R.string.news_2_subtitle),
+            imageRes = R.drawable.noticia_shanghai
+        ),
+        NewsItem(
+            title = stringResource(R.string.news_3_title),
+            subtitle = stringResource(R.string.news_3_subtitle),
+            imageRes = R.drawable.noticia_tui
+        ),
+        NewsItem(
+            title = stringResource(R.string.news_4_title),
+            subtitle = stringResource(R.string.news_4_subtitle),
+            imageRes = R.drawable.noticia_tutorizacion
         )
-    }
+    )
 
     val pagerState = rememberPagerState(pageCount = { newsList.size })
+    val isTutorialActive = UserSessionRepository.isTutorialActiveState
+
+    // Si el tutorial inicial está activo, garantizamos que siempre haya una próxima clase de NPI visible
+    // para que el spotlight pueda iluminar su tarjeta de forma realista e independiente.
+    val tutorialNpiClass = remember {
+        ClassItem(
+            time = "08:30 - 10:30",
+            subject = "Nuevos Paradigmas de Interacción",
+            acronym = "NPI",
+            room = "Aula 0.5 · PB",
+            professor = "Arturo Montejo Ráez",
+            isPractice = false
+        )
+    }
+    val effectiveClass = if (isTutorialActive) (currentOrNextClass ?: tutorialNpiClass) else currentOrNextClass
 
     // Autoplay suave del carrusel de noticias
     LaunchedEffect(pagerState) {
@@ -113,13 +141,26 @@ fun HomeScreen(
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         // ==========================================
-        // 1. TARJETA SUPERIOR: PRÓXIMA CLASE (Solo visible si ha iniciado sesión y hay clase; si no, se oculta y las noticias se expanden)
+        // 1. TARJETA SUPERIOR: PRÓXIMA CLASE (si ha iniciado sesión o durante tutorial) O BIENVENIDA (si es invitado)
         // ==========================================
-        if (profile.isLoggedIn && currentOrNextClass != null) {
+        if (isTutorialActive || (profile.isLoggedIn && effectiveClass != null)) {
+            val classToUse = effectiveClass ?: tutorialNpiClass
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clickable { onNavigate(Screen.Schedule.route) },
+                    .onGloballyPositioned { coords ->
+                        TutorialSpotlightRegistry.updateTarget(
+                            SpotlightTargetId.HOME_NEXT_CLASS,
+                            coords.boundsInRoot()
+                        )
+                    }
+                    .clickable {
+                        if (onShowCurrentClassDialog != null) {
+                            onShowCurrentClassDialog(classToUse)
+                        } else {
+                            onNavigate(Screen.Schedule.route)
+                        }
+                    },
                 shape = RoundedCornerShape(20.dp),
                 elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
                 colors = CardDefaults.cardColors(containerColor = Color.Transparent)
@@ -134,7 +175,7 @@ fun HomeScreen(
                         )
                         .padding(horizontal = 16.dp, vertical = 14.dp)
                 ) {
-                    val rawRoomName = currentOrNextClass.room.split("·")[0].trim()
+                    val rawRoomName = classToUse.room.split("·")[0].trim()
                     val cleanRoom = rawRoomName
                         .replace("Laboratorio", "", ignoreCase = true)
                         .replace("Aula", "", ignoreCase = true)
@@ -168,7 +209,7 @@ fun HomeScreen(
 
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(
-                                    text = "PRÓXIMA CLASE",
+                                    text = stringResource(R.string.next_class_header),
                                     fontSize = 11.sp,
                                     fontWeight = FontWeight.ExtraBold,
                                     color = Color.White.copy(alpha = 0.85f),
@@ -176,7 +217,7 @@ fun HomeScreen(
                                 )
                                 Spacer(modifier = Modifier.height(2.dp))
                                 Text(
-                                    text = currentOrNextClass.acronym,
+                                    text = classToUse.acronym,
                                     fontSize = 20.sp,
                                     fontWeight = FontWeight.ExtraBold,
                                     color = Color.White,
@@ -184,7 +225,7 @@ fun HomeScreen(
                                 )
                                 Spacer(modifier = Modifier.height(1.dp))
                                 Text(
-                                    text = "${currentOrNextClass.time}  ·  $cleanRoom",
+                                    text = "${classToUse.time}  ·  $cleanRoom",
                                     fontSize = 14.sp,
                                     fontWeight = FontWeight.SemiBold,
                                     color = Color.White.copy(alpha = 0.95f),
@@ -197,8 +238,8 @@ fun HomeScreen(
                         Spacer(modifier = Modifier.width(8.dp))
                         Surface(
                             onClick = {
-                                val roomName = currentOrNextClass.room.split("·")[0].trim()
-                                val floorName = currentOrNextClass.room.split("·").getOrElse(1) { "ETSIIT" }.trim()
+                                val roomName = classToUse.room.split("·")[0].trim()
+                                val floorName = classToUse.room.split("·").getOrElse(1) { "ETSIIT" }.trim()
                                 onNavigate(Screen.Navigation.createRoute(roomName, floorName))
                             },
                             shape = RoundedCornerShape(14.dp),
@@ -216,7 +257,7 @@ fun HomeScreen(
                                     modifier = Modifier.size(18.dp)
                                 )
                                 Text(
-                                    text = "Ir",
+                                    text = stringResource(R.string.go),
                                     color = UgrRed,
                                     fontWeight = FontWeight.ExtraBold,
                                     fontSize = 15.sp
@@ -235,6 +276,12 @@ fun HomeScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .weight(1f)
+                .onGloballyPositioned { coords ->
+                    TutorialSpotlightRegistry.updateTarget(
+                        SpotlightTargetId.HOME_NEWS,
+                        coords.boundsInRoot()
+                    )
+                }
         ) {
             HorizontalPager(
                 state = pagerState,
@@ -325,51 +372,195 @@ fun HomeScreen(
         }
 
         // ==========================================
-        // 3. PARTE INFERIOR: BOTONES DE NAVEGACIÓN PROFESIONALES (Tamaño fijo garantizado)
+        // 3. PARTE INFERIOR: NAVEGACIÓN SEGÚN ESTADO DE SESIÓN (O DURANTE TUTORIAL)
         // ==========================================
-        Column(
-            modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            // Botón 1: Mi Horario (Solo visible cuando el estudiante ha iniciado sesión)
-            if (profile.isLoggedIn) {
+        if (profile.isLoggedIn || isTutorialActive) {
+            // CON SESIÓN INICIADA (o durante el tutorial para guiar los 3 accesos): Mi Horario, Servicios y Comedores
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
                 HomeFlatButton(
-                    title = "Mi Horario",
-                    subtitle = "Consulta de clases y aulas",
+                    title = stringResource(R.string.nav_schedule_title),
                     icon = Icons.Default.DateRange,
                     accentColor = Color(0xFF1D4ED8),
                     bgColor = Color(0xFFF0F7FF),
                     borderColor = Color(0xFFBFDBFE),
                     textColor = Color(0xFF1E3A8A),
                     iconGradient = listOf(Color(0xFF3B82F6), Color(0xFF1D4ED8)),
+                    modifier = Modifier.onGloballyPositioned { coords ->
+                        TutorialSpotlightRegistry.updateTarget(
+                            SpotlightTargetId.HOME_SCHEDULE_BUTTON,
+                            coords.boundsInRoot()
+                        )
+                    },
                     onClick = { onNavigate(Screen.Schedule.route) }
                 )
+
+                HomeFlatButton(
+                    title = stringResource(R.string.nav_dining_title),
+                    icon = Icons.Default.Restaurant,
+                    accentColor = Color(0xFFD97706),
+                    bgColor = Color(0xFFFFFBEB),
+                    borderColor = Color(0xFFFDE68A),
+                    textColor = Color(0xFF92400E),
+                    iconGradient = listOf(Color(0xFFF59E0B), Color(0xFFD97706)),
+                    modifier = Modifier.onGloballyPositioned { coords ->
+                        TutorialSpotlightRegistry.updateTarget(
+                            SpotlightTargetId.HOME_DINING_BUTTON,
+                            coords.boundsInRoot()
+                        )
+                    },
+                    onClick = { onNavigate(Screen.Dining.route) }
+                )
+
+                HomeFlatButton(
+                    title = stringResource(R.string.nav_services_title),
+                    icon = Icons.Default.Info,
+                    accentColor = Color(0xFF0F766E),
+                    bgColor = Color(0xFFF0FDFA),
+                    borderColor = Color(0xFF99F6E4),
+                    textColor = Color(0xFF115E59),
+                    iconGradient = listOf(Color(0xFF14B8A6), Color(0xFF0F766E)),
+                    modifier = Modifier.onGloballyPositioned { coords ->
+                        TutorialSpotlightRegistry.updateTarget(
+                            SpotlightTargetId.HOME_SERVICES_BUTTON,
+                            coords.boundsInRoot()
+                        )
+                    },
+                    onClick = { onNavigate(Screen.Services.route) }
+                )
             }
+        } else {
+            // SIN SESIÓN INICIADA: Comedores y Servicios
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                HomeFlatButton(
+                    title = stringResource(R.string.nav_dining_title),
+                    icon = Icons.Default.Restaurant,
+                    accentColor = Color(0xFFD97706),
+                    bgColor = Color(0xFFFFFBEB),
+                    borderColor = Color(0xFFFDE68A),
+                    textColor = Color(0xFF92400E),
+                    iconGradient = listOf(Color(0xFFF59E0B), Color(0xFFD97706)),
+                    onClick = { onNavigate(Screen.Dining.route) }
+                )
 
-            // Botón 2: Comedores (Ámbar gastronómico elegante)
-            HomeFlatButton(
-                title = "Comedores",
-                subtitle = if (profile.isLoggedIn) "Menú diario y encargos" else "Consulta del menú diario",
-                icon = Icons.Default.Restaurant,
-                accentColor = Color(0xFFD97706),
-                bgColor = Color(0xFFFFFBEB),
-                borderColor = Color(0xFFFDE68A),
-                textColor = Color(0xFF92400E),
-                iconGradient = listOf(Color(0xFFF59E0B), Color(0xFFD97706)),
-                onClick = { onNavigate(Screen.Dining.route) }
+                HomeFlatButton(
+                    title = stringResource(R.string.nav_services_title),
+                    icon = Icons.Default.Info,
+                    accentColor = Color(0xFF0F766E),
+                    bgColor = Color(0xFFF0FDFA),
+                    borderColor = Color(0xFF99F6E4),
+                    textColor = Color(0xFF115E59),
+                    iconGradient = listOf(Color(0xFF14B8A6), Color(0xFF0F766E)),
+                    onClick = { onNavigate(Screen.Services.route) }
+                )
+            }
+        }
+    }
+}
+
+/**
+ * Tarjeta de servicio compacta para visitantes sin sesión
+ */
+@Composable
+private fun ServiceQuickCard(
+    title: String,
+    subtitle: String,
+    icon: ImageVector,
+    accentColor: Color,
+    bgColor: Color,
+    borderColor: Color,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
+) {
+    Card(
+        modifier = modifier
+            .height(68.dp)
+            .clickable(onClick = onClick),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = bgColor),
+        border = androidx.compose.foundation.BorderStroke(1.dp, borderColor),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(40.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(accentColor.copy(alpha = 0.15f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = title,
+                    tint = accentColor,
+                    modifier = Modifier.size(22.dp)
+                )
+            }
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = title,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 13.sp,
+                    color = TextPrimary,
+                    maxLines = 1
+                )
+                Text(
+                    text = subtitle,
+                    fontSize = 11.sp,
+                    color = TextSecondary,
+                    maxLines = 1
+                )
+            }
+        }
+    }
+}
+
+/**
+ * Píldora/Etiqueta de servicio informativo (solo etiqueta según feedback)
+ */
+@Composable
+private fun ServiceTagBadge(
+    label: String,
+    icon: ImageVector,
+    modifier: Modifier = Modifier
+) {
+    Surface(
+        modifier = modifier.height(30.dp),
+        shape = RoundedCornerShape(99.dp),
+        color = BackgroundLight,
+        border = androidx.compose.foundation.BorderStroke(1.dp, SurfaceBorder.copy(alpha = 0.6f))
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 10.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = TextSecondary,
+                modifier = Modifier.size(13.dp)
             )
-
-            // Botón 3: Profesores (Verde azulado académico elegante)
-            HomeFlatButton(
-                title = "Profesores",
-                subtitle = "Tutorías y despachos",
-                icon = Icons.Default.School,
-                accentColor = Color(0xFF0F766E),
-                bgColor = Color(0xFFF0FDFA),
-                borderColor = Color(0xFF99F6E4),
-                textColor = Color(0xFF115E59),
-                iconGradient = listOf(Color(0xFF14B8A6), Color(0xFF0F766E)),
-                onClick = { onNavigate(Screen.Professors.route) }
+            Spacer(modifier = Modifier.width(5.dp))
+            Text(
+                text = label,
+                fontSize = 10.sp,
+                color = TextSecondary,
+                fontWeight = FontWeight.Medium,
+                maxLines = 1
             )
         }
     }
@@ -382,19 +573,20 @@ fun HomeScreen(
 @Composable
 private fun HomeFlatButton(
     title: String,
-    subtitle: String,
+    subtitle: String? = null,
     icon: ImageVector,
     accentColor: Color,
     bgColor: Color,
     borderColor: Color,
     textColor: Color,
     iconGradient: List<Color>,
+    modifier: Modifier = Modifier,
     onClick: () -> Unit
 ) {
     Card(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
-            .height(80.dp)
+            .height(if (subtitle != null) 80.dp else 66.dp)
             .clickable(onClick = onClick),
         shape = RoundedCornerShape(20.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
@@ -415,8 +607,8 @@ private fun HomeFlatButton(
                 // Insignia con degradado elegante para el icono
                 Box(
                     modifier = Modifier
-                        .size(52.dp)
-                        .clip(RoundedCornerShape(15.dp))
+                        .size(if (subtitle != null) 52.dp else 44.dp)
+                        .clip(RoundedCornerShape(14.dp))
                         .background(Brush.linearGradient(iconGradient)),
                     contentAlignment = Alignment.Center
                 ) {
@@ -424,23 +616,26 @@ private fun HomeFlatButton(
                         imageVector = icon,
                         contentDescription = title,
                         tint = Color.White,
-                        modifier = Modifier.size(28.dp)
+                        modifier = Modifier.size(if (subtitle != null) 28.dp else 24.dp)
                     )
                 }
 
-                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Column(verticalArrangement = Arrangement.Center) {
                     Text(
                         text = title,
                         color = textColor,
-                        fontSize = 19.sp,
+                        fontSize = 18.sp,
                         fontWeight = FontWeight.ExtraBold
                     )
-                    Text(
-                        text = subtitle,
-                        color = textColor.copy(alpha = 0.70f),
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.Medium
-                    )
+                    if (!subtitle.isNullOrBlank()) {
+                        Spacer(modifier = Modifier.height(2.dp))
+                        Text(
+                            text = subtitle,
+                            color = textColor.copy(alpha = 0.70f),
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
                 }
             }
 

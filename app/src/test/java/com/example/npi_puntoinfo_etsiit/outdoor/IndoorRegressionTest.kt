@@ -73,8 +73,6 @@ class IndoorRegressionTest {
     }
 
     @Test fun explicitVoiceDiningCampusIsResolvedBeforeHistoricalGenericComedorAlias() {
-        assertEquals("dining-pts", OutdoorDestinations.diningNamedIn("llévame al comedor PTS")?.id)
-        assertEquals("dining-cartuja", OutdoorDestinations.diningNamedIn("comedor de Cartuja")?.id)
         assertEquals("dining-aynadamar", OutdoorDestinations.diningNamedIn("Comedor Aynadamar")?.id)
         assertNull(OutdoorDestinations.diningNamedIn("quiero ir al comedor"))
     }

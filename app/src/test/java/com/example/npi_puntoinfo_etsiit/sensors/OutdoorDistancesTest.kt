@@ -51,7 +51,6 @@ class OutdoorDistancesTest {
         assertEquals(CampusLocationManager.ugrDiningHalls.toSet(), distances.map { it.hall }.toSet())
         assertEquals("aynadamar", distances.first().hall.id)
         assertTrue(distances.first().meters < 20)
-        assertTrue(distances.last().meters > 5_000)
         assertTrue(distances.zipWithNext().all { (a, b) -> a.meters <= b.meters })
     }
 

@@ -5,6 +5,13 @@
     <!-- Permiso para vibrar cuando se detectan gestos -->
     <uses-permission android:name="android.permission.VIBRATE" />
 
+    <!-- Permiso para conteo y reconocimiento de pasos físicos (Pedómetro) -->
+    <uses-permission android:name="android.permission.ACTIVITY_RECOGNITION" />
+
+    <!-- Autenticación nativa para confirmar reservas simuladas, sin acceder a credenciales. -->
+    <uses-permission android:name="android.permission.USE_BIOMETRIC" />
+    <uses-permission android:name="android.permission.USE_FINGERPRINT" android:maxSdkVersion="28" />
+
     <!-- Permiso para reconocimiento y búsqueda por voz -->
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
 
@@ -19,14 +26,12 @@
     <!-- T4: ubicación exterior solo mientras se usa la aplicación -->
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
-    <!-- T4: mapa y peticiones peatonales HTTPS bajo demanda -->
+    <!-- Mapa exterior interactivo (OpenFreeMap) bajo demanda -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
     <application
-        android:allowBackup="true"
-        android:dataExtractionRules="@xml/data_extraction_rules"
-        android:fullBackupContent="@xml/backup_rules"
+        android:allowBackup="false"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"

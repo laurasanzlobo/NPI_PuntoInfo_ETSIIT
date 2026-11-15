@@ -55,7 +55,7 @@ fun CompactIndoorEntryButton(onClick: () -> Unit, modifier: Modifier = Modifier)
         elevation = ButtonDefaults.buttonElevation(defaultElevation = 2.dp)
     ) {
         Text(
-            text = "Ya estoy dentro",
+            text = "Continuar dentro",
             style = MaterialTheme.typography.labelMedium,
             fontWeight = FontWeight.SemiBold
         )

@@ -37,6 +37,7 @@ sealed class Screen(
             com.example.npi_puntoinfo_etsiit.outdoor.OutdoorNavigationRoute.create(destinationId)
     }
     data object Professors : Screen("professors", "Profesores", Icons.Default.School)
+    data object Services : Screen("services", "Servicios", Icons.Default.Info)
     data object Profile : Screen("profile", "Mi Perfil", Icons.Default.AccountCircle)
     data object GesturesGuide : Screen("gestures_guide", "Guía de Gestos", Icons.Default.Info)
 }

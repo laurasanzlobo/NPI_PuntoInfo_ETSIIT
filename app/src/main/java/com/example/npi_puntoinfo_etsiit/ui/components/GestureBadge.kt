@@ -1,5 +1,6 @@
 package com.example.npi_puntoinfo_etsiit.ui.components
 
+import androidx.annotation.StringRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -10,6 +11,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Mic
+import androidx.compose.material.icons.filled.School
 import androidx.compose.material.icons.filled.Vibration
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -24,7 +26,9 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.PathNode
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
+import com.example.npi_puntoinfo_etsiit.R
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.npi_puntoinfo_etsiit.ui.theme.*
@@ -171,62 +175,106 @@ val TiltTowardsUserIcon: ImageVector by lazy {
 }
 
 /**
+ * Icono personalizado para el Gesto de Zoom (Pellizcar con dos dedos):
+ * Representa cuatro corchetes angulares de expansión y zoom.
+ */
+val PinchZoomIcon: ImageVector by lazy {
+    ImageVector.Builder(
+        name = "PinchZoomIcon",
+        defaultWidth = 24.dp,
+        defaultHeight = 24.dp,
+        viewportWidth = 24f,
+        viewportHeight = 24f
+    ).addPath(
+        pathData = listOf(
+            // Esquina superior izquierda
+            PathNode.MoveTo(4f, 9f), PathNode.LineTo(4f, 4f), PathNode.LineTo(9f, 4f),
+            // Esquina superior derecha
+            PathNode.MoveTo(15f, 4f), PathNode.LineTo(20f, 4f), PathNode.LineTo(20f, 9f),
+            // Esquina inferior derecha
+            PathNode.MoveTo(20f, 15f), PathNode.LineTo(20f, 20f), PathNode.LineTo(15f, 20f),
+            // Esquina inferior izquierda
+            PathNode.MoveTo(9f, 20f), PathNode.LineTo(4f, 20f), PathNode.LineTo(4f, 15f)
+        ),
+        stroke = SolidColor(Color.Black),
+        strokeLineWidth = 2.0f,
+        strokeLineCap = StrokeCap.Round,
+        strokeLineJoin = StrokeJoin.Round
+    ).build()
+}
+
+/**
  * Tipos de gestos físicos soportados en la aplicación Punto Info ETSIIT.
  */
 enum class GestureType(
-    val title: String,
-    val gestureName: String,
-    val description: String,
-    val howTo: String,
-    val whatFor: String,
+    @StringRes val titleRes: Int,
+    @StringRes val gestureNameRes: Int,
+    @StringRes val descriptionRes: Int,
+    @StringRes val howToRes: Int,
+    @StringRes val whatForRes: Int,
     val icon: ImageVector,
     val badgeColor: Color
 ) {
     TAKE_ME_THERE(
-        title = "Llévame",
-        gestureName = "Inclinar a la izquierda",
-        description = "Inclina el móvil hacia la izquierda y devuélvelo a tu posición inicial para iniciar el guiado hasta el destino.",
-        howTo = "Inclina el móvil hacia la izquierda.",
-        whatFor = "Te guía directamente hasta el destino indicado.",
+        titleRes = R.string.gesture_take_me_there_title,
+        gestureNameRes = R.string.gesture_take_me_there_name,
+        descriptionRes = R.string.gesture_take_me_there_desc,
+        howToRes = R.string.gesture_take_me_there_howto,
+        whatForRes = R.string.gesture_take_me_there_whatfor,
         icon = WristTwistIcon,
         badgeColor = CampusTeal
     ),
     TRIPLE_SHAKE(
-        title = "Clase actual",
-        gestureName = "3 veces hacia adelante",
-        description = "Echa la punta superior del móvil hacia adelante 3 veces (1, 2, 3) y vuelve a tu posición para consultar tu clase actual o próxima.",
-        howTo = "Inclina la punta superior 3 veces hacia adelante.",
-        whatFor = "Muestra tu clase actual o próxima y su aula.",
+        titleRes = R.string.gesture_triple_shake_title,
+        gestureNameRes = R.string.gesture_triple_shake_name,
+        descriptionRes = R.string.gesture_triple_shake_desc,
+        howToRes = R.string.gesture_triple_shake_howto,
+        whatForRes = R.string.gesture_triple_shake_whatfor,
         icon = Icons.Default.Vibration,
         badgeColor = UgrRed
     ),
     ACTION_TRIGGER(
-        title = "Acción rápida",
-        gestureName = "Inclinar hacia ti",
-        description = "Inclina el móvil hacia ti y vuelve a la posición inicial para encargar menú en comedores o enviar un correo al profesor.",
-        howTo = "Inclina el móvil hacia ti.",
-        whatFor = "Reserva el menú para llevar en Comedores o escribe al profesor.",
+        titleRes = R.string.gesture_action_trigger_title,
+        gestureNameRes = R.string.gesture_action_trigger_name,
+        descriptionRes = R.string.gesture_action_trigger_desc,
+        howToRes = R.string.gesture_action_trigger_howto,
+        whatForRes = R.string.gesture_action_trigger_whatfor,
         icon = TiltTowardsUserIcon,
         badgeColor = WarningAmber
     ),
     LIFT_PHONE(
-        title = "Guiado paso a paso",
-        gestureName = "Levantar el móvil",
-        description = "Levanta el móvil en vertical frente a ti para ver el guiado paso a paso con fotos reales del recorrido.",
-        howTo = "Sube el móvil en vertical frente a ti.",
-        whatFor = "Cambia de ver el mapa 2D a un guiado paso a paso con fotos reales.",
+        titleRes = R.string.gesture_lift_phone_title,
+        gestureNameRes = R.string.gesture_lift_phone_name,
+        descriptionRes = R.string.gesture_lift_phone_desc,
+        howToRes = R.string.gesture_lift_phone_howto,
+        whatForRes = R.string.gesture_lift_phone_whatfor,
         icon = Icons.Default.ArrowUpward,
         badgeColor = EtsiitBlue
     ),
     PROXIMITY_VOICE(
-        title = "Búsqueda por voz",
-        gestureName = "Acercar la mano",
-        description = "Acerca la mano al sensor superior del móvil (junto a la cámara frontal) para activar el asistente de voz y buscar cualquier destino.",
-        howTo = "Acerca la mano a poca distancia de la parte superior del móvil.",
-        whatFor = "Búsqueda por voz para guiarte a aulas, comedores o profesores.",
+        titleRes = R.string.gesture_proximity_voice_title,
+        gestureNameRes = R.string.gesture_proximity_voice_name,
+        descriptionRes = R.string.gesture_proximity_voice_desc,
+        howToRes = R.string.gesture_proximity_voice_howto,
+        whatForRes = R.string.gesture_proximity_voice_whatfor,
         icon = Icons.Default.Mic,
         badgeColor = VoicePurple
-    )
+    ),
+    PINCH_ZOOM(
+        titleRes = R.string.gesture_pinch_zoom_title,
+        gestureNameRes = R.string.gesture_pinch_zoom_name,
+        descriptionRes = R.string.gesture_pinch_zoom_desc,
+        howToRes = R.string.gesture_pinch_zoom_howto,
+        whatForRes = R.string.gesture_pinch_zoom_whatfor,
+        icon = PinchZoomIcon,
+        badgeColor = Color(0xFF4F46E5)
+    );
+
+    val title: String @Composable get() = stringResource(titleRes)
+    val gestureName: String @Composable get() = stringResource(gestureNameRes)
+    val description: String @Composable get() = stringResource(descriptionRes)
+    val howTo: String @Composable get() = stringResource(howToRes)
+    val whatFor: String @Composable get() = stringResource(whatForRes)
 }
 
 /**
@@ -240,9 +288,15 @@ fun GestureBadge(
     size: Dp = 30.dp,
     iconSize: Dp = 17.dp,
     showTooltipOnClick: Boolean = true,
+    containerColor: Color? = null,
+    contentColor: Color? = null,
     onClick: (() -> Unit)? = null
 ) {
     var showDialog by remember { mutableStateOf(false) }
+
+    val bg = containerColor ?: type.badgeColor.copy(alpha = 0.12f)
+    val tint = contentColor ?: type.badgeColor
+    val borderModifier = if (containerColor != null) Modifier else Modifier.border(1.dp, type.badgeColor.copy(alpha = 0.35f), CircleShape)
 
     val isInteractive = onClick != null || showTooltipOnClick
     val clickModifier = if (isInteractive) {
@@ -261,15 +315,15 @@ fun GestureBadge(
         modifier = modifier
             .size(size)
             .clip(CircleShape)
-            .background(type.badgeColor.copy(alpha = 0.12f))
-            .border(1.dp, type.badgeColor.copy(alpha = 0.35f), CircleShape)
+            .background(bg)
+            .then(borderModifier)
             .then(clickModifier),
         contentAlignment = Alignment.Center
     ) {
         Icon(
             imageVector = type.icon,
             contentDescription = "${type.title}: ${type.gestureName}",
-            tint = type.badgeColor,
+            tint = tint,
             modifier = Modifier.size(iconSize)
         )
     }
@@ -375,7 +429,7 @@ fun GestureExplanationDialog(
                 )
                 Spacer(modifier = Modifier.height(2.dp))
                 Text(
-                    text = "Gesto: ${type.gestureName}",
+                    text = stringResource(R.string.gesture_name_label, type.gestureName),
                     fontSize = 12.sp,
                     fontWeight = FontWeight.SemiBold,
                     color = type.badgeColor
@@ -392,7 +446,7 @@ fun GestureExplanationDialog(
                 )
                 Spacer(modifier = Modifier.height(2.dp))
                 Text(
-                    text = "• Cómo es el gesto:",
+                    text = stringResource(R.string.gesture_how_to_label),
                     fontWeight = FontWeight.SemiBold,
                     fontSize = 11.sp,
                     color = TextPrimary
@@ -404,7 +458,7 @@ fun GestureExplanationDialog(
                     lineHeight = 16.sp
                 )
                 Text(
-                    text = "• Para qué sirve:",
+                    text = stringResource(R.string.gesture_what_for_label),
                     fontWeight = FontWeight.SemiBold,
                     fontSize = 11.sp,
                     color = TextPrimary
@@ -418,8 +472,23 @@ fun GestureExplanationDialog(
             }
         },
         confirmButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Entendido", color = TextPrimary, fontWeight = FontWeight.Bold)
+            Button(
+                onClick = onDismiss,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = UgrRed,
+                    contentColor = Color.White
+                ),
+                shape = RoundedCornerShape(10.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(42.dp)
+            ) {
+                Text(
+                    text = stringResource(R.string.understood),
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 14.sp,
+                    color = Color.White
+                )
             }
         }
     )
@@ -460,15 +529,17 @@ fun GestureGuideButton(
  * para que quepan siempre en una sola vista sin necesidad de deslizar hacia abajo.
  */
 @Composable
-fun GesturesGuideScreen() {
+fun GesturesGuideScreen(
+    onStartInteractiveTutorial: (() -> Unit)? = null
+) {
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(BackgroundLight)
-            .padding(horizontal = 14.dp, vertical = 12.dp),
-        verticalArrangement = Arrangement.spacedBy(10.dp)
+            .padding(horizontal = 14.dp, vertical = 10.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        // Tarjetas de los 5 gestos repartidas equitativamente sin scroll
+        // Tarjetas de los gestos repartidas equitativamente sin scroll
         GestureType.entries.forEach { gesture ->
             Card(
                 modifier = Modifier
@@ -482,14 +553,14 @@ fun GesturesGuideScreen() {
                 Row(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(horizontal = 12.dp, vertical = 8.dp),
+                        .padding(horizontal = 12.dp, vertical = 5.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     // Icono circular grande a la izquierda
                     Box(
                         modifier = Modifier
-                            .size(44.dp)
+                            .size(42.dp)
                             .clip(CircleShape)
                             .background(gesture.badgeColor.copy(alpha = 0.14f))
                             .border(1.dp, gesture.badgeColor.copy(alpha = 0.40f), CircleShape),
@@ -499,7 +570,7 @@ fun GesturesGuideScreen() {
                             imageVector = gesture.icon,
                             contentDescription = gesture.title,
                             tint = gesture.badgeColor,
-                            modifier = Modifier.size(24.dp)
+                            modifier = Modifier.size(22.dp)
                         )
                     }
 
@@ -519,25 +590,27 @@ fun GesturesGuideScreen() {
                                 fontSize = 14.sp,
                                 color = TextPrimary,
                                 maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
+                                overflow = TextOverflow.Ellipsis,
+                                modifier = Modifier.weight(1f, fill = false)
                             )
                             Spacer(modifier = Modifier.width(6.dp))
                             Surface(
-                                shape = RoundedCornerShape(10.dp),
+                                shape = RoundedCornerShape(8.dp),
                                 color = gesture.badgeColor.copy(alpha = 0.12f)
                             ) {
                                 Text(
                                     text = gesture.gestureName,
                                     fontWeight = FontWeight.Bold,
                                     fontSize = 11.sp,
+                                    lineHeight = 13.sp,
                                     color = gesture.badgeColor,
                                     maxLines = 1,
-                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.5.dp)
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 1.dp)
                                 )
                             }
                         }
 
-                        Spacer(modifier = Modifier.height(8.dp))
+                        Spacer(modifier = Modifier.height(3.dp))
 
                         // Frase directa de cómo realizar el gesto (sin "Cómo:")
                         Text(
@@ -545,21 +618,80 @@ fun GesturesGuideScreen() {
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Medium,
                             color = TextPrimary,
-                            lineHeight = 15.sp,
+                            lineHeight = 14.sp,
                             maxLines = 2,
                             overflow = TextOverflow.Ellipsis
                         )
 
-                        Spacer(modifier = Modifier.height(4.dp))
+                        Spacer(modifier = Modifier.height(2.dp))
 
                         // Para qué sirve (con "Uso:")
                         Text(
-                            text = "Uso: ${gesture.whatFor}",
+                            text = stringResource(R.string.gesture_usage_label, gesture.whatFor),
                             fontSize = 11.5.sp,
                             color = TextSecondary,
-                            lineHeight = 14.sp,
-                            maxLines = 2,
+                            lineHeight = 13.5.sp,
+                            maxLines = 3,
                             overflow = TextOverflow.Ellipsis
+                        )
+                    }
+                }
+            }
+        }
+
+        // Botón al pie para repetir el tutorial en cualquier momento
+        if (onStartInteractiveTutorial != null) {
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable(onClick = onStartInteractiveTutorial),
+                shape = RoundedCornerShape(14.dp),
+                colors = CardDefaults.cardColors(containerColor = UgrRed),
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 14.dp, vertical = 10.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(34.dp)
+                                .clip(CircleShape)
+                                .background(Color.White.copy(alpha = 0.2f)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.School,
+                                contentDescription = null,
+                                tint = Color.White,
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
+                        Text(
+                            text = "Repetir Tutorial",
+                            fontWeight = FontWeight.ExtraBold,
+                            fontSize = 14.sp,
+                            color = Color.White
+                        )
+                    }
+                    Surface(
+                        shape = RoundedCornerShape(50),
+                        color = Color.White
+                    ) {
+                        Text(
+                            text = "Iniciar",
+                            fontWeight = FontWeight.ExtraBold,
+                            fontSize = 11.5.sp,
+                            color = UgrRed,
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
                         )
                     }
                 }

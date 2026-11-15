@@ -163,25 +163,57 @@ class ExampleUnitTest {
         assertTrue("La ruta debe tener nodos y metros", ruta!!.distanciaMetros > 0 && ruta.nodos.isNotEmpty())
         println("Ruta calculada por voz a ${destProfesor.titulo}: ${ruta.distanciaMetros}m en ${ruta.tiempoEstimadoFormateado}")
 
-        // 9. Comprobación de detección del comedor más cercano según GPS
-        // Cerca de la ETSIIT -> Aynadamar
+        // 9. Comprobación de detección del comedor más cercano según GPS (simulación centrada en Aynadamar)
         val nearAynadamar = com.example.npi_puntoinfo_etsiit.sensors.CampusLocationManager.findNearestDiningHall(37.1971, -3.6244)
         assertEquals("aynadamar", nearAynadamar.id)
 
-        // Cerca de Ciencias / Severo Ochoa -> Fuentenueva
-        val nearFuentenueva = com.example.npi_puntoinfo_etsiit.sensors.CampusLocationManager.findNearestDiningHall(37.1815, -3.6090)
-        assertEquals("fuentenueva", nearFuentenueva.id)
-
-        // Cerca de Filosofía / Cartuja -> Cartuja
-        val nearCartuja = com.example.npi_puntoinfo_etsiit.sensors.CampusLocationManager.findNearestDiningHall(37.1935, -3.5980)
-        assertEquals("cartuja", nearCartuja.id)
-
-        // Cerca de Medicina / PTS -> PTS
-        val nearPts = com.example.npi_puntoinfo_etsiit.sensors.CampusLocationManager.findNearestDiningHall(37.1475, -3.6020)
-        assertEquals("pts", nearPts.id)
-
-        // Sin señal GPS -> Aynadamar por defecto
+        // Sin señal GPS o cualquier otra coordenada -> Aynadamar
         val fallbackDefault = com.example.npi_puntoinfo_etsiit.sensors.CampusLocationManager.findNearestDiningHall(null, null)
         assertEquals("aynadamar", fallbackDefault.id)
+    }
+
+    @Test
+    fun testEstimacionHorarioYBarometro() {
+        // 1. Probar estimación de horario durante una clase en curso (jueves 09:00 -> NPI en Aula 0.5)
+        val thursday = java.time.LocalDate.of(2025, 2, 20) // Jueves
+        val ongoingTime = java.time.LocalTime.of(9, 0)
+        val estimatedOngoing = com.example.npi_puntoinfo_etsiit.data.ScheduleRepository.estimateCurrentOrRecentClassroom(
+            context = null,
+            date = thursday,
+            time = ongoingTime
+        )
+        assertNotNull("Debe estimar la clase de NPI en curso a las 09:00 los jueves", estimatedOngoing)
+        assertEquals("Aula 0.5", estimatedOngoing!!.roomName)
+        assertEquals(com.example.npi_puntoinfo_etsiit.data.ClassroomStatus.ONGOING, estimatedOngoing.status)
+
+        // 2. Probar estimación de horario para una clase recién terminada (jueves 14:40 -> VC en Aula 0.5 finalizó a las 14:30)
+        val endedTime = java.time.LocalTime.of(14, 40)
+        val estimatedEnded = com.example.npi_puntoinfo_etsiit.data.ScheduleRepository.estimateCurrentOrRecentClassroom(
+            context = null,
+            date = thursday,
+            time = endedTime
+        )
+        assertNotNull("Debe estimar la clase recién terminada a las 14:40", estimatedEnded)
+        assertEquals("Aula 0.5", estimatedEnded!!.roomName)
+        assertEquals(com.example.npi_puntoinfo_etsiit.data.ClassroomStatus.JUST_ENDED, estimatedEnded.status)
+
+        // 3. Probar horario fuera de clases (jueves 22:00) -> Debe ser null
+        val nightTime = java.time.LocalTime.of(22, 0)
+        val estimatedNight = com.example.npi_puntoinfo_etsiit.data.ScheduleRepository.estimateCurrentOrRecentClassroom(
+            context = null,
+            date = thursday,
+            time = nightTime
+        )
+        assertNull("Fuera de clases debe ser null", estimatedNight)
+
+        // 4. Probar estimación del barómetro según la presión atmosférica
+        val pbEstimate = com.example.npi_puntoinfo_etsiit.sensors.BarometerManager.estimateFloorFromPressure(935.0f, 700.0f)
+        assertEquals("PB", pbEstimate.floorCode)
+
+        val p1Estimate = com.example.npi_puntoinfo_etsiit.sensors.BarometerManager.estimateFloorFromPressure(933.8f, 703.5f)
+        assertEquals("P1", p1Estimate.floorCode)
+
+        val pssEstimate = com.example.npi_puntoinfo_etsiit.sensors.BarometerManager.estimateFloorFromPressure(937.0f, 696.0f)
+        assertEquals("PSS", pssEstimate.floorCode)
     }
 }

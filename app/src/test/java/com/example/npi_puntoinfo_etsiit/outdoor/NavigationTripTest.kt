@@ -10,7 +10,7 @@ class NavigationTripTest {
     @Test fun firstArrivalRequestsPromptOnlyOnce() {
         val trip = start()
         assertFalse(trip.arrivalNotified)
-        assertFalse(trip.showCompactEntry)
+        assertTrue(trip.showCompactEntry)
         val arrived = trip.onArrival()
         assertEquals(ArrivalPresentation.PROMPT, arrived.presentation)
         assertEquals(arrived, arrived.onArrival())
@@ -68,17 +68,29 @@ class NavigationTripTest {
         assertNotEquals(finished.id, next.id)
         assertEquals(ArrivalPresentation.WAITING, next.presentation)
         assertFalse(next.arrivalNotified)
-        assertFalse(next.showCompactEntry)
+        assertTrue(next.showCompactEntry)
     }
 
     @Test fun outdoorOnlyTripNeverOffersIndoorAction() {
-        var trip = NavigationTrip.start(NavigationJourney.Outdoor(OutdoorDestinations.find("dining-pts")!!))
+        var trip = NavigationTrip.start(NavigationJourney.Outdoor(OutdoorDestinations.find("etsiit-auxiliar")!!))
         trip = trip.onArrival().stayOutside().enterIndoors().returnOutdoors()
         assertNull(trip.indoor)
         assertEquals(TripPhase.OUTDOOR, trip.phase)
         assertEquals(ArrivalPresentation.WAITING, trip.presentation)
         assertFalse(trip.showCompactEntry)
         assertEquals(trip, NavigationTrip.restore(trip.savedValues()))
+    }
+
+    @Test fun manualActionIsAvailableBeforeGpsWithoutConsumingTheAutomaticArrival() {
+        val trip = start()
+        assertTrue(trip.showCompactEntry)
+        assertEquals(ArrivalPresentation.WAITING, trip.presentation)
+        assertFalse(trip.arrivalNotified)
+        val restored = NavigationTrip.restore(trip.savedValues())
+        assertTrue(restored.showCompactEntry)
+        val arrived = restored.onArrival()
+        assertEquals(ArrivalPresentation.PROMPT, arrived.presentation)
+        assertEquals(target, arrived.indoor)
     }
 
     @Test fun recentIndoorFixOnlyProposesEntryAndKeepsTargetAcrossDeclineAndReturn() {
@@ -99,7 +111,7 @@ class NavigationTripTest {
 
     @Test fun proximityToOutdoorOnlyDestinationNeverEnablesIndoorTransition() {
         val detector = ArrivalDetector()
-        val trip = NavigationTrip.start(NavigationJourney.Outdoor(OutdoorDestinations.find("dining-pts")!!))
+        val trip = NavigationTrip.start(NavigationJourney.Outdoor(OutdoorDestinations.find("etsiit-auxiliar")!!))
         assertTrue(detector.observe(50.0, 60.0, 100_000))
         val arrived = trip.onArrival()
         assertEquals(ArrivalPresentation.WAITING, arrived.presentation)

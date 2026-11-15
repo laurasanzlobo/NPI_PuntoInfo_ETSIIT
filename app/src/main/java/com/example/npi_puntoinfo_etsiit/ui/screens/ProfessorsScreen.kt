@@ -23,8 +23,11 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -32,6 +35,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForwardIos
 import androidx.compose.material.icons.filled.AccessTime
 import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.MeetingRoom
@@ -145,10 +149,23 @@ fun getProfessorActivityStatus(
                     type = ProfessorActivityType.IN_CLASS,
                     badgeText = "En clase: $roomFormatted",
                     badgeColor = CampusTeal,
-                    dialogMessage = "En este momento ${prof.name} está impartiendo clase de ${c.subject} en el aula $roomFormatted hasta las ${match.groupValues[3]}. Te recomendamos esperar o escribirle un correo."
+                    dialogMessage = "En este momento ${prof.name} está impartiendo clase de ${c.subject} en el aula $roomFormatted hasta las ${match.groupValues[3]}."
                 )
             }
         }
+    }
+
+    // Obtener los dígitos del despacho para locución TTS natural (ej. "el despacho 225" en vez de "D225")
+    val officeDigits = prof.office.split("·")[0]
+        .replace("Despacho", "", ignoreCase = true)
+        .replace("D_", "")
+        .replace("D-", "")
+        .replace("D", "")
+        .trim()
+    val officeSpoken = if (officeDigits.isNotBlank() && !officeDigits.equals("Consultar", ignoreCase = true)) {
+        "el despacho $officeDigits"
+    } else {
+        "su despacho"
     }
 
     // 2. Comprobar si está en su despacho en horario de tutoría
@@ -161,22 +178,20 @@ fun getProfessorActivityStatus(
         val ini = parseTime(m.groupValues[3])
         val fin = parseTime(m.groupValues[4])
         if ((d1 == dayOfWeek || d2 == dayOfWeek) && minutesOfDay in ini until fin) {
-            val officeClean = if (prof.office.startsWith("D_")) "Despacho D${prof.office.removePrefix("D_")}" else prof.office.replace("D_", "D").replace("D-", "D")
             return ProfessorActivityStatus(
                 type = ProfessorActivityType.IN_OFFICE_HOURS,
                 badgeText = "En tutoría",
                 badgeColor = Color(0xFF16A34A), // Verde vivo
-                dialogMessage = "¡Buenas noticias! ${prof.name} se encuentra ahora mismo en su $officeClean atendiendo tutorías hasta las ${m.groupValues[4]}. ¿Quieres que te acompañe hasta allí?"
+                dialogMessage = "${prof.name} se encuentra ahora mismo en $officeSpoken atendiendo tutorías hasta las ${m.groupValues[4]}."
             )
         }
     }
 
     // 3. Fuera de horario de actividad
-    val officeClean = if (prof.office.startsWith("D_")) "Despacho D${prof.office.removePrefix("D_")}" else prof.office.replace("D_", "D").replace("D-", "D")
     val msg = if (prof.isExternal) {
         "${prof.name} se encuentra en ${prof.campus}. Sus tutorías habituales son: ${prof.officeHours}."
     } else {
-        "${prof.name} no tiene tutorías ni clases ahora mismo. Sus tutorías en el $officeClean son: ${prof.officeHours}. Puedes redactar un correo para solicitar cita."
+        "${prof.name} no tiene tutorías ni clases ahora mismo. Sus tutorías en $officeSpoken son: ${prof.officeHours}."
     }
 
     return ProfessorActivityStatus(
@@ -262,17 +277,16 @@ fun ProfessorAvatar(
                 .map { it.first().uppercase() }
                 .joinToString("")
         }
-        val tintColor = if (prof.isMyTeacher) UgrRed else CampusTeal
         Box(
             modifier = modifier
                 .size(size)
                 .clip(CircleShape)
-                .background(tintColor.copy(alpha = 0.15f)),
+                .background(CampusTeal.copy(alpha = 0.12f)),
             contentAlignment = Alignment.Center
         ) {
             Text(
                 text = initials,
-                color = tintColor,
+                color = CampusTeal,
                 fontWeight = FontWeight.Bold,
                 fontSize = (size.value * 0.38f).sp
             )
@@ -283,6 +297,40 @@ fun ProfessorAvatar(
 private fun normalizarTexto(s: String): String {
     val norm = Normalizer.normalize(s, Normalizer.Form.NFD)
     return norm.replace(Regex("\\p{InCombiningDiacriticalMarks}+"), "").lowercase().trim()
+}
+
+/**
+ * Obtiene la versión corta del nombre: Nombre de pila + Primer Apellido
+ * Ejemplos: "Marcelino José Cabrera Cuevas" -> "Marcelino Cabrera", "Zoraida Callejas Carrión" -> "Zoraida Callejas"
+ */
+fun formatShortProfessorName(fullName: String): String {
+    val partes = fullName.trim().split(Regex("\\s+")).filter { it.isNotBlank() }
+    if (partes.size <= 2) return fullName
+
+    val compuestosNombre = setOf(
+        "jose", "josé", "maria", "maría", "juan", "francisco", "jesus", "jesús",
+        "antonio", "luis", "carmen", "ana", "manuel", "ramon", "ramón", "enrique",
+        "javier", "miguel", "luisa", "belen", "belén", "julian", "julián", "celeste",
+        "ángel", "angel"
+    )
+
+    // Manejar apellidos con partículas compuestas como "Begoña del Pino Prieto" -> "Begoña del Pino"
+    for (i in 1 until partes.size - 1) {
+        if (partes[i].lowercase() in setOf("del", "de")) {
+            return "${partes[0]} " + partes.subList(i, (i + 2).coerceAtMost(partes.size)).joinToString(" ")
+        }
+    }
+
+    if (partes[0].equals("Siham", ignoreCase = true)) {
+        return "Siham Tabik"
+    }
+
+    // Si tiene 4 partes y la segunda es un segundo nombre habitual (ej: Marcelino José Cabrera Cuevas)
+    if (partes.size >= 4 && partes[1].lowercase() in compuestosNombre) {
+        return "${partes[0]} ${partes[2]}"
+    }
+
+    return "${partes[0]} ${partes[1]}"
 }
 
 /**
@@ -310,19 +358,76 @@ fun getShortDepartment(department: String): String {
     }
 }
 
+/**
+ * Obtiene la sigla o acrónimo conciso de una asignatura universitaria
+ * Ejemplos: "Nuevos Paradigmas de Interacción" -> "NPI", "Visión por Computador" -> "VC"
+ */
+fun getSubjectAcronym(subject: String): String {
+    val clean = subject.trim()
+    return when {
+        clean.contains("Nuevos Paradigmas", ignoreCase = true) -> "NPI"
+        clean.contains("Visión por Computador", ignoreCase = true) -> "VC"
+        clean.contains("Programación y Diseño", ignoreCase = true) -> "PDOO"
+        clean.contains("Aprendizaje Automático", ignoreCase = true) -> "AA"
+        clean.contains("Arquitectura de Computadores", ignoreCase = true) -> "AC"
+        clean.contains("Bases de Datos Avanzadas", ignoreCase = true) -> "BDA"
+        clean.contains("Bioinformática", ignoreCase = true) -> "BIO"
+        clean.contains("Bioquímica Clínica", ignoreCase = true) -> "BQC"
+        clean.contains("Computación Ubicua", ignoreCase = true) -> "CU"
+        clean.contains("Comunicación Audiovisual", ignoreCase = true) -> "CAV"
+        clean.contains("Comunicaciones Móviles", ignoreCase = true) -> "CM"
+        clean.contains("Diseño Multimedia", ignoreCase = true) -> "DMAD"
+        clean.contains("Estadística Aplicada", ignoreCase = true) -> "EA"
+        clean.contains("Física Computacional", ignoreCase = true) -> "FC"
+        clean.contains("Gestión de Empresas", ignoreCase = true) -> "GES"
+        clean.contains("Informática Gráfica", ignoreCase = true) -> "IG"
+        clean.contains("Informática Médica", ignoreCase = true) -> "IM"
+        clean.contains("Infraestructura Virtual", ignoreCase = true) -> "IV"
+        clean.contains("Ingeniería de Requisitos", ignoreCase = true) -> "IR"
+        clean.contains("Minería de Datos", ignoreCase = true) -> "MD"
+        clean.contains("Modelado 3D", ignoreCase = true) -> "M3D"
+        clean.contains("Procesadores de Lenguajes", ignoreCase = true) -> "PL"
+        clean.contains("Programación Técnica", ignoreCase = true) -> "PTC"
+        clean.contains("Programación Web", ignoreCase = true) -> "PW"
+        clean.contains("Reconocimiento de Formas", ignoreCase = true) -> "RF"
+        clean.contains("Redes de Comunicaciones", ignoreCase = true) -> "RC"
+        clean.contains("Seguridad en Redes", ignoreCase = true) -> "SR"
+        clean.contains("Simulación de Sistemas", ignoreCase = true) -> "SS"
+        clean.contains("Sistemas Concurrentes", ignoreCase = true) -> "SC"
+        clean.contains("Sistemas Empotrados", ignoreCase = true) -> "SE"
+        clean.contains("Sistemas Inteligentes", ignoreCase = true) -> "SI"
+        clean.contains("Tecnologías de la Traducción", ignoreCase = true) -> "TT"
+        clean.contains("Teoría de la Información", ignoreCase = true) -> "TIC"
+        clean.contains("Web Semántica", ignoreCase = true) -> "WS"
+        else -> {
+            val stopWords = setOf("de", "la", "el", "los", "las", "y", "en", "por", "del")
+            val words = clean.split(Regex("\\s+")).filter { it.lowercase() !in stopWords && it.isNotBlank() }
+            if (words.size in 2..4) {
+                words.map { it.first().uppercase() }.joinToString("")
+            } else if (clean.length > 5) {
+                clean.take(4).uppercase()
+            } else {
+                clean
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfessorsScreen(onNavigate: (String) -> Unit, searchedName: String? = null) {
     val context = LocalContext.current
     val profile = UserSessionRepository.getProfile(context)
     val isLoggedIn = profile.isLoggedIn
+    val isEnglish = profile.language == "en"
+    val allCategory = if (isEnglish) "All" else "Todos"
+    val myTeachersCategory = if (isEnglish) "My Professors" else "Mis Profesores"
     var selectedProfessor by remember { mutableStateOf<Professor?>(null) }
     var searchQuery by remember { mutableStateOf(searchedName ?: "") }
-    var selectedFilterCategory by remember(isLoggedIn) {
-        mutableStateOf(if (isLoggedIn) "Mis Profesores" else "Todos")
-    }
-
-    LaunchedEffect(isLoggedIn) {
-        selectedFilterCategory = if (isLoggedIn) "Mis Profesores" else "Todos"
+    var selectedFilterCategory by remember(isLoggedIn, isEnglish) {
+        mutableStateOf(
+            if (!searchedName.isNullOrBlank() || !isLoggedIn) allCategory else myTeachersCategory
+        )
     }
 
     // Motor Text-to-Speech (TTS) en español para el diálogo conversacional
@@ -393,7 +498,50 @@ fun ProfessorsScreen(onNavigate: (String) -> Unit, searchedName: String? = null)
 
     val professorsList = remember(isLoggedIn) {
         val raw = loadProfessors(context)
-        if (isLoggedIn) raw else raw.sortedBy { it.name }
+        if (isLoggedIn) raw else raw.sortedBy { normalizarTexto(it.name) }
+    }
+
+    fun matchesCategory(prof: Professor, category: String): Boolean = when (category) {
+        "Mis Profesores", "My Professors" -> prof.isMyTeacher
+        "CCIA" -> prof.department.contains("Computación", ignoreCase = true)
+        "LSI" -> prof.department.contains("Lenguajes", ignoreCase = true)
+        "Otras Áreas", "Other Departments" -> !prof.isExternal &&
+            !prof.department.contains("Computación", ignoreCase = true) &&
+            !prof.department.contains("Lenguajes", ignoreCase = true)
+        "Exterior UGR", "External UGR" -> prof.isExternal
+        else -> true
+    }
+
+    fun matchesQuery(prof: Professor, normQuery: String): Boolean {
+        if (normQuery.isBlank()) return true
+        return normalizarTexto(prof.name).contains(normQuery) ||
+            normalizarTexto(prof.department).contains(normQuery) ||
+            normalizarTexto(prof.subject).contains(normQuery) ||
+            normalizarTexto(prof.office).contains(normQuery) ||
+            normalizarTexto(prof.campus).contains(normQuery)
+    }
+
+    fun applyVoiceSearch(rawQuery: String) {
+        val trimmed = rawQuery.trim()
+        if (trimmed.isBlank()) return
+        searchQuery = trimmed
+        val normSearch = normalizarTexto(trimmed)
+        val searchMatches = professorsList.filter { matchesQuery(it, normSearch) }
+        if (searchMatches.isNotEmpty() && searchMatches.none { matchesCategory(it, selectedFilterCategory) }) {
+            selectedFilterCategory = allCategory
+        }
+        val nameMatches = professorsList.filter { prof ->
+            val normName = normalizarTexto(prof.name)
+            prof.name.equals(trimmed, ignoreCase = true) ||
+                normName == normSearch ||
+                normName.contains(normSearch) ||
+                normSearch.contains(normName)
+        }
+        val exactOrSingle = nameMatches.firstOrNull { normalizarTexto(it.name) == normSearch }
+            ?: nameMatches.singleOrNull()
+        if (exactOrSingle != null) {
+            selectedProfessor = exactOrSingle
+        }
     }
 
     // Launcher de reconocimiento por voz integrado
@@ -404,7 +552,7 @@ fun ProfessorsScreen(onNavigate: (String) -> Unit, searchedName: String? = null)
             val spokenText = result.data?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)?.firstOrNull()?.trim()
             if (!spokenText.isNullOrBlank()) {
                 triggerVibration(context, durationMs = 120)
-                searchQuery = spokenText
+                applyVoiceSearch(spokenText)
             }
         }
     }
@@ -413,7 +561,7 @@ fun ProfessorsScreen(onNavigate: (String) -> Unit, searchedName: String? = null)
         val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
             putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
             putExtra(RecognizerIntent.EXTRA_LANGUAGE, "es-ES")
-            putExtra(RecognizerIntent.EXTRA_PROMPT, "Di el nombre, apellido o departamento")
+            putExtra(RecognizerIntent.EXTRA_PROMPT, "Di el nombre, asignatura o departamento")
         }
         try {
             speechLauncher.launch(intent)
@@ -481,17 +629,7 @@ fun ProfessorsScreen(onNavigate: (String) -> Unit, searchedName: String? = null)
     androidx.compose.runtime.LaunchedEffect(searchedName) {
         if (!searchedName.isNullOrBlank()) {
             val decoded = try { java.net.URLDecoder.decode(searchedName, "UTF-8") } catch (_: Exception) { searchedName }
-            searchQuery = decoded
-            val normSearch = normalizarTexto(decoded)
-            val found = professorsList.find {
-                it.name.equals(decoded, ignoreCase = true) ||
-                normalizarTexto(it.name) == normSearch ||
-                normalizarTexto(it.name).contains(normSearch) ||
-                normSearch.contains(normalizarTexto(it.name))
-            }
-            if (found != null) {
-                selectedProfessor = found
-            }
+            applyVoiceSearch(decoded)
         }
     }
 
@@ -501,9 +639,9 @@ fun ProfessorsScreen(onNavigate: (String) -> Unit, searchedName: String? = null)
 
         if (selectedProfessor != null) {
             manager.onTakeMeThereGesture = {
-                triggerVibration(context, durationMs = 150)
                 val prof = selectedProfessor
                 if (prof != null) {
+                    triggerVibration(context, durationMs = 150)
                     if (prof.isExternal) {
                         Toast.makeText(context, "El profesor se encuentra en ${prof.campus}", Toast.LENGTH_LONG).show()
                     } else {
@@ -518,9 +656,9 @@ fun ProfessorsScreen(onNavigate: (String) -> Unit, searchedName: String? = null)
 
             manager.onForwardTiltGesture = {
                 // Retorno a la postura de lectura: abre directamente el correo
-                triggerVibration(context, durationMs = 150)
                 val prof = selectedProfessor
                 if (prof != null) {
+                    triggerVibration(context, durationMs = 150)
                     val intent = Intent(Intent.ACTION_SENDTO).apply {
                         data = android.net.Uri.parse("mailto:${prof.email}")
                         putExtra(Intent.EXTRA_SUBJECT, "Tutoría: [Indica tu motivo]")
@@ -544,26 +682,7 @@ fun ProfessorsScreen(onNavigate: (String) -> Unit, searchedName: String? = null)
         val queryNorm = normalizarTexto(searchQuery)
 
         val filtered = professorsList.filter { prof ->
-            val matchesCategory = when (selectedFilterCategory) {
-                "Mis Profesores" -> prof.isMyTeacher
-                "CCIA" -> prof.department.contains("Computación", ignoreCase = true)
-                "LSI" -> prof.department.contains("Lenguajes", ignoreCase = true)
-                "Otras Áreas" -> !prof.isExternal && !prof.department.contains("Computación", ignoreCase = true) && !prof.department.contains("Lenguajes", ignoreCase = true)
-                "Exterior UGR" -> prof.isExternal
-                else -> true
-            }
-
-            val matchesSearch = if (queryNorm.isBlank()) {
-                true
-            } else {
-                normalizarTexto(prof.name).contains(queryNorm) ||
-                        normalizarTexto(prof.department).contains(queryNorm) ||
-                        normalizarTexto(prof.subject).contains(queryNorm) ||
-                        normalizarTexto(prof.office).contains(queryNorm) ||
-                        normalizarTexto(prof.campus).contains(queryNorm)
-            }
-
-            matchesCategory && matchesSearch
+            matchesCategory(prof, selectedFilterCategory) && matchesQuery(prof, queryNorm)
         }
 
         // Ordenación:
@@ -581,7 +700,7 @@ fun ProfessorsScreen(onNavigate: (String) -> Unit, searchedName: String? = null)
                     ProfessorActivityType.OFFLINE -> 2         // ⚪ Fuera de horario
                 }
             }.thenBy { prof ->
-                prof.name
+                normalizarTexto(prof.name)
             }
         )
     }
@@ -634,8 +753,23 @@ fun ProfessorsScreen(onNavigate: (String) -> Unit, searchedName: String? = null)
                 }
             },
             confirmButton = {
-                TextButton(onClick = { showDemoDialog = false }) {
-                    Text("Cerrar", color = CampusTeal)
+                Button(
+                    onClick = { showDemoDialog = false },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = UgrRed,
+                        contentColor = Color.White
+                    ),
+                    shape = RoundedCornerShape(10.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(42.dp)
+                ) {
+                    Text(
+                        text = "Cerrar",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 14.sp,
+                        color = Color.White
+                    )
                 }
             }
         )
@@ -656,8 +790,8 @@ fun ProfessorsScreen(onNavigate: (String) -> Unit, searchedName: String? = null)
             ) {
                 Surface(
                     shape = RoundedCornerShape(24.dp),
-                    color = SurfaceWhite,
-                    tonalElevation = 8.dp,
+                    color = Color.White,
+                    tonalElevation = 0.dp,
                     shadowElevation = 16.dp,
                     modifier = Modifier
                         .fillMaxWidth()
@@ -733,397 +867,353 @@ fun ProfessorsScreen(onNavigate: (String) -> Unit, searchedName: String? = null)
             }
         }
 
-        AlertDialog(
+        ModalBottomSheet(
             onDismissRequest = {
                 selectedProfessor = null
                 tts?.stop()
                 isSpeaking = false
             },
-            containerColor = SurfaceWhite,
-            titleContentColor = TextPrimary,
-            textContentColor = TextPrimary,
-            icon = {
+            containerColor = Color.White,
+            tonalElevation = 0.dp,
+            scrimColor = Color.Black.copy(alpha = 0.45f),
+            shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
+            dragHandle = {
                 Box(
-                    contentAlignment = Alignment.BottomEnd,
-                    modifier = Modifier.clickable { showEnlargedPhoto = true }
+                    modifier = Modifier
+                        .padding(top = 12.dp, bottom = 8.dp)
+                        .size(width = 42.dp, height = 4.dp)
+                        .clip(RoundedCornerShape(2.dp))
+                        .background(TextSecondary.copy(alpha = 0.25f))
+                )
+            }
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(Color.White)
+                    .padding(horizontal = 24.dp)
+                    .padding(top = 4.dp, bottom = 28.dp),
+                verticalArrangement = Arrangement.spacedBy(18.dp)
+            ) {
+                // 1. Cabecera amplia: Foto/Avatar + Nombre completo + Semáforo + Botón Cerrar
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    ProfessorAvatar(prof = prof, size = 68.dp)
-                    Surface(
-                        shape = CircleShape,
-                        color = UgrRed,
-                        shadowElevation = 3.dp,
-                        modifier = Modifier.size(22.dp)
-                    ) {
-                        Box(contentAlignment = Alignment.Center) {
-                            Icon(
-                                imageVector = Icons.Default.Search,
-                                contentDescription = "Ampliar foto",
-                                tint = Color.White,
-                                modifier = Modifier.size(12.dp)
-                            )
-                        }
-                    }
-                }
-            },
-            title = {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text(
-                        text = prof.name,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 18.sp,
-                        lineHeight = 22.sp,
-                        color = TextPrimary,
-                        textAlign = TextAlign.Center
-                    )
-                    Spacer(modifier = Modifier.height(5.dp))
-                    Text(
-                        text = prof.subject,
-                        fontSize = 13.sp,
-                        lineHeight = 16.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = CampusTeal,
-                        textAlign = TextAlign.Center
-                    )
-                    if (prof.department.isNotBlank()) {
-                        Spacer(modifier = Modifier.height(2.dp))
-                        Text(
-                            text = prof.department,
-                            fontSize = 11.sp,
-                            lineHeight = 14.sp,
-                            color = TextSecondary,
-                            textAlign = TextAlign.Center
-                        )
-                    }
-                }
-            },
-            text = {
-                Column(
-                    verticalArrangement = Arrangement.spacedBy(10.dp),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    // Estado de actividad y rol
                     Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.Center,
-                        verticalAlignment = Alignment.CenterVertically
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(16.dp),
+                        modifier = Modifier.weight(1f)
                     ) {
-                        Surface(
-                            shape = RoundedCornerShape(8.dp),
-                            color = status.badgeColor.copy(alpha = 0.14f)
+                        Box(
+                            modifier = Modifier.clickable { showEnlargedPhoto = true }
                         ) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                            ProfessorAvatar(prof = prof, size = 68.dp)
+
+                            // Lupita abajo a la derecha
+                            Surface(
+                                shape = CircleShape,
+                                color = SurfaceWhite,
+                                shadowElevation = 3.dp,
+                                modifier = Modifier
+                                    .align(Alignment.BottomEnd)
+                                    .size(22.dp)
                             ) {
-                                StatusDot(
-                                    color = status.badgeColor,
-                                    isPulsing = status.type == ProfessorActivityType.IN_OFFICE_HOURS
-                                )
-                                Spacer(modifier = Modifier.width(5.dp))
-                                Text(
-                                    text = status.badgeText.uppercase(),
-                                    fontSize = 11.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = status.badgeColor
-                                )
+                                Box(contentAlignment = Alignment.Center) {
+                                    Icon(
+                                        imageVector = Icons.Default.Search,
+                                        contentDescription = "Ampliar foto",
+                                        tint = CampusTeal,
+                                        modifier = Modifier.size(13.dp)
+                                    )
+                                }
+                            }
+
+                            // Estrellita amarilla arriba a la derecha si es tu profesor
+                            if (isLoggedIn && prof.isMyTeacher) {
+                                Surface(
+                                    shape = CircleShape,
+                                    color = SurfaceWhite,
+                                    shadowElevation = 3.dp,
+                                    modifier = Modifier
+                                        .align(Alignment.TopEnd)
+                                        .size(22.dp)
+                                ) {
+                                    Box(contentAlignment = Alignment.Center) {
+                                        Icon(
+                                            imageVector = Icons.Default.Star,
+                                            contentDescription = "Tu profesor",
+                                            tint = Color(0xFFF59E0B),
+                                            modifier = Modifier.size(14.dp)
+                                        )
+                                    }
+                                }
                             }
                         }
 
-                        if (isLoggedIn && prof.isMyTeacher) {
-                            Spacer(modifier = Modifier.width(8.dp))
+                        Column(
+                            verticalArrangement = Arrangement.spacedBy(6.dp),
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text(
+                                text = prof.name,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 19.sp,
+                                lineHeight = 23.sp,
+                                color = TextPrimary
+                            )
+
+                            // Píldora de estado en tiempo real (Tutoría / Clase / Fuera de horario) justo bajo el nombre
                             Surface(
                                 shape = RoundedCornerShape(8.dp),
-                                color = UgrRed.copy(alpha = 0.12f)
+                                color = status.badgeColor.copy(alpha = 0.12f)
                             ) {
                                 Row(
                                     verticalAlignment = Alignment.CenterVertically,
                                     modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                                 ) {
-                                    Icon(
-                                        imageVector = Icons.Default.Star,
-                                        contentDescription = null,
-                                        tint = UgrRed,
-                                        modifier = Modifier.size(13.dp)
+                                    StatusDot(
+                                        color = status.badgeColor,
+                                        isPulsing = status.type == ProfessorActivityType.IN_OFFICE_HOURS
                                     )
-                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Spacer(modifier = Modifier.width(6.dp))
                                     Text(
-                                        text = "TU PROFESOR",
-                                        fontSize = 11.sp,
+                                        text = status.badgeText,
+                                        fontSize = 11.5.sp,
                                         fontWeight = FontWeight.Bold,
-                                        color = UgrRed
+                                        color = status.badgeColor
                                     )
                                 }
                             }
                         }
                     }
 
-                    // --- 1. DATOS DEL PROFESOR: DESPACHO, TUTORÍAS Y CORREO (PRIMERO) ---
-                    Card(
-                        colors = CardDefaults.cardColors(containerColor = BackgroundLight),
-                        shape = RoundedCornerShape(12.dp),
-                        modifier = Modifier.fillMaxWidth()
+                    // Botón discreto cerrar (X)
+                    IconButton(
+                        onClick = {
+                            selectedProfessor = null
+                            tts?.stop()
+                            isSpeaking = false
+                        },
+                        modifier = Modifier.size(36.dp)
                     ) {
-                        Column(
-                            modifier = Modifier.padding(12.dp),
-                            verticalArrangement = Arrangement.spacedBy(10.dp)
+                        Icon(
+                            imageVector = Icons.Default.Close,
+                            contentDescription = "Cerrar",
+                            tint = TextSecondary
+                        )
+                    }
+                }
+
+                HorizontalDivider(color = SurfaceBorder.copy(alpha = 0.35f))
+
+                // 2. Información del profesor más grande y visual (sobre fondo blanco, sin recuadros)
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(14.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    if (prof.subject.isNotBlank() || prof.department.isNotBlank()) {
+                        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            if (prof.subject.isNotBlank()) {
+                                Text(
+                                    text = prof.subject,
+                                    fontSize = 16.sp,
+                                    lineHeight = 21.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = CampusTeal
+                                )
+                            }
+                            if (prof.department.isNotBlank()) {
+                                Text(
+                                    text = prof.department,
+                                    fontSize = 13.5.sp,
+                                    lineHeight = 18.sp,
+                                    color = TextSecondary
+                                )
+                            }
+                        }
+                    }
+
+                    // Tutorías (sin recuadro gris, visual con icono de horario y botón Oír)
+                    val formattedOfficeHours = remember(prof.officeHours) {
+                        prof.officeHours.replace(Regex("(\\d{2}:\\d{2})\\s+y\\s+([A-ZÁÉÍÓÚ])"), "$1\n$2")
+                    }
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.Top,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.Top,
+                            horizontalArrangement = Arrangement.spacedBy(10.dp),
+                            modifier = Modifier.weight(1f)
                         ) {
-                            // Despacho (formato D sin barra baja)
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                modifier = Modifier.fillMaxWidth()
+                            Box(
+                                modifier = Modifier
+                                    .padding(top = 2.dp)
+                                    .size(32.dp)
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(CampusTeal.copy(alpha = 0.10f)),
+                                contentAlignment = Alignment.Center
                             ) {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    modifier = Modifier.weight(1f)
-                                ) {
-                                    Icon(
-                                        imageVector = if (prof.isExternal) Icons.Default.LocationOn else Icons.Default.MeetingRoom,
-                                        contentDescription = null,
-                                        tint = CampusTeal,
-                                        modifier = Modifier.size(18.dp)
-                                    )
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                    Column {
-                                        Text(
-                                            text = prof.office.replace("D_", "D").replace("D-", "D"),
-                                            fontWeight = FontWeight.SemiBold,
-                                            fontSize = 14.sp,
-                                            color = TextPrimary
-                                        )
-                                        if (prof.isExternal) {
-                                            Text(
-                                                text = prof.campus,
-                                                fontSize = 11.sp,
-                                                color = TextSecondary
-                                            )
-                                        }
-                                    }
-                                }
-
-                                if (!prof.isExternal) {
-                                    GestureBadge(
-                                        type = GestureType.TAKE_ME_THERE,
-                                        size = 24.dp,
-                                        iconSize = 14.dp,
-                                        onClick = {
-                                            val roomName = prof.office.split("·")[0].trim().replace("D_", "D").replace("D-", "D")
-                                            val floorName = prof.office.split("·").getOrElse(1) { "ETSIIT" }.trim()
-                                            selectedProfessor = null
-                                            val locationText = if (floorName.isNotBlank() && floorName != "ETSIIT") "${prof.name} · $floorName" else prof.name
-                                            onNavigate(OutdoorNavigationRoute.forProfessor(roomName, locationText))
-                                        }
-                                    )
-                                }
-                            }
-
-                            // Horario de tutorías
-                            val formattedOfficeHours = remember(prof.officeHours) {
-                                prof.officeHours.replace(Regex("(\\d{2}:\\d{2})\\s+y\\s+([A-ZÁÉÍÓÚ])"), "$1\n$2")
-                            }
-
-                            Row(verticalAlignment = Alignment.Top) {
                                 Icon(
                                     imageVector = Icons.Default.Schedule,
                                     contentDescription = null,
-                                    tint = TextSecondary,
-                                    modifier = Modifier
-                                        .size(18.dp)
-                                        .padding(top = 1.dp)
+                                    tint = CampusTeal,
+                                    modifier = Modifier.size(18.dp)
                                 )
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Column {
-                                    Text(
-                                        text = "Tutorías:",
-                                        fontSize = 12.sp,
-                                        fontWeight = FontWeight.SemiBold,
-                                        color = TextPrimary
-                                    )
-                                    Spacer(modifier = Modifier.height(2.dp))
-                                    Text(
-                                        text = formattedOfficeHours,
-                                        fontSize = 12.sp,
-                                        lineHeight = 16.sp,
-                                        color = TextSecondary
-                                    )
-                                }
                             }
-
-                            // Correo electrónico interactivo (pulsable para redactar correo al igual que con el gesto)
-                            val onSendEmail = {
-                                val intent = Intent(Intent.ACTION_SENDTO).apply {
-                                    data = android.net.Uri.parse("mailto:${prof.email}")
-                                    putExtra(Intent.EXTRA_SUBJECT, "Tutoría: [Indica tu motivo]")
-                                }
-                                context.startActivity(intent)
-                                Toast.makeText(context, "Abriendo correo. ¡Recuerda que también puedes inclinar el móvil!", Toast.LENGTH_SHORT).show()
-                            }
-
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clip(RoundedCornerShape(8.dp))
-                                    .clickable { onSendEmail() }
-                                    .padding(vertical = 4.dp, horizontal = 2.dp)
-                            ) {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    modifier = Modifier.weight(1f)
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.Email,
-                                        contentDescription = null,
-                                        tint = CampusTeal,
-                                        modifier = Modifier.size(18.dp)
-                                    )
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                    Text(
-                                        text = prof.email,
-                                        fontSize = 13.sp,
-                                        color = CampusTeal,
-                                        fontWeight = FontWeight.Medium,
-                                        textDecoration = TextDecoration.Underline
-                                    )
-                                }
-                                GestureBadge(
-                                    type = GestureType.ACTION_TRIGGER,
-                                    size = 24.dp,
-                                    iconSize = 14.dp,
-                                    onClick = { onSendEmail() }
+                            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                                Text(
+                                    text = "Horario de tutorías",
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = TextSecondary
+                                )
+                                Text(
+                                    text = formattedOfficeHours,
+                                    fontSize = 13.5.sp,
+                                    lineHeight = 18.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    color = TextPrimary
                                 )
                             }
                         }
-                    }
 
-                    // --- 2. ASISTENTE UGR (DEBAJO DE LOS DATOS) ---
-                    Card(
-                        colors = CardDefaults.cardColors(containerColor = CampusTeal.copy(alpha = 0.08f)),
-                        shape = RoundedCornerShape(14.dp),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Column(modifier = Modifier.padding(12.dp)) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Icon(
-                                        imageVector = Icons.Default.RecordVoiceOver,
-                                        contentDescription = null,
-                                        tint = CampusTeal,
-                                        modifier = Modifier.size(17.dp)
-                                    )
-                                    Spacer(modifier = Modifier.width(5.dp))
-                                    Text(
-                                        text = "Asistente UGR",
-                                        fontSize = 11.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = CampusTeal
-                                    )
-                                }
-
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
-                                ) {
-                                    // 1. Botón para ESCUCHAR por voz (TTS)
-                                    FilledTonalButton(
-                                        onClick = { speak(status.dialogMessage) },
-                                        shape = RoundedCornerShape(8.dp),
-                                        contentPadding = PaddingValues(horizontal = 7.dp, vertical = 2.dp),
-                                        modifier = Modifier.height(28.dp),
-                                        colors = ButtonDefaults.filledTonalButtonColors(
-                                            containerColor = if (isSpeaking) UgrRed.copy(alpha = 0.15f) else CampusTeal.copy(alpha = 0.15f),
-                                            contentColor = if (isSpeaking) UgrRed else CampusTeal
-                                        )
-                                    ) {
-                                        Icon(
-                                            imageVector = if (isSpeaking) Icons.Default.VolumeOff else Icons.Default.VolumeUp,
-                                            contentDescription = null,
-                                            modifier = Modifier.size(13.dp)
-                                        )
-                                        Spacer(modifier = Modifier.width(3.dp))
-                                        Text(if (isSpeaking) "Parar" else "Oír", fontSize = 10.sp, fontWeight = FontWeight.Bold)
-                                    }
-
-                                    // 2. Botón para RESPONDER con la voz
-                                    FilledTonalButton(
-                                        onClick = { startDialogVoiceReply() },
-                                        shape = RoundedCornerShape(8.dp),
-                                        contentPadding = PaddingValues(horizontal = 7.dp, vertical = 2.dp),
-                                        modifier = Modifier.height(28.dp),
-                                        colors = ButtonDefaults.filledTonalButtonColors(
-                                            containerColor = CampusTeal.copy(alpha = 0.15f),
-                                            contentColor = CampusTeal
-                                        )
-                                    ) {
-                                        Icon(
-                                            imageVector = Icons.Default.Mic,
-                                            contentDescription = null,
-                                            modifier = Modifier.size(13.dp)
-                                        )
-                                        Spacer(modifier = Modifier.width(3.dp))
-                                        Text("Hablar", fontSize = 10.sp, fontWeight = FontWeight.Bold)
-                                    }
-                                }
-                            }
-
-                            // Mensaje conciso y limpio sin saturar de texto redundante
-                            val assistantPrompt = when (status.type) {
-                                ProfessorActivityType.IN_OFFICE_HOURS -> "¿Quieres que te guíe hasta su despacho?"
-                                ProfessorActivityType.IN_CLASS -> "Profesor impartiendo clase actualmente."
-                                ProfessorActivityType.OFFLINE -> "Profesor fuera del horario de tutorías."
-                            }
-
-                            Spacer(modifier = Modifier.height(6.dp))
-                            Text(
-                                text = assistantPrompt,
-                                fontSize = 12.sp,
-                                color = TextPrimary,
-                                fontWeight = FontWeight.Medium
+                        // Botón discreto [🔊 Oír]
+                        FilledTonalButton(
+                            onClick = { speak(status.dialogMessage) },
+                            shape = RoundedCornerShape(10.dp),
+                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
+                            modifier = Modifier.height(34.dp),
+                            colors = ButtonDefaults.filledTonalButtonColors(
+                                containerColor = if (isSpeaking) UgrRed.copy(alpha = 0.15f) else CampusTeal.copy(alpha = 0.15f),
+                                contentColor = if (isSpeaking) UgrRed else CampusTeal
                             )
-
-                            // Si está en tutorías, botón destacado directo para ir al despacho
-                            if (status.type == ProfessorActivityType.IN_OFFICE_HOURS && !prof.isExternal) {
-                                Spacer(modifier = Modifier.height(8.dp))
-                                Button(
-                                    onClick = {
-                                        val roomName = prof.office.split("·")[0].trim().replace("D_", "D").replace("D-", "D")
-                                        val floorName = prof.office.split("·").getOrElse(1) { "ETSIIT" }.trim()
-                                        selectedProfessor = null
-                                        tts?.stop()
-                                        isSpeaking = false
-                                        val locationText = if (floorName.isNotBlank() && floorName != "ETSIIT") "${prof.name} · $floorName" else prof.name
-                                        onNavigate(OutdoorNavigationRoute.forProfessor(roomName, locationText))
-                                    },
-                                    colors = ButtonDefaults.buttonColors(containerColor = CampusTeal),
-                                    shape = RoundedCornerShape(10.dp),
-                                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
-                                    modifier = Modifier.fillMaxWidth().height(38.dp)
-                                ) {
-                                    Text("🚶 Sí, llévame al despacho", fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                                }
-                            }
+                        ) {
+                            Icon(
+                                imageVector = if (isSpeaking) Icons.Default.VolumeOff else Icons.Default.VolumeUp,
+                                contentDescription = null,
+                                modifier = Modifier.size(15.dp)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = if (isSpeaking) "Parar" else "Oír",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold
+                            )
                         }
                     }
                 }
-            },
-            confirmButton = {
-                TextButton(onClick = {
-                    selectedProfessor = null
-                    tts?.stop()
-                    isSpeaking = false
-                }) {
-                    Text("Cerrar", color = TextPrimary, fontWeight = FontWeight.Bold)
+
+                Spacer(modifier = Modifier.height(4.dp))
+
+                // 3. Botones reina de navegación (Despacho y Correo)
+                val cleanOffice = prof.office
+                    .split("·")[0]
+                    .replace("Despacho", "", ignoreCase = true)
+                    .replace("D_", "D")
+                    .replace("D-", "D")
+                    .trim()
+                    .let {
+                        if (it.firstOrNull()?.isDigit() == true) "D$it" else it
+                    }
+
+                val onGoToOffice = {
+                    if (!prof.isExternal) {
+                        val roomName = prof.office.split("·")[0].trim().replace("D_", "D").replace("D-", "D")
+                        val floorName = prof.office.split("·").getOrElse(1) { "ETSIIT" }.trim()
+                        selectedProfessor = null
+                        tts?.stop()
+                        isSpeaking = false
+                        val locationText = if (floorName.isNotBlank() && floorName != "ETSIIT") "${prof.name} · $floorName" else prof.name
+                        onNavigate(OutdoorNavigationRoute.forProfessor(roomName, locationText))
+                    } else {
+                        Toast.makeText(context, "El profesor se encuentra en ${prof.campus}", Toast.LENGTH_LONG).show()
+                    }
+                }
+
+                val onSendEmail = {
+                    val intent = Intent(Intent.ACTION_SENDTO).apply {
+                        data = android.net.Uri.parse("mailto:${prof.email}")
+                        putExtra(Intent.EXTRA_SUBJECT, "Tutoría: [Indica tu motivo]")
+                    }
+                    context.startActivity(intent)
+                    Toast.makeText(context, "Abriendo correo...", Toast.LENGTH_SHORT).show()
+                }
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    val officeBtnText = if (cleanOffice.isNotBlank() && !cleanOffice.equals("Consultar", ignoreCase = true)) cleanOffice else "Despacho"
+                    Button(
+                        onClick = onGoToOffice,
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(50.dp),
+                        shape = RoundedCornerShape(14.dp),
+                        contentPadding = PaddingValues(horizontal = 8.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = CampusTeal)
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.MeetingRoom,
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Text(
+                                text = officeBtnText,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 14.sp,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                            GestureBadge(
+                                type = GestureType.TAKE_ME_THERE,
+                                size = 22.dp,
+                                iconSize = 13.dp,
+                                containerColor = Color.White,
+                                contentColor = CampusTeal
+                            )
+                        }
+                    }
+
+                    OutlinedButton(
+                        onClick = onSendEmail,
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(50.dp),
+                        shape = RoundedCornerShape(14.dp),
+                        contentPadding = PaddingValues(horizontal = 8.dp),
+                        border = androidx.compose.foundation.BorderStroke(1.5.dp, UgrRed),
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = UgrRed)
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Email,
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Text("Correo", fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                            GestureBadge(
+                                type = GestureType.ACTION_TRIGGER,
+                                size = 22.dp,
+                                iconSize = 13.dp
+                            )
+                        }
+                    }
                 }
             }
-        )
+        }
     }
 
     Column(
@@ -1213,9 +1303,11 @@ fun ProfessorsScreen(onNavigate: (String) -> Unit, searchedName: String? = null)
 
             // Chips de filtrado rápido
             val categories = if (isLoggedIn) {
-                listOf("Mis Profesores", "Todos", "CCIA", "LSI", "Otras Áreas", "Exterior UGR")
+                if (isEnglish) listOf("My Professors", "All", "CCIA", "LSI", "Other Departments", "External UGR")
+                else listOf("Mis Profesores", "Todos", "CCIA", "LSI", "Otras Áreas", "Exterior UGR")
             } else {
-                listOf("Todos", "CCIA", "LSI", "Otras Áreas", "Exterior UGR")
+                if (isEnglish) listOf("All", "CCIA", "LSI", "Other Departments", "External UGR")
+                else listOf("Todos", "CCIA", "LSI", "Otras Áreas", "Exterior UGR")
             }
             LazyRow(
                 horizontalArrangement = Arrangement.spacedBy(6.dp),
@@ -1242,15 +1334,17 @@ fun ProfessorsScreen(onNavigate: (String) -> Unit, searchedName: String? = null)
             }
         }
 
-        // --- CONTENIDO DE LA PANTALLA ---
-        LazyColumn(
+        // --- CONTENIDO DE LA PANTALLA: GRID DE PROFESORES ---
+        LazyVerticalGrid(
+            columns = GridCells.Fixed(2),
             modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp)
+            contentPadding = PaddingValues(start = 14.dp, end = 14.dp, top = 8.dp, bottom = 48.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             // Título solo para búsqueda activa (al pulsar los chips de filtro no repetimos el título del chip)
             if (searchQuery.isNotBlank()) {
-                item {
+                item(span = { GridItemSpan(maxLineSpan) }) {
                     Text(
                         text = "RESULTADOS (${filteredList.size} ENCONTRADOS)",
                         fontSize = 12.sp,
@@ -1261,9 +1355,9 @@ fun ProfessorsScreen(onNavigate: (String) -> Unit, searchedName: String? = null)
                 }
             }
 
-            // LISTA GENERAL O FILTRADA
+            // LISTA GENERAL O FILTRADA EN GRID
             if (filteredList.isEmpty()) {
-                item {
+                item(span = { GridItemSpan(maxLineSpan) }) {
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -1289,7 +1383,7 @@ fun ProfessorsScreen(onNavigate: (String) -> Unit, searchedName: String? = null)
             } else {
                 items(filteredList) { prof ->
                     val status = getProfessorActivityStatus(prof, currentDayOfWeek, currentMinutesOfDay)
-                    ProfessorListItem(
+                    ProfessorGridCard(
                         prof = prof,
                         status = status,
                         showMyTeacherStar = isLoggedIn && prof.isMyTeacher,
@@ -1302,48 +1396,83 @@ fun ProfessorsScreen(onNavigate: (String) -> Unit, searchedName: String? = null)
 }
 
 /**
- * Tarjeta destacada con Semáforo en vivo de disponibilidad para "Tus profesores"
+ * Tarjeta en cuadrícula limpia y minimalista:
+ * - Foto en grande (80dp) con anillo exterior de disponibilidad
+ * - Píldora de estado en vivo flotante
+ * - Nombre de pila + Primer apellido
+ * - Sin etiquetas de asignatura ni despacho (la información detallada se consulta al pulsar)
  */
 @Composable
-private fun FeaturedTeacherCard(
+private fun ProfessorGridCard(
     prof: Professor,
     status: ProfessorActivityStatus,
+    showMyTeacherStar: Boolean,
     onClick: () -> Unit
 ) {
-    val formattedOffice = remember(prof.office) {
-        prof.office.replace("D_", "D").replace("D-", "D")
+    val ringColor = when (status.type) {
+        ProfessorActivityType.IN_OFFICE_HOURS -> Color(0xFF16A34A) // Verde esmeralda vivo
+        ProfessorActivityType.IN_CLASS -> CampusTeal
+        ProfessorActivityType.OFFLINE -> Color(0xFFE2E8F0)
+    }
+
+    val cardBorder = when (status.type) {
+        ProfessorActivityType.IN_OFFICE_HOURS -> androidx.compose.foundation.BorderStroke(1.5.dp, Color(0xFF86EFAC))
+        else -> androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFE2E8F0).copy(alpha = 0.8f))
     }
 
     Card(
         onClick = onClick,
         modifier = Modifier
-            .width(185.dp)
-            .height(230.dp),
-        shape = RoundedCornerShape(16.dp),
+            .fillMaxWidth()
+            .height(160.dp),
+        shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(containerColor = SurfaceWhite),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        border = cardBorder,
+        elevation = CardDefaults.cardElevation(
+            defaultElevation = if (status.type == ProfessorActivityType.IN_OFFICE_HOURS) 3.dp else 1.5.dp
+        )
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
             Column(
                 modifier = Modifier
-                    .padding(horizontal = 12.dp, vertical = 10.dp)
-                    .fillMaxSize(),
+                    .fillMaxSize()
+                    .padding(horizontal = 8.dp, vertical = 12.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.SpaceBetween
+                verticalArrangement = Arrangement.Center
             ) {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier.fillMaxWidth()
+                // Contenedor del Avatar con Anillo exterior de disponibilidad (Foto en grande)
+                Box(
+                    contentAlignment = Alignment.BottomCenter,
+                    modifier = Modifier.padding(top = 2.dp)
                 ) {
-                    ProfessorAvatar(prof = prof, size = 54.dp)
-                    Spacer(modifier = Modifier.height(4.dp))
+                    Box(
+                        modifier = Modifier
+                            .size(88.dp)
+                            .clip(CircleShape)
+                            .background(ringColor.copy(alpha = if (status.type == ProfessorActivityType.OFFLINE) 0.35f else 0.22f))
+                            .padding(3.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(82.dp)
+                                .clip(CircleShape)
+                                .background(SurfaceWhite)
+                                .padding(2.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            ProfessorAvatar(prof = prof, size = 78.dp)
+                        }
+                    }
 
-                    // Píldora de Semáforo en Tiempo Real (solo si está en horario activo)
+                    // Píldora de estado en vivo flotante en la base del avatar
                     if (status.type != ProfessorActivityType.OFFLINE) {
                         Surface(
-                            shape = RoundedCornerShape(10.dp),
-                            color = status.badgeColor.copy(alpha = 0.12f),
-                            modifier = Modifier.padding(vertical = 2.dp)
+                            shape = RoundedCornerShape(12.dp),
+                            color = SurfaceWhite,
+                            shadowElevation = 3.dp,
+                            border = androidx.compose.foundation.BorderStroke(1.dp, status.badgeColor.copy(alpha = 0.35f)),
+                            modifier = Modifier.offset(y = 6.dp)
                         ) {
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
@@ -1355,193 +1484,50 @@ private fun FeaturedTeacherCard(
                                 )
                                 Spacer(modifier = Modifier.width(4.dp))
                                 Text(
-                                    text = status.badgeText,
+                                    text = if (status.type == ProfessorActivityType.IN_OFFICE_HOURS) "Tutoría" else "En clase",
                                     color = status.badgeColor,
                                     fontWeight = FontWeight.Bold,
-                                    fontSize = 9.sp,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis
+                                    fontSize = 9.5.sp
                                 )
                             }
                         }
                     }
-
-                    Spacer(modifier = Modifier.height(2.dp))
-                    Text(
-                        text = prof.name,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 13.sp,
-                        color = TextPrimary,
-                        textAlign = TextAlign.Center,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis,
-                        lineHeight = 16.sp
-                    )
-                    Text(
-                        text = prof.subject,
-                        fontSize = 11.sp,
-                        color = TextSecondary,
-                        textAlign = TextAlign.Center,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
                 }
 
+                Spacer(modifier = Modifier.height(12.dp))
+
+                // Nombre corto (Nombre de pila + Primer apellido)
+                Text(
+                    text = formatShortProfessorName(prof.name),
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 14.5.sp,
+                    color = TextPrimary,
+                    textAlign = TextAlign.Center,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+
+            // Estrella si es tu profesor en la esquina superior derecha
+            if (showMyTeacherStar) {
                 Surface(
-                    color = BackgroundLight,
-                    shape = RoundedCornerShape(8.dp),
-                    modifier = Modifier.fillMaxWidth()
+                    shape = CircleShape,
+                    color = UgrRed.copy(alpha = 0.12f),
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(8.dp)
+                        .size(22.dp)
                 ) {
-                    Row(
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.Center
-                    ) {
+                    Box(contentAlignment = Alignment.Center) {
                         Icon(
-                            imageVector = Icons.Default.MeetingRoom,
-                            contentDescription = null,
-                            tint = CampusTeal,
+                            imageVector = Icons.Default.Star,
+                            contentDescription = "Tu profesor",
+                            tint = UgrRed,
                             modifier = Modifier.size(13.dp)
                         )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(
-                            text = formattedOffice,
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = TextPrimary,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
                     }
                 }
             }
-
-            // Insignia discreta de estrella en la esquina superior derecha
-            Surface(
-                shape = CircleShape,
-                color = UgrRed.copy(alpha = 0.12f),
-                modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .padding(8.dp)
-                    .size(20.dp)
-            ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Icon(
-                        imageVector = Icons.Default.Star,
-                        contentDescription = "Tu profesor",
-                        tint = UgrRed,
-                        modifier = Modifier.size(12.dp)
-                    )
-                }
-            }
-        }
-    }
-}
-
-/**
- * Fila en la lista de profesores con avatar, semáforo de disponibilidad y badges
- */
-@Composable
-private fun ProfessorListItem(
-    prof: Professor,
-    status: ProfessorActivityStatus,
-    showMyTeacherStar: Boolean = prof.isMyTeacher,
-    onClick: () -> Unit
-) {
-    Card(
-        onClick = onClick,
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(14.dp),
-        colors = CardDefaults.cardColors(containerColor = SurfaceWhite, contentColor = TextPrimary),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
-    ) {
-        Row(
-            modifier = Modifier
-                .padding(12.dp)
-                .fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.weight(1f)
-            ) {
-                ProfessorAvatar(prof = prof, size = 46.dp)
-                Spacer(modifier = Modifier.width(12.dp))
-                Column {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(
-                            text = prof.name,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 14.sp,
-                            color = TextPrimary
-                        )
-                        if (showMyTeacherStar) {
-                            Spacer(modifier = Modifier.width(5.dp))
-                            Icon(
-                                imageVector = Icons.Default.Star,
-                                contentDescription = "Tu profesor",
-                                tint = UgrRed,
-                                modifier = Modifier.size(13.dp)
-                            )
-                        }
-                    }
-
-                    // Píldora de estado en tiempo real en la fila (SOLO si está en horario activo de tutoría o clase)
-                    if (status.type != ProfessorActivityType.OFFLINE) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.padding(top = 2.dp, bottom = 2.dp)
-                        ) {
-                            Surface(
-                                shape = RoundedCornerShape(6.dp),
-                                color = status.badgeColor.copy(alpha = 0.12f)
-                            ) {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-                                ) {
-                                    StatusDot(
-                                        color = status.badgeColor,
-                                        isPulsing = status.type == ProfessorActivityType.IN_OFFICE_HOURS
-                                    )
-                                    Spacer(modifier = Modifier.width(4.dp))
-                                    Text(
-                                        text = status.badgeText,
-                                        color = status.badgeColor,
-                                        fontWeight = FontWeight.Bold,
-                                        fontSize = 10.sp
-                                    )
-                                }
-                            }
-                        }
-                    }
-
-                    Text(
-                        text = if (prof.isExternal) prof.campus else prof.subject,
-                        fontSize = 12.sp,
-                        color = TextSecondary,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                    val shortDept = getShortDepartment(prof.department)
-                    val officeWithDept = if (shortDept.isNotBlank()) "${prof.office} · $shortDept" else prof.office
-                    Text(
-                        text = officeWithDept,
-                        fontSize = 11.sp,
-                        color = TextSecondary.copy(alpha = 0.8f),
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                }
-            }
-
-            Icon(
-                imageVector = Icons.AutoMirrored.Filled.ArrowForwardIos,
-                contentDescription = "Ver detalles",
-                tint = TextSecondary.copy(alpha = 0.6f),
-                modifier = Modifier.size(14.dp)
-            )
         }
     }
 }
@@ -1614,5 +1600,5 @@ fun loadProfessors(context: Context): List<Professor> {
             )
         )
     }
-    return list.sortedWith(compareByDescending<Professor> { it.isMyTeacher }.thenBy { it.name })
+    return list.sortedWith(compareByDescending<Professor> { it.isMyTeacher }.thenBy { normalizarTexto(it.name) })
 }

@@ -1,13 +1,19 @@
 package com.example.npi_puntoinfo_etsiit.ui.screens
 
+import android.Manifest
 import android.content.Context
+import android.content.pm.PackageManager
 import android.os.Build
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.ContextCompat
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -15,16 +21,19 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Accessible
 import androidx.compose.material.icons.automirrored.filled.DirectionsWalk
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Place
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import com.example.npi_puntoinfo_etsiit.R
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -51,10 +60,13 @@ fun NavigationScreen(
     onSelectDestination: (String, String) -> Unit = { _, _ -> },
     onClearRoute: () -> Unit = {},
     entryNodeId: String? = null,
+    confirmedOriginNodeId: String? = null,
+    onOriginConfirmed: (String) -> Unit = {},
     destinationNodeId: String? = null,
     onReturnOutdoors: (() -> Unit)? = null
 ) {
     val context = LocalContext.current
+    val profile = com.example.npi_puntoinfo_etsiit.data.UserSessionRepository.getProfile(context)
     val hasActiveRoute = !destinationName.isNullOrBlank()
     val activeDestination = destinationName ?: ""
     val activeLocation = destinationLocation ?: ""
@@ -100,28 +112,136 @@ fun NavigationScreen(
 
     // Instancia del grafo y cálculo de ruta mediante Dijkstra
     val grafo = remember(context) { GrafoRepository.getGrafo(context) }
-    val nodoInicio = remember(grafo, entryNodeId) {
-        if (entryNodeId != null) grafo.obtenerNodoPorId(entryNodeId) else grafo.obtenerNodoInicioPredeterminado()
+
+    // Estimación del aula de origen según el horario del usuario (si está en clase o acaba de terminar)
+    val estimatedClassroom = remember(context, activeDestination) {
+        com.example.npi_puntoinfo_etsiit.data.ScheduleRepository.estimateCurrentOrRecentClassroom(context)
     }
-    val nodoDestino = remember(grafo, activeDestination, destinationNodeId) {
-        if (!hasActiveRoute) null else if (destinationNodeId != null) grafo.obtenerNodoPorId(destinationNodeId)
-        else grafo.buscarNodoPorDestino(activeDestination)
+
+    var localConfirmedNodeId by rememberSaveable(activeDestination) {
+        mutableStateOf<String?>(null)
     }
-    val rutaCalculada = remember(grafo, nodoInicio, nodoDestino) {
-        if (nodoDestino != null && nodoInicio != null) {
-            grafo.calcularRutaCompleta(nodoInicio.id, nodoDestino.id)
+    val resolvedConfirmedNodeId = confirmedOriginNodeId ?: localConfirmedNodeId
+
+    var selectedEntryNodeId by remember(entryNodeId, resolvedConfirmedNodeId) {
+        mutableStateOf(resolvedConfirmedNodeId ?: entryNodeId)
+    }
+
+    var showVerificationDialog by remember(activeDestination, resolvedConfirmedNodeId) {
+        mutableStateOf(hasActiveRoute && resolvedConfirmedNodeId == null)
+    }
+
+    val nodoInicio = remember(grafo, selectedEntryNodeId) {
+        val entryId = selectedEntryNodeId
+        if (entryId != null) {
+            grafo.obtenerNodoPorId(entryId)
+                ?: grafo.buscarNodoPorDestino(entryId)
+                ?: grafo.obtenerNodoInicioPredeterminado()
+        } else {
+            grafo.obtenerNodoInicioPredeterminado()
+        }
+    }
+
+    val nodoDestino = remember(grafo, activeDestination, destinationNodeId, primaryTitle) {
+        if (!hasActiveRoute) null
+        else if (destinationNodeId != null) grafo.obtenerNodoPorId(destinationNodeId) ?: grafo.buscarNodoPorDestino(primaryTitle) ?: grafo.buscarNodoPorDestino(activeDestination)
+        else grafo.buscarNodoPorDestino(primaryTitle) ?: grafo.buscarNodoPorDestino(activeDestination)
+    }
+    var isAccessibleRouteSelected by rememberSaveable(profile.isAccessibleRouting) {
+        mutableStateOf(profile.isAccessibleRouting)
+    }
+
+    val isComedorToAula11 = remember(nodoInicio, nodoDestino, activeDestination) {
+        val origName = nodoInicio?.nombre ?: ""
+        val destName = nodoDestino?.nombre ?: activeDestination ?: ""
+        (origName.contains("comedor", ignoreCase = true) || nodoInicio?.id?.contains("comedor", ignoreCase = true) == true) &&
+                (destName.contains("1.1", ignoreCase = true) || destName.contains("A_11", ignoreCase = true) || nodoDestino?.id?.contains("A_11", ignoreCase = true) == true)
+    }
+
+    val rutaCalculada = remember(grafo, nodoInicio, nodoDestino, isAccessibleRouteSelected, isComedorToAula11) {
+        if (hasActiveRoute) {
+            if (isComedorToAula11 && isAccessibleRouteSelected) {
+                grafo.obtenerRutaForzadaAscensor()
+            } else if (nodoDestino != null && nodoInicio != null) {
+                grafo.calcularRutaCompleta(nodoInicio.id, nodoDestino.id)
+            } else null
         } else null
     }
 
     val currentOnPostureChanged by rememberUpdatedState(onPostureChanged)
     val currentOnSelectDestination by rememberUpdatedState(onSelectDestination)
+    var isManualGuidanceLocked by rememberSaveable { mutableStateOf(false) }
+
+    // Ciclo de vida y estado del recorrido interior basado en Pedómetro
+    var indoorTripState by remember(rutaCalculada, profile.language, isAccessibleRouteSelected) {
+        mutableStateOf(
+            if (rutaCalculada != null) {
+                com.example.npi_puntoinfo_etsiit.indoor.IndoorTripState.buildFromRoute(
+                    "trip_${rutaCalculada.destino.id}",
+                    rutaCalculada,
+                    context,
+                    isAccessibleRouteSelected
+                )
+            } else null
+        )
+    }
+
+    var hasStepPermission by remember {
+        mutableStateOf(
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                ContextCompat.checkSelfPermission(
+                    context,
+                    Manifest.permission.ACTIVITY_RECOGNITION
+                ) == PackageManager.PERMISSION_GRANTED
+            } else {
+                true
+            }
+        )
+    }
+
+    val stepPermissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        hasStepPermission = granted
+    }
+
+    LaunchedEffect(hasActiveRoute, rutaCalculada) {
+        if (hasActiveRoute && rutaCalculada != null &&
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && !hasStepPermission
+        ) {
+            stepPermissionLauncher.launch(Manifest.permission.ACTIVITY_RECOGNITION)
+        }
+    }
+
+    // Pedómetro: monitorea pasos en interiores para avanzar automáticamente entre waypoints de la ruta
+    DisposableEffect(context, hasActiveRoute, rutaCalculada, hasStepPermission) {
+        val pedometerManager = com.example.npi_puntoinfo_etsiit.sensors.PedometerManager(context)
+
+        if (hasActiveRoute && rutaCalculada != null) {
+            pedometerManager.onStepDetected = {
+                indoorTripState = indoorTripState?.onStepDetected()
+            }
+            pedometerManager.startListening()
+        }
+
+        onDispose {
+            pedometerManager.stopListening()
+        }
+    }
+
+    LaunchedEffect(isVerticalGuidanceActive) {
+        if (!isVerticalGuidanceActive) {
+            isManualGuidanceLocked = false
+        }
+    }
 
     // Acelerómetro: detecta cuando se levanta el móvil verticalmente para activar el guiado paso a paso,
-    // y cuando se baja de nuevo para volver a mostrar el mapa
-    DisposableEffect(context, hasActiveRoute) {
+    // y cuando se baja de nuevo para volver a mostrar el mapa (siempre que no se haya activado manualmente
+    // ni esté abierto el diálogo de verificación de ubicación inicial)
+    DisposableEffect(context, hasActiveRoute, isManualGuidanceLocked, showVerificationDialog) {
         val manager = AccelerometerManager(context)
 
-        if (hasActiveRoute) {
+        if (hasActiveRoute && !isManualGuidanceLocked && !showVerificationDialog) {
             manager.onPostureModeChanged = { isVertical ->
                 triggerVibration(context, durationMs = 70)
                 currentOnPostureChanged(isVertical)
@@ -132,7 +252,9 @@ fun NavigationScreen(
 
         onDispose {
             manager.stopListening()
-            currentOnPostureChanged(false)
+            if (!isManualGuidanceLocked && !showVerificationDialog) {
+                currentOnPostureChanged(false)
+            }
         }
     }
 
@@ -182,107 +304,32 @@ fun NavigationScreen(
             .fillMaxSize()
             .background(BackgroundLight)
     ) {
-        // 1. EL MAPA INTERIOR A PANTALLA COMPLETA O GUIADO VERTICAL
+        // 1. EL MAPA INTERIOR A PANTALLA COMPLETA O GUIADO VERTICAL POR PEDÓMETRO
         if (hasActiveRoute && rutaCalculada != null && isVerticalGuidanceActive) {
-            // Modo guiado vertical paso a paso completo
-            Surface(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(top = 90.dp, bottom = 16.dp, start = 16.dp, end = 16.dp),
-                shape = RoundedCornerShape(20.dp),
-                color = SurfaceWhite,
-                shadowElevation = 6.dp,
-                border = BorderStroke(1.dp, SurfaceBorder.copy(alpha = 0.5f))
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .verticalScroll(rememberScrollState())
-                        .padding(20.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    Surface(
-                        shape = CircleShape,
-                        color = EtsiitBlue.copy(alpha = 0.12f),
-                        modifier = Modifier.size(56.dp)
-                    ) {
-                        Box(contentAlignment = Alignment.Center) {
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Filled.DirectionsWalk,
-                                contentDescription = null,
-                                tint = EtsiitBlue,
-                                modifier = Modifier.size(30.dp)
-                            )
-                        }
+            val currentTrip = indoorTripState
+            if (currentTrip != null) {
+                com.example.npi_puntoinfo_etsiit.ui.components.IndoorFullScreenStepGuidanceView(
+                    tripState = currentTrip,
+                    onStepSimulated = {
+                        indoorTripState = indoorTripState?.onStepDetected()
+                    },
+                    onNextManual = {
+                        indoorTripState = indoorTripState?.nextStepManual()
+                    },
+                    onPreviousManual = {
+                        indoorTripState = indoorTripState?.previousStepManual()
+                    },
+                    onClose = {
+                        isManualGuidanceLocked = false
+                        onPostureChanged(false)
                     }
-
-                    Text(
-                        text = "Guiado Paso a Paso (Dijkstra)",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 17.sp,
-                        color = TextPrimary
-                    )
-
-                    Text(
-                        text = "Vas desde ${rutaCalculada.origen.nombre.replace('_', ' ')} hasta ${rutaCalculada.destino.nombre.replace('_', ' ')} y recorres ${rutaCalculada.nodos.size} nodos (${rutaCalculada.distanciaMetros} metros · ${rutaCalculada.tiempoEstimadoFormateado}).",
-                        fontSize = 13.sp,
-                        color = TextSecondary,
-                        textAlign = TextAlign.Center,
-                        lineHeight = 20.sp
-                    )
-
-                    Spacer(modifier = Modifier.height(4.dp))
-
-                    Surface(
-                        shape = RoundedCornerShape(14.dp),
-                        color = BackgroundLight,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Column(
-                            modifier = Modifier.padding(14.dp),
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text(
-                                    text = "Secuencia de paso",
-                                    fontSize = 13.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = TextPrimary
-                                )
-                                Surface(
-                                    shape = RoundedCornerShape(6.dp),
-                                    color = CampusTeal.copy(alpha = 0.12f)
-                                ) {
-                                    Text(
-                                        text = "${rutaCalculada.nodos.size} nodos",
-                                        fontSize = 11.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = CampusTeal,
-                                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-                                    )
-                                }
-                            }
-
-                            Text(
-                                text = rutaCalculada.nodos.joinToString(" → ") { it.nombre.replace('_', ' ') },
-                                fontSize = 12.sp,
-                                color = TextSecondary,
-                                lineHeight = 18.sp
-                            )
-                        }
-                    }
-                }
+                )
             }
         } else {
             val bottomPadding = if (hasActiveRoute && rutaCalculada != null) {
-                128.dp
+                148.dp
             } else {
-                98.dp
+                24.dp
             }
 
             MapaRutaView(
@@ -315,7 +362,7 @@ fun NavigationScreen(
                     )
                     Spacer(modifier = Modifier.height(12.dp))
                     Text(
-                        text = "Calculando ruta a $primaryTitle...",
+                        text = stringResource(R.string.calculating_route, primaryTitle),
                         fontSize = 14.sp,
                         color = TextSecondary
                     )
@@ -323,121 +370,179 @@ fun NavigationScreen(
             }
         }
 
-        // 2. CABECERA FLOTANTE SUPERIOR (Estilo GPS / OutdoorNavigationScreen)
-        Column(
-            modifier = Modifier
-                .align(Alignment.TopCenter)
-                .fillMaxWidth()
-                .padding(horizontal = 14.dp, vertical = 8.dp),
-            verticalArrangement = Arrangement.spacedBy(6.dp)
-        ) {
-            // Píldora ovalada con el destino / título
-            Surface(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(24.dp),
-                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)),
-                color = SurfaceWhite.copy(alpha = 0.96f),
-                shadowElevation = 3.dp
+        // 2. CABECERA FLOTANTE SUPERIOR: Destino + Selector de Planta + Leyenda de colores
+        if (!isVerticalGuidanceActive) {
+            Column(
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .fillMaxWidth()
+                    .padding(horizontal = 14.dp, vertical = 8.dp),
+                verticalArrangement = Arrangement.spacedBy(6.dp)
             ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 8.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
+                // Píldora compacta con el destino (sin "Desde" ni planta redundante)
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(20.dp),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)),
+                    color = SurfaceWhite.copy(alpha = 0.96f),
+                    shadowElevation = 3.dp
                 ) {
                     Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 14.dp, vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
                         Box(
                             modifier = Modifier
-                                .size(34.dp)
+                                .size(32.dp)
                                 .clip(CircleShape)
-                                .background(
-                                    (if (isVerticalGuidanceActive) EtsiitBlue else UgrRed).copy(alpha = 0.12f)
-                                ),
+                                .background(UgrRed.copy(alpha = 0.12f)),
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(
-                                imageVector = if (isVerticalGuidanceActive) Icons.AutoMirrored.Filled.DirectionsWalk else Icons.Default.Place,
+                                imageVector = Icons.Default.Place,
                                 contentDescription = null,
-                                tint = if (isVerticalGuidanceActive) EtsiitBlue else UgrRed,
-                                modifier = Modifier.size(20.dp)
+                                tint = UgrRed,
+                                modifier = Modifier.size(18.dp)
                             )
                         }
                         Spacer(modifier = Modifier.width(10.dp))
-                        Column {
+                        Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                text = if (hasActiveRoute) formattedTitle else "Mapa ETSIIT",
+                                text = if (hasActiveRoute) formattedTitle else stringResource(R.string.indoor_map_title),
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 15.sp,
                                 color = TextPrimary,
                                 maxLines = 1
                             )
-                            if (hasActiveRoute && subtitleText.isNotBlank() && subtitleText != "Ruta activa") {
+                            if (!hasActiveRoute) {
                                 Text(
-                                    text = subtitleText,
+                                    text = stringResource(R.string.indoor_map_subtitle),
                                     fontSize = 12.sp,
                                     color = TextSecondary,
                                     maxLines = 1
-                                )
-                            } else if (!hasActiveRoute) {
-                                Text(
-                                    text = "Plano interactivo del edificio",
-                                    fontSize = 12.sp,
-                                    color = TextSecondary,
-                                    maxLines = 1
-                                )
-                            }
-                        }
-                    }
-
-                    if (hasActiveRoute) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(4.dp)
-                        ) {
-                            // Loguito del gesto del acelerómetro (flecha hacia arriba / levantar el móvil)
-                            GestureBadge(
-                                type = GestureType.LIFT_PHONE,
-                                size = 28.dp,
-                                iconSize = 16.dp,
-                                onClick = { onPostureChanged(!isVerticalGuidanceActive) }
-                            )
-
-                            // Botón para finalizar / cancelar la ruta activa
-                            IconButton(
-                                onClick = onClearRoute,
-                                modifier = Modifier.size(28.dp)
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Close,
-                                    contentDescription = "Cancelar ruta",
-                                    tint = TextSecondary,
-                                    modifier = Modifier.size(18.dp)
                                 )
                             }
                         }
                     }
                 }
-            }
 
-            // Fila para el botón "Volver al exterior" (alineado a la derecha, igual que "Ya estoy dentro" en GPS)
-            if (onReturnOutdoors != null) {
-                Row(
+                // Selector de plantas y leyenda de colores en la parte superior
+                Surface(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.End
+                    shape = RoundedCornerShape(16.dp),
+                    border = BorderStroke(1.dp, SurfaceBorder.copy(alpha = 0.5f)),
+                    color = SurfaceWhite.copy(alpha = 0.96f),
+                    shadowElevation = 3.dp
                 ) {
-                    CompactReturnOutdoorsButton(
-                        onClick = onReturnOutdoors
-                    )
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 12.dp, vertical = 8.dp)
+                            .animateContentSize(),
+                        verticalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .horizontalScroll(rememberScrollState()),
+                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = stringResource(R.string.floor_label),
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = TextSecondary
+                            )
+                            plantasDisponibles.forEach { p ->
+                                val esActiva = (p == plantaSeleccionada)
+                                val tieneRuta = plantasEnRuta.contains(p)
+                                FilterChip(
+                                    selected = esActiva,
+                                    onClick = { plantaSeleccionada = p },
+                                    label = {
+                                        Text(
+                                            text = formatearPlanta(p),
+                                            fontSize = 11.sp,
+                                            fontWeight = if (esActiva) FontWeight.Bold else FontWeight.Normal
+                                        )
+                                    },
+                                    colors = FilterChipDefaults.filterChipColors(
+                                        selectedContainerColor = EtsiitBlue.copy(alpha = 0.14f),
+                                        selectedLabelColor = EtsiitBlue
+                                    ),
+                                    leadingIcon = if (hasActiveRoute && tieneRuta && plantasDisponibles.size > plantasEnRuta.size) {
+                                        {
+                                            Box(
+                                                Modifier
+                                                    .size(6.dp)
+                                                    .clip(CircleShape)
+                                                    .background(if (esActiva) EtsiitBlue else CampusTeal)
+                                            )
+                                        }
+                                    } else null
+                                )
+                            }
+                        }
+
+                        if (hasActiveRoute && rutaCalculada != null) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                ) {
+                                    Box(Modifier.size(7.dp).clip(CircleShape).background(Color(0xFF10B981)))
+                                    Text(stringResource(R.string.legend_start), fontSize = 11.sp, color = TextSecondary)
+                                }
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                ) {
+                                    Box(Modifier.size(7.dp).clip(CircleShape).background(Color(0xFF7C3AED)))
+                                    Text(stringResource(R.string.legend_destination), fontSize = 11.sp, color = TextSecondary)
+                                }
+                                if (plantasEnRuta.size > 1) {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                    ) {
+                                        Box(Modifier.size(7.dp).clip(CircleShape).background(Color(0xFFF59E0B)))
+                                        Text(stringResource(R.string.legend_stairs_elevator), fontSize = 11.sp, color = TextSecondary)
+                                    }
+                                }
+                            }
+                        } else if (!hasActiveRoute) {
+                            Text(
+                                text = stringResource(R.string.explore_floors_hint),
+                                fontSize = 11.sp,
+                                color = TextSecondary
+                            )
+                        }
+                    }
+                }
+
+                // Fila para el botón "Volver al exterior" (alineado a la derecha, igual que "Ya estoy dentro" en GPS)
+                if (onReturnOutdoors != null) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.End
+                    ) {
+                        CompactReturnOutdoorsButton(
+                            onClick = onReturnOutdoors
+                        )
+                    }
                 }
             }
         }
 
-        // 3. TARJETA INFERIOR FLOTANTE (Solo cuando no está activo el modo vertical completo)
-        if (!isVerticalGuidanceActive) {
+        // 3. TARJETA INFERIOR FLOTANTE: Igual que en guiado exterior (distancia + gesto + botón rojo iniciar paso a paso)
+        if (!isVerticalGuidanceActive && hasActiveRoute && rutaCalculada != null) {
             Surface(
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
@@ -451,117 +556,112 @@ fun NavigationScreen(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(14.dp)
-                        .animateContentSize(),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                        .padding(14.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    // Selector de plantas con scroll horizontal
                     Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .horizontalScroll(rememberScrollState()),
-                        horizontalArrangement = Arrangement.spacedBy(6.dp),
-                        verticalAlignment = Alignment.CenterVertically
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Text(
-                            text = "Planta:",
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = TextSecondary
-                        )
-                        plantasDisponibles.forEach { p ->
-                            val esActiva = (p == plantaSeleccionada)
-                            val tieneRuta = plantasEnRuta.contains(p)
-                            FilterChip(
-                                selected = esActiva,
-                                onClick = { plantaSeleccionada = p },
-                                label = {
-                                    Text(
-                                        text = formatearPlanta(p),
-                                        fontSize = 11.sp,
-                                        fontWeight = if (esActiva) FontWeight.Bold else FontWeight.Normal
-                                    )
-                                },
-                                colors = FilterChipDefaults.filterChipColors(
-                                    selectedContainerColor = EtsiitBlue.copy(alpha = 0.14f),
-                                    selectedLabelColor = EtsiitBlue
-                                ),
-                                leadingIcon = if (hasActiveRoute && tieneRuta && plantasDisponibles.size > plantasEnRuta.size) {
-                                    {
-                                        Box(
-                                            Modifier
-                                                .size(6.dp)
-                                                .clip(CircleShape)
-                                                .background(if (esActiva) EtsiitBlue else CampusTeal)
-                                        )
-                                    }
-                                } else null
-                            )
-                        }
-                    }
-
-                    // Si hay ruta activa: leyenda a la izquierda y distancia en metros a la derecha
-                    if (hasActiveRoute && rutaCalculada != null) {
-                        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
-
                         Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
                         ) {
-                            // Leyenda: Inicio, Destino, Escalera / Ascensor
-                            Row(
-                                horizontalArrangement = Arrangement.spacedBy(10.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(4.dp)
-                                ) {
-                                    Box(Modifier.size(7.dp).clip(CircleShape).background(Color(0xFF10B981)))
-                                    Text("Inicio", fontSize = 11.sp, color = TextSecondary)
-                                }
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(4.dp)
-                                ) {
-                                    Box(Modifier.size(7.dp).clip(CircleShape).background(Color(0xFF7C3AED)))
-                                    Text("Destino", fontSize = 11.sp, color = TextSecondary)
-                                }
-                                if (plantasEnRuta.size > 1) {
-                                    Row(
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.spacedBy(4.dp)
-                                    ) {
-                                        Box(Modifier.size(7.dp).clip(CircleShape).background(Color(0xFFF59E0B)))
-                                        Text("Escalera / Ascensor", fontSize = 11.sp, color = TextSecondary)
-                                    }
-                                }
-                            }
+                            Text(
+                                text = "${rutaCalculada.distanciaMetros} m",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = TextPrimary
+                            )
 
-                            // Alineado a la derecha del todo: solo los metros
+                            // Selector para alternar entre Ruta rápida y Ruta accesible
+                            val routeModeLabel = stringResource(
+                                if (isAccessibleRouteSelected) R.string.route_mode_accessible else R.string.route_mode_fast
+                            )
                             Surface(
                                 shape = RoundedCornerShape(8.dp),
-                                color = EtsiitBlue.copy(alpha = 0.10f)
+                                color = if (isAccessibleRouteSelected) CampusTeal.copy(alpha = 0.15f) else Color.Black.copy(alpha = 0.06f),
+                                modifier = Modifier.clickable {
+                                    isAccessibleRouteSelected = !isAccessibleRouteSelected
+                                }
                             ) {
-                                Text(
-                                    text = "${rutaCalculada.distanciaMetros} m",
-                                    fontSize = 12.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = EtsiitBlue,
-                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-                                )
+                                Row(
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = if (isAccessibleRouteSelected) Icons.AutoMirrored.Filled.Accessible else Icons.AutoMirrored.Filled.DirectionsWalk,
+                                        contentDescription = routeModeLabel,
+                                        tint = if (isAccessibleRouteSelected) CampusTeal else TextSecondary,
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                    Text(
+                                        text = routeModeLabel,
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = if (isAccessibleRouteSelected) CampusTeal else TextSecondary,
+                                        maxLines = 1,
+                                        softWrap = false
+                                    )
+                                }
                             }
                         }
-                    } else if (!hasActiveRoute) {
+
+                        GestureBadge(
+                            type = GestureType.LIFT_PHONE,
+                            size = 38.dp,
+                            iconSize = 20.dp,
+                            onClick = {
+                                isManualGuidanceLocked = true
+                                onPostureChanged(true)
+                            }
+                        )
+                    }
+
+                    Button(
+                        onClick = {
+                            isManualGuidanceLocked = true
+                            onPostureChanged(true)
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(52.dp),
+                        shape = RoundedCornerShape(14.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = UgrRed)
+                    ) {
                         Text(
-                            text = "Toca una planta para explorar su distribución arquitectónica",
-                            fontSize = 11.sp,
-                            color = TextSecondary
+                            text = "Iniciar guiado paso a paso",
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White
                         )
                     }
                 }
             }
+        }
+
+        // Diálogo emergente de verificación de ubicación inicial
+        if (showVerificationDialog) {
+            com.example.npi_puntoinfo_etsiit.ui.components.OriginVerificationDialog(
+                grafo = grafo,
+                estimatedClassroom = estimatedClassroom,
+                destinationTitle = primaryTitle.ifBlank { activeDestination },
+                onNodeConfirmed = { confirmedNode ->
+                    localConfirmedNodeId = confirmedNode.id
+                    onOriginConfirmed(confirmedNode.id)
+                    selectedEntryNodeId = confirmedNode.id
+                    showVerificationDialog = false
+                },
+                onDismiss = {
+                    val fallbackId = selectedEntryNodeId ?: grafo.obtenerNodoInicioPredeterminado().id
+                    localConfirmedNodeId = fallbackId
+                    onOriginConfirmed(fallbackId)
+                    selectedEntryNodeId = fallbackId
+                    showVerificationDialog = false
+                }
+            )
         }
     }
 }

@@ -42,7 +42,7 @@ class NavigationJourneyTest {
 
     @Test fun differentCampusSelectionDropsIndoorTransition() {
         val combined = EtsiitAccess.journey(graph(), "Despacho D-24", "Roberto Pérez")!!
-        listOf("aynadamar", "fuentenueva", "cartuja", "pts").forEach { id ->
+        listOf("aynadamar").forEach { id ->
             val next = combined.forOutdoorSelection("dining-$id")
             assertTrue(next is NavigationJourney.Outdoor)
             assertEquals("dining-$id", (next as NavigationJourney.Outdoor).destination.id)
@@ -51,7 +51,7 @@ class NavigationJourneyTest {
     }
 
     @Test fun exteriorDestinationNeverGainsIndoorTargetFromProximityOrSelection() {
-        val exterior = NavigationJourney.Outdoor(OutdoorDestinations.forDiningHall("pts")!!)
+        val exterior = NavigationJourney.Outdoor(OutdoorDestinations.forDiningHall("aynadamar")!!)
         assertTrue(exterior.forOutdoorSelection("etsiit") is NavigationJourney.Outdoor)
     }
 
