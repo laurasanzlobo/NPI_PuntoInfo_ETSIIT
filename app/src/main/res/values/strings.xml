@@ -63,6 +63,8 @@
     <string name="legend_start">Inicio</string>
     <string name="legend_destination">Destino</string>
     <string name="legend_stairs_elevator">Escalera / Ascensor</string>
+    <string name="route_mode_accessible">Ruta accesible</string>
+    <string name="route_mode_fast">Ruta rápida</string>
     <string name="explore_floors_hint">Toca una planta para explorar su distribución arquitectónica</string>
 
     <!-- Origin Verification Dialog -->

@@ -82,6 +82,7 @@ fun AppNavigation() {
     var isVerticalGuidanceActive by rememberSaveable { mutableStateOf(false) }
     var activeEntryNodeId by rememberSaveable { mutableStateOf<String?>(null) }
     var activeTargetNodeId by rememberSaveable { mutableStateOf<String?>(null) }
+    var confirmedOriginNodeId by rememberSaveable { mutableStateOf<String?>(null) }
     var canReturnOutdoors by rememberSaveable { mutableStateOf(false) }
     var activeTrip by rememberSaveable(stateSaver = listSaver<NavigationTrip?, String>(
         save = { it?.savedValues().orEmpty() },
@@ -91,6 +92,7 @@ fun AppNavigation() {
     fun clearHandoff() {
         activeEntryNodeId = null
         activeTargetNodeId = null
+        confirmedOriginNodeId = null
         canReturnOutdoors = false
     }
 
@@ -681,6 +683,8 @@ fun AppNavigation() {
                     },
                     onClearRoute = clearActiveRoute,
                     entryNodeId = activeEntryNodeId,
+                    confirmedOriginNodeId = confirmedOriginNodeId,
+                    onOriginConfirmed = { nodeId -> confirmedOriginNodeId = nodeId },
                     destinationNodeId = activeTargetNodeId,
                     onReturnOutdoors = if (canReturnOutdoors) ({
                         returnToOutdoor()
@@ -723,6 +727,7 @@ fun AppNavigation() {
                             activeLocation = indoor.target.location
                             activeEntryNodeId = indoor.entryNodeId
                             activeTargetNodeId = indoor.target.nodeId
+                            confirmedOriginNodeId = null
                             canReturnOutdoors = true
                             isVerticalGuidanceActive = false
                             navController.navigate(Screen.Navigation.route) { launchSingleTop = true }

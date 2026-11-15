@@ -60,6 +60,8 @@ fun NavigationScreen(
     onSelectDestination: (String, String) -> Unit = { _, _ -> },
     onClearRoute: () -> Unit = {},
     entryNodeId: String? = null,
+    confirmedOriginNodeId: String? = null,
+    onOriginConfirmed: (String) -> Unit = {},
     destinationNodeId: String? = null,
     onReturnOutdoors: (() -> Unit)? = null
 ) {
@@ -116,16 +118,17 @@ fun NavigationScreen(
         com.example.npi_puntoinfo_etsiit.data.ScheduleRepository.estimateCurrentOrRecentClassroom(context)
     }
 
-    var userConfirmedNodeId by remember(activeDestination) {
+    var localConfirmedNodeId by rememberSaveable(activeDestination) {
         mutableStateOf<String?>(null)
     }
+    val resolvedConfirmedNodeId = confirmedOriginNodeId ?: localConfirmedNodeId
 
-    var selectedEntryNodeId by remember(entryNodeId, userConfirmedNodeId) {
-        mutableStateOf(userConfirmedNodeId ?: entryNodeId)
+    var selectedEntryNodeId by remember(entryNodeId, resolvedConfirmedNodeId) {
+        mutableStateOf(resolvedConfirmedNodeId ?: entryNodeId)
     }
 
-    var showVerificationDialog by remember(activeDestination, userConfirmedNodeId) {
-        mutableStateOf(hasActiveRoute && userConfirmedNodeId == null)
+    var showVerificationDialog by remember(activeDestination, resolvedConfirmedNodeId) {
+        mutableStateOf(hasActiveRoute && resolvedConfirmedNodeId == null)
     }
 
     val nodoInicio = remember(grafo, selectedEntryNodeId) {
@@ -572,7 +575,10 @@ fun NavigationScreen(
                                 color = TextPrimary
                             )
 
-                            // Selector para alternar entre Escaleras y Ascensor
+                            // Selector para alternar entre Ruta rápida y Ruta accesible
+                            val routeModeLabel = stringResource(
+                                if (isAccessibleRouteSelected) R.string.route_mode_accessible else R.string.route_mode_fast
+                            )
                             Surface(
                                 shape = RoundedCornerShape(8.dp),
                                 color = if (isAccessibleRouteSelected) CampusTeal.copy(alpha = 0.15f) else Color.Black.copy(alpha = 0.06f),
@@ -587,15 +593,17 @@ fun NavigationScreen(
                                 ) {
                                     Icon(
                                         imageVector = if (isAccessibleRouteSelected) Icons.AutoMirrored.Filled.Accessible else Icons.AutoMirrored.Filled.DirectionsWalk,
-                                        contentDescription = if (isAccessibleRouteSelected) "Ruta por ascensor" else "Ruta por escaleras",
+                                        contentDescription = routeModeLabel,
                                         tint = if (isAccessibleRouteSelected) CampusTeal else TextSecondary,
                                         modifier = Modifier.size(16.dp)
                                     )
                                     Text(
-                                        text = if (isAccessibleRouteSelected) "Ascensor" else "Escaleras",
+                                        text = routeModeLabel,
                                         fontSize = 12.sp,
                                         fontWeight = FontWeight.Bold,
-                                        color = if (isAccessibleRouteSelected) CampusTeal else TextSecondary
+                                        color = if (isAccessibleRouteSelected) CampusTeal else TextSecondary,
+                                        maxLines = 1,
+                                        softWrap = false
                                     )
                                 }
                             }
@@ -641,13 +649,15 @@ fun NavigationScreen(
                 estimatedClassroom = estimatedClassroom,
                 destinationTitle = primaryTitle.ifBlank { activeDestination },
                 onNodeConfirmed = { confirmedNode ->
-                    userConfirmedNodeId = confirmedNode.id
+                    localConfirmedNodeId = confirmedNode.id
+                    onOriginConfirmed(confirmedNode.id)
                     selectedEntryNodeId = confirmedNode.id
                     showVerificationDialog = false
                 },
                 onDismiss = {
                     val fallbackId = selectedEntryNodeId ?: grafo.obtenerNodoInicioPredeterminado().id
-                    userConfirmedNodeId = fallbackId
+                    localConfirmedNodeId = fallbackId
+                    onOriginConfirmed(fallbackId)
                     selectedEntryNodeId = fallbackId
                     showVerificationDialog = false
                 }

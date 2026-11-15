@@ -63,6 +63,8 @@
     <string name="legend_start">Start</string>
     <string name="legend_destination">Destination</string>
     <string name="legend_stairs_elevator">Stairs / Elevator</string>
+    <string name="route_mode_accessible">Accessible route</string>
+    <string name="route_mode_fast">Fast route</string>
     <string name="explore_floors_hint">Tap a floor to explore its architectural layout</string>
 
     <!-- Origin Verification Dialog -->
