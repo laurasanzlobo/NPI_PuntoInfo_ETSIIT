@@ -233,11 +233,12 @@ fun NavigationScreen(
     }
 
     // Acelerómetro: detecta cuando se levanta el móvil verticalmente para activar el guiado paso a paso,
-    // y cuando se baja de nuevo para volver a mostrar el mapa (siempre que no se haya activado manualmente)
-    DisposableEffect(context, hasActiveRoute, isManualGuidanceLocked) {
+    // y cuando se baja de nuevo para volver a mostrar el mapa (siempre que no se haya activado manualmente
+    // ni esté abierto el diálogo de verificación de ubicación inicial)
+    DisposableEffect(context, hasActiveRoute, isManualGuidanceLocked, showVerificationDialog) {
         val manager = AccelerometerManager(context)
 
-        if (hasActiveRoute && !isManualGuidanceLocked) {
+        if (hasActiveRoute && !isManualGuidanceLocked && !showVerificationDialog) {
             manager.onPostureModeChanged = { isVertical ->
                 triggerVibration(context, durationMs = 70)
                 currentOnPostureChanged(isVertical)
@@ -248,7 +249,7 @@ fun NavigationScreen(
 
         onDispose {
             manager.stopListening()
-            if (!isManualGuidanceLocked) {
+            if (!isManualGuidanceLocked && !showVerificationDialog) {
                 currentOnPostureChanged(false)
             }
         }

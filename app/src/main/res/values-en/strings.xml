@@ -199,9 +199,9 @@
 
     <string name="gesture_action_trigger_title">Confirm / Send</string>
     <string name="gesture_action_trigger_name">Tilt towards you</string>
-    <string name="gesture_action_trigger_desc">Tilt the phone towards yourself and return to starting position to order a dining menu or email a professor.</string>
+    <string name="gesture_action_trigger_desc">Tilt the phone towards yourself and return to starting position to confirm your current location, order a dining menu or email a professor.</string>
     <string name="gesture_action_trigger_howto">Tilt the phone towards yourself.</string>
-    <string name="gesture_action_trigger_whatfor">Reserve a takeaway menu in Dining or write to the professor.</string>
+    <string name="gesture_action_trigger_whatfor">Confirm your starting location, reserve a takeaway menu in Dining or write to the professor.</string>
 
     <string name="gesture_lift_phone_title">Step-by-step guidance</string>
     <string name="gesture_lift_phone_name">Raise the phone</string>

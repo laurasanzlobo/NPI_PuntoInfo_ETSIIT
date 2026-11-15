@@ -194,9 +194,9 @@
 
     <string name="gesture_action_trigger_title">Confirmar / Enviar</string>
     <string name="gesture_action_trigger_name">Inclinar hacia ti</string>
-    <string name="gesture_action_trigger_desc">Inclina el móvil hacia ti y vuelve a la posición inicial para encargar menú en comedores o enviar un correo al profesor.</string>
+    <string name="gesture_action_trigger_desc">Inclina el móvil hacia ti y vuelve a la posición inicial para confirmar tu ubicación actual, encargar menú en comedores o enviar un correo al profesor.</string>
     <string name="gesture_action_trigger_howto">Inclina el móvil hacia ti.</string>
-    <string name="gesture_action_trigger_whatfor">Reserva el menú para llevar en Comedores o escribe al profesor.</string>
+    <string name="gesture_action_trigger_whatfor">Confirma tu ubicación inicial, reserva el menú en Comedores o escribe al profesor.</string>
 
     <string name="gesture_lift_phone_title">Guiado paso a paso</string>
     <string name="gesture_lift_phone_name">Levantar el móvil</string>

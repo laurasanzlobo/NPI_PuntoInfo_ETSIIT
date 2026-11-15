@@ -1,6 +1,11 @@
 package com.example.npi_puntoinfo_etsiit.ui.components
 
+import android.content.Context
 import android.content.Intent
+import android.os.Build
+import android.os.VibrationEffect
+import android.os.Vibrator
+import android.os.VibratorManager
 import android.provider.MediaStore
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -43,6 +48,7 @@ import com.example.npi_puntoinfo_etsiit.Nodo
 import com.example.npi_puntoinfo_etsiit.data.ClassroomStatus
 import com.example.npi_puntoinfo_etsiit.data.EstimatedClassroom
 import com.example.npi_puntoinfo_etsiit.formatearPlanta
+import com.example.npi_puntoinfo_etsiit.sensors.AccelerometerManager
 import com.example.npi_puntoinfo_etsiit.sensors.BarometerFloorEstimate
 import com.example.npi_puntoinfo_etsiit.sensors.BarometerManager
 import com.example.npi_puntoinfo_etsiit.sensors.CampusLocationManager
@@ -312,6 +318,70 @@ fun OriginVerificationDialog(
         onDispose { manager.stopListening() }
     }
 
+    val currentOnNodeConfirmed by rememberUpdatedState(onNodeConfirmed)
+    val confirmBarometerStep: (VerificationStep.BarometerStep) -> Unit = { step ->
+        val detectedBuilding = CampusLocationManager.estimateEtsiitBuilding(
+            userLat = userCoordinates?.latitude,
+            userLon = userCoordinates?.longitude,
+            floorCode = step.estimate.floorCode
+        )
+        val floorNodes = grafo.obtenerNodosPorPlanta(
+            planta = step.estimate.floorCode,
+            edificio = detectedBuilding.graphCode
+        )
+        val candidateNodes = if (floorNodes.isNotEmpty()) floorNodes else listOf(grafo.obtenerNodoInicioPredeterminado())
+        val isEnglish = java.util.Locale.getDefault().language.equals("en", ignoreCase = true)
+        val sortedNodes = candidateNodes.sortedBy { formatearNombreNodoAmigable(it, isEnglish) }
+        currentStep = VerificationStep.FloorNodeSelectionStep(
+            floorCode = step.estimate.floorCode,
+            floorName = step.estimate.floorName,
+            nodes = sortedNodes
+        )
+    }
+
+    val confirmQrStep: () -> Unit = {
+        // Simular escaneo de QR: si es la ruta demo al Aula 1.1, se simula el QR del comedor; si no, entrada principal
+        val confirmedNode = if (isDemoRouteToAula11) nodoComedor else grafo.obtenerNodoInicioPredeterminado()
+        currentOnNodeConfirmed(confirmedNode)
+    }
+
+    var selectedFloorNode by remember(currentStep) {
+        mutableStateOf((currentStep as? VerificationStep.FloorNodeSelectionStep)?.nodes?.firstOrNull())
+    }
+
+    val confirmYesByStep: (VerificationStep) -> Unit = { step ->
+        when (step) {
+            is VerificationStep.DemoComedorStep -> currentOnNodeConfirmed(step.node)
+            is VerificationStep.ScheduleStep -> currentOnNodeConfirmed(step.node)
+            is VerificationStep.BarometerStep -> confirmBarometerStep(step)
+            is VerificationStep.FloorNodeSelectionStep -> selectedFloorNode?.let { currentOnNodeConfirmed(it) }
+            is VerificationStep.QRScanStep -> confirmQrStep()
+        }
+    }
+
+    val isGestureConfirmable = currentStep is VerificationStep.DemoComedorStep ||
+        currentStep is VerificationStep.ScheduleStep ||
+        currentStep is VerificationStep.BarometerStep ||
+        (currentStep is VerificationStep.FloorNodeSelectionStep && selectedFloorNode != null) ||
+        currentStep is VerificationStep.QRScanStep
+    val latestStep by rememberUpdatedState(currentStep)
+    val latestConfirmYes by rememberUpdatedState(confirmYesByStep)
+
+    // Gesto físico "Inclinar hacia ti" (ACTION_TRIGGER) para decir «Sí» en la verificación de ubicación
+    DisposableEffect(context, isGestureConfirmable) {
+        val accelerometerManager = AccelerometerManager(context)
+        if (isGestureConfirmable) {
+            accelerometerManager.onForwardTiltGesture = {
+                triggerVerificationVibration(context, durationMs = 120L)
+                latestConfirmYes(latestStep)
+            }
+            accelerometerManager.startListening()
+        }
+        onDispose {
+            accelerometerManager.stopListening()
+        }
+    }
+
     BasicAlertDialog(
         onDismissRequest = onDismiss
     ) {
@@ -381,21 +451,11 @@ fun OriginVerificationDialog(
                                     )
                                 }
 
-                                Button(
-                                    onClick = {
-                                        onNodeConfirmed(step.node)
-                                    },
-                                    modifier = Modifier.weight(1f),
-                                    shape = RoundedCornerShape(12.dp),
-                                    colors = ButtonDefaults.buttonColors(containerColor = CampusTeal)
-                                ) {
-                                    Text(
-                                        text = stringResource(R.string.verification_yes_here),
-                                        fontSize = 14.sp,
-                                        color = Color.White,
-                                        maxLines = 1
-                                    )
-                                }
+                                VerificationConfirmButton(
+                                    containerColor = CampusTeal,
+                                    onClick = { onNodeConfirmed(step.node) },
+                                    modifier = Modifier.weight(1f)
+                                )
                             }
                         }
 
@@ -452,22 +512,14 @@ fun OriginVerificationDialog(
                                     )
                                 }
 
-                                Button(
+                                VerificationConfirmButton(
+                                    containerColor = EtsiitBlue,
                                     onClick = {
                                         // Si dice que SÍ, utilizamos este nodo dado
                                         onNodeConfirmed(step.node)
                                     },
-                                    modifier = Modifier.weight(1f),
-                                    shape = RoundedCornerShape(12.dp),
-                                    colors = ButtonDefaults.buttonColors(containerColor = EtsiitBlue)
-                                ) {
-                                    Text(
-                                        text = stringResource(R.string.verification_yes_here),
-                                        fontSize = 14.sp,
-                                        color = Color.White,
-                                        maxLines = 1
-                                    )
-                                }
+                                    modifier = Modifier.weight(1f)
+                                )
                             }
                         }
 
@@ -532,33 +584,11 @@ fun OriginVerificationDialog(
                                     )
                                 }
 
-                                Button(
-                                    onClick = {
-                                        // Si dice que SÍ, filtramos los nodos solo por la planta y el edificio detectado
-                                        val floorNodes = grafo.obtenerNodosPorPlanta(
-                                            planta = step.estimate.floorCode,
-                                            edificio = detectedBuilding.graphCode
-                                        )
-                                        val candidateNodes = if (floorNodes.isNotEmpty()) floorNodes else listOf(grafo.obtenerNodoInicioPredeterminado())
-                                        val isEnglish = java.util.Locale.getDefault().language.equals("en", ignoreCase = true)
-                                        val sortedNodes = candidateNodes.sortedBy { formatearNombreNodoAmigable(it, isEnglish) }
-                                        currentStep = VerificationStep.FloorNodeSelectionStep(
-                                            floorCode = step.estimate.floorCode,
-                                            floorName = step.estimate.floorName,
-                                            nodes = sortedNodes
-                                        )
-                                    },
-                                    modifier = Modifier.weight(1f),
-                                    shape = RoundedCornerShape(12.dp),
-                                    colors = ButtonDefaults.buttonColors(containerColor = CampusTeal)
-                                ) {
-                                    Text(
-                                        text = stringResource(R.string.verification_yes_here),
-                                        fontSize = 14.sp,
-                                        color = Color.White,
-                                        maxLines = 1
-                                    )
-                                }
+                                VerificationConfirmButton(
+                                    containerColor = CampusTeal,
+                                    onClick = { confirmBarometerStep(step) },
+                                    modifier = Modifier.weight(1f)
+                                )
                             }
                         }
 
@@ -566,8 +596,6 @@ fun OriginVerificationDialog(
                         // PASO 2.1: SELECCIÓN DEL NODO MÁS CERCANO EN LA PLANTA CONFIRMADA
                         // =========================================================================
                         is VerificationStep.FloorNodeSelectionStep -> {
-                            var selectedNode by remember { mutableStateOf(step.nodes.firstOrNull()) }
-
                             Surface(
                                 shape = CircleShape,
                                 color = EtsiitBlue.copy(alpha = 0.12f),
@@ -590,13 +618,6 @@ fun OriginVerificationDialog(
                                 color = TextPrimary
                             )
 
-                            Text(
-                                text = stringResource(R.string.verification_select_location_prompt, step.floorName),
-                                fontSize = 13.sp,
-                                color = TextSecondary,
-                                textAlign = TextAlign.Center
-                            )
-
                             Box(
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -609,11 +630,11 @@ fun OriginVerificationDialog(
                                     verticalArrangement = Arrangement.spacedBy(4.dp)
                                 ) {
                                     items(step.nodes) { node ->
-                                        val isSelected = (selectedNode?.id == node.id)
+                                        val isSelected = (selectedFloorNode?.id == node.id)
                                         Surface(
                                             modifier = Modifier
                                                 .fillMaxWidth()
-                                                .clickable { selectedNode = node },
+                                                .clickable { selectedFloorNode = node },
                                             shape = RoundedCornerShape(10.dp),
                                             color = if (isSelected) EtsiitBlue.copy(alpha = 0.12f) else SurfaceWhite,
                                             border = if (isSelected) BorderStroke(1.dp, EtsiitBlue) else null
@@ -649,23 +670,28 @@ fun OriginVerificationDialog(
                             ) {
                                 OutlinedButton(
                                     onClick = onDismiss,
-                                    modifier = Modifier.weight(1f),
-                                    shape = RoundedCornerShape(12.dp)
+                                    modifier = Modifier.weight(0.85f),
+                                    shape = RoundedCornerShape(12.dp),
+                                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 10.dp)
                                 ) {
-                                    Text(stringResource(R.string.cancel), fontSize = 12.sp)
+                                    Text(
+                                        text = stringResource(R.string.cancel),
+                                        fontSize = 12.5.sp,
+                                        maxLines = 1,
+                                        softWrap = false
+                                    )
                                 }
 
-                                Button(
-                                    onClick = {
-                                        selectedNode?.let { onNodeConfirmed(it) }
-                                    },
-                                    enabled = selectedNode != null,
-                                    modifier = Modifier.weight(1f),
-                                    shape = RoundedCornerShape(12.dp),
-                                    colors = ButtonDefaults.buttonColors(containerColor = EtsiitBlue)
-                                ) {
-                                    Text(stringResource(R.string.confirm), fontSize = 12.sp, color = Color.White)
-                                }
+                                VerificationConfirmButton(
+                                    containerColor = EtsiitBlue,
+                                    onClick = { selectedFloorNode?.let { onNodeConfirmed(it) } },
+                                    modifier = Modifier.weight(1.15f),
+                                    label = stringResource(R.string.confirm),
+                                    fontSize = 12.5.sp,
+                                    enabled = selectedFloorNode != null,
+                                    badgeSize = 20.dp,
+                                    badgeIconSize = 12.dp
+                                )
                             }
                         }
 
@@ -710,7 +736,7 @@ fun OriginVerificationDialog(
                             ) {
                                 OutlinedButton(
                                     onClick = onDismiss,
-                                    modifier = Modifier.weight(0.85f),
+                                    modifier = Modifier.weight(0.75f),
                                     shape = RoundedCornerShape(12.dp),
                                     contentPadding = PaddingValues(horizontal = 8.dp, vertical = 10.dp)
                                 ) {
@@ -723,32 +749,36 @@ fun OriginVerificationDialog(
                                 }
 
                                 Button(
-                                    onClick = {
-                                        // Simular escaneo de QR: si es la ruta demo al Aula 1.1, se simula el QR del comedor; si no, entrada principal
-                                        val confirmedNode = if (isDemoRouteToAula11) nodoComedor else grafo.obtenerNodoInicioPredeterminado()
-                                        onNodeConfirmed(confirmedNode)
-                                    },
-                                    modifier = Modifier.weight(1.35f),
+                                    onClick = confirmQrStep,
+                                    modifier = Modifier.weight(1.45f),
                                     shape = RoundedCornerShape(12.dp),
                                     contentPadding = PaddingValues(horizontal = 10.dp, vertical = 10.dp),
                                     colors = ButtonDefaults.buttonColors(containerColor = UgrRed)
                                 ) {
-                                    Row(
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.spacedBy(6.dp)
-                                    ) {
-                                        Icon(
-                                            imageVector = Icons.Default.CameraAlt,
-                                            contentDescription = null,
-                                            tint = Color.White,
-                                            modifier = Modifier.size(16.dp)
-                                        )
-                                        Text(
-                                            text = stringResource(R.string.open_camera),
-                                            fontSize = 13.sp,
-                                            color = Color.White,
-                                            maxLines = 1,
-                                            softWrap = false
+                                    Box(modifier = Modifier.fillMaxWidth()) {
+                                        Row(
+                                            modifier = Modifier.align(Alignment.Center),
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.spacedBy(5.dp)
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Default.CameraAlt,
+                                                contentDescription = null,
+                                                tint = Color.White,
+                                                modifier = Modifier.size(15.dp)
+                                            )
+                                            Text(
+                                                text = stringResource(R.string.open_camera),
+                                                fontSize = 12.5.sp,
+                                                color = Color.White,
+                                                maxLines = 1,
+                                                softWrap = false
+                                            )
+                                        }
+                                        ConfirmGestureBadge(
+                                            modifier = Modifier.align(Alignment.CenterEnd),
+                                            size = 20.dp,
+                                            iconSize = 12.dp
                                         )
                                     }
                                 }
@@ -758,5 +788,86 @@ fun OriginVerificationDialog(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun ConfirmGestureBadge(
+    modifier: Modifier = Modifier,
+    size: androidx.compose.ui.unit.Dp = 22.dp,
+    iconSize: androidx.compose.ui.unit.Dp = 13.dp
+) {
+    // Círculo blanco opaco debajo para aislar el color del botón y pintar encima el badge naranja estándar
+    Box(
+        modifier = modifier
+            .size(size)
+            .clip(CircleShape)
+            .background(SurfaceWhite),
+        contentAlignment = Alignment.Center
+    ) {
+        GestureBadge(
+            type = GestureType.ACTION_TRIGGER,
+            size = size,
+            iconSize = iconSize,
+            showTooltipOnClick = false
+        )
+    }
+}
+
+@Composable
+private fun VerificationConfirmButton(
+    containerColor: Color,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    label: String = stringResource(R.string.verification_yes_here),
+    fontSize: androidx.compose.ui.unit.TextUnit = 14.sp,
+    enabled: Boolean = true,
+    badgeSize: androidx.compose.ui.unit.Dp = 22.dp,
+    badgeIconSize: androidx.compose.ui.unit.Dp = 13.dp
+) {
+    Button(
+        onClick = onClick,
+        enabled = enabled,
+        modifier = modifier,
+        shape = RoundedCornerShape(12.dp),
+        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 10.dp),
+        colors = ButtonDefaults.buttonColors(containerColor = containerColor)
+    ) {
+        Box(modifier = Modifier.fillMaxWidth()) {
+            Text(
+                text = label,
+                fontSize = fontSize,
+                color = Color.White,
+                maxLines = 1,
+                softWrap = false,
+                modifier = Modifier.align(Alignment.Center)
+            )
+            ConfirmGestureBadge(
+                modifier = Modifier.align(Alignment.CenterEnd),
+                size = badgeSize,
+                iconSize = badgeIconSize
+            )
+        }
+    }
+}
+
+private fun triggerVerificationVibration(context: Context, durationMs: Long = 120L) {
+    try {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            val vibratorManager = context.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as? VibratorManager
+            vibratorManager?.defaultVibrator?.vibrate(
+                VibrationEffect.createOneShot(durationMs, VibrationEffect.DEFAULT_AMPLITUDE)
+            )
+        } else {
+            @Suppress("DEPRECATION")
+            val vibrator = context.getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                vibrator?.vibrate(VibrationEffect.createOneShot(durationMs, VibrationEffect.DEFAULT_AMPLITUDE))
+            } else {
+                @Suppress("DEPRECATION")
+                vibrator?.vibrate(durationMs)
+            }
+        }
+    } catch (_: Exception) {
     }
 }
