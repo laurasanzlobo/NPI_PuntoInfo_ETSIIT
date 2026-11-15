@@ -186,14 +186,14 @@ class ExampleUnitTest {
         assertEquals("Aula 0.5", estimatedOngoing!!.roomName)
         assertEquals(com.example.npi_puntoinfo_etsiit.data.ClassroomStatus.ONGOING, estimatedOngoing.status)
 
-        // 2. Probar estimación de horario para una clase recién terminada (jueves 10:40 -> NPI finalizó a las 10:30)
-        val endedTime = java.time.LocalTime.of(10, 40)
+        // 2. Probar estimación de horario para una clase recién terminada (jueves 14:40 -> VC en Aula 0.5 finalizó a las 14:30)
+        val endedTime = java.time.LocalTime.of(14, 40)
         val estimatedEnded = com.example.npi_puntoinfo_etsiit.data.ScheduleRepository.estimateCurrentOrRecentClassroom(
             context = null,
             date = thursday,
             time = endedTime
         )
-        assertNotNull("Debe estimar la clase recién terminada a las 10:40", estimatedEnded)
+        assertNotNull("Debe estimar la clase recién terminada a las 14:40", estimatedEnded)
         assertEquals("Aula 0.5", estimatedEnded!!.roomName)
         assertEquals(com.example.npi_puntoinfo_etsiit.data.ClassroomStatus.JUST_ENDED, estimatedEnded.status)
 

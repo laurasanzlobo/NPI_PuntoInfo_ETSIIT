@@ -70,7 +70,6 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.repeatOnLifecycle
 import android.os.SystemClock
 import android.util.Log
-import com.example.npi_puntoinfo_etsiit.BuildConfig
 import com.example.npi_puntoinfo_etsiit.outdoor.*
 import com.example.npi_puntoinfo_etsiit.sensors.*
 import com.example.npi_puntoinfo_etsiit.ui.components.OutdoorMap
@@ -110,15 +109,10 @@ fun OutdoorNavigationScreen(
     val updateTrip by rememberUpdatedState(onTripChanged)
     var currentSelectedDestinationId by remember(selectedId) { mutableStateOf(selectedId) }
     val navigator = remember(trip.id, context) {
-        val ors = OpenRouteService(BuildConfig.ORS_API_KEY)
-        val hybrid = HybridWalkingRouteSource(
-            context = context,
-            fallback = ors,
-            destinationIdProvider = { currentSelectedDestinationId }
-        )
+        val localRoutes = LocalExteriorRouteSource(context) { currentSelectedDestinationId }
         OutdoorNavigator(
             gps = GpsLocationReader(DeviceLocationProvider(context)),
-            routes = hybrid,
+            routes = localRoutes,
             initialDestinationId = selectedId
         )
     }
@@ -132,9 +126,6 @@ fun OutdoorNavigationScreen(
     var showInfo by remember(destinationId, finalDestination, finalNodeId) { mutableStateOf(false) }
     var showSteps by rememberSaveable { mutableStateOf(false) }
     var launchPending by rememberSaveable(destinationId, finalDestination, finalNodeId) { mutableStateOf(true) }
-    val consentStore = remember(context) { RouteConsentStore(context) }
-    var routeConsent by remember { mutableStateOf(consentStore.isGranted) }
-    var showConsent by rememberSaveable(destinationId, finalDestination, finalNodeId) { mutableStateOf(false) }
     var routeAfterPermission by rememberSaveable(destinationId, finalDestination, finalNodeId) { mutableStateOf(false) }
     var showArrival by rememberSaveable(trip.id) { mutableStateOf(false) }
     var showManualEntry by rememberSaveable(trip.id) { mutableStateOf(false) }
@@ -162,7 +153,7 @@ fun OutdoorNavigationScreen(
                 Lifecycle.Event.ON_START -> {
                     navigator.onStart()
                     checkNetwork()
-                    if (routeConsent && navigator.state.value.location == GpsLocationState.Idle) launchPending = true
+                    if (navigator.state.value.location == GpsLocationState.Idle) launchPending = true
                 }
                 Lifecycle.Event.ON_STOP -> navigator.onStop()
                 else -> Unit
@@ -172,7 +163,7 @@ fun OutdoorNavigationScreen(
         if (lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)) {
             navigator.onStart()
             checkNetwork()
-            if (routeConsent && navigator.state.value.location == GpsLocationState.Idle) launchPending = true
+            if (navigator.state.value.location == GpsLocationState.Idle) launchPending = true
         }
         onDispose { lifecycle.removeObserver(observer); navigator.onStop() }
     }
@@ -193,24 +184,23 @@ fun OutdoorNavigationScreen(
     }
 
     val permissionLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
-        if (routeAfterPermission && routeConsent) {
-            if (online) navigator.requestRoute(scope) else launchPending = true
-        } else navigator.refreshLocation(scope)
+        if (routeAfterPermission) {
+            navigator.requestRoute(scope)
+        } else {
+            navigator.refreshLocation(scope)
+        }
         routeAfterPermission = false
     }
     fun startRoute() {
-        val isLocal = GuidanceExteriorRepository.isLocalGuidanceRoute(state.destination?.id)
-        if (!isLocal && (!routeConsent || !online)) return
         if (state.location == GpsLocationState.PermissionDenied) {
             routeAfterPermission = true
             permissionLauncher.launch(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION))
         } else navigator.requestRoute(scope)
     }
-    LaunchedEffect(navigator, selectedId, online, launchPending) {
-        val isLocal = GuidanceExteriorRepository.isLocalGuidanceRoute(selectedId)
-        if (launchPending && state.destination != null && (isLocal || (online && BuildConfig.ORS_API_KEY.isNotBlank()))) {
+    LaunchedEffect(navigator, selectedId, launchPending) {
+        if (launchPending && state.destination != null) {
             launchPending = false
-            if (isLocal || routeConsent) startRoute() else showConsent = true
+            startRoute()
         }
     }
     fun openSettings(action: String) {
@@ -230,24 +220,16 @@ fun OutdoorNavigationScreen(
         }
     }
     val localFallbackRoute = remember(context, state.destination?.id, position) {
-        if (GuidanceExteriorRepository.isLocalGuidanceRoute(state.destination?.id)) {
+        state.destination?.id?.let { destId ->
             GuidanceExteriorRepository.getRouteForDestination(
                 context = context,
-                destinationId = state.destination?.id,
+                destinationId = destId,
                 origin = position?.let { GeoPoint(it.latitude, it.longitude) }
             )
-        } else null
+        }
     }
     val route = (state.route as? WalkingRouteResult.Success)?.route ?: localFallbackRoute
-    val guidanceRoute = route ?: remember(context, state.destination?.id, position) {
-        if (GuidanceExteriorRepository.isLocalGuidanceRoute(state.destination?.id)) {
-            GuidanceExteriorRepository.getRouteForDestination(
-                context = context,
-                destinationId = state.destination?.id,
-                origin = position?.let { GeoPoint(it.latitude, it.longitude) }
-            )
-        } else null
-    }
+    val guidanceRoute = route ?: localFallbackRoute
     var isVerticalGuidanceActive by rememberSaveable { mutableStateOf(false) }
     var isManualGuidanceLocked by rememberSaveable { mutableStateOf(false) }
     var currentStepIndex by rememberSaveable(trip.id, guidanceRoute) { mutableIntStateOf(0) }
@@ -339,7 +321,7 @@ fun OutdoorNavigationScreen(
         else Double.NaN
     val updateInterval = ActiveLocationPolicy.interval(distanceToAccess, position?.accuracyMeters?.toDouble() ?: Double.NaN)
 
-    // La propuesta interior no depende de Internet, consentimiento ORS ni de calcular una ruta a pie.
+    // La propuesta interior es independiente del estado de conexión de la ruta exterior.
     LaunchedEffect(navigator, route != null, state.location == GpsLocationState.Loading,
         indoor, updateInterval, lifecycle) {
         if (route == null && indoor == null) return@LaunchedEffect
@@ -382,36 +364,19 @@ fun OutdoorNavigationScreen(
         }
     }
 
-    if (showConsent) {
-        AlertDialog(onDismissRequest = { showConsent = false },
-            title = { Text("Calcular ruta a pie") },
-            text = { Text("Para calcular la ruta se enviarán tu ubicación actual y el destino a " +
-                "openrouteservice (HeiGIT). ¿Lo autorizas para esta y futuras rutas? " +
-                "Puedes consultar los detalles en el icono de información.") },
-            confirmButton = { TextButton(onClick = {
-                consentStore.grant()
-                routeConsent = true
-                showConsent = false
-                if (online) startRoute() else launchPending = true
-            }) { Text("Aceptar e iniciar ruta") } },
-            dismissButton = { TextButton(onClick = { showConsent = false }) { Text("Ahora no") } })
-    }
     if (showInfo) {
         AlertDialog(onDismissRequest = { showInfo = false },
             title = { Text("Información de navegación") },
             text = { Column(Modifier.verticalScroll(rememberScrollState())) {
-                Text("Para calcular la ruta se envían tu ubicación actual y el destino a openrouteservice (HeiGIT). " +
-                    "OpenFreeMap descarga la zona visible. Durante una ruta activa se comprueba tu ubicación " +
-                    "cada 12 s, o cada 2 s cerca del acceso (según señal), solo con esta pantalla visible; " +
+                Text("Las rutas exteriores entre la ETSIIT y el Edificio Auxiliar están calibradas localmente en el dispositivo " +
+                    "con fotografías reales. OpenFreeMap descarga las teselas del mapa visible. Durante una ruta activa se " +
+                    "comprueba tu ubicación cada 12 s, o cada 2 s cerca del acceso (según señal), solo con esta pantalla visible; " +
                     "sin historial ni seguimiento en segundo plano.")
                 if (indoor != null) TextButton(onClick = {
                     showInfo = false
                     showManualEntry = true
                 }) { Text("Continuar dentro manualmente") }
-                Text("Ruta estática: usa Actualizar ruta al moverte. Los extremos se ajustan a caminos próximos " +
-                    "(hasta 100 m). Comprueba los accesos y la señalización.")
-                Text("El punto ETSIIT es la referencia del catálogo para el acceso PB; su posición exacta en la puerta " +
-                    "está pendiente de validación sobre el terreno. El GPS no confirma que estés dentro.")
+                Text("El punto ETSIIT es la referencia del catálogo para el acceso PB; el GPS no confirma por sí solo que hayas entrado al edificio.")
                 OutdoorAttribution()
             } },
             confirmButton = {
@@ -733,19 +698,9 @@ fun OutdoorNavigationScreen(
                             }
                         }
 
-                        val isLocalDest = GuidanceExteriorRepository.isLocalGuidanceRoute(state.destination?.id)
                         Button(
-                            enabled = !busy && state.destination != null && (isLocalDest || BuildConfig.ORS_API_KEY.isNotBlank()),
-                            onClick = {
-                                if (isLocalDest) {
-                                    startRoute()
-                                } else {
-                                    checkNetwork()
-                                    if (routeConsent) {
-                                        if (online) startRoute() else launchPending = true
-                                    } else showConsent = true
-                                }
-                            },
+                            enabled = !busy && state.destination != null,
+                            onClick = { startRoute() },
                             colors = ButtonDefaults.buttonColors(containerColor = UgrRed),
                             contentPadding = PaddingValues(horizontal = 14.dp, vertical = 8.dp),
                             shape = RoundedCornerShape(10.dp)
@@ -1139,9 +1094,7 @@ private fun OutdoorAttribution() {
     val uriHandler = LocalUriHandler.current
     val links = listOf("OpenFreeMap" to "https://openfreemap.org/",
         "© OpenMapTiles" to "https://openmaptiles.org/",
-        "© OpenStreetMap" to "https://www.openstreetmap.org/copyright",
-        "Rutas: © openrouteservice / HeiGIT" to "https://openrouteservice.org/",
-        "Privacidad de HeiGIT" to "https://heigit.org/privacy-policy/")
+        "© OpenStreetMap" to "https://www.openstreetmap.org/copyright")
     links.forEach { (label, url) ->
         TextButton(onClick = { try { uriHandler.openUri(url) } catch (_: ActivityNotFoundException) { } }) {
             Text(label, style = MaterialTheme.typography.bodySmall)

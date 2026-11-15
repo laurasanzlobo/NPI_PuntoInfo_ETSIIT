@@ -14,13 +14,15 @@ class SingleTiltActionDetectorTest {
         assertFalse(detector.onAccelerometer(0f, 7.5f, 6.3f, 1000L))
         assertFalse(detector.onAccelerometer(0f, 7.5f, 6.3f, 1050L))
 
-        // Inclinar la parte superior hacia ti hasta vertical / pasar vertical (y=9.8, z=-0.4)
+        // Inclinar la parte superior hacia ti hasta sobrepasar ligeramente la vertical (y=9.7, z=-1.2)
         assertFalse(detector.onAccelerometer(0f, 9.7f, 0.2f, 1150L))
-        assertFalse(detector.onAccelerometer(0f, 9.8f, -0.5f, 1250L))
+        assertFalse(detector.onAccelerometer(0f, 9.7f, -1.2f, 1200L))
+        assertFalse(detector.onAccelerometer(0f, 9.7f, -1.2f, 1250L))
+        assertFalse(detector.onAccelerometer(0f, 9.7f, -1.2f, 1300L))
 
         // Volver a la postura de lectura normal -> dispara el gesto «Sí»
-        assertFalse(detector.onAccelerometer(0f, 8.6f, 2.2f, 1320L))
-        assertTrue(detector.onAccelerometer(0f, 7.4f, 6.4f, 1400L))
+        assertFalse(detector.onAccelerometer(0f, 8.6f, 2.2f, 1380L))
+        assertTrue(detector.onAccelerometer(0f, 7.5f, 6.3f, 1450L))
     }
 
     @Test

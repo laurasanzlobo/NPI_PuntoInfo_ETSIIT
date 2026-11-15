@@ -181,10 +181,6 @@
     <string name="dining_proceed_payment_btn">Proceed to Payment</string>
     <string name="dining_cancel_return">Cancel and Return</string>
     <string name="dining_auth_cancelled">Authentication cancelled. Menu has not been reserved.</string>
-    <string name="dining_already_ordered_toast">You already have a menu ordered for this day</string>
-    <string name="dining_reserve_notice_toast">You can reserve any of the next four working days, but not today.</string>
-    <string name="dining_login_gesture_toast">Log in to order your menu using gestures</string>
-    <string name="dining_expired_reservation_toast">The deadline to reserve this menu has ended.</string>
 
     <!-- Gestures Guide Detailed Explanations -->
     <string name="gesture_take_me_there_title">Take me there</string>
@@ -229,7 +225,6 @@
     <string name="profile_year_4">4th Year</string>
     <string name="profile_group_a">Group A</string>
     <string name="profile_photo_desc">Profile picture</string>
-    <string name="profile_simulate_btn">Simulate (this button will be removed in the future)</string>
     <string name="profile_tui_verified_toast">TUI verified! Logged in as %1$s</string>
 
     <!-- Services Strings -->

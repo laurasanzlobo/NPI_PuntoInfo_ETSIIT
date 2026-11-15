@@ -87,24 +87,19 @@
     \vspace{0.4cm}
     {\huge \bfseries Memoria Técnica del Proyecto \par}
     \vspace{0.3cm}
-    {\Large \bfseries Punto de Información Multimodal, Ubicuo y Accesible para la ETSIIT \par}
+    {\Large \bfseries Punto de Información ETSIIT \par}
     \vspace{0.15cm}
     {\normalsize Práctica 1 --- Dispositivos Móviles (Android) \par}
     \vspace{0.4cm}
     \hrule height 0.8pt
 
     \vspace{0.9cm}
-    \begin{minipage}{0.76\textwidth}
-        \textbf{Equipo de desarrollo (5 integrantes):}
-        \vspace{0.3cm}
-        \begin{itemize}[leftmargin=1.5em, itemsep=0.3em]
-            \item \textbf{Pablo Álvarez Fernández}
-            \item \textbf{Estrella Muñoz Ortega}
-            \item \textbf{José Pedregosa García}
-            \item \textbf{Ángela Rodríguez Machado}
-            \item \textbf{Laura Sanz Lobo}
-        \end{itemize}
-    \end{minipage}
+    {\large\bfseries
+    Pablo Álvarez Fernández\\[0.35em]
+    Estrella Muñoz Ortega\\[0.35em]
+    José Pedregosa García\\[0.35em]
+    Ángela Rodríguez Machado\\[0.35em]
+    Laura Sanz Lobo\par}
 
     \vfill
     {\normalsize Profesor responsable: Marcelino Cabrera Cuevas \par}
@@ -140,6 +135,7 @@ Quien llega a la Escuela Técnica Superior de Ingenierías Informática y de Tel
 
 Con \textbf{PuntoInfo ETSIIT} nos propusimos llevar esa información al bolsillo del estudiante bajo el enfoque de las \textbf{Interfaces Naturales de Usuario (NUI)}: que la aplicación aproveche los sensores del móvil, el contexto horario y el entorno físico para dar respuestas directas sin obligar a rellenar formularios ni a navegar por menús profundos.
 
+\vspace{-0.25cm}
 \subsection{Objetivos del proyecto}
 Siguiendo las pautas del guion de la práctica, fijamos cuatro objetivos principales:
 \begin{enumerate}[leftmargin=1.8em]
@@ -150,11 +146,13 @@ Siguiendo las pautas del guion de la práctica, fijamos cuatro objetivos princip
 \end{enumerate}
 
 % =========================================================================
+\vspace{-0.25cm}
 \section{Planificación del Proyecto y Reparto de Tareas}
 % =========================================================================
 
 Desde el inicio acordamos un plan de trabajo dividido en dos etapas y un reparto equilibrado entre los cinco miembros del equipo para poder avanzar en paralelo sobre los distintos módulos sin bloquearnos entre nosotros.
 
+\vspace{-0.25cm}
 \subsection{Fases de desarrollo seguidas}
 \begin{itemize}[leftmargin=1.8em]
     \item \textbf{Etapa 1 (Arquitectura base, datos y sensores principales):} Creación del proyecto en Android Studio con Jetpack Compose, definición de la navegación principal, carga del horario del curso y del directorio docente, digitalización del grafo de plantas de la ETSIIT, primera versión de los detectores gestuales con el acelerómetro y conexión inicial con el GPS y la identificación mediante la TUI.
@@ -173,7 +171,7 @@ Para coordinar el desarrollo entre los cinco miembros del grupo sin pisarnos los
 
     \item \textbf{Estrella Muñoz Ortega:} Desarrolló de forma coordinada con Laura la detección de gestos físicos con acelerómetro y giroscopio y asumió el sistema de guiado paso a paso en interiores: vista fotográfica a pantalla completa activada al levantar el móvil (\texttt{IndoorStepGuidanceCard}), avance automático por pasos mediante el podómetro (\texttt{PedometerManager}), calibración de las rutas interiores por escaleras y por ascensor (\texttt{guidance\_interior.json}) y soporte bilingüe español/inglés en toda la interfaz y en las instrucciones de ruta.
 
-    \item \textbf{Pablo Álvarez Fernández:} Implementó la localización exterior y los mapas por el campus (\texttt{GpsLocationReader}, \texttt{CampusLocationManager}, \texttt{OutdoorNavigator}, visor \texttt{OutdoorMap} con MapLibre y trazado peatonal con \textit{OpenRouteService} o mediante las rutas locales calibradas de \texttt{guidance\_exterior.json}, junto con la detección automática de llegada a la ETSIIT). También desarrolló el módulo completo de Comedores (\texttt{DiningScreen}), el cálculo de distancia al comedor más cercano, las reglas de reserva (\texttt{DiningReservationPolicy}) y la pasarela de pago simulada confirmada con huella dactilar o bloqueo del teléfono (\texttt{DiningPaymentAuthorizer} y \texttt{AndroidDeviceAuthenticator}).
+    \item \textbf{Pablo Álvarez Fernández:} Implementó la localización exterior y los mapas por el campus (\texttt{GpsLocationReader}, \texttt{CampusLocationManager}, \texttt{OutdoorNavigator}, visor \texttt{OutdoorMap} con MapLibre y el proveedor local \texttt{LocalExteriorRouteSource} sobre las rutas calibradas de \texttt{guidance\_exterior.json} entre la ETSIIT Principal y el Edificio Auxiliar, junto con \texttt{ArrivalDetector} para la detección automática de llegada a la ETSIIT). También desarrolló el módulo completo de Comedores (\texttt{DiningScreen}), el cálculo de distancia al comedor más cercano, las reglas de reserva (\texttt{DiningReservationPolicy}) y la pasarela de pago simulada confirmada con huella dactilar o bloqueo del teléfono (\texttt{DiningPaymentAuthorizer} y \texttt{AndroidDeviceAuthenticator}).
 \end{itemize}
 
 % =========================================================================
@@ -192,27 +190,30 @@ En el fichero \texttt{app/build.gradle.kts} configuramos:
 \subsection{Bibliotecas externas empleadas}
 En la Tabla~\ref{tab:dependencias} resumimos únicamente las bibliotecas reales incluidas en \texttt{app/build.gradle.kts} y en \texttt{gradle/libs.versions.toml}, junto a su papel concreto en la aplicación. Todas corresponden a SDKs oficiales o bibliotecas de código abierto utilizadas respetando su autoría y licencias de distribución.
 
+\vspace{0.5cm}
+
 \begin{table}[htbp]
 \centering
 \small
 \renewcommand{\arraystretch}{1.22}
-\begin{tabularx}{\textwidth}{>{\ttfamily\raggedright\arraybackslash}p{5.2cm} >{\raggedright\arraybackslash}p{2.0cm} X}
+\begin{tabularx}{\textwidth}{>{\ttfamily\raggedright\arraybackslash}p{5.8cm} X}
 \toprule
-\normalfont\bfseries Biblioteca / Dependencia & \textbf{Versión} & \textbf{Función en PuntoInfo ETSIIT} \\
+\normalfont\bfseries Biblioteca / Dependencia & \textbf{Función en PuntoInfo ETSIIT} \\
 \midrule
-androidx.compose.material3 (BOM) & 2026.02.01 & Interfaz declarativa completa, tarjetas, diálogos e iconos extendidos. \\
-androidx.navigation:\allowbreak navigation-compose & 2.8.8 & Navegación entre pantallas conservando el estado de ruta activa y el idioma. \\
-com.google.android.gms:\allowbreak play-services-location & 21.3.0 & Acceso al cliente de ubicación fusionada (\texttt{FusedLocationProviderClient}) para GPS exterior y detección de edificio. \\
-org.maplibre.gl:\allowbreak android-sdk & 13.7.1 & Visor vectorial de mapas exteriores (estilo libre OpenFreeMap) para campus y comedores. \\
-com.google.mlkit:\allowbreak barcode-scanning & 17.3.0 & Lector en vivo del código QR del reverso de la tarjeta TUI usando la cámara trasera. \\
-com.google.code.gson:gson & 2.10.1 & Lectura de los ficheros JSON locales (grafo completo, horarios y docentes). \\
-{\normalfont APIs nativas del SDK Android} & SDK 26--37 & \texttt{SensorManager}, \texttt{Camera2}, \texttt{BiometricPrompt}, \texttt{RecognizerIntent} y \texttt{TextToSpeech}. \\
+androidx.compose.material3 (BOM) & Interfaz declarativa completa, tarjetas, diálogos e iconos extendidos. \\
+androidx.navigation:\allowbreak navigation-compose & Navegación entre pantallas conservando el estado de ruta activa y el idioma. \\
+com.google.android.gms:\allowbreak play-services-location & Acceso al cliente de ubicación fusionada (\texttt{FusedLocationProviderClient}) para GPS exterior y detección de edificio. \\
+org.maplibre.gl:\allowbreak android-sdk & Visor vectorial de mapas exteriores (estilo libre OpenFreeMap) para campus y comedores. \\
+com.google.mlkit:\allowbreak barcode-scanning & Lector en vivo del código QR del reverso de la tarjeta TUI usando la cámara trasera. \\
+com.google.code.gson:gson & Lectura de los ficheros JSON locales (grafo completo, horarios y docentes). \\
+{\normalfont APIs nativas del SDK Android} & \texttt{SensorManager}, \texttt{Camera2}, \texttt{BiometricPrompt}, \texttt{RecognizerIntent} y \texttt{TextToSpeech}. \\
 \bottomrule
 \end{tabularx}
 \caption{Dependencias externas y APIs principales configuradas en el proyecto.}
 \label{tab:dependencias}
 \end{table}
 
+\clearpage
 \subsection{Gestión de permisos y funcionamiento ante fallos o sin Internet}
 Todos los permisos sensibles declarados en \texttt{AndroidManifest.xml} se solicitan en tiempo de ejecución únicamente cuando el usuario entra en la función que los necesita, evitando pedirlos todos de golpe al abrir la app y evitando bloqueos si alguno se rechaza:
 \begin{itemize}[leftmargin=1.8em]
@@ -221,7 +222,7 @@ Todos los permisos sensibles declarados en \texttt{AndroidManifest.xml} se solic
     \item \textbf{Actividad física (\texttt{ACTIVITY\_RECOGNITION}):} Necesaria en Android 10 o superior para el contador hardware de pasos (\texttt{TYPE\_STEP\_DETECTOR}). Si el teléfono no tiene este sensor (como ocurre en algunos emuladores) o no está disponible, \texttt{PedometerManager} conmuta a una estimación de pasos por movimiento sobre el acelerómetro y mantiene siempre botones táctiles de paso anterior y siguiente como alternativa.
     \item \textbf{Biometría y bloqueo (\texttt{USE\_BIOMETRIC}, \texttt{USE\_FINGERPRINT}):} Para confirmar la reserva de comedor, \texttt{AndroidDeviceAuthenticator} comprueba primero si el teléfono tiene un bloqueo configurado (\texttt{KeyguardManager}); si no existe ninguno, muestra un mensaje claro pidiendo configurar PIN, patrón o biometría y nunca valida la reserva sin autenticación.
     \item \textbf{Audio y reconocimiento de voz (\texttt{RECORD\_AUDIO}):} El lanzamiento del micrófono del sistema está protegido frente a dispositivos sin servicio de voz mediante bloques de control (\texttt{ActivityNotFoundException}), mostrando un aviso amigable en ese caso.
-    \item \textbf{Uso sin conexión a Internet (\texttt{INTERNET}, \texttt{ACCESS\_NETWORK\_STATE}):} Toda la base de datos de la escuela está empaquetada dentro del APK en \texttt{app/src/main/assets/}: planos WebP de las 6 plantas, grafo de 306 nodos, horarios del curso, 36 docentes y las fotografías calibradas tanto de la ruta interior como de la ruta exterior entre el edificio principal y el auxiliar. Gracias a esto, la práctica totalidad de la aplicación funciona completamente sin Internet. Solo la petición de rutas peatonales remotas mediante la API HTTPS de \textit{OpenRouteService} requiere red (y clave local \texttt{ORS\_API\_KEY}); si falta red o clave, la interfaz informa del estado con precisión, mantiene visible la distancia en línea recta y sigue permitiendo navegar sin errores por las rutas calibradas del campus.
+    \item \textbf{Uso sin conexión a Internet (\texttt{INTERNET}, \texttt{ACCESS\_NETWORK\_STATE}):} Toda la base de datos de la escuela y el guiado completo están empaquetados dentro del APK en \texttt{app/src/main/assets/}: planos WebP de las 6 plantas, grafo de 306 nodos, horarios del curso, 36 docentes y las fotografías calibradas tanto de la ruta interior como de la ruta exterior entre el edificio principal y el auxiliar. Gracias a esto, tanto el cálculo de rutas como toda la navegación y resto de funciones operan completamente en local sin depender de servidores externos; los permisos de red se utilizan únicamente para descargar las teselas del mapa vectorial \textit{OpenFreeMap} en el visor exterior (\texttt{OutdoorMap}), mostrando la ruta calibrada sobre el mapa en local incluso sin conexión.
 \end{itemize}
 
 % =========================================================================
@@ -231,10 +232,10 @@ Todos los permisos sensibles declarados en \texttt{AndroidManifest.xml} se solic
 \subsection{Justificación de sensores desde distintas categorías}
 Para cumplir con holgura el requisito del guion de usar al menos cuatro sensores de categorías diferentes (evitando apoyarnos únicamente en el movimiento), nuestra aplicación combina \textbf{seis categorías físicas distintas}, sintetizadas en la Tabla~\ref{tab:sensores}.
 
-\begin{table}[htbp]
+\begin{table}[H]
 \centering
 \footnotesize
-\renewcommand{\arraystretch}{1.22}
+\renewcommand{\arraystretch}{1.18}
 \begin{tabularx}{\textwidth}{>{\bfseries\raggedright\arraybackslash}p{2.4cm} >{\raggedright\arraybackslash}p{3.2cm} X}
 \toprule
 \textbf{Categoría} & \textbf{Sensores / Hardware} & \textbf{Para qué se usa y por qué tiene sentido} \\
@@ -254,18 +255,18 @@ Para cumplir con holgura el requisito del guion de usar al menos cuatro sensores
 \subsection{Catálogo de los 6 gestos de la aplicación}
 Para que el usuario sepa en todo momento qué gestos existen y cuándo están disponibles, creamos el componente \texttt{GestureBadge} con seis insignias codificadas por color que coinciden exactamente con la pantalla de \textit{Guía de Gestos} accesible desde el botón \texttt{(i)} de la barra superior (Tabla~\ref{tab:gestos}).
 
-\begin{table}[htbp]
+\begin{table}[H]
 \centering
 \footnotesize
-\renewcommand{\arraystretch}{1.22}
-\begin{tabularx}{\textwidth}{>{\bfseries\raggedright\arraybackslash}p{3.0cm} >{\raggedright\arraybackslash}p{2.0cm} >{\raggedright\arraybackslash}p{4.3cm} X}
+\renewcommand{\arraystretch}{1.15}
+\begin{tabularx}{\textwidth}{>{\bfseries\raggedright\arraybackslash}p{2.5cm} >{\raggedright\arraybackslash}p{1.8cm} >{\raggedright\arraybackslash}p{3.4cm} X}
 \toprule
 \textbf{Nombre del gesto} & \textbf{Insignia} & \textbf{Cómo se realiza} & \textbf{Dónde y qué acción ejecuta} \\
 \midrule
 «¡Llévame!» & Color verde azulado & Inclinar el móvil a la izquierda y volver al frente rápidamente. & En tarjeta de clase actual, detalle de asignatura, comedor y ficha de profesor: inicia la navegación directa al destino. \\
 Clase actual & Color rojo UGR & Tres inclinaciones rápidas hacia adelante y volver hacia ti. & En cualquier pantalla general (con sesión iniciada): abre la tarjeta con tu clase actual o la próxima en empezar. \\
 Confirmar / Enviar & Color ámbar & Partiendo de lectura normal, llevar el móvil a vertical hacia ti y volver. & En el verificador de ubicación inicial (confirma tu punto de partida o abre la cámara QR), en \textit{Comedores} (reserva de menú de días futuros) y en ficha de \textit{Profesores} (abre el correo ya rellenado). \\
-Levantar móvil & Color azul ETSIIT & Colocar el móvil en vertical frente a los ojos (y tumbarlo para volver). & En los mapas interior y exterior con ruta activa: abre o cierra el guiado fotográfico paso a paso. \\
+Levantar móvil & Color azul ETSIIT & Colocar el móvil en vertical frente a los ojos. & En los mapas interior y exterior con ruta activa: abre o cierra el guiado fotográfico paso a paso. \\
 Voz por proximidad & Color morado & Acercar la mano a la parte superior frontal del teléfono. & Desde cualquier pantalla general: activa el micrófono para buscar aulas, despachos, edificios, comedor o profesores. \\
 Pellizco de zoom & Color índigo & Separar o juntar dos dedos sobre la pantalla. & En \textit{Mi Horario}: cambia entre la vista panorámica de 3 días y el detalle de 1 día completo. \\
 \bottomrule
@@ -295,13 +296,16 @@ Para trabajar en equipo sin pisarnos el código, dividimos el proyecto bajo el p
 
 \begin{enumerate}[leftmargin=1.8em]
     \item \textbf{Capa de interfaz y navegación (\texttt{ui/screens}, \texttt{ui/components}, \texttt{ui/navigation}):} Contiene \texttt{AppNavigation.kt}, que coordina todas las rutas entre pantallas, la barra superior adaptativa con las insignias de gestos, el asistente global de voz y los diálogos compartidos. Aquí viven también las pantallas (\texttt{HomeScreen}, \texttt{ScheduleScreen}, \texttt{DiningScreen}, \texttt{ServicesScreen}, \texttt{ProfessorsScreen}, \texttt{NavigationScreen}, \texttt{OutdoorNavigationScreen} y \texttt{ProfileScreen}) y componentes reutilizables como los visores de mapa (\texttt{MapaRutaView}, \texttt{OutdoorMap}), el tutorial inicial (\texttt{OnboardingTutorialOverlay}) y el verificador de ubicación (\texttt{OriginVerificationDialog}).
-    \item \textbf{Capa de lógica y enrutamiento (\texttt{GrafoETSIIT.kt}, \texttt{indoor/}, \texttt{outdoor/}, \texttt{data/}):} Agrupa el cálculo de rutas interiores con Dijkstra y la interpretación de frases de voz; la gestión del recorrido paso a paso en interior (\texttt{IndoorTripState}) y exterior (\texttt{OutdoorNavigator}, \texttt{HybridWalkingRouteSource}, \texttt{ArrivalDetector}); y las reglas de negocio de horarios, sesión de usuario (\texttt{UserSessionRepository}), fechas reservables y autorización de pago (\texttt{DiningReservationPolicy}, \texttt{DiningPaymentAuthorizer}).
+    \clearpage
+    \item \textbf{Capa de lógica y enrutamiento (\texttt{GrafoETSIIT.kt}, \texttt{indoor/}, \texttt{outdoor/}, \texttt{data/}):} Agrupa el cálculo de rutas interiores con Dijkstra y la interpretación de frases de voz; la gestión del recorrido paso a paso en interior (\texttt{IndoorTripState}) y exterior (\texttt{OutdoorNavigator}, \texttt{LocalExteriorRouteSource}, \texttt{GuidanceExteriorRepository}, \texttt{NavigationJourney}, \texttt{ArrivalDetector}); y las reglas de negocio de horarios, sesión de usuario (\texttt{UserSessionRepository}), fechas reservables y autorización de pago (\texttt{DiningReservationPolicy}, \texttt{DiningPaymentAuthorizer}).
     \item \textbf{Capa de sensores y hardware (\texttt{sensors/}):} Encapsula cada acceso hardware en su propio gestor (\texttt{AccelerometerManager}, \texttt{ProximityManager}, \texttt{BarometerManager}, \texttt{PedometerManager}, \texttt{CampusLocationManager}, \texttt{GpsLocationReader} y \texttt{AndroidDeviceAuthenticator}). Cada pantalla registra y libera los sensores necesarios dentro de su ciclo de vida (\texttt{DisposableEffect}) para no gastar batería cuando no se utilizan.
-    \item \textbf{Capa de datos locales y recursos (\texttt{assets/}, \texttt{res/values*}):} Almacena el grafo de las seis plantas (\texttt{grafo\_etsiit\_completo.json} y JSON por planta), los planos WebP, los horarios (\texttt{horarios\_etsiit.json}), los 36 profesores (\texttt{docentes.json}) con sus fotografías, los ficheros de guiado fotográfico calibrado (\texttt{guidance\_interior.json} y \texttt{guidance\_exterior.json}) y los diccionarios de textos en español (\texttt{values/strings.xml}) e inglés (\texttt{values-en/strings.xml}).
+    \item \textbf{Capa de datos locales y recursos (\texttt{assets/}, \texttt{res/values*}):} Almacena el grafo de las seis plantas (\texttt{grafo\_etsiit\_completo.json}; los JSON individuales por planta quedan en la herramienta auxiliar \texttt{editor\_mapa/}), los planos WebP, los horarios (\texttt{horarios\_etsiit.json}), los 36 profesores (\texttt{docentes.json}) con sus fotografías, los ficheros de guiado fotográfico calibrado (\texttt{guidance\_interior.json} y \texttt{guidance\_exterior.json}) y los diccionarios de textos en español (\texttt{values/strings.xml}) e inglés (\texttt{values-en/strings.xml}).
 \end{enumerate}
 
 \subsection{Flujo de estimación del origen en interiores}
 Cuando el usuario inicia una ruta dentro de la ETSIIT sin venir guiado desde fuera, no podemos depender de la altura del GPS ni queremos obligarle a buscar su aula en una lista gigante de más de trescientos puntos. Por ello diseñamos un diálogo en tres pasos simples (\texttt{OriginVerificationDialog.kt}) que intenta adivinar el origen de menor a mayor esfuerzo para el usuario, tal como ilustra la Figura~\ref{fig:origen}. (En el caso concreto de probar la ruta de demostración hacia el Aula 1.1, pregunta además directamente si se parte desde el Comedor Aynadamar). Todos sus botones de confirmación (\textit{«Sí»}, selección de aula y \textit{«Abrir Cámara»}) muestran la insignia gestual correspondiente y permiten confirmar mediante el gesto de inclinar el móvil hacia uno mismo (\textit{Confirmar / Enviar}), pausando mientras tanto el detector de levantamiento para evitar conflictos; además, el origen confirmado se conserva en la sesión si el usuario consulta temporalmente la \textit{Guía de Gestos} o su \textit{Perfil} antes de regresar al mapa.
+
+\vspace{0.6cm}
 
 \begin{figure}[htbp]
 \centering
@@ -330,7 +334,9 @@ Cuando el usuario inicia una ruta dentro de la ETSIIT sin venir guiado desde fue
 
 \clearpage
 \subsection{Principales clases, atributos y métodos}
-Para estructurar la lógica de la aplicación bajo un enfoque modular, desacoplado y reactivo en Jetpack Compose, el sistema se apoya en un conjunto de componentes especializados encargados del enrutamiento, la captura sensorial, la gestión del estado y la persistencia. En la Tabla~\ref{tab:clases} se sintetizan las clases centrales del proyecto, detallando sus atributos más representativos y sus métodos principales. Como complemento visual, la Figura~\ref{fig:uml_arquitectura_npi} modela las relaciones arquitectónicas y dependencias entre estos componentes mediante un diagrama de clases UML.
+Para estructurar la lógica de la aplicación bajo un enfoque modular, desacoplado y reactivo en Jetpack Compose, el sistema se apoya en un conjunto de componentes especializados encargados del enrutamiento, la captura sensorial, la gestión del estado y la persistencia. En la Tabla~\ref{tab:clases} se sintetizan las clases centrales del proyecto, detallando sus atributos más representativos y sus métodos principales.
+
+\vspace{0.4cm}
 
 \begin{table}[H]
 \centering
@@ -343,22 +349,24 @@ Para estructurar la lógica de la aplicación bajo un enfoque modular, desacopla
 \midrule
 GrafoETSIIT & Carga y modela la topología de la escuela, calcula rutas óptimas con Dijkstra y resuelve destinos por voz. & \texttt{conexiones}, \newline \texttt{directorioNodos} & \texttt{cargarDesdeAssets()}, \newline \texttt{calcularRuta\allowbreak Dijkstra()}, \newline \texttt{calcularRuta\allowbreak Completa()}, \newline \texttt{obtenerRutaForzada\allowbreak Ascensor()}, \newline \texttt{resolverDestino\allowbreak PorVoz()} \\
 \midrule
-IndoorTripState & Modela el estado inmutable y reactivo del recorrido interior paso a paso guiado por podómetro. & \texttt{tripId}, \texttt{route}, \texttt{steps}, \texttt{currentStepIndex}, \texttt{totalStepsTaken} & \texttt{onStepDetected()}, \newline \texttt{advanceStep\allowbreak Manually()}, \newline \texttt{currentStep}, \newline \texttt{totalRouteSteps} \\
+IndoorTripState & Modela el estado inmutable y reactivo del recorrido interior paso a paso guiado por podómetro. & \texttt{tripId}, \texttt{route}, \texttt{steps}, \texttt{currentStepIndex}, \texttt{totalStepsTaken} & \texttt{onStepDetected()}, \newline \texttt{nextStepManual()}, \newline \texttt{previousStepManual()}, \newline \texttt{buildFromRoute()} \\
 \midrule
-OutdoorNavigator & Gestiona la progresión de la navegación exterior hacia hitos geolocalizados y detecta la llegada al centro. & \texttt{trip}, \texttt{currentStepIndex}, \texttt{proximityThreshold\allowbreak Meters} & \texttt{updateLocation()}, \newline \texttt{onHeadingChanged()}, \newline \texttt{advanceToNextStep()}, \newline \texttt{hasArrived()} \\
+OutdoorNavigator & Coordina la lectura GPS y el proveedor local de rutas exteriores manteniendo el estado reactivo (\texttt{OutdoorUiState}). & \texttt{gps}, \texttt{routes}, \newline \texttt{state} (\texttt{StateFlow}) & \texttt{selectDestination()}, \newline \texttt{refreshLocation()}, \newline \texttt{requestRoute()}, \newline \texttt{onStart()}, \texttt{onStop()} \\
 \midrule
-Accelerometer\allowbreak Manager & Reconoce gestos físicos de acelerómetro y giroscopio mediante máquinas de estados e histéresis. & Umbrales de inclinación (\texttt{TILT\_LEFT\_STRONG}, \texttt{verticalMinY}), callbacks gestuales & \texttt{startListening()}, \newline \texttt{stopListening()}, \newline \texttt{onSensorChanged()} \\
+Accelerometer\allowbreak Manager & Reconoce gestos físicos de acelerómetro y giroscopio mediante máquinas de estados e histéresis. & \texttt{TILT\_LEFT\_STRONG\_\allowbreak THRESHOLD}, \newline \texttt{verticalMinY\allowbreak Threshold}, callbacks & \texttt{startListening()}, \newline \texttt{stopListening()}, \newline \texttt{onSensorChanged()} \\
 \midrule
-CampusLocation\allowbreak Manager & Provee geolocalización, determina el edificio de la ETSIIT (Aulas vs.\ Zonas Comunes) y busca comedores cercanos. & Coordenadas ETSIIT, polígonos de recintos, lista de comedores UGR & \texttt{detectCurrent\allowbreak Building()}, \newline \texttt{isInsideEtsiit()}, \newline \texttt{getClosest\allowbreak DiningHall()} \\
+CampusLocation\allowbreak Manager & Provee geolocalización, determina el edificio de la ETSIIT (Aulas vs.\ Zonas Comunes) y busca comedores cercanos. & \texttt{ugrDiningHalls}, \newline \texttt{lastKnownLocation}, polígonos de recintos & \texttt{estimateEtsiit\allowbreak Building()}, \newline \texttt{isUserNearEtsiit()}, \newline \texttt{findNearest\allowbreak DiningHall()} \\
 \midrule
-DiningPayment\allowbreak Authorizer & Autoriza y procesa la reserva de menú para llevar exigiendo verificación biométrica o PIN del dispositivo. & \texttt{authenticator}, \newline \texttt{activity} & \texttt{authorizeAndPay()} \\
+DiningPayment\allowbreak Authorizer & Autoriza y procesa la reserva de menú para llevar exigiendo verificación biométrica o bloqueo del dispositivo. & \texttt{authenticator} & \texttt{confirm(onResult)}, \newline \texttt{cancel()} \\
 \midrule
-UserSession\allowbreak Repository & Gestiona la persistencia local de sesión (\textit{SharedPreferences}), el perfil TUI, el idioma y la preferencia accesible. & Claves de sesión (\texttt{IS\_LOGGED\_IN}, \texttt{ACCESSIBILITY\_\allowbreak ENABLED}) & \texttt{getProfile()}, \newline \texttt{saveProfile()}, \newline \texttt{setAccessibility\allowbreak Enabled()}, \newline \texttt{isAccessibility\allowbreak Enabled()} \\
+UserSession\allowbreak Repository & Gestiona la persistencia local de sesión (\textit{SharedPreferences}), el perfil TUI, el idioma y el estado del tutorial inicial. & \texttt{PREFS\_NAME}, \texttt{KEY\_PROFILE}, \newline \texttt{isTutorial\allowbreak ActiveState} & \texttt{getProfile()}, \newline \texttt{loginWithOfficial\allowbreak Profile()}, \newline \texttt{saveProfile()}, \newline \texttt{updateLanguage()} \\
 \bottomrule
 \end{tabularx}
 \caption{Clases principales del software, variables de clase más relevantes y métodos destacados.}
 \label{tab:clases}
 \end{table}
+
+Como complemento visual, la Figura~\ref{fig:uml_arquitectura_npi} modela las relaciones arquitectónicas y dependencias entre estos componentes mediante un diagrama de clases UML.
 
 \begin{figure}[H]
     \centering
@@ -490,8 +498,9 @@ UserSession\allowbreak Repository & Gestiona la persistencia local de sesión (\
         \texttt{+ state: StateFlow<OutdoorUiState>}
         \nodepart{third}
         \texttt{+ selectDestination(id)}\\
+        \texttt{+ refreshLocation(scope)}\\
         \texttt{+ requestRoute(scope)}\\
-        \texttt{+ trackActivePosition(scope)}
+        \texttt{+ onStart() / onStop()}
     };
 
     % =========================================================================
@@ -525,7 +534,7 @@ UserSession\allowbreak Repository & Gestiona la persistencia local de sesión (\
     % NOTAS EXPLICATIVAS (Mediación de UI / Compose)
     % =========================================================================
 
-    \node[umlnote, below=1.85cm of accel] (note_compose) {
+    \node[umlnote] at ($(grafo.east)!0.5!(outdoor.west)$) (note_compose) {
         \textbf{Orquestación UI (Jetpack Compose):}\\
         \texttt{AppNavigation} y las pantallas leen el\\
         perfil accesible (\texttt{UserSessionRepository}),\\
@@ -567,7 +576,6 @@ UserSession\allowbreak Repository & Gestiona la persistencia local de sesión (\
     \label{fig:uml_arquitectura_npi}
 \end{figure}
 
-\clearpage
 % =========================================================================
 \section{Descripción Detallada de Pantallas y Funcionalidades}
 % =========================================================================
@@ -607,9 +615,10 @@ Desde \texttt{ServicesScreen.kt} el usuario accede a una tarjeta destacada inter
 Por su parte, \texttt{ProfessorsScreen.kt} gestiona la base local de \textbf{36 docentes} (\texttt{assets/docentes.json}) con sus fotografías de avatar:
 \begin{itemize}[leftmargin=1.8em]
     \item \textbf{Cuadrícula, ordenación y estado en tiempo real:} La pantalla muestra una cuadrícula en dos columnas con tarjetas de 160\,dp de altura que integran la foto circular de 80\,dp, el nombre corto (nombre de pila y primer apellido mediante \texttt{formatShortProfessorName}) y una píldora con el estado en directo (\textit{En tutoría}, \textit{En clase} o \textit{Fuera de horario}), ordenados alfabéticamente sin sesgo de tildes (\texttt{normalizarTexto}) y priorizando a los profesores del alumno si ha iniciado sesión (con estrella roja). Se incluye además un selector de \textit{Modo Demo horario} para simular diferentes momentos de la semana en demostraciones.
-    \item \textbf{Ficha desplegable (\textit{ModalBottomSheet}) y acciones multimodales:} Cuenta con buscador escrito y por voz integrado en la barra superior. Al pulsar sobre cualquier docente se despliega una ficha inferior donde consultar sus horarios de tutorías, pulsar el botón \textbf{[Oír]} para escuchar las indicaciones por voz natural con \textbf{\texttt{TextToSpeech}} (*«...en el despacho 225...»*), pulsar sobre la fotografía para ampliarla a pantalla completa con la asignatura y departamento completos, o ejecutar sus dos acciones principales mediante botones con insignia gestual: ir al despacho con el botón directo \textbf{[DXXX]} y gesto \textbf{«¡Llévame!»}, o redactar un correo con el botón \textbf{[Correo]} mediante el gesto de cabeceo hacia uno mismo (\texttt{Intent.ACTION\_SENDTO}).
+    \item \textbf{Ficha desplegable (\textit{ModalBottomSheet}) y acciones multimodales:} Cuenta con buscador escrito y por voz integrado en la barra superior. Al pulsar sobre cualquier docente se despliega una ficha inferior donde consultar sus horarios de tutorías, pulsar el botón \textbf{[Oír]} para escuchar las indicaciones por voz natural con \textbf{\texttt{TextToSpeech}} (*«...en el despacho 225...»*), pulsar sobre la fotografía para ampliarla a pantalla completa con la asignatura y departamento completos, o ejecutar sus dos acciones principales mediante botones con insignia gestual: ir al despacho con su botón directo (p.\,ej., \textbf{D225}) y gesto \textbf{«¡Llévame!»}, o redactar un correo con el botón \textbf{[Correo]} mediante el gesto de cabeceo hacia uno mismo (\texttt{Intent.ACTION\_SENDTO}).
 \end{itemize}
 
+\vspace{0.35cm}
 \subsection{Navegación Interior, Exterior y Asistente de Voz}
 En el apartado de rutas combinamos la base completa del edificio con un guiado paso a paso práctico y adaptado a uso real:
 \begin{itemize}[leftmargin=1.8em]
@@ -618,12 +627,16 @@ En el apartado de rutas combinamos la base completa del edificio con un guiado p
         \item \textbf{Interior (\texttt{guidance\_interior.json}):} Recorrido completo entre el Comedor de la ETSIIT y el Aula 1.1 con dos variantes reales: \textbf{escaleras (9 nodos)} o \textbf{ascensor accesible (12 nodos)}, seleccionables según la preferencia de movilidad reducida (también con trazado forzado por ascensor en el mapa 2D).
         \item \textbf{Exterior (\texttt{guidance\_exterior.json}):} Recorrido real de \textbf{9 hitos de ida y 9 de vuelta} entre la ETSIIT Principal y el Edificio Auxiliar, calibrando coordenadas GPS, rumbo magnético y la posición horizontal del camino (\texttt{eje\_x\_camino}) dentro de cada foto panorámica.
     \end{itemize}
+    \clearpage
     \item \textbf{Guiado fotográfico automático al levantar el móvil:} Con una ruta activa (tanto dentro como fuera), basta colocar el móvil en vertical frente a uno para pasar a pantalla completa con la fotografía real del tramo. Usando la brújula del móvil (\textit{Vector de rotación} / Acelerómetro + Magnetómetro), la imagen panorámica se recorta hacia donde mira el usuario: si apunta en la dirección correcta del camino ve la flecha y los pasos o metros que quedan; si está girado respecto al rumbo adecuado ($> 28^\circ$ fuera o $> 35^\circ$ dentro), la pantalla le indica claramente \textit{«Gira a la izquierda»} o \textit{«Gira a la derecha»}. Dentro del edificio los tramos avanzan solos con el \textbf{podómetro} (\texttt{PedometerManager}), y fuera por \textbf{proximidad GPS} al estar a $\le 12$\,m del siguiente hito, dejando siempre botones de avance/retroceso manual.
-    \item \textbf{Mapa exterior híbrido:} \texttt{OutdoorNavigationScreen} y \texttt{HybridWalkingRouteSource} usan las rutas locales calibradas para los trayectos entre ETSIIT, Edificio Auxiliar y Comedor Aynadamar, y delegan en \textbf{MapLibre (13.7.1)} sobre teselas \textit{OpenFreeMap} más \textbf{OpenRouteService} si se consulta otro destino con conexión y clave. Además, \texttt{ArrivalDetector} detecta cuándo se llega físicamente a la ETSIIT para ofrecer la transición directa al mapa interior.
+    \vspace{0.2cm}
+    \item \textbf{Mapa exterior calibrado y transición al interior:} \texttt{OutdoorNavigationScreen} y \texttt{LocalExteriorRouteSource} cargan desde \texttt{GuidanceExteriorRepository} las rutas peatonales calibradas de ida y vuelta entre la \textbf{ETSIIT Principal} y el \textbf{Edificio Auxiliar} sin depender de APIs externas de cálculo de rutas, representándolas sobre el visor \textbf{MapLibre} con teselas \textit{OpenFreeMap}. Cuando el trayecto parte de fuera hacia un aula o despacho concreto, \texttt{NavigationJourney} conserva el destino final durante todo el desplazamiento y, al llegar físicamente al centro, \texttt{ArrivalDetector} e \texttt{IndoorArrivalDialog} permiten enlazar de forma directa con la navegación interior hasta ese punto.
+    \vspace{0.2cm}
     \item \textbf{Asistente global de voz por proximidad:} Al acercar la mano al sensor frontal en casi cualquier pantalla, \texttt{AppNavigation} lanza el reconocimiento de voz y comprueba primero si coincide con alguno de los 36 profesores, después si pide ir al Edificio Auxiliar o al Comedor, y finalmente interpreta destinos interiores en \texttt{GrafoETSIIT} (normalizando tildes y expresiones habladas como \textit{«aula uno punto cinco»} o despachos).
 \end{itemize}
 
 % =========================================================================
+\vspace{0.4cm}
 \section{Accesibilidad, Diseño Visual y Verificación}
 % =========================================================================
 
@@ -635,10 +648,11 @@ Hemos cuidado que la experiencia sea uniforme y comprensible desde el primer min
     \item \textbf{Accesibilidad física y lingüística:} Soporte continuo de español e inglés (\texttt{values/strings.xml}, \texttt{values-en/strings.xml} y textos bilingües en pasos de ruta y nodos) e interruptor global de rutas por ascensor sin escaleras.
 \end{itemize}
 
+\clearpage
 \subsection{Pruebas y comprobación del sistema}
 Para verificar el comportamiento de la aplicación combinamos pruebas reales en el teléfono caminando por el interior de la ETSIIT y entre el edificio principal y el auxiliar (comprobando el cambio entre mapa y fotos, los giros por brújula, el recuento de pasos, las reservas biométricas y el lector QR con una tarjeta TUI) junto con la batería automatizada incluida en el proyecto:
 \begin{itemize}[leftmargin=1.8em]
-    \item \textbf{Pruebas unitarias (\texttt{app/src/test/}, 18 ficheros JUnit):} Verifican el estado del viaje interior (\texttt{IndoorTripStateTest}), la detección del gesto de confirmación por inclinación (\texttt{SingleTiltActionDetectorTest}), el catálogo exterior y cálculo de distancias GPS (\texttt{GuidanceExteriorRepositoryTest}, \texttt{OutdoorDistancesTest}, \texttt{GpsLocationReaderTest}), las políticas de fechas y autorización de pagos de comedor (\texttt{DiningReservationPolicyTest}, \texttt{DiningPaymentAuthorizerTest}) y la lógica de llegada exterior y transición al edificio (\texttt{ArrivalDetectorTest}, \texttt{NavigationJourneyTest}, \texttt{OutdoorNavigatorTest}, \texttt{OutdoorRoutingTest}).
+    \item \textbf{Pruebas unitarias (\texttt{app/src/test/}, 18 ficheros JUnit, 138 casos verificados en verde):} Verifican el estado del viaje interior (\texttt{IndoorTripStateTest}), la detección del gesto de confirmación por inclinación (\texttt{SingleTiltActionDetectorTest}), el catálogo exterior y cálculo de distancias GPS (\texttt{GuidanceExteriorRepositoryTest}, \texttt{OutdoorDistancesTest}, \texttt{GpsLocationReaderTest}), las políticas de fechas y autorización de pagos de comedor (\texttt{DiningReservationPolicyTest}, \texttt{DiningPaymentAuthorizerTest}) y la lógica de llegada exterior y transición al edificio (\texttt{ArrivalDetectorTest}, \texttt{NavigationJourneyTest}, \texttt{OutdoorNavigatorTest}, \texttt{OutdoorRoutingTest}).
     \item \textbf{Pruebas instrumentadas de interfaz (\texttt{app/src/androidTest/}, 5 ficheros Compose Test / Espresso):} Cubren el flujo visual completo de reserva y pago en \textit{Comedores} (\texttt{DiningPaymentTest}), la integración exterior-interior desde comedor, horario o profesores (\texttt{OutdoorNavigationIntegrationTest}), la presentación de llegada y entrada manual al edificio (\texttt{IndoorArrivalPresentationTest}) y la visualización limpia de pasos peatonales (\texttt{WalkingStepPresentationTest}).
 \end{itemize}
 

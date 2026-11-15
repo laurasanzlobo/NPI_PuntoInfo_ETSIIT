@@ -224,7 +224,6 @@
     <string name="profile_year_4">4º Año</string>
     <string name="profile_group_a">Grupo A</string>
     <string name="profile_photo_desc">Foto de perfil</string>
-    <string name="profile_simulate_btn">Simular (este botón se borrará en un futuro)</string>
     <string name="profile_tui_verified_toast">¡TUI verificada! Sesión iniciada como %1$s</string>
 
     <!-- Services Strings -->
