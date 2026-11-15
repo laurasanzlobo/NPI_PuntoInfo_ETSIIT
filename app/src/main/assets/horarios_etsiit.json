@@ -1,0 +1,302 @@
+{
+  "curso_academico": "Curso Académico Local",
+  "fecha_extraccion": "2026-10-21T23:33:55.344954",
+  "total_grados": 1,
+  "total_clases": 18,
+  "grados": [
+    {
+      "id": "gii",
+      "nombre": "Grado en Ingeniería Informática",
+      "cursos": [
+        {
+          "curso": 4,
+          "grupo": "A",
+          "cuatrimestre": 1,
+          "mencion": "",
+          "horario": {
+            "Lunes": [
+              {
+                "time": "09:30 - 11:30",
+                "hora_inicio": "09:30",
+                "hora_fin": "11:30",
+                "subject": "Programación Técnica y Científica",
+                "acronym": "PTC",
+                "subgroup": null,
+                "room": "Aula 1.8 · Planta 1",
+                "room_code": "1.8",
+                "planta": "P1",
+                "tipo_espacio": "aula",
+                "professor": "José Enrique Cano Ocaña",
+                "isPractice": false,
+                "isCurrent": false
+              },
+              {
+                "time": "11:30 - 13:30",
+                "hora_inicio": "11:30",
+                "hora_fin": "13:30",
+                "subject": "Simulación de Sistemas",
+                "acronym": "SS",
+                "subgroup": "A1",
+                "room": "Laboratorio 2.7 · Planta 2",
+                "room_code": "2.7",
+                "planta": "P2",
+                "tipo_espacio": "laboratorio",
+                "professor": "Luis Miguel Campos Ibáñez",
+                "isPractice": true,
+                "isCurrent": false
+              }
+            ],
+            "Martes": [
+              {
+                "time": "09:30 - 11:30",
+                "hora_inicio": "09:30",
+                "hora_fin": "11:30",
+                "subject": "Teoría de la Información y la Codificación",
+                "acronym": "TIC",
+                "subgroup": "A1",
+                "room": "Laboratorio 2.3 · Planta 2",
+                "room_code": "2.3",
+                "planta": "P2",
+                "tipo_espacio": "laboratorio",
+                "professor": "Manuel Pegalajar Cuéllar",
+                "isPractice": true,
+                "isCurrent": false
+              },
+              {
+                "time": "11:30 - 13:30",
+                "hora_inicio": "11:30",
+                "hora_fin": "13:30",
+                "subject": "Simulación de Sistemas",
+                "acronym": "SS",
+                "subgroup": null,
+                "room": "Aula 0.1 · Planta Baja",
+                "room_code": "0.1",
+                "planta": "PB",
+                "tipo_espacio": "aula",
+                "professor": "Luis Miguel Campos Ibáñez",
+                "isPractice": false,
+                "isCurrent": false
+              }
+            ],
+            "Miércoles": [
+              {
+                "time": "09:30 - 11:30",
+                "hora_inicio": "09:30",
+                "hora_fin": "11:30",
+                "subject": "Teoría de la Información y la Codificación",
+                "acronym": "TIC",
+                "subgroup": null,
+                "room": "Aula 1.1 · Planta 1",
+                "room_code": "1.1",
+                "planta": "P1",
+                "tipo_espacio": "aula",
+                "professor": "Manuel Pegalajar Cuéllar",
+                "isPractice": false,
+                "isCurrent": false
+              },
+              {
+                "time": "11:30 - 13:30",
+                "hora_inicio": "11:30",
+                "hora_fin": "13:30",
+                "subject": "Programación Técnica y Científica",
+                "acronym": "PTC",
+                "subgroup": "A1",
+                "room": "Laboratorio 3.5 · Planta 3",
+                "room_code": "3.5",
+                "planta": "P3",
+                "tipo_espacio": "laboratorio",
+                "professor": "José Enrique Cano Ocaña",
+                "isPractice": true,
+                "isCurrent": false
+              }
+            ],
+            "Jueves": [
+              {
+                "time": "08:30 - 10:30",
+                "hora_inicio": "08:30",
+                "hora_fin": "10:30",
+                "subject": "Nuevos Paradigmas de Interacción",
+                "acronym": "NPI",
+                "subgroup": null,
+                "room": "Aula 0.5 · Planta Baja",
+                "room_code": "0.5",
+                "planta": "PB",
+                "tipo_espacio": "aula",
+                "professor": "Marcelino José Cabrera Cuevas",
+                "isPractice": false,
+                "isCurrent": false
+              },
+              {
+                "time": "10:30 - 12:30",
+                "hora_inicio": "10:30",
+                "hora_fin": "12:30",
+                "subject": "Visión por Computador",
+                "acronym": "VC",
+                "subgroup": "A1",
+                "room": "Laboratorio 3.8 · Planta 3",
+                "room_code": "3.8",
+                "planta": "P3",
+                "tipo_espacio": "laboratorio",
+                "professor": "Siham Tabik Ouled Hrour",
+                "isPractice": true,
+                "isCurrent": false
+              },
+              {
+                "time": "10:30 - 12:30",
+                "hora_inicio": "10:30",
+                "hora_fin": "12:30",
+                "subject": "Nuevos Paradigmas de Interacción",
+                "acronym": "NPI",
+                "subgroup": "A2",
+                "room": "Laboratorio 2.7 · Planta 2",
+                "room_code": "2.7",
+                "planta": "P2",
+                "tipo_espacio": "laboratorio",
+                "professor": "Marcelino José Cabrera Cuevas",
+                "isPractice": true,
+                "isCurrent": false
+              },
+              {
+                "time": "10:30 - 12:30",
+                "hora_inicio": "10:30",
+                "hora_fin": "12:30",
+                "subject": "Procesadores de Lenguajes",
+                "acronym": "PL",
+                "subgroup": "A3",
+                "room": "Laboratorio 2.8 · Planta 2",
+                "room_code": "2.8",
+                "planta": "P2",
+                "tipo_espacio": "laboratorio",
+                "professor": "Jorge Revelles Moreno",
+                "isPractice": true,
+                "isCurrent": false
+              },
+              {
+                "time": "12:30 - 14:30",
+                "hora_inicio": "12:30",
+                "hora_fin": "14:30",
+                "subject": "Visión por Computador",
+                "acronym": "VC",
+                "subgroup": null,
+                "room": "Aula 0.5 · Planta Baja",
+                "room_code": "0.5",
+                "planta": "PB",
+                "tipo_espacio": "aula",
+                "professor": "Pablo Mesejo Santiago",
+                "isPractice": false,
+                "isCurrent": false
+              }
+            ],
+            "Viernes": [
+              {
+                "time": "08:30 - 10:30",
+                "hora_inicio": "08:30",
+                "hora_fin": "10:30",
+                "subject": "Procesadores de Lenguajes",
+                "acronym": "PL",
+                "subgroup": "A1",
+                "room": "Laboratorio 2.8 · Planta 2",
+                "room_code": "2.8",
+                "planta": "P2",
+                "tipo_espacio": "laboratorio",
+                "professor": "Jorge Revelles Moreno",
+                "isPractice": true,
+                "isCurrent": false
+              },
+              {
+                "time": "08:30 - 10:30",
+                "hora_inicio": "08:30",
+                "hora_fin": "10:30",
+                "subject": "Visión por Computador",
+                "acronym": "VC",
+                "subgroup": "A2",
+                "room": "Laboratorio 2.6 · Planta 2",
+                "room_code": "2.6",
+                "planta": "P2",
+                "tipo_espacio": "laboratorio",
+                "professor": "Pablo Mesejo Santiago",
+                "isPractice": true,
+                "isCurrent": false
+              },
+              {
+                "time": "08:30 - 10:30",
+                "hora_inicio": "08:30",
+                "hora_fin": "10:30",
+                "subject": "Nuevos Paradigmas de Interacción",
+                "acronym": "NPI",
+                "subgroup": "A3",
+                "room": "Laboratorio 2.7 · Planta 2",
+                "room_code": "2.7",
+                "planta": "P2",
+                "tipo_espacio": "laboratorio",
+                "professor": "Marcelino José Cabrera Cuevas",
+                "isPractice": true,
+                "isCurrent": false
+              },
+              {
+                "time": "10:30 - 12:30",
+                "hora_inicio": "10:30",
+                "hora_fin": "12:30",
+                "subject": "Procesadores de Lenguajes",
+                "acronym": "PL",
+                "subgroup": null,
+                "room": "Aula 0.5 · Planta Baja",
+                "room_code": "0.5",
+                "planta": "PB",
+                "tipo_espacio": "aula",
+                "professor": "Ramón López-Cózar Delgado",
+                "isPractice": false,
+                "isCurrent": false
+              },
+              {
+                "time": "12:30 - 14:30",
+                "hora_inicio": "12:30",
+                "hora_fin": "14:30",
+                "subject": "Nuevos Paradigmas de Interacción",
+                "acronym": "NPI",
+                "subgroup": "A1",
+                "room": "Laboratorio 2.7 · Planta 2",
+                "room_code": "2.7",
+                "planta": "P2",
+                "tipo_espacio": "laboratorio",
+                "professor": "Marcelino José Cabrera Cuevas",
+                "isPractice": true,
+                "isCurrent": false
+              },
+              {
+                "time": "12:30 - 14:30",
+                "hora_inicio": "12:30",
+                "hora_fin": "14:30",
+                "subject": "Procesadores de Lenguajes",
+                "acronym": "PL",
+                "subgroup": "A2",
+                "room": "Laboratorio 2.6 · Planta 2",
+                "room_code": "2.6",
+                "planta": "P2",
+                "tipo_espacio": "laboratorio",
+                "professor": "Jorge Revelles Moreno",
+                "isPractice": true,
+                "isCurrent": false
+              },
+              {
+                "time": "12:30 - 14:30",
+                "hora_inicio": "12:30",
+                "hora_fin": "14:30",
+                "subject": "Visión por Computador",
+                "acronym": "VC",
+                "subgroup": "A3",
+                "room": "Laboratorio 3.2 · Planta 3",
+                "room_code": "3.2",
+                "planta": "P3",
+                "tipo_espacio": "laboratorio",
+                "professor": "Pablo Mesejo Santiago",
+                "isPractice": true,
+                "isCurrent": false
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

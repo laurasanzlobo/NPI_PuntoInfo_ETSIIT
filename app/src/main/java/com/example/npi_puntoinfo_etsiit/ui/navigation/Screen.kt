@@ -1,0 +1,51 @@
+package com.example.npi_puntoinfo_etsiit.ui.navigation
+
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccountCircle
+import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Navigation
+import androidx.compose.material.icons.filled.Restaurant
+import androidx.compose.material.icons.filled.School
+import androidx.compose.ui.graphics.vector.ImageVector
+
+sealed class Screen(
+    val route: String,
+    val title: String,
+    val icon: ImageVector
+) {
+    data object Home : Screen("home", "Inicio", Icons.Default.Home)
+    data object Schedule : Screen("schedule", "Horario", Icons.Default.DateRange)
+    data object Navigation : Screen("navigation", "Guiado", Icons.Default.Navigation) {
+        const val routePattern = "navigation?destination={destination}&location={location}"
+
+        fun createRoute(destination: String? = null, location: String? = null): String {
+            return if (!destination.isNullOrBlank()) {
+                val encodedDest = android.net.Uri.encode(destination)
+                val encodedLoc = android.net.Uri.encode(location ?: "")
+                "navigation?destination=$encodedDest&location=$encodedLoc"
+            } else {
+                "navigation"
+            }
+        }
+    }
+    data object Dining : Screen("dining", "Comedores", Icons.Default.Restaurant)
+    data object Outdoor : Screen("outdoor", "Mapa exterior", Icons.Default.Navigation) {
+        const val routePattern = com.example.npi_puntoinfo_etsiit.outdoor.OutdoorNavigationRoute.pattern
+        fun createRoute(destinationId: String): String =
+            com.example.npi_puntoinfo_etsiit.outdoor.OutdoorNavigationRoute.create(destinationId)
+    }
+    data object Professors : Screen("professors", "Profesores", Icons.Default.School)
+    data object Services : Screen("services", "Servicios", Icons.Default.Info)
+    data object Profile : Screen("profile", "Mi Perfil", Icons.Default.AccountCircle)
+    data object GesturesGuide : Screen("gestures_guide", "Guía de Gestos", Icons.Default.Info)
+}
+
+val bottomNavItems = listOf(
+    Screen.Home,
+    Screen.Schedule,
+    Screen.Navigation,
+    Screen.Dining,
+    Screen.Professors
+)

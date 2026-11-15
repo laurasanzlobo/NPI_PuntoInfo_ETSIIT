@@ -1,0 +1,235 @@
+<resources>
+    <!-- App & General -->
+    <string name="app_name">ETSIIT</string>
+    <string name="confirm">Confirmar</string>
+    <string name="cancel">Cancelar</string>
+    <string name="yes">Sí</string>
+    <string name="no">No</string>
+    <string name="go">Ir</string>
+    <string name="back">Volver</string>
+    <string name="close">Cerrar</string>
+    <string name="clear">Limpiar</string>
+    <string name="search">Buscar</string>
+
+    <!-- Navigation Titles -->
+    <string name="title_home">Inicio</string>
+    <string name="title_map">Mapa ETSIIT</string>
+    <string name="title_outdoor_map">Mapa exterior</string>
+    <string name="title_dining">Comedores</string>
+    <string name="title_professors">Profesores</string>
+    <string name="title_profile">Mi Perfil</string>
+    <string name="title_gestures_guide">Guía de Gestos</string>
+    <string name="title_step_by_step">Guiado Paso a Paso</string>
+
+    <!-- Home Screen -->
+    <string name="welcome_title">Bienvenido a la ETSIIT</string>
+    <string name="welcome_subtitle">Punto de Información y Guiado ETSIIT</string>
+    <string name="next_class_header">PRÓXIMA CLASE</string>
+    <string name="nav_schedule_title">Mi Horario</string>
+    <string name="nav_schedule_subtitle">Consulta de clases y aulas</string>
+    <string name="nav_services_title">Servicios</string>
+    <string name="nav_services_subtitle">Biblioteca, cafetería y gestión</string>
+    <string name="nav_dining_title">Comedores</string>
+    <string name="nav_dining_subtitle">Menú diario y encargos</string>
+    <string name="nav_dining_subtitle_guest">Consulta del menú diario</string>
+    <string name="nav_professors_title">Profesores</string>
+    <string name="nav_professors_subtitle">Tutorías y despachos</string>
+    <string name="news_1_title">IV Olimpiada Informática de Granada</string>
+    <string name="news_1_subtitle">Fase clasificatoria provincial integrada en la Olimpiada de Andalucía.</string>
+    <string name="news_2_title">Liderazgo en el Ranking Shanghai 2026</string>
+    <string name="news_2_subtitle">La ETSIIT y la UGR se consolidan en el top internacional de informática.</string>
+    <string name="news_3_title">Emisión Instantánea de la TUI 2026/27</string>
+    <string name="news_3_subtitle">Puntos de emisión activa en el campus para obtener tu carné universitario.</string>
+    <string name="news_4_title">Plan de Tutorización Nuevos Alumnos</string>
+    <string name="news_4_subtitle">Apoyo y mentoría para estudiantes que inician sus estudios en la escuela.</string>
+
+    <!-- Indoor Navigation Screen -->
+    <string name="indoor_map_title">Mapa ETSIIT</string>
+    <string name="indoor_map_subtitle">Plano interactivo del edificio</string>
+    <string name="from_label">Desde: %1$s</string>
+    <string name="floor_label">Planta:</string>
+    <string name="calculating_route">Calculando ruta a %1$s...</string>
+    <string name="step_sequence">Secuencia de paso</string>
+    <string name="n_nodes">%1$d nodos</string>
+    <string name="step_by_step_summary">Vas desde %1$s hasta %2$s y recorres %3$d nodos (%4$d metros · %5$s).</string>
+    <string name="step_by_step_header">Guiado Paso a Paso (Dijkstra)</string>
+    <string name="indoor_step_change_floor">Cambia de la planta %1$s a la %2$s por escaleras o ascensor hacia %3$s</string>
+    <string name="indoor_step_turn_right">Gira a la derecha tras %1$s dirigiéndote hacia %2$s</string>
+    <string name="indoor_step_turn_left">Gira a la izquierda tras %1$s dirigiéndote hacia %2$s</string>
+    <string name="indoor_step_arrival">Llegada inminente a %1$s</string>
+    <string name="indoor_step_straight">Sigue recto por el pasillo desde %1$s hacia %2$s</string>
+    <string name="cancel_route">Cancelar ruta</string>
+    <string name="return_outdoors">Volver al exterior</string>
+    <string name="legend_start">Inicio</string>
+    <string name="legend_destination">Destino</string>
+    <string name="legend_stairs_elevator">Escalera / Ascensor</string>
+    <string name="explore_floors_hint">Toca una planta para explorar su distribución arquitectónica</string>
+
+    <!-- Origin Verification Dialog -->
+    <string name="verification_dialog_title">Verificación de Ubicación</string>
+    <string name="verification_prompt_schedule">¿Te encuentras actualmente en el %1$s (%2$s)?</string>
+    <string name="verification_yes_here">Sí, estoy aquí</string>
+    <string name="verification_no_not_here">No, no estoy aquí</string>
+    <string name="verification_subject">Asignatura: %1$s</string>
+    <string name="verification_barometer_title">Estimación por Barómetro</string>
+    <string name="verification_barometer_prompt">Según el sensor de barómetro de tu móvil, estás en la %1$s. ¿Es correcto?</string>
+    <string name="verification_barometer_pressure">Presión: %1$.1f hPa</string>
+    <string name="verification_barometer_floor">Planta estimada: %1$s</string>
+    <string name="verification_no_wrong">No, es errónea</string>
+    <string name="verification_select_location_title">Selecciona tu ubicación</string>
+    <string name="verification_select_location_prompt">Elige el espacio o aula más cercana donde estás en %1$s:</string>
+    <string name="verification_qr_title">Escaneo de Código QR</string>
+    <string name="verification_qr_prompt">Por favor, escanea el código QR más cercano para ubicar tu posición inicial.</string>
+    <string name="open_camera">Abrir Cámara</string>
+
+    <!-- Outdoor Navigation Screen & Steps -->
+    <string name="outdoor_nav_title">Navegación Exterior GPS</string>
+    <string name="outdoor_nav_subtitle">Guiado hacia la ETSIIT</string>
+    <string name="im_inside">Ya estoy dentro</string>
+    <string name="recalculating_route">Recalculando ruta exterior...</string>
+    <string name="gps_off_warning">Ubicación GPS desactivada</string>
+    <string name="enable_gps_prompt">Activa el GPS de tu dispositivo para recibir guiado paso a paso.</string>
+    <string name="off_route_warning">¡Atención! Te has desviado de la ruta. Recalculando...</string>
+    <string name="destination_reached">¡Has llegado a tu destino!</string>
+    <string name="step_straight">Avanza recto durante %1$d metros</string>
+    <string name="step_turn_right">Gira a la derecha en %1$s</string>
+    <string name="step_turn_left">Gira a la izquierda en %1$s</string>
+    <string name="step_slight_right">Inclinación leve a la derecha</string>
+    <string name="step_slight_left">Inclinación leve a la izquierda</string>
+    <string name="step_uturn">Haz un giro de 180º</string>
+    <string name="step_destination_ahead">Tu destino está al frente</string>
+
+    <!-- Dining Screen -->
+    <string name="dining_title">Comedores UGR</string>
+    <string name="dining_today_menu">Menú de Hoy</string>
+    <string name="dining_first_courses">Primeros Platos</string>
+    <string name="dining_second_courses">Segundos Platos</string>
+    <string name="dining_desserts">Postres</string>
+    <string name="dining_takeaway_order">Encargar Menú para Llevar</string>
+    <string name="dining_order_button">Realizar Encargo</string>
+    <string name="dining_order_success">¡Encargo realizado con éxito!</string>
+    <string name="dining_nearest">Comedor más cercano (GPS): %1$s</string>
+
+    <!-- Professors Screen -->
+    <string name="professors_search_placeholder">Buscar profesor, despacho o departamento...</string>
+    <string name="professors_office_hours">Horario de Tutorías</string>
+    <string name="professors_office">Despacho</string>
+    <string name="professors_department">Departamento</string>
+    <string name="professors_email">Correo Electrónico</string>
+    <string name="professors_how_to_get_there">Cómo Llegar</string>
+
+    <!-- Schedule Screen -->
+    <string name="schedule_title">Mi Horario Lectivo</string>
+    <string name="schedule_day_monday">Lunes</string>
+    <string name="schedule_day_tuesday">Martes</string>
+    <string name="schedule_day_wednesday">Miércoles</string>
+    <string name="schedule_day_thursday">Jueves</string>
+    <string name="schedule_day_friday">Viernes</string>
+    <string name="schedule_no_classes">No tienes clases programadas para este día</string>
+    <string name="schedule_classroom">Aula</string>
+    <string name="schedule_group">Grupo</string>
+
+    <!-- Profile Screen -->
+    <string name="profile_title">Mi Perfil UGR</string>
+    <string name="profile_student_label">ESTUDIANTE</string>
+    <string name="profile_academic_info">Información Académica</string>
+    <string name="profile_preferences">Preferencias de Navegación</string>
+    <string name="profile_accessible_route">Ruta Accesible (Ascensor)</string>
+    <string name="profile_fast_route">Ruta Rápida (Escaleras)</string>
+    <string name="profile_accessible_desc">Prioriza ascensores para movilidad reducida</string>
+    <string name="profile_fast_desc">Usa escaleras y tramos directos entre plantas</string>
+    <string name="profile_app_language">Idioma de la Aplicación</string>
+    <string name="profile_app_language_en">App Language</string>
+    <string name="profile_lang_spanish">Español (Spanish)</string>
+    <string name="profile_lang_english">English (Inglés)</string>
+    <string name="profile_logout">Cerrar Sesión</string>
+    <string name="profile_logout_toast">Sesión cerrada</string>
+    <string name="profile_scan_tui_qr">Escanea el código QR de tu TUI</string>
+    <string name="profile_scan_tui_qr_desc">Enfoca el código QR situado en el reverso de la tarjeta</string>
+
+    <!-- Gestures Guide -->
+    <string name="gestures_guide_title">Guía de Gestos e Inclinación</string>
+    <string name="gesture_proximity_title">Sensor de Proximidad</string>
+    <string name="gesture_proximity_desc">Pasa la mano por la parte superior de la pantalla para activar el asistente de voz</string>
+    <string name="gesture_shake_title">Triple Inclinación / Sacudida</string>
+    <string name="gesture_shake_desc">Sacude 3 veces el móvil para consultar tu aula o clase actual al instante</string>
+    <string name="gesture_lift_title">Gesto Raise to View</string>
+    <string name="gesture_lift_desc">Levanta el móvil verticalmente para conmutar al guiado paso a paso</string>
+    <string name="understood">Entendido</string>
+    <string name="gesture_how_to_label">• Cómo es el gesto:</string>
+    <string name="gesture_what_for_label">• Para qué sirve:</string>
+    <string name="gesture_usage_label">Uso: %1$s</string>
+    <string name="gesture_name_label">Gesto: %1$s</string>
+
+    <!-- Additional Dining & Payment Strings -->
+    <string name="dining_menu_traditional">Tradicional</string>
+    <string name="dining_menu_vegetarian">Vegetariano</string>
+    <string name="dining_payment_gateway">Pasarela de pago</string>
+    <string name="dining_order_summary">Resumen del pedido</string>
+    <string name="dining_day">Día:</string>
+    <string name="dining_choose_menu_type">Elige tu tipo de menú:</string>
+    <string name="dining_menu_label">Menú %1$s</string>
+    <string name="dining_payment_method">Método de pago</string>
+    <string name="dining_payment_proceed_question">¿Quieres proceder al pago?</string>
+    <string name="dining_payment_proceed_desc">Confirma con la huella, el reconocimiento facial o el PIN, patrón o contraseña que tengas configurado en el móvil. Importe: %1$s.</string>
+    <string name="dining_waiting_auth">Esperando autenticación…</string>
+    <string name="dining_proceed_payment_btn">Proceder al pago</string>
+    <string name="dining_cancel_return">Cancelar y volver</string>
+    <string name="dining_auth_cancelled">Autenticación cancelada. No se ha reservado el menú.</string>
+    <!-- Gestures Guide Detailed Explanations -->
+    <string name="gesture_take_me_there_title">Llévame</string>
+    <string name="gesture_take_me_there_name">Inclinar a la izquierda</string>
+    <string name="gesture_take_me_there_desc">Inclina el móvil hacia la izquierda y devuélvelo a tu posición inicial para iniciar el guiado hasta el destino.</string>
+    <string name="gesture_take_me_there_howto">Inclina el móvil hacia la izquierda.</string>
+    <string name="gesture_take_me_there_whatfor">Te guía directamente hasta el destino indicado.</string>
+
+    <string name="gesture_triple_shake_title">Clase actual</string>
+    <string name="gesture_triple_shake_name">3 veces hacia adelante</string>
+    <string name="gesture_triple_shake_desc">Echa la punta superior del móvil hacia adelante 3 veces (1, 2, 3) y vuelve a tu posición para consultar tu clase actual o próxima.</string>
+    <string name="gesture_triple_shake_howto">Inclina la punta superior 3 veces hacia adelante.</string>
+    <string name="gesture_triple_shake_whatfor">Muestra tu clase actual o próxima y su aula.</string>
+
+    <string name="gesture_action_trigger_title">Confirmar / Enviar</string>
+    <string name="gesture_action_trigger_name">Inclinar hacia ti</string>
+    <string name="gesture_action_trigger_desc">Inclina el móvil hacia ti y vuelve a la posición inicial para encargar menú en comedores o enviar un correo al profesor.</string>
+    <string name="gesture_action_trigger_howto">Inclina el móvil hacia ti.</string>
+    <string name="gesture_action_trigger_whatfor">Reserva el menú para llevar en Comedores o escribe al profesor.</string>
+
+    <string name="gesture_lift_phone_title">Guiado paso a paso</string>
+    <string name="gesture_lift_phone_name">Levantar el móvil</string>
+    <string name="gesture_lift_phone_desc">Levanta el móvil en vertical frente a ti para ver el guiado paso a paso con fotos reales del recorrido.</string>
+    <string name="gesture_lift_phone_howto">Sube el móvil en vertical frente a ti.</string>
+    <string name="gesture_lift_phone_whatfor">Cambia de ver el mapa 2D a un guiado paso a paso con fotos reales.</string>
+
+    <string name="gesture_proximity_voice_title">Búsqueda por voz</string>
+    <string name="gesture_proximity_voice_name">Acercar la mano</string>
+    <string name="gesture_proximity_voice_desc">Acerca la mano al sensor superior del móvil (junto a la cámara frontal) para activar el asistente de voz y buscar cualquier destino.</string>
+    <string name="gesture_proximity_voice_howto">Acerca la mano a poca distancia de la parte superior del móvil.</string>
+    <string name="gesture_proximity_voice_whatfor">Búsqueda por voz para guiarte a aulas, comedores o profesores.</string>
+
+    <string name="gesture_pinch_zoom_title">Zoom Horario</string>
+    <string name="gesture_pinch_zoom_name">Pellizco con 2 dedos</string>
+    <string name="gesture_pinch_zoom_desc">Haz el gesto de zoom con dos dedos (abrir o cerrar pellizco) para alternar entre la vista panorámica de 3 días y la vista detallada de 1 día.</string>
+    <string name="gesture_pinch_zoom_howto">Abre o junta 2 dedos sobre la pantalla.</string>
+    <string name="gesture_pinch_zoom_whatfor">Alterna entre ver 3 días a la vez o el día actual ampliado con todos sus detalles.</string>
+
+    <!-- Student Profile Additional Strings -->
+    <string name="profile_academic_record">EXPEDIENTE ACADÉMICO</string>
+    <string name="profile_degree_name">Grado en Ingeniería Informática</string>
+    <string name="profile_year_4">4º Año</string>
+    <string name="profile_group_a">Grupo A</string>
+    <string name="profile_photo_desc">Foto de perfil</string>
+    <string name="profile_simulate_btn">Simular (este botón se borrará en un futuro)</string>
+    <string name="profile_tui_verified_toast">¡TUI verificada! Sesión iniciada como %1$s</string>
+
+    <!-- Services Strings -->
+    <string name="service_canteen">Comedor Aynadamar</string>
+    <string name="service_canteen_fuentenueva">Comedor Fuentenueva</string>
+    <string name="service_canteen_cartuja">Comedor Cartuja</string>
+    <string name="service_canteen_pts">Comedor PTS</string>
+    <string name="service_cafeteria">Cafetería</string>
+    <string name="service_library">Biblioteca</string>
+    <string name="service_auditorium">Salón de Actos</string>
+    <string name="service_main_entrance">Entrada Principal Exterior</string>
+    <string name="service_lobby">Vestíbulo de Entrada</string>
+</resources>
