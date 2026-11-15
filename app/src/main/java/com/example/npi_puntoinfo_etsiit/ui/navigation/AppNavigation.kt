@@ -269,25 +269,44 @@ fun AppNavigation() {
             val spokenList = result.data?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)
             val query = spokenList?.firstOrNull()?.trim()
             if (!query.isNullOrBlank()) {
+                val isOnProfessors = currentRoute?.startsWith(Screen.Professors.route) == true
 
-                // --- 1. BUSCAR PRIMERO EN EL DIRECTORIO DE PROFESORES ---
-                val jsonString = context.assets.open("docentes.json").bufferedReader().use { it.readText() }
-                val jsonArray = org.json.JSONObject(jsonString).getJSONArray("profesores")
-                var foundProfessor: String? = null
+                // --- 1. BUSCAR EN PROFESORES (si ya estamos en la pantalla, transcribe cualquier texto directo al buscador) ---
+                val hasProfessorMatch = if (isOnProfessors) {
+                    true
+                } else {
+                    val jsonString = context.assets.open("docentes.json").bufferedReader().use { it.readText() }
+                    val jsonArray = org.json.JSONObject(jsonString).getJSONArray("profesores")
+                    val normQuery = java.text.Normalizer.normalize(query, java.text.Normalizer.Form.NFD)
+                        .replace(Regex("\\p{InCombiningDiacriticalMarks}+"), "")
+                        .lowercase()
+                    var matched = false
 
-                for (i in 0 until jsonArray.length()) {
-                    val nombre = jsonArray.getJSONObject(i).getString("nombre")
-                    // Comprobamos si lo que ha dicho el usuario coincide con algún nombre
-                    if (nombre.contains(query, ignoreCase = true)) {
-                        foundProfessor = nombre
-                        break
+                    for (i in 0 until jsonArray.length()) {
+                        val nombre = jsonArray.getJSONObject(i).getString("nombre")
+                        val normNombre = java.text.Normalizer.normalize(nombre, java.text.Normalizer.Form.NFD)
+                            .replace(Regex("\\p{InCombiningDiacriticalMarks}+"), "")
+                            .lowercase()
+                        // Comprobamos si lo que ha dicho el usuario coincide con algún nombre
+                        if (normNombre.contains(normQuery)) {
+                            matched = true
+                            break
+                        }
                     }
+                    matched
                 }
 
-                if (foundProfessor != null) {
+                if (hasProfessorMatch) {
                     triggerVibration(context, durationMs = 120)
-                    // Viajamos a la pestaña de profesores pasándole el nombre por la URL interna
-                    navController.navigate("${Screen.Professors.route}?nombre=$foundProfessor")
+                    // Pasamos exactamente el texto reconocido por voz (ej. "Fernando" o una asignatura), sin completar apellidos ni mostrar error de ruta
+                    val encodedQuery = android.net.Uri.encode(query)
+                    val targetRoute = "${Screen.Professors.route}?nombre=$encodedQuery"
+                    navController.navigate(targetRoute) {
+                        if (isOnProfessors) {
+                            popUpTo("${Screen.Professors.route}?nombre={nombre}") { inclusive = true }
+                        }
+                        launchSingleTop = true
+                    }
                     return@rememberLauncherForActivityResult
                 }
                 // --- FIN DE LA BÚSQUEDA DE PROFESORES ---
@@ -347,9 +366,9 @@ fun AppNavigation() {
 
     fun launchGlobalVoiceSearch(promptText: String? = null) {
         val defaultPrompt = if (currentRoute?.startsWith(Screen.Professors.route) == true) {
-            "Di el nombre, apellido o departamento"
+            "Di el nombre, asignatura o departamento"
         } else {
-            "¿A dónde quieres ir o a qué profesor buscas?"
+            "¿A dónde quieres ir?"
         }
         val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
             putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)

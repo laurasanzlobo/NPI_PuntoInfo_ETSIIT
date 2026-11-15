@@ -420,14 +420,14 @@ fun ProfessorsScreen(onNavigate: (String) -> Unit, searchedName: String? = null)
     val profile = UserSessionRepository.getProfile(context)
     val isLoggedIn = profile.isLoggedIn
     val isEnglish = profile.language == "en"
+    val allCategory = if (isEnglish) "All" else "Todos"
+    val myTeachersCategory = if (isEnglish) "My Professors" else "Mis Profesores"
     var selectedProfessor by remember { mutableStateOf<Professor?>(null) }
     var searchQuery by remember { mutableStateOf(searchedName ?: "") }
     var selectedFilterCategory by remember(isLoggedIn, isEnglish) {
-        mutableStateOf(if (isLoggedIn) (if (isEnglish) "My Professors" else "Mis Profesores") else (if (isEnglish) "All" else "Todos"))
-    }
-
-    LaunchedEffect(isLoggedIn, isEnglish) {
-        selectedFilterCategory = if (isLoggedIn) (if (isEnglish) "My Professors" else "Mis Profesores") else (if (isEnglish) "All" else "Todos")
+        mutableStateOf(
+            if (!searchedName.isNullOrBlank() || !isLoggedIn) allCategory else myTeachersCategory
+        )
     }
 
     // Motor Text-to-Speech (TTS) en español para el diálogo conversacional
@@ -501,6 +501,49 @@ fun ProfessorsScreen(onNavigate: (String) -> Unit, searchedName: String? = null)
         if (isLoggedIn) raw else raw.sortedBy { normalizarTexto(it.name) }
     }
 
+    fun matchesCategory(prof: Professor, category: String): Boolean = when (category) {
+        "Mis Profesores", "My Professors" -> prof.isMyTeacher
+        "CCIA" -> prof.department.contains("Computación", ignoreCase = true)
+        "LSI" -> prof.department.contains("Lenguajes", ignoreCase = true)
+        "Otras Áreas", "Other Departments" -> !prof.isExternal &&
+            !prof.department.contains("Computación", ignoreCase = true) &&
+            !prof.department.contains("Lenguajes", ignoreCase = true)
+        "Exterior UGR", "External UGR" -> prof.isExternal
+        else -> true
+    }
+
+    fun matchesQuery(prof: Professor, normQuery: String): Boolean {
+        if (normQuery.isBlank()) return true
+        return normalizarTexto(prof.name).contains(normQuery) ||
+            normalizarTexto(prof.department).contains(normQuery) ||
+            normalizarTexto(prof.subject).contains(normQuery) ||
+            normalizarTexto(prof.office).contains(normQuery) ||
+            normalizarTexto(prof.campus).contains(normQuery)
+    }
+
+    fun applyVoiceSearch(rawQuery: String) {
+        val trimmed = rawQuery.trim()
+        if (trimmed.isBlank()) return
+        searchQuery = trimmed
+        val normSearch = normalizarTexto(trimmed)
+        val searchMatches = professorsList.filter { matchesQuery(it, normSearch) }
+        if (searchMatches.isNotEmpty() && searchMatches.none { matchesCategory(it, selectedFilterCategory) }) {
+            selectedFilterCategory = allCategory
+        }
+        val nameMatches = professorsList.filter { prof ->
+            val normName = normalizarTexto(prof.name)
+            prof.name.equals(trimmed, ignoreCase = true) ||
+                normName == normSearch ||
+                normName.contains(normSearch) ||
+                normSearch.contains(normName)
+        }
+        val exactOrSingle = nameMatches.firstOrNull { normalizarTexto(it.name) == normSearch }
+            ?: nameMatches.singleOrNull()
+        if (exactOrSingle != null) {
+            selectedProfessor = exactOrSingle
+        }
+    }
+
     // Launcher de reconocimiento por voz integrado
     val speechLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
@@ -509,7 +552,7 @@ fun ProfessorsScreen(onNavigate: (String) -> Unit, searchedName: String? = null)
             val spokenText = result.data?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)?.firstOrNull()?.trim()
             if (!spokenText.isNullOrBlank()) {
                 triggerVibration(context, durationMs = 120)
-                searchQuery = spokenText
+                applyVoiceSearch(spokenText)
             }
         }
     }
@@ -518,7 +561,7 @@ fun ProfessorsScreen(onNavigate: (String) -> Unit, searchedName: String? = null)
         val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
             putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
             putExtra(RecognizerIntent.EXTRA_LANGUAGE, "es-ES")
-            putExtra(RecognizerIntent.EXTRA_PROMPT, "Di el nombre, apellido o departamento")
+            putExtra(RecognizerIntent.EXTRA_PROMPT, "Di el nombre, asignatura o departamento")
         }
         try {
             speechLauncher.launch(intent)
@@ -586,17 +629,7 @@ fun ProfessorsScreen(onNavigate: (String) -> Unit, searchedName: String? = null)
     androidx.compose.runtime.LaunchedEffect(searchedName) {
         if (!searchedName.isNullOrBlank()) {
             val decoded = try { java.net.URLDecoder.decode(searchedName, "UTF-8") } catch (_: Exception) { searchedName }
-            searchQuery = decoded
-            val normSearch = normalizarTexto(decoded)
-            val found = professorsList.find {
-                it.name.equals(decoded, ignoreCase = true) ||
-                normalizarTexto(it.name) == normSearch ||
-                normalizarTexto(it.name).contains(normSearch) ||
-                normSearch.contains(normalizarTexto(it.name))
-            }
-            if (found != null) {
-                selectedProfessor = found
-            }
+            applyVoiceSearch(decoded)
         }
     }
 
@@ -649,26 +682,7 @@ fun ProfessorsScreen(onNavigate: (String) -> Unit, searchedName: String? = null)
         val queryNorm = normalizarTexto(searchQuery)
 
         val filtered = professorsList.filter { prof ->
-            val matchesCategory = when (selectedFilterCategory) {
-                "Mis Profesores", "My Professors" -> prof.isMyTeacher
-                "CCIA" -> prof.department.contains("Computación", ignoreCase = true)
-                "LSI" -> prof.department.contains("Lenguajes", ignoreCase = true)
-                "Otras Áreas", "Other Departments" -> !prof.isExternal && !prof.department.contains("Computación", ignoreCase = true) && !prof.department.contains("Lenguajes", ignoreCase = true)
-                "Exterior UGR", "External UGR" -> prof.isExternal
-                else -> true
-            }
-
-            val matchesSearch = if (queryNorm.isBlank()) {
-                true
-            } else {
-                normalizarTexto(prof.name).contains(queryNorm) ||
-                        normalizarTexto(prof.department).contains(queryNorm) ||
-                        normalizarTexto(prof.subject).contains(queryNorm) ||
-                        normalizarTexto(prof.office).contains(queryNorm) ||
-                        normalizarTexto(prof.campus).contains(queryNorm)
-            }
-
-            matchesCategory && matchesSearch
+            matchesCategory(prof, selectedFilterCategory) && matchesQuery(prof, queryNorm)
         }
 
         // Ordenación:
