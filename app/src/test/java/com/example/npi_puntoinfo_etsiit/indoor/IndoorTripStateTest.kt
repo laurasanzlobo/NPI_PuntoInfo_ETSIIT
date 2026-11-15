@@ -35,4 +35,31 @@ class IndoorTripStateTest {
         assertFalse(trip.isCompleted)
         assertEquals(0, trip.currentStepIndex)
     }
+
+    @Test
+    fun testStepDetectionAdvancesExactTargetStepsAndCrossFloorDoesNotInflate() {
+        val pssNode = Nodo("pss", "EscalerasMain_1", "PSS", "ETSIIT", "ESCALERA", 612, 614)
+        val pbNode = Nodo("pb", "EscalerasMain_PB", "PB", "ETSIIT", "ESCALERA", 642, 794)
+        val corridorNode = Nodo("cor", "Pasillo", "PB", "ETSIIT", "PASILLO", 642, 834)
+
+        val ruta = RutaCalculada(pssNode, corridorNode, listOf(pssNode, pbNode, corridorNode), 20, 15)
+        var trip = IndoorTripState.buildFromRoute("test_steps_02", ruta)
+
+        assertEquals(2, trip.steps.size)
+        assertEquals(16, trip.steps[0].targetSteps)
+        assertEquals(4, trip.steps[1].targetSteps)
+
+        repeat(15) {
+            trip = trip.onStepDetected()
+            assertEquals(0, trip.currentStepIndex)
+        }
+        trip = trip.onStepDetected()
+        assertEquals(1, trip.currentStepIndex)
+        assertEquals(0, trip.currentStepProgress)
+
+        repeat(4) {
+            trip = trip.onStepDetected()
+        }
+        assertTrue(trip.isCompleted)
+    }
 }

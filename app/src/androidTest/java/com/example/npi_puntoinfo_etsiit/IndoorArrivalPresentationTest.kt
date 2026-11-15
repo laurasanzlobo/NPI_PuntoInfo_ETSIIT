@@ -13,7 +13,6 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.example.npi_puntoinfo_etsiit.outdoor.ArrivalDetector
 import com.example.npi_puntoinfo_etsiit.outdoor.ArrivalPresentation
-import com.example.npi_puntoinfo_etsiit.outdoor.RouteConsentStore
 import com.example.npi_puntoinfo_etsiit.outdoor.NavigationTrip
 import com.example.npi_puntoinfo_etsiit.outdoor.NavigationJourney
 import com.example.npi_puntoinfo_etsiit.outdoor.IndoorTarget
@@ -186,22 +185,5 @@ class IndoorArrivalPresentationTest {
                 PackageManager.PERMISSION_DENIED else super.checkPermission(permission, pid, uid)
         override fun getSharedPreferences(name: String, mode: Int) =
             super.getSharedPreferences("${name}_proximity_test", mode)
-    }
-
-    @Test fun consentIsAbsentByDefaultAndValidAcrossNewScreenStores() {
-        val context = object : ContextWrapper(ApplicationProvider.getApplicationContext<Context>()) {
-            override fun getSharedPreferences(name: String, mode: Int) = super.getSharedPreferences("${name}_test", mode)
-        }
-        val preferences = context.getSharedPreferences("outdoor_privacy", Context.MODE_PRIVATE)
-        preferences.edit().clear().commit()
-        try {
-            assertFalse(RouteConsentStore(context).isGranted)
-            RouteConsentStore(context).grant()
-            assertTrue(RouteConsentStore(context).isGranted)
-            preferences.edit().putInt("ors_consent_version", 0).commit()
-            assertFalse(RouteConsentStore(context).isGranted)
-        } finally {
-            preferences.edit().clear().commit()
-        }
     }
 }

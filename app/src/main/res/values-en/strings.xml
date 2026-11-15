@@ -63,16 +63,21 @@
     <string name="legend_start">Start</string>
     <string name="legend_destination">Destination</string>
     <string name="legend_stairs_elevator">Stairs / Elevator</string>
+    <string name="route_mode_accessible">Accessible route</string>
+    <string name="route_mode_fast">Fast route</string>
     <string name="explore_floors_hint">Tap a floor to explore its architectural layout</string>
 
     <!-- Origin Verification Dialog -->
     <string name="verification_dialog_title">Location Verification</string>
-    <string name="verification_prompt_schedule">Are you currently in %1$s (%2$s)?</string>
-    <string name="verification_yes_here">Yes, I am here</string>
-    <string name="verification_no_not_here">No, I am not here</string>
+    <string name="verification_prompt_comedor">Are you currently at the Aynadamar Dining Hall?</string>
+    <string name="verification_prompt_schedule">Are you currently in %1$s at %2$s on %3$s?</string>
+    <string name="verification_yes_here">Yes</string>
+    <string name="verification_no_not_here">No</string>
     <string name="verification_subject">Subject: %1$s</string>
     <string name="verification_barometer_title">Barometer Estimation</string>
-    <string name="verification_barometer_prompt">According to your phone\'s barometer, you are on %1$s. Is this correct?</string>
+    <string name="verification_barometer_prompt">Are you on %1$s of the %2$s?</string>
+    <string name="building_classrooms">classrooms building</string>
+    <string name="building_common_areas">common areas building</string>
     <string name="verification_barometer_pressure">Pressure: %1$.1f hPa</string>
     <string name="verification_barometer_floor">Estimated floor: %1$s</string>
     <string name="verification_no_wrong">No, it\'s incorrect</string>
@@ -138,7 +143,7 @@
     <string name="profile_fast_route">Fast Route (Stairs)</string>
     <string name="profile_accessible_desc">Prioritizes elevators for reduced mobility</string>
     <string name="profile_fast_desc">Uses stairs and direct paths between floors</string>
-    <string name="profile_app_language">App Language</string>
+    <string name="profile_app_language">Language</string>
     <string name="profile_app_language_en">App Language</string>
     <string name="profile_lang_spanish">Spanish (Español)</string>
     <string name="profile_lang_english">English (Inglés)</string>
@@ -176,10 +181,6 @@
     <string name="dining_proceed_payment_btn">Proceed to Payment</string>
     <string name="dining_cancel_return">Cancel and Return</string>
     <string name="dining_auth_cancelled">Authentication cancelled. Menu has not been reserved.</string>
-    <string name="dining_already_ordered_toast">You already have a menu ordered for this day</string>
-    <string name="dining_reserve_notice_toast">You can reserve any of the next four working days, but not today.</string>
-    <string name="dining_login_gesture_toast">Log in to order your menu using gestures</string>
-    <string name="dining_expired_reservation_toast">The deadline to reserve this menu has ended.</string>
 
     <!-- Gestures Guide Detailed Explanations -->
     <string name="gesture_take_me_there_title">Take me there</string>
@@ -196,9 +197,9 @@
 
     <string name="gesture_action_trigger_title">Confirm / Send</string>
     <string name="gesture_action_trigger_name">Tilt towards you</string>
-    <string name="gesture_action_trigger_desc">Tilt the phone towards yourself and return to starting position to order a dining menu or email a professor.</string>
+    <string name="gesture_action_trigger_desc">Tilt the phone towards yourself and return to starting position to confirm your current location, order a dining menu or email a professor.</string>
     <string name="gesture_action_trigger_howto">Tilt the phone towards yourself.</string>
-    <string name="gesture_action_trigger_whatfor">Reserve a takeaway menu in Dining or write to the professor.</string>
+    <string name="gesture_action_trigger_whatfor">Confirm your starting location, reserve a takeaway menu in Dining or write to the professor.</string>
 
     <string name="gesture_lift_phone_title">Step-by-step guidance</string>
     <string name="gesture_lift_phone_name">Raise the phone</string>
@@ -224,7 +225,6 @@
     <string name="profile_year_4">4th Year</string>
     <string name="profile_group_a">Group A</string>
     <string name="profile_photo_desc">Profile picture</string>
-    <string name="profile_simulate_btn">Simulate (this button will be removed in the future)</string>
     <string name="profile_tui_verified_toast">TUI verified! Logged in as %1$s</string>
 
     <!-- Services Strings -->

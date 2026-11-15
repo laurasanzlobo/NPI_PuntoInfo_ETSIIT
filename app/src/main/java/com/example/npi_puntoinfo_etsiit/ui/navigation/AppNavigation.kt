@@ -34,10 +34,15 @@ import com.example.npi_puntoinfo_etsiit.ui.components.GestureBadge
 import com.example.npi_puntoinfo_etsiit.ui.components.GestureGuideButton
 import com.example.npi_puntoinfo_etsiit.ui.components.GesturesGuideScreen
 import com.example.npi_puntoinfo_etsiit.ui.components.GestureType
+import com.example.npi_puntoinfo_etsiit.ui.components.OnboardingTutorialOverlay
+import com.example.npi_puntoinfo_etsiit.ui.components.SpotlightTargetId
+import com.example.npi_puntoinfo_etsiit.ui.components.TutorialSpotlightRegistry
 import java.time.LocalTime
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.boundsInRoot
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import com.example.npi_puntoinfo_etsiit.R
@@ -77,6 +82,7 @@ fun AppNavigation() {
     var isVerticalGuidanceActive by rememberSaveable { mutableStateOf(false) }
     var activeEntryNodeId by rememberSaveable { mutableStateOf<String?>(null) }
     var activeTargetNodeId by rememberSaveable { mutableStateOf<String?>(null) }
+    var confirmedOriginNodeId by rememberSaveable { mutableStateOf<String?>(null) }
     var canReturnOutdoors by rememberSaveable { mutableStateOf(false) }
     var activeTrip by rememberSaveable(stateSaver = listSaver<NavigationTrip?, String>(
         save = { it?.savedValues().orEmpty() },
@@ -86,6 +92,7 @@ fun AppNavigation() {
     fun clearHandoff() {
         activeEntryNodeId = null
         activeTargetNodeId = null
+        confirmedOriginNodeId = null
         canReturnOutdoors = false
     }
 
@@ -150,6 +157,17 @@ fun AppNavigation() {
                 restoreState = false
             }
         }
+    }
+
+    val clearActiveRoute: () -> Unit = {
+        activeTrip = activeTrip?.finish()
+        clearHandoff()
+        activeDestination = null
+        activeLocation = null
+        isVerticalGuidanceActive = false
+        navController.popBackStack(Screen.Outdoor.routePattern, inclusive = true)
+        activeTrip = null
+        navigateToTab(Screen.Home.route)
     }
 
     fun handleNavigation(route: String) {
@@ -251,25 +269,44 @@ fun AppNavigation() {
             val spokenList = result.data?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)
             val query = spokenList?.firstOrNull()?.trim()
             if (!query.isNullOrBlank()) {
+                val isOnProfessors = currentRoute?.startsWith(Screen.Professors.route) == true
 
-                // --- 1. BUSCAR PRIMERO EN EL DIRECTORIO DE PROFESORES ---
-                val jsonString = context.assets.open("docentes.json").bufferedReader().use { it.readText() }
-                val jsonArray = org.json.JSONObject(jsonString).getJSONArray("profesores")
-                var foundProfessor: String? = null
+                // --- 1. BUSCAR EN PROFESORES (si ya estamos en la pantalla, transcribe cualquier texto directo al buscador) ---
+                val hasProfessorMatch = if (isOnProfessors) {
+                    true
+                } else {
+                    val jsonString = context.assets.open("docentes.json").bufferedReader().use { it.readText() }
+                    val jsonArray = org.json.JSONObject(jsonString).getJSONArray("profesores")
+                    val normQuery = java.text.Normalizer.normalize(query, java.text.Normalizer.Form.NFD)
+                        .replace(Regex("\\p{InCombiningDiacriticalMarks}+"), "")
+                        .lowercase()
+                    var matched = false
 
-                for (i in 0 until jsonArray.length()) {
-                    val nombre = jsonArray.getJSONObject(i).getString("nombre")
-                    // Comprobamos si lo que ha dicho el usuario coincide con algún nombre
-                    if (nombre.contains(query, ignoreCase = true)) {
-                        foundProfessor = nombre
-                        break
+                    for (i in 0 until jsonArray.length()) {
+                        val nombre = jsonArray.getJSONObject(i).getString("nombre")
+                        val normNombre = java.text.Normalizer.normalize(nombre, java.text.Normalizer.Form.NFD)
+                            .replace(Regex("\\p{InCombiningDiacriticalMarks}+"), "")
+                            .lowercase()
+                        // Comprobamos si lo que ha dicho el usuario coincide con algún nombre
+                        if (normNombre.contains(normQuery)) {
+                            matched = true
+                            break
+                        }
                     }
+                    matched
                 }
 
-                if (foundProfessor != null) {
+                if (hasProfessorMatch) {
                     triggerVibration(context, durationMs = 120)
-                    // Viajamos a la pestaña de profesores pasándole el nombre por la URL interna
-                    navController.navigate("${Screen.Professors.route}?nombre=$foundProfessor")
+                    // Pasamos exactamente el texto reconocido por voz (ej. "Fernando" o una asignatura), sin completar apellidos ni mostrar error de ruta
+                    val encodedQuery = android.net.Uri.encode(query)
+                    val targetRoute = "${Screen.Professors.route}?nombre=$encodedQuery"
+                    navController.navigate(targetRoute) {
+                        if (isOnProfessors) {
+                            popUpTo("${Screen.Professors.route}?nombre={nombre}") { inclusive = true }
+                        }
+                        launchSingleTop = true
+                    }
                     return@rememberLauncherForActivityResult
                 }
                 // --- FIN DE LA BÚSQUEDA DE PROFESORES ---
@@ -329,9 +366,9 @@ fun AppNavigation() {
 
     fun launchGlobalVoiceSearch(promptText: String? = null) {
         val defaultPrompt = if (currentRoute?.startsWith(Screen.Professors.route) == true) {
-            "Di el nombre, apellido o departamento"
+            "Di el nombre, asignatura o departamento"
         } else {
-            "¿A dónde quieres ir o a qué profesor buscas?"
+            "¿A dónde quieres ir?"
         }
         val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
             putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
@@ -354,6 +391,12 @@ fun AppNavigation() {
     val isUserLoggedIn = currentUserProfile.isLoggedIn
     var isExitingProfileOnLogout by remember { mutableStateOf(false) }
 
+    // Condición estricta de ejecución única del tutorial inicial (solo salta solo 1 vez por instalación)
+    LaunchedEffect(Unit) {
+        UserSessionRepository.checkAndInitTutorialOnce(context)
+    }
+    val isTutorialActive = UserSessionRepository.isTutorialActiveState
+
     LaunchedEffect(currentRoute) {
         if (currentRoute != Screen.Profile.route) {
             isExitingProfileOnLogout = false
@@ -363,18 +406,21 @@ fun AppNavigation() {
     // Indica si el usuario está en la vista inmersiva de cámara escaneando el código QR de la TUI
     val isScanningQrMode = currentRoute == Screen.Profile.route && !isUserLoggedIn && !isExitingProfileOnLogout
 
-    // Pausar proximidad durante el escaneo QR y el pago para no interrumpir la autenticación.
+    // Desactivar todos los gestos globales durante el escaneo QR, el pago, el tutorial y el GUIADO PASO A PASO (interior o exterior)
+    val isStepByStepGuidanceActive = isVerticalGuidanceActive || currentRoute == Screen.Outdoor.routePattern
+
+    // Pausar proximidad durante el escaneo QR, pago, tutorial interactivo y durante el GUIADO PASO A PASO.
     // Al pasar la mano por la cámara frontal / parte superior del móvil o acercarlo a la oreja,
-    // se activa el asistente de voz y se calcula la ruta guiada en el mapa.
-    DisposableEffect(context, isScanningQrMode, isDiningPaymentActive) {
-        if (isScanningQrMode || isDiningPaymentActive) {
+    // se activa el asistente de voz y se calcula la ruta guiada en el mapa (solo fuera de guiado activo).
+    DisposableEffect(context, isScanningQrMode, isDiningPaymentActive, isTutorialActive, isStepByStepGuidanceActive) {
+        if (isScanningQrMode || isDiningPaymentActive || isTutorialActive || isStepByStepGuidanceActive) {
             onDispose { }
         } else {
             val proximityManager = ProximityManager(context)
 
             proximityManager.onNear = {
                 val now = System.currentTimeMillis()
-                if (!isListeningSpeechGlobal && !isScanningQrMode && (now - lastBackClickTimeMs > 800L)) {
+                if (!isListeningSpeechGlobal && !isScanningQrMode && !isStepByStepGuidanceActive && (now - lastBackClickTimeMs > 800L)) {
                     triggerVibration(context, durationMs = 80)
                     currentLaunchGlobalVoiceSearch()
                 }
@@ -388,18 +434,18 @@ fun AppNavigation() {
         }
     }
 
-    // Pausar también la agitación durante el escaneo QR y la pasarela de pago.
+    // Pausar también la agitación durante el escaneo QR, la pasarela de pago, el tutorial interactivo y durante el GUIADO PASO A PASO.
     // Detecta dinámicamente si hay una clase en curso o próxima (con 30 minutos de antelación).
     // Si hay clase, el gesto de «¡Llévame!» (giro de muñeca) guía directamente a su aula.
     DisposableEffect(context, showCurrentClassDialog, activeClassForDialog, isScanningQrMode, isUserLoggedIn,
-        isDiningPaymentActive) {
-        if (isScanningQrMode || isDiningPaymentActive) {
+        isDiningPaymentActive, isTutorialActive, isStepByStepGuidanceActive) {
+        if (isScanningQrMode || isDiningPaymentActive || isTutorialActive || isStepByStepGuidanceActive) {
             onDispose { }
         } else {
             val accelerometerManager = AccelerometerManager(context)
 
             accelerometerManager.onShakeDetected = {
-                if (isUserLoggedIn && !isScanningQrMode) {
+                if (isUserLoggedIn && !isScanningQrMode && !isStepByStepGuidanceActive) {
                     triggerVibration(context, durationMs = 150)
                     activeClassForDialog = ScheduleRepository.getCurrentOrUpcomingClass(context = context)
                     showCurrentClassDialog = true
@@ -443,6 +489,7 @@ fun AppNavigation() {
         else -> ""
     }
 
+    Box(modifier = Modifier.fillMaxSize()) {
     Scaffold(
         topBar = {
             if (!isScanningQrMode && !isVerticalGuidanceActive) {
@@ -464,9 +511,9 @@ fun AppNavigation() {
                                     diningPaymentCancelTrigger++
                                     return@IconButton
                                 }
-                                if (currentRoute == Screen.Outdoor.routePattern) {
-                                    activeTrip = null
-                                    clearHandoff()
+                                if (currentRoute == Screen.Outdoor.routePattern || currentRoute?.startsWith("navigation") == true) {
+                                    clearActiveRoute()
+                                    return@IconButton
                                 }
                                 if (!navController.popBackStack()) {
                                     navigateToTab(Screen.Home.route)
@@ -483,63 +530,79 @@ fun AppNavigation() {
                     actions = {
                         // En la pasarela de pago se ocultan todos los iconos de gestos y el perfil
                         if (!isDiningPaymentActive) {
-                            // Distintivo informativo del gesto de zoom para el Horario (solo visual, sin click)
-                            if (currentRoute == Screen.Schedule.route) {
-                                GestureBadge(
-                                    type = GestureType.PINCH_ZOOM,
-                                    size = 26.dp,
-                                    iconSize = 14.dp,
-                                    showTooltipOnClick = false,
-                                    onClick = null
-                                )
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.onGloballyPositioned { coords ->
+                                    TutorialSpotlightRegistry.updateTarget(
+                                        SpotlightTargetId.GESTURE_BADGES,
+                                        coords.boundsInRoot()
+                                    )
+                                }
+                            ) {
+                                // Distintivo informativo del gesto de zoom para el Horario (solo visual, sin click)
+                                if (currentRoute == Screen.Schedule.route) {
+                                    GestureBadge(
+                                        type = GestureType.PINCH_ZOOM,
+                                        size = 26.dp,
+                                        iconSize = 14.dp,
+                                        showTooltipOnClick = false,
+                                        onClick = null
+                                    )
 
-                                Spacer(modifier = Modifier.width(6.dp))
-                            }
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                }
 
-                            // Indicador visual del sensor de proximidad (morado) — En Profesores se integra directamente en la barra de búsqueda
-                            if (currentRoute?.startsWith(Screen.Professors.route) != true) {
-                                GestureBadge(
-                                    type = GestureType.PROXIMITY_VOICE,
-                                    size = 26.dp,
-                                    iconSize = 14.dp,
-                                    showTooltipOnClick = false,
-                                    onClick = null
-                                )
+                                // Indicador visual del sensor de proximidad (morado) — En Profesores se integra directamente en la barra de búsqueda
+                                if (currentRoute?.startsWith(Screen.Professors.route) != true) {
+                                    GestureBadge(
+                                        type = GestureType.PROXIMITY_VOICE,
+                                        size = 26.dp,
+                                        iconSize = 14.dp,
+                                        showTooltipOnClick = false,
+                                        onClick = null
+                                    )
 
-                                Spacer(modifier = Modifier.width(6.dp))
-                            }
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                }
 
-                            // Indicador visual del gesto de 3 inclinaciones para clase actual (rojo) — Solo si ha iniciado sesión
-                            val isUserLoggedIn = UserSessionRepository.getProfile(context).isLoggedIn
-                            if (isUserLoggedIn) {
-                                GestureBadge(
-                                    type = GestureType.TRIPLE_SHAKE,
-                                    size = 26.dp,
-                                    iconSize = 14.dp,
-                                    showTooltipOnClick = false,
-                                    onClick = null
-                                )
+                                // Indicador visual del gesto de 3 inclinaciones para clase actual (rojo) — Solo si ha iniciado sesión
+                                val isUserLoggedIn = UserSessionRepository.getProfile(context).isLoggedIn
+                                if (isUserLoggedIn) {
+                                    GestureBadge(
+                                        type = GestureType.TRIPLE_SHAKE,
+                                        size = 26.dp,
+                                        iconSize = 14.dp,
+                                        showTooltipOnClick = false,
+                                        onClick = null
+                                    )
 
-                                Spacer(modifier = Modifier.width(6.dp))
-                            }
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                }
 
-                            // Botón con la 'i' de información sobre gestos: abre la pestaña dedicada de Guía de Gestos
-                            val isGesturesGuideScreen = currentRoute == Screen.GesturesGuide.route
-                            GestureGuideButton(
-                                size = 32.dp,
-                                iconSize = 18.dp,
-                                onClick = {
-                                    if (!isGesturesGuideScreen) {
-                                        navController.navigate(Screen.GesturesGuide.route) {
-                                            launchSingleTop = true
+                                // Botón con la 'i' de información sobre gestos: abre la pestaña dedicada de Guía de Gestos
+                                val isGesturesGuideScreen = currentRoute == Screen.GesturesGuide.route
+                                GestureGuideButton(
+                                    size = 32.dp,
+                                    iconSize = 18.dp,
+                                    onClick = {
+                                        if (!isGesturesGuideScreen) {
+                                            navController.navigate(Screen.GesturesGuide.route) {
+                                                launchSingleTop = true
+                                            }
                                         }
                                     }
-                                }
-                            )
+                                )
+                            }
 
                             // Icono de perfil de usuario siempre presente a la derecha para que los iconos de gestos no bailen de posición
                             val isProfileScreen = currentRoute == Screen.Profile.route
                             IconButton(
+                                modifier = Modifier.onGloballyPositioned { coords ->
+                                    TutorialSpotlightRegistry.updateTarget(
+                                        SpotlightTargetId.PROFILE_ICON,
+                                        coords.boundsInRoot()
+                                    )
+                                },
                                 onClick = {
                                     if (!isProfileScreen) {
                                         navController.navigate(Screen.Profile.route)
@@ -602,7 +665,13 @@ fun AppNavigation() {
                     }
                 )
             ) { backStackEntry ->
-                BackHandler(enabled = canReturnOutdoors) { returnToOutdoor() }
+                BackHandler(enabled = canReturnOutdoors || activeDestination != null) {
+                    if (canReturnOutdoors) {
+                        returnToOutdoor()
+                    } else {
+                        clearActiveRoute()
+                    }
+                }
                 val destinationArg = backStackEntry.arguments?.getString("destination")
                 val locationArg = backStackEntry.arguments?.getString("location")
 
@@ -631,20 +700,10 @@ fun AppNavigation() {
                             activeLocation = loc
                         }
                     },
-                    onClearRoute = {
-                        val hadTrip = activeTrip != null
-                        activeTrip = activeTrip?.finish()
-                        clearHandoff()
-                        activeDestination = null
-                        activeLocation = null
-                        isVerticalGuidanceActive = false
-                        if (hadTrip) {
-                            navController.popBackStack(Screen.Outdoor.routePattern, inclusive = true)
-                            activeTrip = null
-                            navigateToTab(Screen.Navigation.route)
-                        }
-                    },
+                    onClearRoute = clearActiveRoute,
                     entryNodeId = activeEntryNodeId,
+                    confirmedOriginNodeId = confirmedOriginNodeId,
+                    onOriginConfirmed = { nodeId -> confirmedOriginNodeId = nodeId },
                     destinationNodeId = activeTargetNodeId,
                     onReturnOutdoors = if (canReturnOutdoors) ({
                         returnToOutdoor()
@@ -687,6 +746,7 @@ fun AppNavigation() {
                             activeLocation = indoor.target.location
                             activeEntryNodeId = indoor.entryNodeId
                             activeTargetNodeId = indoor.target.nodeId
+                            confirmedOriginNodeId = null
                             canReturnOutdoors = true
                             isVerticalGuidanceActive = false
                             navController.navigate(Screen.Navigation.route) { launchSingleTop = true }
@@ -733,7 +793,12 @@ fun AppNavigation() {
             }
 
             composable(Screen.GesturesGuide.route) {
-                GesturesGuideScreen()
+                GesturesGuideScreen(
+                    onStartInteractiveTutorial = {
+                        navigateToTab(Screen.Home.route)
+                        UserSessionRepository.startTutorialManually()
+                    }
+                )
             }
         }
 
@@ -873,6 +938,17 @@ fun AppNavigation() {
                 }
             )
         }
+    }
+
+    // Overlay global del Tutorial Inicial Interactivo (se muestra automáticamente solo la 1ª vez
+    // o cuando el usuario pulsa "Repetir Tutorial Interactivo" desde la Guía 'i' o desde su Perfil)
+    if (isTutorialActive) {
+        OnboardingTutorialOverlay(
+            onFinishTutorial = {
+                UserSessionRepository.markTutorialCompleted(context)
+            }
+        )
+    }
     }
 }
 

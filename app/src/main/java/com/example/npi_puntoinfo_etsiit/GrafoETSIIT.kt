@@ -137,13 +137,29 @@ class GrafoETSIIT {
     }
 
     /**
-     * Devuelve todos los nodos pertenecientes a una planta específica.
+     * Devuelve los nodos seleccionables pertenecientes a una planta específica,
+     * filtrando opcionalmente por edificio ("laboratorios" para aulas, "despachos" para zonas comunes)
+     * y excluyendo nodos intermedios de pasillo.
      */
-    fun obtenerNodosPorPlanta(planta: String): List<Nodo> {
+    fun obtenerNodosPorPlanta(planta: String, edificio: String? = null): List<Nodo> {
         val norm = normalizarPlanta(planta)
-        return directorioNodos.values
+        val floorNodes = directorioNodos.values
             .filter { normalizarPlanta(it.planta) == norm }
-            .sortedBy { it.nombre }
+            .filter {
+                !it.tipo.equals("pasillo", ignoreCase = true) &&
+                    !it.tipo.equals("pasillo_exterior", ignoreCase = true)
+            }
+
+        if (edificio.isNullOrBlank()) {
+            return floorNodes.sortedBy { it.nombre }
+        }
+
+        val byBuilding = floorNodes.filter { node ->
+            node.edificio.equals(edificio, ignoreCase = true) ||
+                (norm == "PSS" && edificio.equals("despachos", ignoreCase = true) && node.tipo.equals("aula", ignoreCase = true))
+        }
+
+        return (if (byBuilding.isNotEmpty()) byBuilding else floorNodes).sortedBy { it.nombre }
     }
 
     /**
@@ -518,6 +534,42 @@ class GrafoETSIIT {
         val distancia = calcularDistanciaRuta(nodos)
         val tiempoSegundos = (distancia / 1.2).toInt()
         return RutaCalculada(origen, destino, nodos, distancia, tiempoSegundos)
+    }
+
+    /**
+     * Ruta accesible predefinida por ascensores desde Comedor a Aula 1.1 trazada en 2D
+     */
+    fun obtenerRutaForzadaAscensor(): RutaCalculada? {
+        val ids = listOf(
+            // PSS
+            "n_1791914616902_89", // Comedor_PSS
+            "n_1791914593902_88", // Vestibulo_PSS
+            "n_1791914903466_670", // P_Interior_SS
+            "n_1791914995295_675", // Ascensor_PSS
+            // PB
+            "Ascensor_PB_Despachos", // Ascensor_Despachos_PB
+            "n_1791913008264_508", // Vestibulo
+            "n_1791913092915_589", // E_Desp_Secundaria
+            "n_1791913355297_289", // Pasillo_Exterior_1
+            "n_1791913475969_1",   // Entrada_Aulas_1
+            "n_1791913602551_344", // P_05
+            "n_1791913597882_818", // P_06
+            "n_1791913923106_438", // Ascensor_PB_Aulas
+            // P1
+            "n_1791915763675_148", // Ascensor_Aulas_P1
+            "n_1791916187542_524", // P_16
+            "n_1791916191531_0",   // P_15
+            "n_1791916196672_575", // P_14
+            "n_1791916200996_782", // P_13
+            "n_1791916203737_121", // P_12
+            "n_1791916212257_968", // P_11
+            "n_1791915532304_638"  // A_11
+        )
+        val nodosRuta = ids.mapNotNull { directorioNodos[it] }
+        if (nodosRuta.size < 2) return null
+        val distancia = calcularDistanciaRuta(nodosRuta).coerceAtLeast(120)
+        val tiempoSegundos = (distancia / 1.2).toInt().coerceAtLeast(60)
+        return RutaCalculada(nodosRuta.first(), nodosRuta.last(), nodosRuta, distancia, tiempoSegundos)
     }
 
     // La función principal de Dijkstra

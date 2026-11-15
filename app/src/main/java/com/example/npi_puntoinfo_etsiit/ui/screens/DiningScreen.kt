@@ -244,7 +244,11 @@ fun DiningScreen(
     var selectedMenuType by rememberSaveable { mutableStateOf(DiningMenuType.TRADITIONAL) }
 
     val orderPreferences = remember(context) {
-        context.getSharedPreferences("npi_demo_dining_orders", Context.MODE_PRIVATE)
+        context.getSharedPreferences("npi_demo_dining_orders", Context.MODE_PRIVATE).also { prefs ->
+            if (!prefs.getBoolean("dining_orders_reset_v2", false)) {
+                prefs.edit().clear().putBoolean("dining_orders_reset_v2", true).apply()
+            }
+        }
     }
     val ordersPlaced = remember(orderPreferences) {
         mutableStateMapOf<String, String>().apply {
@@ -293,7 +297,7 @@ fun DiningScreen(
     }
 
     fun reserveMenu(menu: DayDiningMenu) {
-        if (!DiningReservationPolicy.canReserve(menu.date, dateProvider()) ||
+        if (!isLoggedIn || !DiningReservationPolicy.canReserve(menu.date, dateProvider()) ||
             ordersPlaced.containsKey(menu.date.toString()) || isPaymentProcessing) return
         orderMenuType = selectedMenuType
         paymentError = null
@@ -338,8 +342,6 @@ fun DiningScreen(
                         } else if (isOrdered) {
                             triggerVibration(context, durationMs = 40)
                             Toast.makeText(context, "Ya tienes un menú encargado para este día", Toast.LENGTH_SHORT).show()
-                        } else if (selected != null) {
-                            Toast.makeText(context, "Puedes reservar cualquiera de los cuatro próximos días laborables, pero no hoy.", Toast.LENGTH_SHORT).show()
                         }
                     } else {
                         triggerVibration(context, durationMs = 40)
@@ -736,7 +738,7 @@ fun DiningScreen(
             modifier = Modifier.fillMaxWidth().weight(1f).testTag("dining-menu-pager")
         ) { page ->
             val menu = menuList[page]
-            val dayOrderedType = ordersPlaced[menu.date.toString()]
+            val dayOrderedType = if (isLoggedIn) ordersPlaced[menu.date.toString()] else null
             val isThisDayOrdered = !dayOrderedType.isNullOrBlank()
             val isDisplayedMenuReserved = dayOrderedType == selectedMenuType.label
             val hasService = DiningReservationPolicy.hasService(menu.date)
@@ -981,28 +983,46 @@ fun DiningScreen(
                                     style = MaterialTheme.typography.bodySmall, color = TextSecondary
                                 )
                             }
+
+                            if (isLoggedIn && canReserve && !isThisDayOrdered) {
+                                GestureBadge(
+                                    type = GestureType.ACTION_TRIGGER,
+                                    size = 28.dp,
+                                    iconSize = 16.dp,
+                                    onClick = { reserveMenu(menu) }
+                                )
+                            }
                         }
-                        Button(
-                            onClick = { reserveMenu(menu) },
-                            enabled = canReserve && !isThisDayOrdered,
-                            modifier = Modifier.fillMaxWidth().testTag("dining-reserve-${menu.date}"),
-                            shape = RoundedCornerShape(12.dp),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = UgrRed,
-                                disabledContainerColor = if (isThisDayOrdered) CampusGreen else SurfaceBorder,
-                                disabledContentColor = if (isThisDayOrdered) Color.White else TextSecondary
+                        if (isLoggedIn && (canReserve || isThisDayOrdered)) {
+                            Button(
+                                onClick = { reserveMenu(menu) },
+                                enabled = canReserve && !isThisDayOrdered,
+                                modifier = Modifier.fillMaxWidth().testTag("dining-reserve-${menu.date}"),
+                                shape = RoundedCornerShape(12.dp),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = UgrRed,
+                                    disabledContainerColor = if (isThisDayOrdered) CampusGreen else SurfaceBorder,
+                                    disabledContentColor = if (isThisDayOrdered) Color.White else TextSecondary
+                                )
+                            ) {
+                                Text(when {
+                                    isThisDayOrdered -> if (isEnglish) "Reserved" else "Reservado"
+                                    !hasService -> if (isEnglish) "No service" else "Sin servicio"
+                                    else -> if (isEnglish) "Reserve" else "Reservar"
+                                }, fontWeight = FontWeight.Bold)
+                            }
+                        }
+                        if (!isLoggedIn && hasService) {
+                            Text(
+                                if (isEnglish) "Sign in with your TUI to reserve your menu." else "Inicia sesión con tu TUI para poder reservar tu menú.",
+                                style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.5.sp, lineHeight = 17.sp),
+                                color = TextSecondary
                             )
-                        ) {
-                            Text(when {
-                                isThisDayOrdered -> if (isEnglish) "Reserved" else "Reservado"
-                                !hasService -> if (isEnglish) "No service" else "Sin servicio"
-                                else -> if (isEnglish) "Reserve" else "Reservar"
-                            }, fontWeight = FontWeight.Bold)
-                        }
-                        if (!isThisDayOrdered && hasService && !canReserve) {
+                        } else if (!isThisDayOrdered && hasService && !canReserve) {
                             Text(
                                 if (isEnglish) "Reservations are not allowed for today. Swipe to reserve one of the next four working days." else "No se admiten reservas para hoy. Desliza para reservar uno de los cuatro próximos días laborables.",
-                                style = MaterialTheme.typography.bodySmall, color = TextSecondary
+                                style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.5.sp, lineHeight = 17.sp),
+                                color = TextSecondary
                             )
                         }
                     }

@@ -150,7 +150,7 @@ class DiningPaymentTest {
         showDining()
         compose.onNodeWithTag("dining-current-day").assertTextContains("Hoy", substring = true)
         compose.onNodeWithTag("dining-menu-$initialDate").assertIsDisplayed()
-        compose.onNodeWithTag("dining-reserve-$initialDate").assertIsNotEnabled()
+        compose.onNodeWithTag("dining-reserve-$initialDate").assertDoesNotExist()
         (1L..4L).forEach { offset ->
             compose.onNodeWithTag("dining-menu-pager").performTouchInput { swipeLeft() }
             compose.onNodeWithTag("dining-reserve-${initialDate.plusDays(offset)}").assertIsEnabled()

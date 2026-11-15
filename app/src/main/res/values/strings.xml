@@ -63,16 +63,21 @@
     <string name="legend_start">Inicio</string>
     <string name="legend_destination">Destino</string>
     <string name="legend_stairs_elevator">Escalera / Ascensor</string>
+    <string name="route_mode_accessible">Ruta accesible</string>
+    <string name="route_mode_fast">Ruta rápida</string>
     <string name="explore_floors_hint">Toca una planta para explorar su distribución arquitectónica</string>
 
     <!-- Origin Verification Dialog -->
     <string name="verification_dialog_title">Verificación de Ubicación</string>
-    <string name="verification_prompt_schedule">¿Te encuentras actualmente en el %1$s (%2$s)?</string>
-    <string name="verification_yes_here">Sí, estoy aquí</string>
-    <string name="verification_no_not_here">No, no estoy aquí</string>
+    <string name="verification_prompt_comedor">¿Te encuentras actualmente en el Comedor Aynadamar?</string>
+    <string name="verification_prompt_schedule">¿Te encuentras actualmente en la asignatura %1$s en el %2$s de la %3$s?</string>
+    <string name="verification_yes_here">Sí</string>
+    <string name="verification_no_not_here">No</string>
     <string name="verification_subject">Asignatura: %1$s</string>
     <string name="verification_barometer_title">Estimación por Barómetro</string>
-    <string name="verification_barometer_prompt">Según el sensor de barómetro de tu móvil, estás en la %1$s. ¿Es correcto?</string>
+    <string name="verification_barometer_prompt">¿Estás en la %1$s del %2$s?</string>
+    <string name="building_classrooms">edificio de las aulas</string>
+    <string name="building_common_areas">edificio de zonas comunes</string>
     <string name="verification_barometer_pressure">Presión: %1$.1f hPa</string>
     <string name="verification_barometer_floor">Planta estimada: %1$s</string>
     <string name="verification_no_wrong">No, es errónea</string>
@@ -138,7 +143,7 @@
     <string name="profile_fast_route">Ruta Rápida (Escaleras)</string>
     <string name="profile_accessible_desc">Prioriza ascensores para movilidad reducida</string>
     <string name="profile_fast_desc">Usa escaleras y tramos directos entre plantas</string>
-    <string name="profile_app_language">Idioma de la Aplicación</string>
+    <string name="profile_app_language">Idioma</string>
     <string name="profile_app_language_en">App Language</string>
     <string name="profile_lang_spanish">Español (Spanish)</string>
     <string name="profile_lang_english">English (Inglés)</string>
@@ -191,9 +196,9 @@
 
     <string name="gesture_action_trigger_title">Confirmar / Enviar</string>
     <string name="gesture_action_trigger_name">Inclinar hacia ti</string>
-    <string name="gesture_action_trigger_desc">Inclina el móvil hacia ti y vuelve a la posición inicial para encargar menú en comedores o enviar un correo al profesor.</string>
+    <string name="gesture_action_trigger_desc">Inclina el móvil hacia ti y vuelve a la posición inicial para confirmar tu ubicación actual, encargar menú en comedores o enviar un correo al profesor.</string>
     <string name="gesture_action_trigger_howto">Inclina el móvil hacia ti.</string>
-    <string name="gesture_action_trigger_whatfor">Reserva el menú para llevar en Comedores o escribe al profesor.</string>
+    <string name="gesture_action_trigger_whatfor">Confirma tu ubicación inicial, reserva el menú en Comedores o escribe al profesor.</string>
 
     <string name="gesture_lift_phone_title">Guiado paso a paso</string>
     <string name="gesture_lift_phone_name">Levantar el móvil</string>
@@ -219,7 +224,6 @@
     <string name="profile_year_4">4º Año</string>
     <string name="profile_group_a">Grupo A</string>
     <string name="profile_photo_desc">Foto de perfil</string>
-    <string name="profile_simulate_btn">Simular (este botón se borrará en un futuro)</string>
     <string name="profile_tui_verified_toast">¡TUI verificada! Sesión iniciada como %1$s</string>
 
     <!-- Services Strings -->

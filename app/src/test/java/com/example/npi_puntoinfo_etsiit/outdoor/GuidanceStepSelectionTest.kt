@@ -48,10 +48,15 @@ class GuidanceStepSelectionTest {
     }
 
     @Test fun nodesWithoutPhotosAreNotReplacedByMoreDistantNodes() {
-        val route = GuidanceExteriorRepository.tramoToWalkingRoute(data.vuelta)
-        val entranceIndex = route.nearestStepIndex(route.steps[7].point)!!
-        assertEquals(7, entranceIndex)
-        assertNull(route.steps[entranceIndex].photo)
+        val nearWithoutPhoto = GeoPoint(37.196873, -3.624742)
+        val farWithPhoto = GeoPoint(37.197484, -3.625095)
+        val route = WalkingRoute(emptyList(), 0.0, null, listOf(
+            WalkingStep("Con foto lejana", 0.0, photo = "rutas/vuelta/vuelta3.jpg", point = farWithPhoto),
+            WalkingStep("Sin foto cercana", 0.0, photo = null, point = nearWithoutPhoto)
+        ))
+        val selectedIndex = route.nearestStepIndex(nearWithoutPhoto)!!
+        assertEquals(1, selectedIndex)
+        assertNull(route.steps[selectedIndex].photo)
     }
 
     @Test fun missingOrInvalidNodeCoordinatesAreIgnoredWithoutChangingIndices() {
