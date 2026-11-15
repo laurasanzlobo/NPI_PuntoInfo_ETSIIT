@@ -80,7 +80,7 @@ object UserSessionRepository {
 
         // Si está logueado, garantizamos los datos oficiales de Elena Morales Vega y sus 6 asignaturas
         val hasAllSix = officialMatricula.keys.all { loadedWithSysLang.matricula.containsKey(it) }
-        val finalProfile = if (!hasAllSix || loadedWithSysLang.name.contains("José", ignoreCase = true) || loadedWithSysLang.name.contains("Pedregosa", ignoreCase = true) || loadedWithSysLang.dni == "48291054") {
+        val finalProfile = if (!hasAllSix || loadedWithSysLang.name != "Elena Morales Vega" || loadedWithSysLang.dni != "48291054R") {
             val updated = loadedWithSysLang.copy(
                 name = "Elena Morales Vega",
                 dni = "48291054R",

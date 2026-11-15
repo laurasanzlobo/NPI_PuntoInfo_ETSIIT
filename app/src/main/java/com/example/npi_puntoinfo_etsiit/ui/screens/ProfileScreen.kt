@@ -135,10 +135,7 @@ fun ProfileScreen(
 
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = if (profile.name.isNotBlank() && !profile.name.contains("José", ignoreCase = true))
-                                profile.name
-                            else
-                                "Elena Morales Vega",
+                            text = profile.name.ifBlank { "Elena Morales Vega" },
                             color = TextPrimary,
                             fontSize = 20.sp,
                             fontWeight = FontWeight.ExtraBold,
@@ -147,7 +144,7 @@ fun ProfileScreen(
                         )
                         Spacer(modifier = Modifier.height(3.dp))
                         Text(
-                            text = "DNI ${if (profile.dni.isNotBlank() && profile.dni != "75932717") (if (profile.dni.matches(Regex(""".*[A-Za-z]$"""))) profile.dni else "${profile.dni}R") else "48291054R"}",
+                            text = "DNI ${profile.dni.ifBlank { "48291054R" }}",
                             color = TextSecondary,
                             fontSize = 13.sp,
                             fontWeight = FontWeight.Medium
