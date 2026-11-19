@@ -65,7 +65,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import com.example.npi_puntoinfo_etsiit.data.UserSessionRepository
-import com.example.npi_puntoinfo_etsiit.outdoor.OutdoorNavigationRoute
+import com.example.npi_puntoinfo_etsiit.ui.navigation.Screen
 import com.example.npi_puntoinfo_etsiit.sensors.AccelerometerManager
 import com.example.npi_puntoinfo_etsiit.ui.components.GestureBadge
 import com.example.npi_puntoinfo_etsiit.ui.components.GestureType
@@ -589,7 +589,7 @@ fun ProfessorsScreen(onNavigate: (String) -> Unit, searchedName: String? = null)
                         tts?.stop()
                         isSpeaking = false
                         val locationText = if (floorName.isNotBlank() && floorName != "ETSIIT") "${prof.name} · $floorName" else prof.name
-                        onNavigate(OutdoorNavigationRoute.forProfessor(roomName, locationText))
+                        onNavigate(Screen.Navigation.createRoute(roomName, locationText))
                     } else {
                         Toast.makeText(context, "El profesor se encuentra en ${prof.campus}", Toast.LENGTH_LONG).show()
                     }
@@ -649,7 +649,7 @@ fun ProfessorsScreen(onNavigate: (String) -> Unit, searchedName: String? = null)
                         val floorName = prof.office.split("·").getOrElse(1) { "ETSIIT" }.trim()
                         selectedProfessor = null
                         val locationText = if (floorName.isNotBlank() && floorName != "ETSIIT") "${prof.name} · $floorName" else prof.name
-                        onNavigate(OutdoorNavigationRoute.forProfessor(roomName, locationText))
+                        onNavigate(Screen.Navigation.createRoute(roomName, locationText))
                     }
                 }
             }
@@ -1129,7 +1129,7 @@ fun ProfessorsScreen(onNavigate: (String) -> Unit, searchedName: String? = null)
                         tts?.stop()
                         isSpeaking = false
                         val locationText = if (floorName.isNotBlank() && floorName != "ETSIIT") "${prof.name} · $floorName" else prof.name
-                        onNavigate(OutdoorNavigationRoute.forProfessor(roomName, locationText))
+                        onNavigate(Screen.Navigation.createRoute(roomName, locationText))
                     } else {
                         Toast.makeText(context, "El profesor se encuentra en ${prof.campus}", Toast.LENGTH_LONG).show()
                     }

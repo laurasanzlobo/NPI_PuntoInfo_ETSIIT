@@ -188,13 +188,13 @@ fun AppNavigation() {
             val journey = combined ?: OutdoorDestinations.find(destinationId)?.let { NavigationJourney.Outdoor(it) }
                 ?: return
 
-            if (combined != null && destinationId == EtsiitAccess.outdoorId && CampusLocationManager.isUserNearEtsiit(context)) {
+            if (combined != null) {
                 clearHandoff()
                 activeTrip = null
                 activeDestination = combined.indoor.target.name
                 activeLocation = combined.indoor.target.location
-                activeEntryNodeId = null
-                navigateToTab(Screen.Navigation.route)
+                activeTargetNodeId = combined.indoor.target.nodeId
+                navigateToTab(Screen.Navigation.route, preserveBackStack = preserveBackStack)
                 return
             }
 
@@ -218,37 +218,19 @@ fun AppNavigation() {
             val dest = uri.getQueryParameter("destination")
             val loc = uri.getQueryParameter("location")
             val graph = GrafoRepository.getGrafo(context)
-            if (dest != null && EtsiitAccess.journey(graph, dest, loc.orEmpty()) != null) {
-                if (CampusLocationManager.isUserNearEtsiit(context)) {
-                    clearHandoff()
-                    activeTrip = null
-                    activeDestination = dest
-                    activeLocation = loc
-                    activeEntryNodeId = null
-                    navigateToTab(Screen.Navigation.route)
-                } else {
-                    handleNavigation(OutdoorNavigationRoute.forIndoorTarget(dest, loc.orEmpty(),
-                        graph.buscarNodoPorDestino(dest)?.id))
-                }
-                return
-            }
             if (dest?.contains("comedor", ignoreCase = true) == true) {
                 val dining = OutdoorDestinations.diningNamedIn(dest)
-                if (dining != null) {
+                if (dining != null && dining.id != "dining-aynadamar") {
                     handleNavigation(OutdoorNavigationRoute.create(dining.id))
-                } else {
-                    val provider = DeviceLocationProvider(context)
-                    val last = runCatching { kotlinx.coroutines.runBlocking { provider.lastKnownLocation() } }.getOrNull()
-                    val nearest = CampusLocationManager.findNearestDiningHall(last?.latitude, last?.longitude)
-                    handleNavigation(OutdoorNavigationRoute.create("dining-${nearest.id}"))
+                    return
                 }
-                return
             }
             clearHandoff()
+            activeTrip = null
             if (!dest.isNullOrBlank()) {
-                activeTrip = null
                 activeDestination = dest
                 activeLocation = loc
+                activeTargetNodeId = graph.buscarNodoPorDestino(dest)?.id
             }
             navigateToTab(Screen.Navigation.route, preserveBackStack = preserveBackStack)
         } else if (route == Screen.Profile.route) {
@@ -321,7 +303,11 @@ fun AppNavigation() {
                 val namedDining = OutdoorDestinations.diningNamedIn(query)
                 if (namedDining != null) {
                     triggerVibration(context, durationMs = 120)
-                    handleNavigation(OutdoorNavigationRoute.create(namedDining.id))
+                    if (namedDining.id == "dining-aynadamar") {
+                        handleNavigation(Screen.Navigation.createRoute("Comedor Aynadamar", "Planta -1"))
+                    } else {
+                        handleNavigation(OutdoorNavigationRoute.create(namedDining.id))
+                    }
                     return@rememberLauncherForActivityResult
                 }
 
@@ -332,25 +318,23 @@ fun AppNavigation() {
                     val last = runCatching { kotlinx.coroutines.runBlocking { provider.lastKnownLocation() } }.getOrNull()
                     val nearest = CampusLocationManager.findNearestDiningHall(last?.latitude, last?.longitude)
                     triggerVibration(context, durationMs = 120)
-                    handleNavigation(OutdoorNavigationRoute.create("dining-${nearest.id}"))
+                    if (nearest.id == "aynadamar") {
+                        handleNavigation(Screen.Navigation.createRoute("Comedor Aynadamar", "Planta -1"))
+                    } else {
+                        handleNavigation(OutdoorNavigationRoute.create("dining-${nearest.id}"))
+                    }
                     return@rememberLauncherForActivityResult
                 }
                 val grafo = GrafoRepository.getGrafo(context)
                 when (val res = grafo.resolverDestinoPorVoz(query)) {
                     is ResultadoVoz.Exito -> {
-                        if (EtsiitAccess.journey(grafo, res.destino.titulo,
-                                res.destino.ubicacion, res.destino.nodo.id) != null) {
-                            triggerVibration(context, durationMs = 120)
-                            handleNavigation(OutdoorNavigationRoute.forIndoorTarget(res.destino.titulo,
-                                res.destino.ubicacion, res.destino.nodo.id))
-                        } else {
-                            activeTrip = null
-                            clearHandoff()
-                            triggerVibration(context, durationMs = 120)
-                            activeDestination = res.destino.titulo
-                            activeLocation = res.destino.ubicacion
-                            navigateToTab(Screen.Navigation.route)
-                        }
+                        activeTrip = null
+                        clearHandoff()
+                        triggerVibration(context, durationMs = 120)
+                        activeDestination = res.destino.titulo
+                        activeLocation = res.destino.ubicacion
+                        activeTargetNodeId = res.destino.nodo.id
+                        navigateToTab(Screen.Navigation.route)
                     }
                     is ResultadoVoz.Error -> {
                         Toast.makeText(
@@ -691,14 +675,11 @@ fun AppNavigation() {
                         isVerticalGuidanceActive = isVertical
                     },
                     onSelectDestination = { dest, loc ->
-                        if (EtsiitAccess.journey(GrafoRepository.getGrafo(context), dest, loc) != null) {
-                            handleNavigation(Screen.Navigation.createRoute(dest, loc))
-                        } else {
-                            activeTrip = null
-                            clearHandoff()
-                            activeDestination = dest
-                            activeLocation = loc
-                        }
+                        activeTrip = null
+                        clearHandoff()
+                        activeDestination = dest
+                        activeLocation = loc
+                        activeTargetNodeId = GrafoRepository.getGrafo(context).buscarNodoPorDestino(dest)?.id
                     },
                     onClearRoute = clearActiveRoute,
                     entryNodeId = activeEntryNodeId,

@@ -142,8 +142,7 @@ fun DiningScreen(
 
     fun navigateToDining() {
         triggerVibration(context, durationMs = 150)
-        // Mantener el destino del comedor para enlazar el acceso ETSIIT con su tramo interior.
-        onNavigate(Screen.Outdoor.createRoute("dining-aynadamar"))
+        onNavigate(Screen.Navigation.createRoute("Comedor Aynadamar", "Planta -1"))
     }
 
     val currentNavigateToDining by rememberUpdatedState(::navigateToDining)
