@@ -75,8 +75,6 @@ import com.example.npi_puntoinfo_etsiit.sensors.*
 import com.example.npi_puntoinfo_etsiit.ui.components.OutdoorMap
 import com.example.npi_puntoinfo_etsiit.ui.components.OutdoorMapStatus
 import com.example.npi_puntoinfo_etsiit.ui.components.WalkingStepRow
-import com.example.npi_puntoinfo_etsiit.ui.components.IndoorArrivalDialog
-import com.example.npi_puntoinfo_etsiit.ui.components.CompactIndoorEntryButton
 import com.example.npi_puntoinfo_etsiit.ui.components.GestureBadge
 import com.example.npi_puntoinfo_etsiit.ui.components.GestureType
 import com.example.npi_puntoinfo_etsiit.ui.components.loadSampledBitmapFromAssets
@@ -128,8 +126,6 @@ fun OutdoorNavigationScreen(
     var launchPending by rememberSaveable(destinationId, finalDestination, finalNodeId) { mutableStateOf(true) }
     var routeAfterPermission by rememberSaveable(destinationId, finalDestination, finalNodeId) { mutableStateOf(false) }
     var showArrival by rememberSaveable(trip.id) { mutableStateOf(false) }
-    var showManualEntry by rememberSaveable(trip.id) { mutableStateOf(false) }
-    var automaticPromptVisible by remember(trip.id) { mutableStateOf(false) }
     val detector = remember(trip.id, navigator) { ArrivalDetector(alreadyNotified = trip.arrivalNotified) }
 
     fun selectDestination(id: String) {
@@ -350,19 +346,6 @@ fun OutdoorNavigationScreen(
             navigator.trackActivePosition(updateInterval, requireRoute = indoor == null, onLocation = ::observe)
         }
     }
-    LaunchedEffect(trip.presentation) {
-        if (trip.presentation == ArrivalPresentation.PROMPT) {
-            automaticPromptVisible = true
-            onTripChanged(trip.markPromptShown())
-        }
-    }
-    LaunchedEffect(automaticPromptVisible) {
-        if (automaticPromptVisible) {
-            withFrameNanos { } // Medir tras componer el diálogo, no al solicitar su estado.
-            Log.d("NavigationArrival", "promptVisible trip=${trip.id} atMs=${SystemClock.elapsedRealtime()} " +
-                "afterConfirmationMs=${detector.confirmedAtMillis?.let { SystemClock.elapsedRealtime() - it }}")
-        }
-    }
 
     if (showInfo) {
         AlertDialog(onDismissRequest = { showInfo = false },
@@ -372,10 +355,6 @@ fun OutdoorNavigationScreen(
                     "con fotografías reales. OpenFreeMap descarga las teselas del mapa visible. Durante una ruta activa se " +
                     "comprueba tu ubicación cada 12 s, o cada 2 s cerca del acceso (según señal), solo con esta pantalla visible; " +
                     "sin historial ni seguimiento en segundo plano.")
-                if (indoor != null) TextButton(onClick = {
-                    showInfo = false
-                    showManualEntry = true
-                }) { Text("Continuar dentro manualmente") }
                 Text("El punto ETSIIT es la referencia del catálogo para el acceso PB; el GPS no confirma por sí solo que hayas entrado al edificio.")
                 OutdoorAttribution()
             } },
@@ -398,20 +377,6 @@ fun OutdoorNavigationScreen(
                         color = Color.White
                     )
                 }
-            })
-    }
-    if ((automaticPromptVisible || showManualEntry) && indoor != null) {
-        IndoorArrivalDialog(manual = showManualEntry,
-            onContinue = {
-                onTripChanged(trip.enterIndoors())
-                automaticPromptVisible = false
-                showManualEntry = false
-                onContinueIndoors(indoor)
-            },
-            onStayOutside = {
-                onTripChanged(trip.stayOutside())
-                automaticPromptVisible = false
-                showManualEntry = false
             })
     }
 
@@ -534,16 +499,6 @@ fun OutdoorNavigationScreen(
                     }
                 } else {
                     Spacer(Modifier.width(1.dp))
-                }
-
-                // Disponible también lejos del edificio, sin esperar a la detección de llegada.
-                if (trip.showCompactEntry && indoor != null) {
-                    CompactIndoorEntryButton(
-                        onClick = {
-                            onTripChanged(trip.enterIndoors())
-                            onContinueIndoors(indoor)
-                        }
-                    )
                 }
             }
         }
